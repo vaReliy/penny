@@ -1,3 +1,4 @@
+import { HttpClientModule } from "@angular/common/http";
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 
@@ -14,7 +15,8 @@ import { SystemModule } from './system/system.module';
     BrowserModule,
     AppRoutingModule,
     AuthModule,
-    SystemModule
+    SystemModule,
+    HttpClientModule
   ],
   providers: [],
   bootstrap: [AppComponent]

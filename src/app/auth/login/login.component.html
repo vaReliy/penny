@@ -1,5 +1,6 @@
 <p class="text-xs-center">Увійдіть для роботи</p>
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
+  <div class="alert alert-{{alertMessage.type}}" *ngIf="alertMessage.text.length">{{alertMessage.text}}</div>
   <div class="form-group" [ngClass]="{'has-error': hasFormError()}">
     <label for="email">Email</label>
     <input
