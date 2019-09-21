@@ -10,8 +10,8 @@
       placeholder="Введіть email"
     >
     <span class="form-help-text" *ngIf="hasFormError()">
-      <span *ngIf="form.get('email')['errors'] && form.get('email')['errors']['required']">{{showErrorMessage('required')}}</span>
-      <span *ngIf="form.get('email')['errors'] && form.get('email')['errors']['email']">{{showErrorMessage('email')}}</span>
+      <span *ngIf="hasControlValidationError('email', 'required')">{{showErrorMessage('required')}}</span>
+      <span *ngIf="hasControlValidationError('email', 'email')">{{showErrorMessage('email')}}</span>
     </span>
   </div>
   <div class="form-group" [ngClass]="{'has-error': hasFormError()}">
@@ -24,8 +24,8 @@
       placeholder="Введіть пароль"
     >
     <span class="form-help-text" *ngIf="hasFormError()">
-      <span *ngIf="form.get('password')['errors'] && form.get('password')['errors']['required']">{{showErrorMessage('required')}}</span>
-      <span *ngIf="form.get('password')['errors'] && form.get('password')['errors']['minlength']">{{showErrorMessage('minlength', form.get('password')['errors']['minlength'])}}</span>
+      <span *ngIf="hasControlValidationError('password', 'required')">{{showErrorMessage('required')}}</span>
+      <span *ngIf="hasControlValidationError('password', 'minlength')">{{showErrorMessage('minlength', form.get('password')['errors']['minlength'])}}</span>
     </span>
   </div>
   <div class="form-group" [ngClass]="{'has-error': hasFormError()}">
@@ -38,8 +38,8 @@
       placeholder="Введіть ім'я"
     >
     <span class="form-help-text" *ngIf="hasFormError()">
-      <span *ngIf="form.get('name')['errors'] && form.get('name')['errors']['required']">{{showErrorMessage('required')}}</span>
-      <span *ngIf="form.get('name')['errors'] && form.get('name')['errors']['minlength']">{{showErrorMessage('minlength', form.get('name')['errors']['minlength'])}}</span>
+      <span *ngIf="hasControlValidationError('name', 'required')">{{showErrorMessage('required')}}</span>
+      <span *ngIf="hasControlValidationError('name', 'minlength')">{{showErrorMessage('minlength', form.get('name')['errors']['minlength'])}}</span>
     </span>
   </div>
   <div class="form-group">

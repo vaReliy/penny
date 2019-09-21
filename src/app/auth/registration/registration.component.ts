@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 
-import { FormControllerAbstract } from '../shared/FormControllerAbstract';
+import { FormControllerAbstract } from '../shared/form-controller-abstract';
 
 @Component({
   selector: 'app-registration',
