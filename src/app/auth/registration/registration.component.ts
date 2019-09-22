@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -17,6 +18,7 @@ export class RegistrationComponent extends FormControllerAbstract implements OnI
   constructor(
     private fb: FormBuilder,
     private usersService: UsersService,
+    private router: Router,
   ) {
     super();
     this.form = this.fb.group({
@@ -36,8 +38,11 @@ export class RegistrationComponent extends FormControllerAbstract implements OnI
     const {email, password, name} = this.form.value;
     this.usersService.createUser(email, password, name)
       .subscribe((user: User) => {
-        console.log('created a new user:', user);
-        // todo redirect to main service
+        this.router.navigate(['./login'], {
+          queryParams: {
+            email: user.email
+          }
+        });
       });
   }
 
