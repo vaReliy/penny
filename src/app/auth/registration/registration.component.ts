@@ -17,7 +17,8 @@ export class RegistrationComponent extends FormControllerAbstract implements OnI
     this.form = this.fb.group({
       email: this.fb.control(null, [Validators.required, Validators.email]),
       password: this.fb.control(null, [Validators.required, Validators.minLength(6)]),
-      name: this.fb.control(null, [Validators.required, Validators.minLength(4)])
+      name: this.fb.control(null, [Validators.required, Validators.minLength(4)]),
+      agree: this.fb.control(null, [Validators.requiredTrue])
     });
   }
 

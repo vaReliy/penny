@@ -3,8 +3,9 @@ import { FormGroup } from '@angular/forms';
 export abstract class FormControllerAbstract {
   form: FormGroup;
 
-  hasFormError(): boolean {
-    return this.form.invalid && this.form.touched;
+  hasControlInvalid(controlName: string): boolean {
+    const targetControl = this.form.get(controlName);
+    return targetControl && targetControl.invalid && targetControl.touched;
   }
 
   hasControlValidationError(controlName: string, errorKey: string): boolean {

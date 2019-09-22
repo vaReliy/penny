@@ -1,6 +1,6 @@
 <p class="text-xs-center">Реєстрація для отримання доступу</p>
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
-  <div class="form-group" [ngClass]="{'has-error': hasFormError()}">
+  <div class="form-group" [ngClass]="{'has-error': hasControlInvalid('email')}">
     <label for="email">Email</label>
     <input
       formControlName="email"
@@ -9,12 +9,12 @@
       id="email"
       placeholder="Введіть email"
     >
-    <span class="form-help-text" *ngIf="hasFormError()">
+    <span class="form-help-text" *ngIf="hasControlInvalid('email')">
       <span *ngIf="hasControlValidationError('email', 'required')">{{showErrorMessage('required')}}</span>
       <span *ngIf="hasControlValidationError('email', 'email')">{{showErrorMessage('email')}}</span>
     </span>
   </div>
-  <div class="form-group" [ngClass]="{'has-error': hasFormError()}">
+  <div class="form-group" [ngClass]="{'has-error': hasControlInvalid('password')}">
     <label for="password">Пароль</label>
     <input
       formControlName="password"
@@ -23,12 +23,12 @@
       id="password"
       placeholder="Введіть пароль"
     >
-    <span class="form-help-text" *ngIf="hasFormError()">
+    <span class="form-help-text" *ngIf="hasControlInvalid('password')">
       <span *ngIf="hasControlValidationError('password', 'required')">{{showErrorMessage('required')}}</span>
       <span *ngIf="hasControlValidationError('password', 'minlength')">{{showErrorMessage('minlength', form.get('password')['errors']['minlength'])}}</span>
     </span>
   </div>
-  <div class="form-group" [ngClass]="{'has-error': hasFormError()}">
+  <div class="form-group" [ngClass]="{'has-error': hasControlInvalid('name')}">
     <label for="name">Им'я</label>
     <input
       formControlName="name"
@@ -37,14 +37,14 @@
       id="name"
       placeholder="Введіть ім'я"
     >
-    <span class="form-help-text" *ngIf="hasFormError()">
+    <span class="form-help-text" *ngIf="hasControlInvalid('name')">
       <span *ngIf="hasControlValidationError('name', 'required')">{{showErrorMessage('required')}}</span>
       <span *ngIf="hasControlValidationError('name', 'minlength')">{{showErrorMessage('minlength', form.get('name')['errors']['minlength'])}}</span>
     </span>
   </div>
   <div class="form-group">
     <label for="agree">
-      <input class="checkbox" id="agree" type="checkbox">
+      <input class="checkbox" id="agree" type="checkbox" formControlName="agree">
       <span>Погожуюсь з умовами</span>
     </label>
   </div>
