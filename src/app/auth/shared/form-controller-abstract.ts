@@ -17,6 +17,7 @@ export abstract class FormControllerAbstract {
     switch (error) {
       case 'required': return 'Обовʼязвове поле.';
       case 'email': return 'Не коректний Email';
+      case 'isUserEmailExist': return 'Користувач з таким email вже існує';
       case 'minlength': return `Довжина поля має бути не меншою за ${e.requiredLength} символів`;
       default: return '';
     }
