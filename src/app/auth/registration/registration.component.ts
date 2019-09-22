@@ -3,6 +3,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
+import { User } from '../../shared/models/user.model';
 import { UsersService } from '../../shared/services/users.service';
 import { FormControllerAbstract } from '../shared/form-controller-abstract';
 
@@ -32,7 +33,12 @@ export class RegistrationComponent extends FormControllerAbstract implements OnI
   }
 
   onSubmit() {
-    console.log(this.form);
+    const {email, password, name} = this.form.value;
+    this.usersService.createUser(email, password, name)
+      .subscribe((user: User) => {
+        console.log('created a new user:', user);
+        // todo redirect to main service
+      });
   }
 
   private checkEmailExist(): Observable<{isUserEmailExist?: boolean}> {

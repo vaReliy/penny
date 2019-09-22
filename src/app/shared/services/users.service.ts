@@ -13,6 +13,13 @@ export class UsersService {
     private http: HttpClient
   ) { }
 
+  createUser(email: string, password: string, name: string) {
+    return this.http
+      .post(`${this.URL}/users`, new User(name, email, password))
+      .pipe(
+        map((user: User) => user)
+      );
+  }
 
   getUserByEmail(email: string, password: string): Observable<User> {
     return this.http
