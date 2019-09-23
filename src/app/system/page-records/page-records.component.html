@@ -1,1 +1,75 @@
-<p>page-records works!</p>
+<div class="title-block">
+  <h3 class="title">
+    Сторінка записів <span class="sparkline bar"></span>
+  </h3>
+</div>
+<section class="section">
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bordered">
+          <div class="header-block">
+            <h3 class="title">Додати подію</h3>
+          </div>
+        </div>
+        <div class="card-block">
+          <form>
+            <div class="form-group">
+              <label class="control-label" for="category">Оберіть категорію</label>
+              <select class="form-control" id="category">
+                <option>Опція 1</option>
+                <option>Опція 2</option>
+                <option>Опція 3</option>
+                <option>Опція 4</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="control-label">Оберіть тип</label>
+              <div>
+                <label>
+                  <input class="radio" name="radios" type="radio">
+                  <span>Прибуток</span>
+                </label>
+              </div>
+              <div>
+                <label>
+                  <input class="radio" name="radios" type="radio" checked>
+                  <span>Витрата</span>
+                </label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="control-label" for="amount">Введіть суму</label>
+              <input type="number" value="0" id="amount" class="form-control">
+            </div>
+            <button type="submit" class="btn btn-primary">Додати</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bordered">
+          <div class="header-block">
+            <h3 class="title">Додати категорію</h3>
+          </div>
+        </div>
+        <div class="card-block">
+          <form>
+            <div class="form-group has-error">
+              <label class="control-label" for="category-name">Введіть назву</label>
+              <input type="text" id="category-name" class="form-control">
+              <span class="form-help-text">Помилка (валідація)</span>
+            </div>
+            <div class="form-group has-success">
+              <label class="control-label" for="category-value">Введіть ліміт</label>
+              <input type="number" value="0" id="category-value" class="form-control">
+              <span class="form-help-text">Помилки відсутні (валідація)</span>
+            </div>
+            <button type="submit" class="btn btn-primary">Додати</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
