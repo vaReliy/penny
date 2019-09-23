@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { ActivatedRoute, Params } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 
 import { Message } from '../../shared/models/message.model';
 import { User } from '../../shared/models/user.model';
@@ -21,6 +21,7 @@ export class LoginComponent extends FormControllerAbstract implements OnInit {
     private usersService: UsersService,
     private authService: AuthService,
     private route: ActivatedRoute,
+    private router: Router,
   ) {
     super();
     this.form = this.fb.group({
@@ -47,6 +48,7 @@ export class LoginComponent extends FormControllerAbstract implements OnInit {
         if (user) {
           this.authService.login();
           window.localStorage.setItem('user', JSON.stringify(user));
+          this.router.navigate(['/system', 'bill']);
         } else {
           this.showAlertMessage('Невірний email або пароль');
         }
