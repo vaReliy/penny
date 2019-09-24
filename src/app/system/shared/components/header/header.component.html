@@ -1,19 +1,25 @@
 <header class="header">
   <div class="header-block header-block-search">
-    12:12:12
+    {{date | date: 'dd.MM.yyyy'}}
   </div>
   <div class="header-block header-block-nav">
     <ul class="nav-profile">
-      <li class="profile dropdown">
-        <a class="nav-link dropdown-toggle" href="#" role="button">
-                                <span class="name">
-                                    Вітаю, Ірино
-                                </span>
+      <li class="profile dropdown" appDropdown>
+        <a class="nav-link dropdown-toggle" role="button">
+          <span class="name">
+              Вітання, {{name}}
+          </span>
         </a>
         <div class="dropdown-menu profile-dropdown-menu">
-          <a class="dropdown-item" href="#"> <i class="fa fa-gear icon"></i>Створити запис</a>
+          <a class="dropdown-item" [routerLink]="['./records']">
+            <i class="fa fa-gear icon"></i>
+            Створити запис
+          </a>
           <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="#"><i class="fa fa-power-off icon"></i>Вийти</a>
+          <a class="dropdown-item" (click)="onLogout()">
+            <i class="fa fa-power-off icon"></i>
+            Вийти
+          </a>
         </div>
       </li>
     </ul>
