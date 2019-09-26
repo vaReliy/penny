@@ -1,24 +1,22 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map } from 'rxjs/operators';
+
+import { BaseApi } from '../../../shared/core/base-api';
 
 @Injectable()
-export class BillService {
-  private URL = 'http://localhost:3201';
+export class BillService extends BaseApi {
 
   constructor(
-    private http: HttpClient
-  ) { }
+    protected http: HttpClient
+  ) {
+    super(http);
+  }
 
   getBill(): any {
-    return this.http.get(`${this.URL}/bill`).pipe(
-      map((response: Response) => response),
-    );
+    return this.GET('bill');
   }
 
   getExchangeRates(): any {
-    return this.http.get(`${this.URL}/rates`).pipe(
-      map((response: Response) => response),
-    );
+    return this.GET('rates');
   }
 }
