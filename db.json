@@ -8,7 +8,7 @@
     }
   ],
   "bill": {
-    "value": 100000,
+    "value": 10000,
     "currency": "UAH"
   },
   "rates": {
