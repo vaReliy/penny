@@ -1,0 +1,40 @@
+<div class="card">
+  <div class="card-header bordered">
+    <div class="header-block">
+      <h3 class="title">Додати подію</h3>
+    </div>
+  </div>
+  <div class="card-block">
+    <form>
+      <div class="form-group">
+        <label class="control-label" for="category">Оберіть категорію</label>
+        <select class="form-control" id="category">
+          <option>Опція 1</option>
+          <option>Опція 2</option>
+          <option>Опція 3</option>
+          <option>Опція 4</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="control-label">Оберіть тип</label>
+        <div>
+          <label>
+            <input class="radio" name="radios" type="radio">
+            <span>Прибуток</span>
+          </label>
+        </div>
+        <div>
+          <label>
+            <input class="radio" name="radios" type="radio" checked>
+            <span>Витрата</span>
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="control-label" for="amount">Введіть суму</label>
+        <input type="number" value="0" id="amount" class="form-control">
+      </div>
+      <button type="submit" class="btn btn-primary">Додати</button>
+    </form>
+  </div>
+</div>
