@@ -1,9 +1,11 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { NgForm } from '@angular/forms';
+import * as moment from 'moment';
 
 import { Message } from '../../../shared/models/message.model';
-import { Category } from '../../shared/models/category.model';
 import { AppEvent } from '../../shared/models/app-event.model';
+import { Bill } from '../../shared/models/bill.model';
+import { Category } from '../../shared/models/category.model';
 
 @Component({
   selector: 'app-add-event',
@@ -12,7 +14,7 @@ import { AppEvent } from '../../shared/models/app-event.model';
 })
 export class AddEventComponent implements OnInit {
   @Input() categories: Category[];
-  @Input() currentBillValue: number;
+  @Input() currentBill: Bill;
   @Output() addAppEvent = new EventEmitter<AppEvent>();
   eventTypes = [
     {type: 'income', label: 'Прибуток'},
@@ -27,11 +29,12 @@ export class AddEventComponent implements OnInit {
 
   onSubmit(form: NgForm) {
     const {type, amount, category, description} = form.value;
-    if (amount > this.currentBillValue) {
-      this.showAlertMessage(`Недостатньо коштів для операції. Поточний рахунок: ${this.currentBillValue}грн`);
+    if (amount > this.currentBill.value) {
+      this.showAlertMessage(`Недостатньо коштів для операції. Поточний рахунок: ${this.currentBill.value}${this.currentBill.currency}`);
       return;
     }
-    this.addAppEvent.emit(new AppEvent(type, amount, category, null, description));
+    const date = moment().format('DD.MM.YYYY HH:mm:ss');
+    this.addAppEvent.emit(new AppEvent(type, amount, category, date, description));
     this.setDefaults(form);
   }
 

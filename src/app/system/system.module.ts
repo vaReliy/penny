@@ -14,6 +14,7 @@ import { PageRecordsComponent } from './page-records/page-records.component';
 import { HeaderComponent } from './shared/components/header/header.component';
 import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
 import { DropdownDirective } from './shared/directives/dropdown.directive';
+import { AppEventService } from './shared/services/app-event.service';
 import { BillService } from './shared/services/bill.service';
 import { CategoriesService } from './shared/services/categories.service';
 import { SystemRoutingModule } from './system-routing.module';
@@ -43,6 +44,7 @@ import { SystemComponent } from './system.component';
   providers: [
     BillService,
     CategoriesService,
+    AppEventService,
   ],
 })
 export class SystemModule { }

@@ -24,6 +24,14 @@ export class BillService extends BaseApi {
       );
   }
 
+  updateBill(bill: Bill): Observable<Bill> {
+    return this.POST('bill', bill)
+      .pipe(
+        delay(500),
+        map(v => new Bill(v.value, v.currency)),
+      );
+  }
+
   getExchangeRates(): Observable<CurrencyRatesModel> {
     return this.GET('rates')
       .pipe(

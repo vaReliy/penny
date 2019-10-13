@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs';
 import { AppEvent } from '../shared/models/app-event.model';
 import { Bill } from '../shared/models/bill.model';
 import { Category } from '../shared/models/category.model';
+import { AppEventService } from '../shared/services/app-event.service';
 import { BillService } from '../shared/services/bill.service';
 import { CategoriesService } from '../shared/services/categories.service';
 
@@ -20,10 +21,12 @@ export class PageRecordsComponent implements OnInit, OnDestroy {
   private sub2: Subscription;
   private sub3: Subscription;
   private sub4: Subscription;
+  private sub5: Subscription;
 
   constructor(
     private categoryService: CategoriesService,
     private billService: BillService,
+    private eventService: AppEventService,
   ) { }
 
   ngOnInit() {
@@ -39,7 +42,14 @@ export class PageRecordsComponent implements OnInit, OnDestroy {
   }
 
   onAddEvent(event: AppEvent) {
-    console.log(event);
+    this.sub5 = this.eventService.addEvent(event)
+      .subscribe((addedEvent: AppEvent) => {
+        this.bill.value += (addedEvent.type === 'outcome') ? -addedEvent.amount : addedEvent.amount;
+        this.billService.updateBill(this.bill)
+          .subscribe((updatedBill: Bill) => {
+            this.bill = updatedBill;
+          });
+      });
   }
 
   onAddCategory(category: Category) {
@@ -52,7 +62,7 @@ export class PageRecordsComponent implements OnInit, OnDestroy {
   onEditCategory(category: Category) {
     this.sub3 = this.categoryService.updateCategory(category)
       .subscribe((updatedCategory: Category) => {
-        console.log('updatedCategory', updatedCategory);
+        console.log('updatedCategory', updatedCategory); // fixme
       });
   }
 
@@ -68,6 +78,9 @@ export class PageRecordsComponent implements OnInit, OnDestroy {
     }
     if (this.sub4) {
       this.sub4.unsubscribe();
+    }
+    if (this.sub5) {
+      this.sub5.unsubscribe();
     }
   }
 
