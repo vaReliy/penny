@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { delay, map } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 
 import { BaseApi } from '../../../shared/core/base-api';
 import { AppEvent } from '../models/app-event.model';
@@ -18,7 +18,6 @@ export class AppEventService extends BaseApi {
   getEvents(): Observable<AppEvent[]> {
     return this.GET('events')
       .pipe(
-        delay(500),
         map(events => {
           const result = [];
           events.forEach((e: AppEvent) => {
@@ -39,7 +38,6 @@ export class AppEventService extends BaseApi {
   addEvent(event: AppEvent): Observable<AppEvent> {
     return this.POST('events', event)
       .pipe(
-        delay(500),
         map(v => new AppEvent(
           (v as AppEvent).type,
           (v as AppEvent).amount,
