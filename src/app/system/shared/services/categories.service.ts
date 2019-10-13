@@ -18,7 +18,17 @@ export class CategoriesService extends BaseApi {
   getCategories(): Observable<Category[]> {
     return this.GET('categories').pipe(
       delay(500),
-      map(v => v),
+      map(categories => {
+        const result = [];
+        categories.forEach((c: Category) => {
+          result.push(new Category(
+            c.name,
+            c.capacity,
+            c.id,
+          ));
+        });
+        return result;
+      }),
     );
   }
 

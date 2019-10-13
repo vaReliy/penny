@@ -15,6 +15,27 @@ export class AppEventService extends BaseApi {
     super(http);
   }
 
+  getEvents(): Observable<AppEvent[]> {
+    return this.GET('events')
+      .pipe(
+        delay(500),
+        map(events => {
+          const result = [];
+          events.forEach((e: AppEvent) => {
+            result.push(new AppEvent(
+              e.type,
+              e.amount,
+              e.category,
+              e.date,
+              e.description,
+              e.id,
+            ));
+          });
+          return result;
+        }),
+      );
+  }
+
   addEvent(event: AppEvent): Observable<AppEvent> {
     return this.POST('events', event)
       .pipe(

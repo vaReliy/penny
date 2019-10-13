@@ -34,7 +34,7 @@ export class AddEventComponent implements OnInit {
       return;
     }
     const date = moment().format('DD.MM.YYYY HH:mm:ss');
-    this.addAppEvent.emit(new AppEvent(type, amount, category, date, description));
+    this.addAppEvent.emit(new AppEvent(type, amount, +category, date, description));
     this.setDefaults(form);
   }
 
