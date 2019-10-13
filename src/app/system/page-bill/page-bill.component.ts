@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { combineLatest, Subscription } from 'rxjs';
 
-import { BillModel } from '../shared/models/bill.model';
+import { Bill } from '../shared/models/bill.model';
 import { CurrencyRatesModel } from '../shared/models/currency-rates.model';
 import { BillService } from '../shared/services/bill.service';
 
@@ -13,7 +13,7 @@ import { BillService } from '../shared/services/bill.service';
 export class PageBillComponent implements OnInit, OnDestroy {
   private subscription: Subscription;
   private subscription2: Subscription;
-  bill: BillModel;
+  bill: Bill;
   rates: CurrencyRatesModel = new CurrencyRatesModel(0, 0, 0);
   date: Date = new Date();
   isLoaded = false;
