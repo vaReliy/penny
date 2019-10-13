@@ -30,11 +30,13 @@ export class AddEventComponent implements OnInit {
   onSubmit(form: NgForm) {
     const {type, amount, category, description} = form.value;
     if (amount > this.currentBill.value) {
-      this.showAlertMessage(`Недостатньо коштів для операції. Поточний рахунок: ${this.currentBill.value}${this.currentBill.currency}`);
+      // tslint:disable-next-line:max-line-length
+      this.showAlertMessage(`Недостатньо коштів для операції. Поточний рахунок: ${this.currentBill.value}${this.currentBill.currency}`, 'danger');
       return;
     }
     const date = moment().format('DD.MM.YYYY HH:mm:ss');
     this.addAppEvent.emit(new AppEvent(type, amount, +category, date, description));
+    this.showAlertMessage(`Подію успішно додано!`);
     this.setDefaults(form);
   }
 
@@ -47,8 +49,8 @@ export class AddEventComponent implements OnInit {
     });
   }
 
-  private showAlertMessage(text: string, time: number = 5000) {
-    this.alertMessage.text = text;
+  private showAlertMessage(text: string, type: string = 'success', time: number = 5000) {
+    this.alertMessage = {text, type};
     setTimeout(() => {
       this.alertMessage.text = '';
     }, time);

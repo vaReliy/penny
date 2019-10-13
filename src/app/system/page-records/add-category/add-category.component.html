@@ -5,6 +5,7 @@
     </div>
   </div>
   <div class="card-block">
+    <div class="alert alert-{{alertMessage.type}}" *ngIf="alertMessage.text.length">{{alertMessage.text}}</div>
     <form #form="ngForm" (ngSubmit)="onSubmit(form)">
       <div class="form-group" [ngClass]="{'has-error': categoryName.touched && categoryName.invalid}">
         <label class="control-label" for="category-name">Введіть назву</label>
