@@ -16,6 +16,7 @@ export class PageBillComponent implements OnInit, OnDestroy {
   bill: BillModel;
   rates: CurrencyRatesModel = new CurrencyRatesModel(0, 0, 0);
   date: Date = new Date();
+  isLoaded = false;
 
   constructor(
     private billService: BillService,
@@ -30,13 +31,16 @@ export class PageBillComponent implements OnInit, OnDestroy {
       .subscribe(([bill, rates]) => {
         this.bill = bill;
         this.rates = rates;
+        this.isLoaded = true;
       });
   }
 
   onRefresh() {
+    this.isLoaded = false;
     this.subscription2 = this.billService.getExchangeRates()
       .subscribe(rates => {
         this.rates = rates;
+        this.isLoaded = true;
       });
   }
 

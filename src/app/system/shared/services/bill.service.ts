@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { delay, map } from 'rxjs/operators';
 
 import { BaseApi } from '../../../shared/core/base-api';
 import { BillModel } from '../models/bill.model';
@@ -19,6 +19,7 @@ export class BillService extends BaseApi {
   getBill(): Observable<BillModel> {
     return this.GET('bill')
       .pipe(
+        delay(500),
         map(v => new BillModel(v.value, v.currency)),
       );
   }
@@ -26,6 +27,7 @@ export class BillService extends BaseApi {
   getExchangeRates(): Observable<CurrencyRatesModel> {
     return this.GET('rates')
       .pipe(
+        delay(1500),
         map((v: any) => new CurrencyRatesModel(v.UAH, v.USD / 1000000, v.EUR / 1000000)),
       );
   }
