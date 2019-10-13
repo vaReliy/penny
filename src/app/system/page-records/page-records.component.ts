@@ -9,18 +9,32 @@ import { CategoriesService } from '../shared/services/categories.service';
   styleUrls: ['./page-records.component.scss']
 })
 export class PageRecordsComponent implements OnInit {
+  isLoaded = false;
+  categories: Category[];
 
   constructor(
     private categoryService: CategoriesService,
   ) { }
 
   ngOnInit() {
+    this.categoryService.getCategories()
+      .subscribe((categories) => {
+        this.categories = categories;
+        this.isLoaded = true;
+      });
   }
 
   onAddCategory(category: Category) {
     this.categoryService.addCategory(category)
       .subscribe((addedCategory: Category) => {
-        console.log('addedCategory:', addedCategory);
+        this.categories.push(addedCategory);
+      });
+  }
+
+  onEditCategory(category: Category) {
+    this.categoryService.updateCategory(category)
+      .subscribe((updatedCategory: Category) => {
+        console.log('updatedCategory', updatedCategory);
       });
   }
 }

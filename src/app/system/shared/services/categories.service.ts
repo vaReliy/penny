@@ -1,4 +1,4 @@
-import { HttpClient } from "@angular/common/http";
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { delay, map } from 'rxjs/operators';
@@ -15,8 +15,22 @@ export class CategoriesService extends BaseApi {
     super(http);
   }
 
+  getCategories(): Observable<Category[]> {
+    return this.GET('categories').pipe(
+      delay(500),
+      map(v => v),
+    );
+  }
+
   addCategory(category: Category): Observable<Category> {
     return this.POST('categories', category).pipe(
+      delay(500),
+      map(v => v),
+    );
+  }
+
+  updateCategory(category: Category): Observable<Category> {
+    return this.PUT(`categories/${category.id}`, category).pipe(
       delay(500),
       map(v => v),
     );
