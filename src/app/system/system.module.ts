@@ -5,6 +5,10 @@ import { FormsModule } from '@angular/forms';
 import { BillCardComponent } from './page-bill/bill-card/bill-card.component';
 import { CurrencyCardComponent } from './page-bill/currency-card/currency-card.component';
 import { PageBillComponent } from './page-bill/page-bill.component';
+import { HistoryChartComponent } from './page-history/history-chart/history-chart.component';
+import { HistoryDetailsComponent } from './page-history/history-details/history-details.component';
+import { HistoryEventsComponent } from './page-history/history-events/history-events.component';
+import { HistoryFilterComponent } from './page-history/history-filter/history-filter.component';
 import { PageHistoryComponent } from './page-history/page-history.component';
 import { PagePlannerComponent } from './page-planner/page-planner.component';
 import { AddCategoryComponent } from './page-records/add-category/add-category.component';
@@ -35,6 +39,10 @@ import { SystemComponent } from './system.component';
     AddEventComponent,
     AddCategoryComponent,
     EditCategoryComponent,
+    HistoryChartComponent,
+    HistoryEventsComponent,
+    HistoryDetailsComponent,
+    HistoryFilterComponent,
   ],
   imports: [
     SystemRoutingModule,
