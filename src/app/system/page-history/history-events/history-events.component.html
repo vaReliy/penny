@@ -37,28 +37,16 @@
             </tr>
             </thead>
             <tbody>
-            <tr>
-              <th scope="row">1</th>
-              <td>44 444</td>
-              <td>12.12.2017</td>
-              <td>Товари</td>
+            <tr *ngFor="let e of events; let i = index;">
+              <th scope="row">{{i + 1}}</th>
+              <td>{{e.amount | number:'1.2-2'}}</td>
+              <td>{{e.date}}</td>
+              <td>{{getCategoryName(e.category)}}</td>
               <td>
-                <span class="label label-danger">Витрата</span>
+                <span class="label label-{{getColorClass(e.type)}}">{{getEventLabel(e.type)}}</span>
               </td>
               <td class="text-lg-center">
-                <a href="#" class="btn btn-primary-outline">Відкрити</a>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">2</th>
-              <td>33 333</td>
-              <td>12.12.2017</td>
-              <td>Відпочинок</td>
-              <td>
-                <span class="label label-success">Прибуток</span>
-              </td>
-              <td class="text-lg-center">
-                <a href="#" class="btn btn-primary-outline">Відкрити</a>
+                <a class="btn btn-primary-outline">Відкрити</a>
               </td>
             </tr>
             </tbody>

@@ -7,7 +7,13 @@
   Завантаження...
 </section>
 <section class="section" *ngIf="isLoaded">
-  <app-history-chart [chartData]="chartData"></app-history-chart>
-  <app-history-events></app-history-events>
+  <app-history-chart
+    [chartData]="chartData">
+  </app-history-chart>
+  <app-history-events
+    [categories]="categories"
+    [events]="events"
+    [categoryMap]="categoryMap">
+  </app-history-events>
   <app-history-filter></app-history-filter>
 </section>

@@ -17,6 +17,7 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
   categories: Category[];
   events: AppEvent[];
   chartData: IChartData[];
+  categoryMap: Map<number, string>;
   private sub1: Subscription;
 
   constructor(
@@ -32,6 +33,7 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
       this.categories = data[0];
       this.events = data[1];
       this.chartData = this.generateChartData();
+      this.categoryMap = this.generateCategoryMap();
       this.isLoaded = true;
     });
   }
@@ -54,5 +56,13 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
       data.push({name: c.name, value});
     });
     return data;
+  }
+
+  private generateCategoryMap(): Map<number, string> {
+    const map = new Map();
+    this.categories.forEach(c => {
+      map.set(c.id, c.name);
+    });
+    return map;
   }
 }

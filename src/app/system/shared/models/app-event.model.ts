@@ -7,4 +7,9 @@ export class AppEvent {
     public description: string,
     public id?: number,
   ) {}
+
+  static TYPES = ['income', 'outcome'];
+  static getLabel(type: string): string {
+    return type === 'income' ? 'Прибуток' : 'Витрата';
+  }
 }

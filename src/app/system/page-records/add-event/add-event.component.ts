@@ -16,15 +16,13 @@ export class AddEventComponent implements OnInit {
   @Input() categories: Category[];
   @Input() currentBill: Bill;
   @Output() addAppEvent = new EventEmitter<AppEvent>();
-  eventTypes = [
-    {type: 'income', label: 'Прибуток'},
-    {type: 'outcome', label: 'Витрата'},
-  ];
+  eventTypes = [];
   alertMessage: Message = {text: '', type: 'danger'};
 
   constructor() { }
 
   ngOnInit() {
+    this.generateEventTypes();
   }
 
   onSubmit(form: NgForm) {
@@ -56,4 +54,9 @@ export class AddEventComponent implements OnInit {
     }, time);
   }
 
+  private generateEventTypes() {
+    AppEvent.TYPES.forEach(type => {
+      this.eventTypes.push({type, label: AppEvent.getLabel(type)});
+    });
+  }
 }
