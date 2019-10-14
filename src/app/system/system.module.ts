@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { PieChartModule } from '@swimlane/ngx-charts';
 
 import { BillCardComponent } from './page-bill/bill-card/bill-card.component';
 import { CurrencyCardComponent } from './page-bill/currency-card/currency-card.component';
@@ -48,6 +50,8 @@ import { SystemComponent } from './system.component';
     SystemRoutingModule,
     CommonModule,
     FormsModule,
+    PieChartModule,
+    BrowserAnimationsModule,
   ],
   providers: [
     BillService,

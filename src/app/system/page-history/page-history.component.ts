@@ -1,8 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { combineLatest, Subscription } from 'rxjs';
+
 import { AppEvent } from '../shared/models/app-event.model';
 import { Category } from '../shared/models/category.model';
-
+import { IChartData } from '../shared/models/IChartData';
 import { AppEventService } from '../shared/services/app-event.service';
 import { CategoriesService } from '../shared/services/categories.service';
 
@@ -15,6 +16,7 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
   isLoaded = false;
   categories: Category[];
   events: AppEvent[];
+  chartData: IChartData[];
   private sub1: Subscription;
 
   constructor(
@@ -29,6 +31,7 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
     ).subscribe((data: [Category[], AppEvent[]]) => {
       this.categories = data[0];
       this.events = data[1];
+      this.chartData = this.generateChartData();
       this.isLoaded = true;
     });
   }
@@ -37,5 +40,19 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
     if (this.sub1) {
       this.sub1.unsubscribe();
     }
+  }
+
+  private generateChartData(): IChartData[] {
+    const data: IChartData[] = [];
+    this.categories.forEach(c => {
+      const value = this.events
+        .filter(e => e.category === c.id && e.type === 'outcome')
+        .reduce((sum, event) => {
+          sum += event.amount;
+          return sum;
+        }, 0);
+      data.push({name: c.name, value});
+    });
+    return data;
   }
 }

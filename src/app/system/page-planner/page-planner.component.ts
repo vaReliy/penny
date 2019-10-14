@@ -50,7 +50,6 @@ export class PagePlannerComponent implements OnInit, OnDestroy {
 
   getCategoryLeftValue(category: Category): number {
     const spendValue = this.getCategorySpendValue(category);
-    console.log(category.name, this.getPercent(spendValue, +category.capacity));
     return +category.capacity - spendValue;
   }
 
