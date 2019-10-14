@@ -12,11 +12,15 @@ export class HistoryEventsComponent implements OnInit {
   @Input() events: AppEvent[];
   @Input() categories: Category[];
   @Input() categoryMap: Map<number, string>;
+  searchPlaceholder = '';
+  searchValue = '';
+  searchType = '';
 
 
   constructor() { }
 
   ngOnInit() {
+    this.changeFilterType('amount');
   }
 
   getCategoryName(categoryId: number): string {
@@ -29,5 +33,17 @@ export class HistoryEventsComponent implements OnInit {
 
   getColorClass(eventType: string) {
     return eventType === AppEvent.TYPES[0] ? 'success' : 'danger';
+  }
+
+  changeFilterType(type: string) {
+    const filterMap = {
+      amount: 'Сума',
+      date: 'Дата',
+      category: 'Категорія',
+      type: 'Тип',
+    };
+    this.searchType = type;
+    this.searchPlaceholder = filterMap[type];
+    this.searchValue = '';
   }
 }
