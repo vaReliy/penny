@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { PageBillComponent } from './page-bill/page-bill.component';
+import { HistoryDetailsComponent } from './page-history/history-details/history-details.component';
 import { PageHistoryComponent } from './page-history/page-history.component';
 import { PagePlannerComponent } from './page-planner/page-planner.component';
 import { PageRecordsComponent } from './page-records/page-records.component';
@@ -13,6 +14,7 @@ const routes: Routes = [
       { path: 'history', component: PageHistoryComponent },
       { path: 'planner', component: PagePlannerComponent },
       { path: 'records', component: PageRecordsComponent },
+      { path: 'history/:id', component: HistoryDetailsComponent },
     ] }
 ];
 

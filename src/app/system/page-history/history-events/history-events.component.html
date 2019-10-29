@@ -49,7 +49,7 @@
                 <span class="label label-{{getColorClass(e.type)}}">{{getEventLabel(e.type)}}</span>
               </td>
               <td class="text-lg-center">
-                <a class="btn btn-primary-outline">Відкрити</a>
+                <a [routerLink]="e.id" class="btn btn-primary-outline">Відкрити</a>
               </td>
             </tr>
             </tbody>

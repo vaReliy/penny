@@ -31,6 +31,16 @@ export class CategoriesService extends BaseApi {
     );
   }
 
+  getCategoryById(id: number): Observable<Category> {
+    return this.GET(`categories/${id}`).pipe(
+      map((c: Category) => new Category(
+        c.name,
+        c.capacity,
+        c.id,
+      )),
+    );
+  }
+
   addCategory(category: Category): Observable<Category> {
     return this.POST('categories', category).pipe(
       map(v => v),

@@ -35,6 +35,20 @@ export class AppEventService extends BaseApi {
       );
   }
 
+  getEventById(id: number): Observable<AppEvent> {
+    return this.GET(`events/${id}`)
+      .pipe(
+        map((e: AppEvent) => new AppEvent(
+          e.type,
+          e.amount,
+          e.category,
+          e.date,
+          e.description,
+          e.id,
+        )),
+      );
+  }
+
   addEvent(event: AppEvent): Observable<AppEvent> {
     return this.POST('events', event)
       .pipe(
