@@ -1,7 +1,16 @@
 <div class="title-block">
-  <h3 class="title">
+  <h3 class="title pull-left">
     Сторінка історії <span class="sparkline bar"></span>
   </h3>
+  <div class="pull-right">
+    <button
+      (click)="onFilter()"
+      [disabled]="!isLoaded || isFilterVisible"
+      class="btn-sm btn btn-primary-outline"
+    >
+      <i class="fa fa-filter"></i>
+    </button>
+  </div>
 </div>
 <section class="section" *ngIf="!isLoaded">
   Завантаження...
@@ -15,5 +24,12 @@
     [events]="events"
     [categoryMap]="categoryMap">
   </app-history-events>
-  <app-history-filter></app-history-filter>
+  <div *ngIf="isFilterVisible">
+    <app-history-filter
+    [events]="events"
+    [categoryMap]="categoryMap"
+    (cancelFilter)="onCancelFilter()"
+    (applyFilter)="onApplyFilter($event)">
+    </app-history-filter>
+  </div>
 </section>

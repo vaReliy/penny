@@ -7,6 +7,13 @@ import { IChartData } from '../shared/models/IChartData';
 import { AppEventService } from '../shared/services/app-event.service';
 import { CategoriesService } from '../shared/services/categories.service';
 
+export interface HistoryFilterData {
+  types: Set<string>;
+  categories: Set<string>;
+  period: 'd' | 'w' | 'M';
+}
+
+
 @Component({
   selector: 'app-page-history',
   templateUrl: './page-history.component.html',
@@ -18,6 +25,7 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
   events: AppEvent[];
   chartData: IChartData[];
   categoryMap: Map<number, string>;
+  isFilterVisible = false;
   private sub1: Subscription;
 
   constructor(
@@ -44,6 +52,19 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
     }
   }
 
+  onFilter() {
+    this.toggleFilterVisibility(true);
+  }
+
+  onCancelFilter() {
+    this.toggleFilterVisibility(false);
+  }
+
+  onApplyFilter(filterData: HistoryFilterData) {
+    this.toggleFilterVisibility(false);
+    console.log('filterData:', filterData); // fixme
+  }
+
   private generateChartData(): IChartData[] {
     const data: IChartData[] = [];
     this.categories.forEach(c => {
@@ -64,5 +85,9 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
       map.set(c.id, c.name);
     });
     return map;
+  }
+
+  private toggleFilterVisibility(value: boolean) {
+    this.isFilterVisible = value;
   }
 }
