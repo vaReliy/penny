@@ -9,7 +9,7 @@ import { PageRecordsComponent } from './page-records/page-records.component';
 import { SystemComponent } from './system.component';
 
 const routes: Routes = [
-  { path: 'system', component: SystemComponent, children: [
+  { path: '', component: SystemComponent, children: [
       { path: 'bill', component: PageBillComponent },
       { path: 'history', component: PageHistoryComponent },
       { path: 'planner', component: PagePlannerComponent },
@@ -19,7 +19,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],
 })
 export class SystemRoutingModule { }
