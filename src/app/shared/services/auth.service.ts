@@ -1,6 +1,11 @@
 export class AuthService {
   private isAuthenticated  = false;
 
+  constructor() {
+    const user = JSON.parse(window.localStorage.getItem('user'));
+    this.isAuthenticated = !!user && !!user.email && !!user.name && !!user.id;
+  }
+
   login() {
     this.isAuthenticated = true;
   }
