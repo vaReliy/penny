@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import * as moment from 'moment';
 import { combineLatest, Subscription } from 'rxjs';
 
 import { AppEvent } from '../shared/models/app-event.model';
@@ -23,6 +24,7 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
   isLoaded = false;
   categories: Category[];
   events: AppEvent[];
+  filteredEvents: AppEvent[] = [];
   chartData: IChartData[];
   categoryMap: Map<number, string>;
   isFilterVisible = false;
@@ -40,7 +42,8 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
     ).subscribe((data: [Category[], AppEvent[]]) => {
       this.categories = data[0];
       this.events = data[1];
-      this.chartData = this.generateChartData();
+      this.setOriginalEvents();
+      this.generateChartData();
       this.categoryMap = this.generateCategoryMap();
       this.isLoaded = true;
     });
@@ -58,17 +61,35 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
 
   onCancelFilter() {
     this.toggleFilterVisibility(false);
+    this.setOriginalEvents();
+    this.generateChartData();
   }
 
   onApplyFilter(filterData: HistoryFilterData) {
     this.toggleFilterVisibility(false);
-    console.log('filterData:', filterData); // fixme
+    this.setOriginalEvents();
+
+    const startOf = moment().startOf(filterData.period).startOf('d');
+    const endOf = moment().endOf(filterData.period).endOf('d');
+
+    this.filteredEvents = this.filteredEvents
+      .filter((e: AppEvent) => {
+        return filterData.types.has(e.type);
+      })
+      .filter((e: AppEvent) => {
+        return filterData.categories.has(e.category.toString());
+      })
+      .filter((e: AppEvent) => {
+        const momentDate = moment(e.date, 'DD.MM.YYYY HH:mm:ss');
+        return momentDate.isBetween(startOf, endOf);
+      });
+    this.generateChartData();
   }
 
-  private generateChartData(): IChartData[] {
+  private generateChartData() {
     const data: IChartData[] = [];
     this.categories.forEach(c => {
-      const value = this.events
+      const value = this.filteredEvents
         .filter(e => e.category === c.id && e.type === 'outcome')
         .reduce((sum, event) => {
           sum += event.amount;
@@ -76,7 +97,7 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
         }, 0);
       data.push({name: c.name, value});
     });
-    return data;
+    this.chartData = data;
   }
 
   private generateCategoryMap(): Map<number, string> {
@@ -89,5 +110,9 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
 
   private toggleFilterVisibility(value: boolean) {
     this.isFilterVisible = value;
+  }
+
+  private setOriginalEvents() {
+    this.filteredEvents = this.events.slice();
   }
 }
