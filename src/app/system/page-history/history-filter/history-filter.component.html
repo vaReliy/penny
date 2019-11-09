@@ -37,14 +37,14 @@
         <div class="form-group">
           <label class="control-label">Оберіть категорії</label>
           <div *ngIf="categoryMap">
-            <label *ngFor="let k of categoryMap.keys()">
+            <label *ngFor="let item of categoryMap | keyvalue">
               <input
-                [value]="k"
+                [value]="item.key"
                 (change)="categoryTypeHandler($event.target)"
                 class="checkbox"
                 type="checkbox"
               >
-              <span>{{categoryMap.get(k)}}</span>
+              <span>{{item.value}}</span>
             </label>
           </div>
         </div>

@@ -9,7 +9,7 @@ import { HistoryFilterData } from '../page-history.component';
   styleUrls: ['./history-filter.component.scss']
 })
 export class HistoryFilterComponent {
-  @Input() categoryMap: Map<number, string>; // fixme: ExpressionChangedAfterItHasBeenCheckedError
+  @Input() categoryMap: Map<number, string>;
   @Input() events: AppEvent[];
   @Output() cancelFilter = new EventEmitter();
   @Output() applyFilter = new EventEmitter<HistoryFilterData>();
