@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-import { AuthGuard } from '../auth/auth.guard';
+import { AuthGuard } from '../shared/services/auth.guard';
 import { PageBillComponent } from './page-bill/page-bill.component';
 import { HistoryDetailsComponent } from './page-history/history-details/history-details.component';
 import { PageHistoryComponent } from './page-history/page-history.component';
