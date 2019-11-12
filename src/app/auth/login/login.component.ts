@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
+import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 
 import { Message } from '../../shared/models/message.model';
@@ -22,8 +23,10 @@ export class LoginComponent extends FormControllerAbstract implements OnInit {
     private authService: AuthService,
     private route: ActivatedRoute,
     private router: Router,
+    private title: Title,
   ) {
     super();
+    this.title.setTitle('Вхід до системи');
     this.form = this.fb.group({
       email: this.fb.control(null, [Validators.required, Validators.email]),
       password: this.fb.control(null, [Validators.required, Validators.minLength(6)])

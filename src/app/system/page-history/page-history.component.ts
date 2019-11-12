@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Title } from '@angular/platform-browser';
 import * as moment from 'moment';
 import { combineLatest, Subscription } from 'rxjs';
 
@@ -33,7 +34,10 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
   constructor(
     private categoryService: CategoriesService,
     private eventService: AppEventService,
-  ) { }
+    private title: Title,
+  ) {
+    this.title.setTitle('Історія');
+  }
 
   ngOnInit() {
     this.sub1 = combineLatest(

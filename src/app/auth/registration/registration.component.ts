@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
+import { Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -19,8 +20,10 @@ export class RegistrationComponent extends FormControllerAbstract implements OnI
     private fb: FormBuilder,
     private usersService: UsersService,
     private router: Router,
+    private title: Title,
   ) {
     super();
+    this.title.setTitle('Реєстрація');
     this.form = this.fb.group({
       email: this.fb.control(null,
         [Validators.required, Validators.email],

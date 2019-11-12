@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Title } from '@angular/platform-browser';
 import { combineLatest, Subscription } from 'rxjs';
 
 import { Bill } from '../shared/models/bill.model';
@@ -20,7 +21,9 @@ export class PageBillComponent implements OnInit, OnDestroy {
 
   constructor(
     private billService: BillService,
+    private title: Title,
   ) {
+    this.title.setTitle('Рахунок');
   }
 
   ngOnInit() {

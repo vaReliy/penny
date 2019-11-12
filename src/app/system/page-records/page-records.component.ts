@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Title } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 
 import { AppEvent } from '../shared/models/app-event.model';
@@ -27,7 +28,10 @@ export class PageRecordsComponent implements OnInit, OnDestroy {
     private categoryService: CategoriesService,
     private billService: BillService,
     private eventService: AppEventService,
-  ) { }
+    private title: Title,
+  ) {
+    this.title.setTitle('Записи');
+  }
 
   ngOnInit() {
     this.sub1 = this.categoryService.getCategories()

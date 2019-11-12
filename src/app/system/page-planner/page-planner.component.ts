@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Title } from '@angular/platform-browser';
 import { combineLatest, Subscription } from 'rxjs';
 
 import { AppEvent } from '../shared/models/app-event.model';
@@ -24,7 +25,9 @@ export class PagePlannerComponent implements OnInit, OnDestroy {
     private billService: BillService,
     private eventService: AppEventService,
     private categoriesService: CategoriesService,
+    private title: Title,
   ) {
+    this.title.setTitle('Планувальник');
   }
 
   ngOnInit() {
