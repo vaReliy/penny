@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PieChartModule } from '@swimlane/ngx-charts';
 
+import { SharedModule } from '../shared/shared.module';
 import { BillCardComponent } from './page-bill/bill-card/bill-card.component';
 import { CurrencyCardComponent } from './page-bill/currency-card/currency-card.component';
 import { PageBillComponent } from './page-bill/page-bill.component';
@@ -52,6 +53,7 @@ import { SystemComponent } from './system.component';
     CommonModule,
     FormsModule,
     PieChartModule,
+    SharedModule,
   ],
   providers: [
     BillService,

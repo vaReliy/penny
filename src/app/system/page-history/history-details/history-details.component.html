@@ -1,4 +1,6 @@
-<div class="section" *ngIf="!isLoaded">Завантаження...</div>
+<div class="section text-center" *ngIf="!isLoaded">
+  <app-loader></app-loader>
+</div>
 <div class="section" *ngIf="isLoaded">
   <div class="title-block">
     <h3 class="title">

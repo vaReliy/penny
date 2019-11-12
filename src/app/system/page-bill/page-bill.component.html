@@ -13,7 +13,7 @@
 </div>
 <section class="section">
   <div class="row" *ngIf="!isLoaded">
-    Завантаження...
+    <app-loader></app-loader>
   </div>
   <div class="row" *ngIf="isLoaded">
     <app-bill-card
