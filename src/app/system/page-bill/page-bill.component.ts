@@ -27,10 +27,10 @@ export class PageBillComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.subscription = combineLatest(
+    this.subscription = combineLatest([
       this.billService.getBill(),
       this.billService.getExchangeRates(),
-    )
+    ])
       .subscribe(([bill, rates]) => {
         this.bill = bill;
         this.rates = rates;

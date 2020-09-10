@@ -31,11 +31,11 @@ export class PagePlannerComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.sub1 = combineLatest(
+    this.sub1 = combineLatest([
       this.billService.getBill(),
       this.eventService.getEvents(),
       this.categoriesService.getCategories(),
-    ).subscribe((data: [Bill, AppEvent[], Category[]]) => {
+    ]).subscribe((data: [Bill, AppEvent[], Category[]]) => {
       this.bill = data[0];
       this.events = data[1];
       this.categories = data[2];

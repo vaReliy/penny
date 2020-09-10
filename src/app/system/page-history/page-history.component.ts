@@ -40,10 +40,10 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.sub1 = combineLatest(
+    this.sub1 = combineLatest([
       this.categoryService.getCategories(),
       this.eventService.getEvents(),
-    ).subscribe((data: [Category[], AppEvent[]]) => {
+    ]).subscribe((data: [Category[], AppEvent[]]) => {
       this.categories = data[0];
       this.events = data[1];
       this.setOriginalEvents();
