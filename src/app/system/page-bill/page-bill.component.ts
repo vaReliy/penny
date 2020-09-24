@@ -15,8 +15,7 @@ export class PageBillComponent implements OnInit, OnDestroy {
   private subscription: Subscription;
   private subscription2: Subscription;
   bill: Bill;
-  rates: CurrencyRatesModel = new CurrencyRatesModel(0, 0, 0);
-  date: Date = new Date();
+  rates: CurrencyRatesModel = new CurrencyRatesModel(Date.now(), 0, 0, 0);
   isLoaded = false;
 
   constructor(

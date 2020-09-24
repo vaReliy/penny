@@ -2,7 +2,7 @@
   <div class="card">
     <div class="card-block">
       <div class="title-block">
-        <h4 class="title">Курс (офлайн-плейсхолдер)</h4>
+        <h4 class="title">Курс</h4>
       </div>
       <div class="row row-sm stats-container">
         <table class="table table-hover">
@@ -16,18 +16,18 @@
           <tbody>
           <tr>
             <td>грн</td>
-            <td>1</td>
-            <td>{{ date | date:'dd.MM.yyyy' }}</td>
+            <td>{{rates?.UAH | number:'1.2-2'}}</td>
+            <td>{{rates.updatedAt | date:'dd.MM.yyyy hh:mm'}}</td>
           </tr>
           <tr>
             <td>доллар</td>
             <td>{{rates?.USD | number:'1.2-2'}}</td>
-            <td>{{ date | date:'dd.MM.yyyy' }}</td>
+            <td>{{rates.updatedAt | date:'dd.MM.yyyy hh:mm'}}</td>
           </tr>
           <tr>
             <td>евро</td>
             <td>{{rates?.EUR | number:'1.2-2'}}</td>
-            <td>{{ date | date:'dd.MM.yyyy' }}</td>
+            <td>{{rates.updatedAt | date:'dd.MM.yyyy hh:mm'}}</td>
           </tr>
           </tbody>
         </table>

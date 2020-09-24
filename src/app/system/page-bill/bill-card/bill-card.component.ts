@@ -11,7 +11,6 @@ import { CurrencyRatesModel } from '../../shared/models/currency-rates.model';
 export class BillCardComponent implements OnInit {
   @Input() bill: Bill;
   @Input() rates: CurrencyRatesModel;
-  @Input() date: Date = new Date();
 
   constructor() { }
 
