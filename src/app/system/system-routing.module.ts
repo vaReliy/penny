@@ -11,12 +11,14 @@ import { SystemComponent } from './system.component';
 
 const routes: Routes = [
   { path: '', component: SystemComponent, canActivate: [AuthGuard], children: [
+      { path: '', redirectTo: 'planner', pathMatch: 'full' },
       { path: 'bill', component: PageBillComponent },
       { path: 'history', component: PageHistoryComponent },
       { path: 'planner', component: PagePlannerComponent },
       { path: 'records', component: PageRecordsComponent },
       { path: 'history/:id', component: HistoryDetailsComponent },
-    ] }
+    ]
+  }
 ];
 
 @NgModule({
