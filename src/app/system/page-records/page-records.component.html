@@ -3,28 +3,36 @@
     Сторінка записів <span class="sparkline bar"></span>
   </h3>
 </div>
-<section class="section text-center" *ngIf="!isLoaded">
+
+<ng-container *ngIf="categories$ | async as categories; else loader">
+  <ng-container *ngIf="bill$ | async as bill; else loader">
+
+    <section class="section">
+      <div class="row">
+        <div class="col-md-6">
+          <app-add-event
+            [categories]="categories"
+            [currentBill]="bill"
+            (addAppEvent)="onAddEvent($event, bill)">
+          </app-add-event>
+        </div>
+        <div class="col-md-6">
+          <app-add-category
+            (addCategory)="onAddCategory($event)">
+          </app-add-category>
+        </div>
+        <div class="col-md-6">
+          <app-edit-category
+            [categories]="categories"
+            (editCategory)="onEditCategory($event)">
+          </app-edit-category>
+        </div>
+      </div>
+    </section>
+
+  </ng-container>
+</ng-container>
+
+<ng-template class="section text-center" #loader>
   <app-loader></app-loader>
-</section>
-<section class="section" *ngIf="isLoaded">
-  <div class="row">
-    <div class="col-md-6">
-      <app-add-event
-        [categories]="categories"
-        [currentBill]="bill"
-        (addAppEvent)="onAddEvent($event)">
-      </app-add-event>
-    </div>
-    <div class="col-md-6">
-      <app-add-category
-        (addCategory)="onAddCategory($event)">
-      </app-add-category>
-    </div>
-    <div class="col-md-6">
-      <app-edit-category
-        [categories]="categories"
-        (editCategory)="onEditCategory($event)">
-      </app-edit-category>
-    </div>
-  </div>
-</section>
+</ng-template>

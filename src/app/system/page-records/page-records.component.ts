@@ -1,6 +1,7 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import { Subscription } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import { startWith, switchMap, takeUntil } from 'rxjs/operators';
 
 import { AppEvent } from '../shared/models/app-event.model';
 import { Bill } from '../shared/models/bill.model';
@@ -12,17 +13,15 @@ import { CategoriesService } from '../shared/services/categories.service';
 @Component({
   selector: 'app-page-records',
   templateUrl: './page-records.component.html',
-  styleUrls: ['./page-records.component.scss']
+  styleUrls: ['./page-records.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PageRecordsComponent implements OnInit, OnDestroy {
-  isLoaded = false;
-  categories: Category[];
-  bill: Bill;
-  private sub1: Subscription;
-  private sub2: Subscription;
-  private sub3: Subscription;
-  private sub4: Subscription;
-  private sub5: Subscription;
+  categories$: Observable<Category[]>;
+  bill$: Observable<Bill>;
+  private refreshBill$ = new Subject();
+  private refreshCategories$ = new Subject();
+  private doUnsubscribe$ = new Subject();
 
   constructor(
     private categoryService: CategoriesService,
@@ -34,55 +33,40 @@ export class PageRecordsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.sub1 = this.categoryService.getCategories()
-      .subscribe((categories) => {
-        this.categories = categories;
-        this.isLoaded = true;
-      });
-    this.sub4 = this.billService.getBill()
-      .subscribe((bill: Bill) => {
-        this.bill = bill;
-      });
+    this.categories$ = this.refreshCategories$.pipe(
+      startWith({}),
+      takeUntil(this.doUnsubscribe$),
+      switchMap(() => this.categoryService.getCategories())
+    );
+
+    this.bill$ = this.refreshBill$.pipe(
+      startWith({}),
+      takeUntil(this.doUnsubscribe$),
+      switchMap(() => this.billService.getBill())
+    );
   }
 
-  onAddEvent(event: AppEvent) {
-    this.sub5 = this.eventService.addEvent(event)
-      .subscribe((addedEvent: AppEvent) => {
-        this.bill.value += (addedEvent.type === 'outcome') ? -addedEvent.amount : addedEvent.amount;
-        this.billService.updateBill(this.bill)
-          .subscribe((updatedBill: Bill) => {
-            this.bill = updatedBill;
-          });
-      });
+  onAddEvent(event: AppEvent, bill: Bill) {
+    this.eventService.addEvent(event).pipe(
+      switchMap((addedEvent: AppEvent) => {
+        bill.value += (addedEvent.type === 'outcome') ? -addedEvent.amount : addedEvent.amount;
+        return this.billService.updateBill(bill)
+      })
+    ).subscribe(() => this.refreshBill$.next());
   }
 
   onAddCategory(category: Category) {
-    this.sub2 = this.categoryService.addCategory(category)
-      .subscribe((addedCategory: Category) => {
-        this.categories.push(addedCategory);
-      });
+    this.categoryService.addCategory(category)
+      .subscribe(() => this.refreshCategories$.next({}));
   }
 
   onEditCategory(category: Category) {
-    this.sub3 = this.categoryService.updateCategory(category).subscribe();
+    this.categoryService.updateCategory(category)
+      .subscribe(() => this.refreshCategories$.next({}));
   }
 
-  ngOnDestroy(): void {
-    if (this.sub1) {
-      this.sub1.unsubscribe();
-    }
-    if (this.sub2) {
-      this.sub2.unsubscribe();
-    }
-    if (this.sub3) {
-      this.sub3.unsubscribe();
-    }
-    if (this.sub4) {
-      this.sub4.unsubscribe();
-    }
-    if (this.sub5) {
-      this.sub5.unsubscribe();
-    }
+  ngOnDestroy() {
+    this.doUnsubscribe$.next();
+    this.doUnsubscribe$.complete();
   }
-
 }

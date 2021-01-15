@@ -46,8 +46,7 @@ export class BillService extends BaseApi {
       return of(this.rates);
     }
 
-    return of(new CurrencyRatesModel(0, 0, 0, 0)); // fixme: temporary: antispam of monobank
-    // return this.getExchangeRates();
+    return this.getExchangeRates();
   }
 
   getExchangeRates(): Observable<CurrencyRatesModel> { // todo: move to backend?
