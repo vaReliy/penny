@@ -13,9 +13,8 @@ import { BillService } from '../shared/services/bill.service';
 })
 export class PageBillComponent implements OnInit, OnDestroy {
   private subscription: Subscription;
-  private subscription2: Subscription;
   bill: Bill;
-  rates: CurrencyRatesModel = new CurrencyRatesModel(Date.now(), 0, 0, 0);
+  rates: CurrencyRatesModel = null;
   isLoaded = false;
 
   constructor(
@@ -26,9 +25,14 @@ export class PageBillComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.onRefresh();
+  }
+
+  onRefresh() {
+    this.isLoaded = false;
     this.subscription = combineLatest([
       this.billService.getBill(),
-      this.billService.getExchangeRates(),
+      this.billService.getRates(),
     ])
       .subscribe(([bill, rates]) => {
         this.bill = bill;
@@ -37,20 +41,7 @@ export class PageBillComponent implements OnInit, OnDestroy {
       });
   }
 
-  onRefresh() {
-    this.isLoaded = false;
-    this.subscription2 = this.billService.getExchangeRates()
-      .subscribe(rates => {
-        this.rates = rates;
-        this.isLoaded = true;
-      });
-  }
-
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
-    if (this.subscription2) {
-      this.subscription2.unsubscribe();
-    }
   }
-
 }

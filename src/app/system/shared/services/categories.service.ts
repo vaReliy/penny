@@ -48,7 +48,7 @@ export class CategoriesService extends BaseApi {
   }
 
   updateCategory(category: Category): Observable<Category> {
-    return this.PUT(`categories/${category.id}`, category).pipe(
+    return this.PUT(`categories`, category).pipe(
       map(v => v),
     );
   }

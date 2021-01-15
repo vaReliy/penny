@@ -16,7 +16,7 @@ export class AppEventService extends BaseApi {
   }
 
   getEvents(): Observable<AppEvent[]> {
-    return this.GET('events')
+    return this.GET('user-actions')
       .pipe(
         map(events => {
           const result = [];
@@ -36,7 +36,7 @@ export class AppEventService extends BaseApi {
   }
 
   getEventById(id: number): Observable<AppEvent> {
-    return this.GET(`events/${id}`)
+    return this.GET(`user-actions/${id}`)
       .pipe(
         map((e: AppEvent) => new AppEvent(
           e.type,
@@ -50,7 +50,7 @@ export class AppEventService extends BaseApi {
   }
 
   addEvent(event: AppEvent): Observable<AppEvent> {
-    return this.POST('events', event)
+    return this.POST('user-actions', event)
       .pipe(
         map(v => new AppEvent(
           (v as AppEvent).type,

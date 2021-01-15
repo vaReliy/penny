@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-import { AuthGuard } from '../shared/services/auth.guard';
 import { PageBillComponent } from './page-bill/page-bill.component';
 import { HistoryDetailsComponent } from './page-history/history-details/history-details.component';
 import { PageHistoryComponent } from './page-history/page-history.component';
@@ -10,8 +9,8 @@ import { PageRecordsComponent } from './page-records/page-records.component';
 import { SystemComponent } from './system.component';
 
 const routes: Routes = [
-  { path: '', component: SystemComponent, canActivate: [AuthGuard], children: [
-      { path: '', redirectTo: 'planner', pathMatch: 'full' },
+  { path: '', component: SystemComponent, children: [
+      { path: '', redirectTo: 'bill', pathMatch: 'full' },
       { path: 'bill', component: PageBillComponent },
       { path: 'history', component: PageHistoryComponent },
       { path: 'planner', component: PagePlannerComponent },

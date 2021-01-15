@@ -1,7 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { Observable } from 'rxjs';
 
-import { AuthService } from '../../../../shared/services/auth.service';
+import { AuthService } from '../../../../core/auth.service';
+import { UsersService } from '../../../../core/users.service';
+import { User } from '../../../../shared/models/user.model';
 
 @Component({
   selector: 'app-header',
@@ -10,23 +13,21 @@ import { AuthService } from '../../../../shared/services/auth.service';
 })
 export class HeaderComponent implements OnInit {
   date: Date = new Date();
-  name = '';
+  currentUser$: Observable<User> = null;
 
   constructor(
     private authService: AuthService,
+    private usersService: UsersService,
     private router: Router,
   ) { }
 
   ngOnInit() {
-    const user = JSON.parse(window.localStorage.getItem('user'));
-    if (user && user.name) {
-      this.name = user.name;
-    }
+    this.currentUser$ = this.usersService.getCurrentUser();
   }
 
   onLogout() {
     this.authService.logout();
-    this.router.navigate(['/login']);
+    this.router.navigate(['/login']).then();
   }
 
 }

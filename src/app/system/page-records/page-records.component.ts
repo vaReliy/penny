@@ -64,10 +64,7 @@ export class PageRecordsComponent implements OnInit, OnDestroy {
   }
 
   onEditCategory(category: Category) {
-    this.sub3 = this.categoryService.updateCategory(category)
-      .subscribe((updatedCategory: Category) => {
-        console.log('updatedCategory', updatedCategory); // fixme
-      });
+    this.sub3 = this.categoryService.updateCategory(category).subscribe();
   }
 
   ngOnDestroy(): void {

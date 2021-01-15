@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 
 import { BaseApi } from '../../../shared/core/base-api';
 import { Bill } from '../models/bill.model';
@@ -10,6 +10,8 @@ import { CurrencyInfoMonobank, getCurrencyCodeByName, getCurrencyNameByCode } fr
 
 @Injectable()
 export class BillService extends BaseApi {
+  private rates: CurrencyRatesModel = null;
+  private ratesDateStamp: number;
 
   constructor(
     protected http: HttpClient
@@ -38,12 +40,23 @@ export class BillService extends BaseApi {
       );
   }*/
 
-  getExchangeRates(): Observable<CurrencyRatesModel> {
+  getRates(): Observable<CurrencyRatesModel> {
+    const nonUpdateTimeMs = 1000 * 60 * 60 * 3; // 3 hours
+    if (this.ratesDateStamp > Date.now() - nonUpdateTimeMs) {
+      return of(this.rates);
+    }
+
+    return of(new CurrencyRatesModel(0, 0, 0, 0)); // fixme: temporary: antispam of monobank
+    // return this.getExchangeRates();
+  }
+
+  getExchangeRates(): Observable<CurrencyRatesModel> { // todo: move to backend?
     return this.http.get('https://api.monobank.ua/bank/currency')
       .pipe(
         map((data: CurrencyInfoMonobank[]) => {
           const result = [];
           let date = Date.now();
+          this.ratesDateStamp = date;
           data.forEach((currency: CurrencyInfoMonobank) => {
             const name = getCurrencyNameByCode(currency.currencyCodeA);
             if (name && currency.currencyCodeB === getCurrencyCodeByName('UAH')) {
@@ -63,6 +76,9 @@ export class BillService extends BaseApi {
         catchError(e => {
           console.error(e);
           return of(new CurrencyRatesModel(0, 0, 0, 0));
+        }),
+        tap((rates: CurrencyRatesModel) => {
+          this.rates = rates;
         })
       );
   }

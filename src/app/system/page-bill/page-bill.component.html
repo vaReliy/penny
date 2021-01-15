@@ -15,7 +15,7 @@
   <div class="row" *ngIf="!isLoaded">
     <app-loader></app-loader>
   </div>
-  <div class="row" *ngIf="isLoaded">
+  <div class="row" *ngIf="isLoaded && rates">
     <app-bill-card
       [bill]="bill"
       [rates]="rates"

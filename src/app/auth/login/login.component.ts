@@ -2,11 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Params, Router } from '@angular/router';
+import { AuthService } from '../../core/auth.service';
+import { UsersService } from '../../core/users.service';
 
 import { Message } from '../../shared/models/message.model';
-import { User } from '../../shared/models/user.model';
-import { AuthService } from '../../shared/services/auth.service';
-import { UsersService } from '../../shared/services/users.service';
 import { FormControllerAbstract } from '../shared/form-controller-abstract';
 
 @Component({
@@ -46,20 +45,17 @@ export class LoginComponent extends FormControllerAbstract implements OnInit {
   }
 
   onSubmit() {
+    this.form.disable();
     const formData: {email: string, password: string} = this.form.value;
 
-    this.usersService
-      .getUserByEmail(formData.email, formData.password)
-      .subscribe((user: User) => {
-        if (user) {
-          this.authService.login();
-          window.localStorage.setItem('user', JSON.stringify(user));
-          this.router.navigate(['/system']);
-        } else {
+    this.authService.login(formData)
+      .subscribe(
+        () => this.router.navigate(['/system']).then(),
+        (error) => {
           this.showAlertMessage('Невірний email або пароль');
+          this.form.enable();
         }
-        this.form.reset();
-      });
+      );
   }
 
   private showAlertMessage(text: string, type: string = 'danger', time: number = 5000) {

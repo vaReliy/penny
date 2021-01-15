@@ -11,7 +11,9 @@ import { Observable } from 'rxjs';
 
 import { AuthService } from './auth.service';
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class AuthGuard implements CanActivate, CanActivateChild {
 
   constructor(
@@ -28,7 +30,7 @@ export class AuthGuard implements CanActivate, CanActivateChild {
         queryParams: {
           accessDenied: true,
         }
-      });
+      }).then();
       return false;
     }
   }
@@ -37,6 +39,4 @@ export class AuthGuard implements CanActivate, CanActivateChild {
   canActivateChild(childRoute: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
     return this.canActivate(childRoute, state);
   }
-
-
 }

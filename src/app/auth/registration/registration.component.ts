@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { User } from '../../shared/models/user.model';
-import { UsersService } from '../../shared/services/users.service';
+import { UsersService } from '../../core/users.service';
 import { FormControllerAbstract } from '../shared/form-controller-abstract';
 
 @Component({

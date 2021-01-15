@@ -8,9 +8,7 @@
     "prod": "ng build --prod",
     "test": "ng test",
     "lint": "ng lint",
-    "e2e": "ng e2e",
-    "server": "json-server --watch db.json --port 3201",
-    "dev": "concurrently --kill-others \"npm run server\" \"npm run start\""
+    "e2e": "ng e2e"
   },
   "private": true,
   "dependencies": {

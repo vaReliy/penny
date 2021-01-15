@@ -16,7 +16,7 @@ import { RegistrationComponent } from './registration/registration.component';
   imports: [
     AuthRoutingModule,
     ReactiveFormsModule,
-    CommonModule
+    CommonModule,
   ],
   providers: [],
 })
