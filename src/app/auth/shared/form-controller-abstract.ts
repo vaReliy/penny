@@ -1,7 +1,7 @@
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 
 export abstract class FormControllerAbstract {
-  form: FormGroup;
+  form: UntypedFormGroup;
 
   hasControlInvalid(controlName: string): boolean {
     const targetControl = this.form.get(controlName);
