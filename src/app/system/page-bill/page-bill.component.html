@@ -3,10 +3,7 @@
     Сторінка рахунку <span class="sparkline bar"></span>
   </h3>
   <div class="pull-right">
-    <button
-      (click)="onRefresh()"
-      class="btn-sm btn btn-primary-outline"
-    >
+    <button (click)="onRefresh()" class="btn-sm btn btn-primary-outline">
       <i class="fa fa-refresh"></i>
     </button>
   </div>
@@ -16,14 +13,7 @@
     <app-loader></app-loader>
   </div>
   <div class="row" *ngIf="isLoaded">
-    <app-bill-card
-      [bill]="bill"
-      [rates]="rates"
-    >
-    </app-bill-card>
-    <app-currency-card
-      [rates]="rates"
-    >
-    </app-currency-card>
+    <app-bill-card [bill]="bill" [rates]="rates"> </app-bill-card>
+    <app-currency-card [rates]="rates"> </app-currency-card>
   </div>
 </section>

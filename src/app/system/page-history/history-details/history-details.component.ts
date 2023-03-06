@@ -14,7 +14,7 @@ import { CategoriesService } from '../../shared/services/categories.service';
 @Component({
   selector: 'app-history-details',
   templateUrl: './history-details.component.html',
-  styleUrls: ['./history-details.component.scss']
+  styleUrls: ['./history-details.component.scss'],
 })
 export class HistoryDetailsComponent implements OnInit, OnDestroy {
   isLoaded = false;
@@ -27,8 +27,8 @@ export class HistoryDetailsComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private eventService: AppEventService,
     private categoriesService: CategoriesService,
-    private billService: BillService,
-  ) { }
+    private billService: BillService
+  ) {}
 
   ngOnInit() {
     this.route.params
@@ -41,7 +41,7 @@ export class HistoryDetailsComponent implements OnInit, OnDestroy {
         mergeMap((category: Category) => {
           this.category = category;
           return this.billService.getBill();
-        }),
+        })
       )
       .subscribe((bill: Bill) => {
         this.currency = bill.currency;

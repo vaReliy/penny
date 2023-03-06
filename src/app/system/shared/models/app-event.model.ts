@@ -5,7 +5,7 @@ export class AppEvent {
     public category: number,
     public date: string,
     public description: string,
-    public id?: number,
+    public id?: number
   ) {}
 
   static TYPES = ['income', 'outcome'];

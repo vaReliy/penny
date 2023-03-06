@@ -10,29 +10,33 @@ import { Category } from '../../shared/models/category.model';
 @Component({
   selector: 'app-add-event',
   templateUrl: './add-event.component.html',
-  styleUrls: ['./add-event.component.scss']
+  styleUrls: ['./add-event.component.scss'],
 })
 export class AddEventComponent implements OnInit {
   @Input() categories: Category[];
   @Input() currentBill: Bill;
   @Output() addAppEvent = new EventEmitter<AppEvent>();
   eventTypes = [];
-  alertMessage: Message = {text: '', type: 'danger'};
-
+  alertMessage: Message = { text: '', type: 'danger' };
 
   ngOnInit() {
     this.generateEventTypes();
   }
 
   onSubmit(form: NgForm) {
-    const {type, amount, category, description} = form.value;
+    const { type, amount, category, description } = form.value;
     if (amount > this.currentBill.value) {
       // tslint:disable-next-line:max-line-length
-      this.showAlertMessage(`Недостатньо коштів для операції. Поточний рахунок: ${this.currentBill.value}${this.currentBill.currency}`, 'danger');
+      this.showAlertMessage(
+        `Недостатньо коштів для операції. Поточний рахунок: ${this.currentBill.value}${this.currentBill.currency}`,
+        'danger'
+      );
       return;
     }
     const date = moment().format('DD.MM.YYYY HH:mm:ss');
-    this.addAppEvent.emit(new AppEvent(type, amount, +category, date, description));
+    this.addAppEvent.emit(
+      new AppEvent(type, amount, +category, date, description)
+    );
     this.showAlertMessage(`Подію успішно додано!`);
     this.setDefaults(form);
   }
@@ -47,7 +51,7 @@ export class AddEventComponent implements OnInit {
   }
 
   private showAlertMessage(text: string, type = 'success', time = 5000) {
-    this.alertMessage = {text, type};
+    this.alertMessage = { text, type };
     setTimeout(() => {
       this.alertMessage.text = '';
     }, time);
@@ -55,7 +59,7 @@ export class AddEventComponent implements OnInit {
 
   private generateEventTypes() {
     AppEvent.TYPES.forEach(type => {
-      this.eventTypes.push({type, label: AppEvent.getLabel(type)});
+      this.eventTypes.push({ type, label: AppEvent.getLabel(type) });
     });
   }
 }

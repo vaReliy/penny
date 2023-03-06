@@ -5,8 +5,7 @@ import { delay } from 'rxjs/operators';
 export class BaseApi {
   private URL = 'http://localhost:3201';
 
-  constructor(protected http: HttpClient) {
-  }
+  constructor(protected http: HttpClient) {}
 
   private appendUrl(urlSuffix: string): string {
     return `${this.URL}/${urlSuffix}`;

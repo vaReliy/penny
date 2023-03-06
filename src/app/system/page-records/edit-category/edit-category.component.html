@@ -5,26 +5,32 @@
     </div>
   </div>
   <div class="card-block">
-    <div class="alert alert-{{alertMessage.type}}" *ngIf="alertMessage.text.length">{{alertMessage.text}}</div>
+    <div
+      class="alert alert-{{ alertMessage.type }}"
+      *ngIf="alertMessage.text.length">
+      {{ alertMessage.text }}
+    </div>
     <form #form="ngForm" (ngSubmit)="onSubmit(form)">
       <div class="form-group">
-        <label class="control-label" for="edit-category">Оберіть категорію</label>
+        <label class="control-label" for="edit-category"
+          >Оберіть категорію</label
+        >
         <select
           [(ngModel)]="selectedCategoryId"
-          [ngModelOptions]="{standalone: true}"
+          [ngModelOptions]="{ standalone: true }"
           (change)="onOptionSelect()"
           class="form-control"
-          id="edit-category"
-        >
-          <option
-            *ngFor="let c of categories"
-            [value]="c.id"
-          >
-            {{c.name}}
+          id="edit-category">
+          <option *ngFor="let c of categories" [value]="c.id">
+            {{ c.name }}
           </option>
         </select>
       </div>
-      <div class="form-group" [ngClass]="{'has-error': categoryName.touched && categoryName.invalid}">
+      <div
+        class="form-group"
+        [ngClass]="{
+          'has-error': categoryName.touched && categoryName.invalid
+        }">
         <label class="control-label" for="category-name">Введіть назву</label>
         <input
           [ngModel]="currentCategory ? currentCategory.name : ''"
@@ -33,15 +39,18 @@
           type="text"
           id="category-name"
           class="form-control"
-          required
-        >
+          required />
         <span
           class="form-help-text"
           *ngIf="categoryName.touched && categoryName.invalid">
           Поле не може бути пустим
         </span>
       </div>
-      <div class="form-group" [ngClass]="{'has-error': categoryCapacity.touched && categoryCapacity.invalid}">
+      <div
+        class="form-group"
+        [ngClass]="{
+          'has-error': categoryCapacity.touched && categoryCapacity.invalid
+        }">
         <label class="control-label" for="category-value">Введіть ліміт</label>
         <input
           [ngModel]="currentCategory ? currentCategory.capacity : ''"
@@ -52,19 +61,14 @@
           id="category-value"
           class="form-control"
           required
-          minlength="1"
-        >
+          minlength="1" />
         <span
           class="form-help-text"
           *ngIf="categoryCapacity.touched && categoryCapacity.invalid">
           Поле не може бути пустим
         </span>
       </div>
-      <button
-        [disabled]="form.invalid"
-        type="submit"
-        class="btn btn-primary"
-      >
+      <button [disabled]="form.invalid" type="submit" class="btn btn-primary">
         Оновити
       </button>
     </form>

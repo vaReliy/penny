@@ -6,16 +6,13 @@ import { AuthService } from '../../../../shared/services/auth.service';
 @Component({
   selector: 'app-header',
   templateUrl: './header.component.html',
-  styleUrls: ['./header.component.scss']
+  styleUrls: ['./header.component.scss'],
 })
 export class HeaderComponent implements OnInit {
   date: Date = new Date();
   name = '';
 
-  constructor(
-    private authService: AuthService,
-    private router: Router,
-  ) { }
+  constructor(private authService: AuthService, private router: Router) {}
 
   ngOnInit() {
     const user = JSON.parse(window.localStorage.getItem('user'));
@@ -28,5 +25,4 @@ export class HeaderComponent implements OnInit {
     this.authService.logout();
     this.router.navigate(['/login']);
   }
-
 }

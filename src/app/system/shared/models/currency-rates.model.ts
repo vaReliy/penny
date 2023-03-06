@@ -3,6 +3,6 @@ export class CurrencyRatesModel {
     public updatedAt: number,
     public UAH: number,
     public USD: number,
-    public EUR: number,
+    public EUR: number
   ) {}
 }

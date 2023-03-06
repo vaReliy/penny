@@ -1,7 +1,5 @@
 <div class="title-block">
-  <h3 class="title">
-    Сторінка записів <span class="sparkline bar"></span>
-  </h3>
+  <h3 class="title">Сторінка записів <span class="sparkline bar"></span></h3>
 </div>
 <section class="section text-center" *ngIf="!isLoaded">
   <app-loader></app-loader>
@@ -16,8 +14,7 @@
       </app-add-event>
     </div>
     <div class="col-md-6">
-      <app-add-category
-        (addCategory)="onAddCategory($event)">
+      <app-add-category (addCategory)="onAddCategory($event)">
       </app-add-category>
     </div>
     <div class="col-md-6">

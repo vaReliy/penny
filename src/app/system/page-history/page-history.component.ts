@@ -15,11 +15,10 @@ export interface HistoryFilterData {
   period: 'd' | 'w' | 'M';
 }
 
-
 @Component({
   selector: 'app-page-history',
   templateUrl: './page-history.component.html',
-  styleUrls: ['./page-history.component.scss']
+  styleUrls: ['./page-history.component.scss'],
 })
 export class PageHistoryComponent implements OnInit, OnDestroy {
   isLoaded = false;
@@ -34,7 +33,7 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
   constructor(
     private categoryService: CategoriesService,
     private eventService: AppEventService,
-    private title: Title,
+    private title: Title
   ) {
     this.title.setTitle('Історія');
   }
@@ -99,7 +98,7 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
           sum += event.amount;
           return sum;
         }, 0);
-      data.push({name: c.name, value});
+      data.push({ name: c.name, value });
     });
     this.chartData = data;
   }

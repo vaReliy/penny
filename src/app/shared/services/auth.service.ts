@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 
 @Injectable()
 export class AuthService {
-  private isAuthenticated  = false;
+  private isAuthenticated = false;
 
   constructor() {
     const user = JSON.parse(window.localStorage.getItem('user'));

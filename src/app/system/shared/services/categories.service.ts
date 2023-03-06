@@ -8,10 +8,7 @@ import { Category } from '../models/category.model';
 
 @Injectable()
 export class CategoriesService extends BaseApi {
-
-  constructor(
-    protected http: HttpClient
-  ) {
+  constructor(protected http: HttpClient) {
     super(http);
   }
 
@@ -20,36 +17,24 @@ export class CategoriesService extends BaseApi {
       map(categories => {
         const result = [];
         categories.forEach((c: Category) => {
-          result.push(new Category(
-            c.name,
-            c.capacity,
-            c.id,
-          ));
+          result.push(new Category(c.name, c.capacity, c.id));
         });
         return result;
-      }),
+      })
     );
   }
 
   getCategoryById(id: number): Observable<Category> {
     return this.GET(`categories/${id}`).pipe(
-      map((c: Category) => new Category(
-        c.name,
-        c.capacity,
-        c.id,
-      )),
+      map((c: Category) => new Category(c.name, c.capacity, c.id))
     );
   }
 
   addCategory(category: Category): Observable<Category> {
-    return this.POST('categories', category).pipe(
-      map(v => v),
-    );
+    return this.POST('categories', category).pipe(map(v => v));
   }
 
   updateCategory(category: Category): Observable<Category> {
-    return this.PUT(`categories/${category.id}`, category).pipe(
-      map(v => v),
-    );
+    return this.PUT(`categories/${category.id}`, category).pipe(map(v => v));
   }
 }

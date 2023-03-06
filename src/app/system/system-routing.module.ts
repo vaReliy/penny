@@ -10,17 +10,22 @@ import { PageRecordsComponent } from './page-records/page-records.component';
 import { SystemComponent } from './system.component';
 
 const routes: Routes = [
-  { path: '', component: SystemComponent, canActivate: [AuthGuard], children: [
+  {
+    path: '',
+    component: SystemComponent,
+    canActivate: [AuthGuard],
+    children: [
       { path: 'bill', component: PageBillComponent },
       { path: 'history', component: PageHistoryComponent },
       { path: 'planner', component: PagePlannerComponent },
       { path: 'records', component: PageRecordsComponent },
       { path: 'history/:id', component: HistoryDetailsComponent },
-    ] }
+    ],
+  },
 ];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],
 })
-export class SystemRoutingModule { }
+export class SystemRoutingModule {}

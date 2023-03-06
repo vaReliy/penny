@@ -12,7 +12,7 @@ import { CategoriesService } from '../shared/services/categories.service';
 @Component({
   selector: 'app-page-records',
   templateUrl: './page-records.component.html',
-  styleUrls: ['./page-records.component.scss']
+  styleUrls: ['./page-records.component.scss'],
 })
 export class PageRecordsComponent implements OnInit, OnDestroy {
   isLoaded = false;
@@ -28,28 +28,31 @@ export class PageRecordsComponent implements OnInit, OnDestroy {
     private categoryService: CategoriesService,
     private billService: BillService,
     private eventService: AppEventService,
-    private title: Title,
+    private title: Title
   ) {
     this.title.setTitle('Записи');
   }
 
   ngOnInit() {
-    this.sub1 = this.categoryService.getCategories()
-      .subscribe((categories) => {
-        this.categories = categories;
-        this.isLoaded = true;
-      });
-    this.sub4 = this.billService.getBill()
-      .subscribe((bill: Bill) => {
-        this.bill = bill;
-      });
+    this.sub1 = this.categoryService.getCategories().subscribe(categories => {
+      this.categories = categories;
+      this.isLoaded = true;
+    });
+    this.sub4 = this.billService.getBill().subscribe((bill: Bill) => {
+      this.bill = bill;
+    });
   }
 
   onAddEvent(event: AppEvent) {
-    this.sub5 = this.eventService.addEvent(event)
+    this.sub5 = this.eventService
+      .addEvent(event)
       .subscribe((addedEvent: AppEvent) => {
-        this.bill.value += (addedEvent.type === 'outcome') ? -addedEvent.amount : addedEvent.amount;
-        this.billService.updateBill(this.bill)
+        this.bill.value +=
+          addedEvent.type === 'outcome'
+            ? -addedEvent.amount
+            : addedEvent.amount;
+        this.billService
+          .updateBill(this.bill)
           .subscribe((updatedBill: Bill) => {
             this.bill = updatedBill;
           });
@@ -57,14 +60,16 @@ export class PageRecordsComponent implements OnInit, OnDestroy {
   }
 
   onAddCategory(category: Category) {
-    this.sub2 = this.categoryService.addCategory(category)
+    this.sub2 = this.categoryService
+      .addCategory(category)
       .subscribe((addedCategory: Category) => {
         this.categories.push(addedCategory);
       });
   }
 
   onEditCategory(category: Category) {
-    this.sub3 = this.categoryService.updateCategory(category)
+    this.sub3 = this.categoryService
+      .updateCategory(category)
       .subscribe((updatedCategory: Category) => {
         console.log('updatedCategory', updatedCategory); // fixme
       });
@@ -87,5 +92,4 @@ export class PageRecordsComponent implements OnInit, OnDestroy {
       this.sub5.unsubscribe();
     }
   }
-
 }

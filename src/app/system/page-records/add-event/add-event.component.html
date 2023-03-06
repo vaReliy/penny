@@ -5,7 +5,11 @@
     </div>
   </div>
   <div class="card-block">
-    <div class="alert alert-{{alertMessage.type}}" *ngIf="alertMessage.text.length">{{alertMessage.text}}</div>
+    <div
+      class="alert alert-{{ alertMessage.type }}"
+      *ngIf="alertMessage.text.length">
+      {{ alertMessage.text }}
+    </div>
     <form #form="ngForm" (ngSubmit)="onSubmit(form)">
       <div class="form-group">
         <label class="control-label" for="add-event">Оберіть категорію</label>
@@ -14,13 +18,9 @@
           name="category"
           class="form-control"
           id="add-event"
-          required
-        >
-          <option
-            *ngFor="let c of categories"
-            [value]="c.id"
-          >
-            {{c.name}}
+          required>
+          <option *ngFor="let c of categories" [value]="c.id">
+            {{ c.name }}
           </option>
         </select>
       </div>
@@ -34,8 +34,8 @@
               class="radio"
               name="type"
               type="radio"
-              required>
-            <span>{{t.label}}</span>
+              required />
+            <span>{{ t.label }}</span>
           </label>
         </div>
       </div>
@@ -48,7 +48,7 @@
           id="amount"
           class="form-control"
           min="1"
-          required>
+          required />
       </div>
       <div class="form-group">
         <label class="control-label" for="amount">Опис</label>
@@ -58,13 +58,9 @@
           type="text"
           id="description"
           class="form-control"
-          required>
+          required />
       </div>
-      <button
-        [disabled]="form.invalid"
-        type="submit"
-        class="btn btn-primary"
-      >
+      <button [disabled]="form.invalid" type="submit" class="btn btn-primary">
         Додати
       </button>
     </form>

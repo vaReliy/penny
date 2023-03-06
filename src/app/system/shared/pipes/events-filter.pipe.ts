@@ -5,7 +5,12 @@ import { AppEvent } from '../models/app-event.model';
   name: 'appEventsFilter',
 })
 export class EventsFilterPipe implements PipeTransform {
-  transform(items: string[], value: string, filterBy: string, categoryMap: Map<number, string>): string[] {
+  transform(
+    items: AppEvent[],
+    value: string,
+    filterBy: string,
+    categoryMap: Map<number, string>
+  ): AppEvent[] {
     if (items.length === 0 || !value) {
       return items;
     }

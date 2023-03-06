@@ -2,10 +2,7 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button
-          (click)="close()"
-          type="button"
-          class="close">
+        <button (click)="close()" type="button" class="close">
           <span>×</span>
         </button>
         <h4 class="modal-title">Фільтр</h4>
@@ -13,11 +10,10 @@
       <div class="modal-body">
         <div class="form-group">
           <label class="control-label" for="period">Оберіть період</label>
-          <select
-            [(ngModel)]="selectedPeriod"
-            class="form-control"
-            id="period">
-            <option *ngFor="let p of periodTypes" [value]="p.type">{{p.label}}</option>
+          <select [(ngModel)]="selectedPeriod" class="form-control" id="period">
+            <option *ngFor="let p of periodTypes" [value]="p.type">
+              {{ p.label }}
+            </option>
           </select>
         </div>
         <div class="form-group">
@@ -28,9 +24,8 @@
                 [value]="eType"
                 (change)="eventTypeHandler($event.target)"
                 class="checkbox"
-                type="checkbox"
-              >
-              <span>{{getEventLabelByType(eType)}}</span>
+                type="checkbox" />
+              <span>{{ getEventLabelByType(eType) }}</span>
             </label>
           </div>
         </div>
@@ -42,23 +37,16 @@
                 [value]="item.key"
                 (change)="categoryTypeHandler($event.target)"
                 class="checkbox"
-                type="checkbox"
-              >
-              <span>{{item.value}}</span>
+                type="checkbox" />
+              <span>{{ item.value }}</span>
             </label>
           </div>
         </div>
         <div class="modal-footer">
-          <button
-            (click)="close()"
-            type="button"
-            class="btn btn-secondary">
+          <button (click)="close()" type="button" class="btn btn-secondary">
             Скасувати
           </button>
-          <button
-            (click)="confirm()"
-            type="button"
-            class="btn btn-primary">
+          <button (click)="confirm()" type="button" class="btn btn-primary">
             Застосувати
           </button>
         </div>

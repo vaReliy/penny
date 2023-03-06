@@ -1,7 +1,5 @@
 <div class="title-block">
-  <h3 class="title">
-    Сторінка планування <span class="sparkline bar"></span>
-  </h3>
+  <h3 class="title">Сторінка планування <span class="sparkline bar"></span></h3>
 </div>
 <section class="section" *ngIf="!isLoaded">
   <app-loader></app-loader>
@@ -15,25 +13,37 @@
             <h3 class="title">Витрати</h3>
           </div>
           <h5 class="planning-expenses pull-right">
-            Загальний залишок: <span class="text-success">{{bill.value | number:'1.2'}} {{bill.currency}}</span>
+            Загальний залишок:
+            <span class="text-success"
+              >{{ bill.value | number : '1.2' }} {{ bill.currency }}</span
+            >
           </h5>
         </div>
         <div class="card-block">
           <div class="row" *ngFor="let c of categories">
             <div class="col-xs-6">
               <div class="n-progress">
-                <div class="progress-bar {{getProgressColor(c)}}" [ngStyle]="{width: getProgressWidthValue(c)}">
-                  <span>{{c.name}}</span>
+                <div
+                  class="progress-bar {{ getProgressColor(c) }}"
+                  [ngStyle]="{ width: getProgressWidthValue(c) }">
+                  <span>{{ c.name }}</span>
                 </div>
               </div>
             </div>
             <div class="col-xs-6">
               <p>
-                <span class="text-{{getProgressColor(c)}}">{{getCategorySpendValue(c) | number:'1.2'}}</span>
+                <span class="text-{{ getProgressColor(c) }}">{{
+                  getCategorySpendValue(c) | number : '1.2'
+                }}</span>
                 з
-                <span class="text-primary">{{c.capacity | number:'1.2'}}</span>
-                |
-                Залишок <span class="text-{{getProgressColor(c)}}">{{getCategoryLeftValue(c) | number:'1.2'}}</span> ({{bill.currency}})
+                <span class="text-primary">{{
+                  c.capacity | number : '1.2'
+                }}</span>
+                | Залишок
+                <span class="text-{{ getProgressColor(c) }}">{{
+                  getCategoryLeftValue(c) | number : '1.2'
+                }}</span>
+                ({{ bill.currency }})
               </p>
             </div>
           </div>

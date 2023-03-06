@@ -12,7 +12,7 @@ import { CategoriesService } from '../shared/services/categories.service';
 @Component({
   selector: 'app-page-planner',
   templateUrl: './page-planner.component.html',
-  styleUrls: ['./page-planner.component.scss']
+  styleUrls: ['./page-planner.component.scss'],
 })
 export class PagePlannerComponent implements OnInit, OnDestroy {
   isLoaded = false;
@@ -25,7 +25,7 @@ export class PagePlannerComponent implements OnInit, OnDestroy {
     private billService: BillService,
     private eventService: AppEventService,
     private categoriesService: CategoriesService,
-    private title: Title,
+    private title: Title
   ) {
     this.title.setTitle('Планувальник');
   }
@@ -44,7 +44,9 @@ export class PagePlannerComponent implements OnInit, OnDestroy {
   }
 
   getCategorySpendValue(category: Category): number {
-    const events = this.events.filter((e) => e.category === category.id && e.type === 'outcome');
+    const events = this.events.filter(
+      e => e.category === category.id && e.type === 'outcome'
+    );
     return events.reduce((acc, el) => {
       acc += el.amount;
       return acc;
@@ -68,8 +70,7 @@ export class PagePlannerComponent implements OnInit, OnDestroy {
 
   getProgressColor(category: Category) {
     const percent = this.getProgressPercent(category);
-    return percent > 90 ? 'danger' :
-      percent > 60 ? 'warning' : 'success';
+    return percent > 90 ? 'danger' : percent > 60 ? 'warning' : 'success';
   }
 
   ngOnDestroy(): void {
@@ -79,7 +80,7 @@ export class PagePlannerComponent implements OnInit, OnDestroy {
   }
 
   private getPercent(value: number, base: number): number {
-    const percent = Math.round(value * 100 / base * 100) / 100;
+    const percent = Math.round(((value * 100) / base) * 100) / 100;
     return Math.max(0, percent);
   }
 }

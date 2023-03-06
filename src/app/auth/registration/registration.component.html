@@ -1,51 +1,75 @@
 <p class="text-xs-center">Реєстрація для отримання доступу</p>
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
-  <div class="form-group" [ngClass]="{'has-error': hasControlInvalid('email')}">
+  <div
+    class="form-group"
+    [ngClass]="{ 'has-error': hasControlInvalid('email') }">
     <label for="email">Email</label>
     <input
       formControlName="email"
       type="text"
       class="form-control underlined"
       id="email"
-      placeholder="Введіть email"
-    >
+      placeholder="Введіть email" />
     <span class="form-help-text" *ngIf="hasControlInvalid('email')">
-      <span *ngIf="hasControlValidationError('email', 'required')">{{showErrorMessage('required')}}</span>
-      <span *ngIf="hasControlValidationError('email', 'email')">{{showErrorMessage('email')}}</span>
-      <span *ngIf="hasControlValidationError('email', 'isUserEmailExist')">{{showErrorMessage('isUserEmailExist')}}</span>
+      <span *ngIf="hasControlValidationError('email', 'required')">{{
+        showErrorMessage('required')
+      }}</span>
+      <span *ngIf="hasControlValidationError('email', 'email')">{{
+        showErrorMessage('email')
+      }}</span>
+      <span *ngIf="hasControlValidationError('email', 'isUserEmailExist')">{{
+        showErrorMessage('isUserEmailExist')
+      }}</span>
     </span>
   </div>
-  <div class="form-group" [ngClass]="{'has-error': hasControlInvalid('password')}">
+  <div
+    class="form-group"
+    [ngClass]="{ 'has-error': hasControlInvalid('password') }">
     <label for="password">Пароль</label>
     <input
       formControlName="password"
       type="password"
       class="form-control underlined"
       id="password"
-      placeholder="Введіть пароль"
-    >
+      placeholder="Введіть пароль" />
     <span class="form-help-text" *ngIf="hasControlInvalid('password')">
-      <span *ngIf="hasControlValidationError('password', 'required')">{{showErrorMessage('required')}}</span>
-      <span *ngIf="hasControlValidationError('password', 'minlength')">{{showErrorMessage('minlength', form.get('password')['errors']['minlength'])}}</span>
+      <span *ngIf="hasControlValidationError('password', 'required')">{{
+        showErrorMessage('required')
+      }}</span>
+      <span *ngIf="hasControlValidationError('password', 'minlength')">{{
+        showErrorMessage(
+          'minlength',
+          form.get('password')['errors']['minlength']
+        )
+      }}</span>
     </span>
   </div>
-  <div class="form-group" [ngClass]="{'has-error': hasControlInvalid('name')}">
+  <div
+    class="form-group"
+    [ngClass]="{ 'has-error': hasControlInvalid('name') }">
     <label for="name">Им'я</label>
     <input
       formControlName="name"
       type="text"
       class="form-control underlined"
       id="name"
-      placeholder="Введіть ім'я"
-    >
+      placeholder="Введіть ім'я" />
     <span class="form-help-text" *ngIf="hasControlInvalid('name')">
-      <span *ngIf="hasControlValidationError('name', 'required')">{{showErrorMessage('required')}}</span>
-      <span *ngIf="hasControlValidationError('name', 'minlength')">{{showErrorMessage('minlength', form.get('name')['errors']['minlength'])}}</span>
+      <span *ngIf="hasControlValidationError('name', 'required')">{{
+        showErrorMessage('required')
+      }}</span>
+      <span *ngIf="hasControlValidationError('name', 'minlength')">{{
+        showErrorMessage('minlength', form.get('name')['errors']['minlength'])
+      }}</span>
     </span>
   </div>
   <div class="form-group">
     <label for="agree">
-      <input class="checkbox" id="agree" type="checkbox" formControlName="agree">
+      <input
+        class="checkbox"
+        id="agree"
+        type="checkbox"
+        formControlName="agree" />
       <span>Погожуюсь з умовами</span>
     </label>
   </div>
@@ -53,8 +77,7 @@
     <button
       type="submit"
       class="btn btn-block btn-primary"
-      [disabled]="form.invalid"
-    >
+      [disabled]="form.invalid">
       Зареєструватись
     </button>
   </div>

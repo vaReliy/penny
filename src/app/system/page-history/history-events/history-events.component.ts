@@ -6,7 +6,7 @@ import { Category } from '../../shared/models/category.model';
 @Component({
   selector: 'app-history-events',
   templateUrl: './history-events.component.html',
-  styleUrls: ['./history-events.component.scss']
+  styleUrls: ['./history-events.component.scss'],
 })
 export class HistoryEventsComponent implements OnInit {
   @Input() events: AppEvent[];
@@ -15,7 +15,6 @@ export class HistoryEventsComponent implements OnInit {
   searchPlaceholder = '';
   searchValue = '';
   searchType = '';
-
 
   ngOnInit() {
     this.changeFilterType('amount');

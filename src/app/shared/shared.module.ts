@@ -8,21 +8,9 @@ import { AuthService } from './services/auth.service';
 import { UsersService } from './services/users.service';
 
 @NgModule({
-  declarations: [
-    NotFoundComponent,
-    LoaderComponent,
-  ],
-  imports: [
-    RouterModule,
-  ],
-  exports: [
-    NotFoundComponent,
-    LoaderComponent,
-  ],
-  providers: [
-    UsersService,
-    AuthService,
-    AuthGuard,
-  ],
+  declarations: [NotFoundComponent, LoaderComponent],
+  imports: [RouterModule],
+  exports: [NotFoundComponent, LoaderComponent],
+  providers: [UsersService, AuthService, AuthGuard],
 })
 export class SharedModule {}

@@ -6,7 +6,7 @@ import { HistoryFilterData } from '../page-history.component';
 @Component({
   selector: 'app-history-filter',
   templateUrl: './history-filter.component.html',
-  styleUrls: ['./history-filter.component.scss']
+  styleUrls: ['./history-filter.component.scss'],
 })
 export class HistoryFilterComponent {
   @Input() categoryMap: Map<number, string>;
@@ -23,17 +23,20 @@ export class HistoryFilterComponent {
     { type: 'M', label: 'Місяць' },
   ];
 
-
   getEventLabelByType(eventType: string) {
     return AppEvent.getLabel(eventType);
   }
 
   eventTypeHandler({ checked, value }) {
-    checked ? this.selectedEventsIds.add(value) : this.selectedEventsIds.delete(value);
+    checked
+      ? this.selectedEventsIds.add(value)
+      : this.selectedEventsIds.delete(value);
   }
 
   categoryTypeHandler({ checked, value }) {
-    checked ? this.selectedCategoryIds.add(value) : this.selectedCategoryIds.delete(value);
+    checked
+      ? this.selectedCategoryIds.add(value)
+      : this.selectedCategoryIds.delete(value);
   }
 
   close() {
@@ -47,5 +50,4 @@ export class HistoryFilterComponent {
       period: this.selectedPeriod,
     });
   }
-
 }

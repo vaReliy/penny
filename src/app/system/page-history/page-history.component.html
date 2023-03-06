@@ -6,8 +6,7 @@
     <button
       (click)="onFilter()"
       [disabled]="!isLoaded || isFilterVisible"
-      class="btn-sm btn btn-primary-outline"
-    >
+      class="btn-sm btn btn-primary-outline">
       <i class="fa fa-filter"></i>
     </button>
   </div>
@@ -16,9 +15,7 @@
   <app-loader></app-loader>
 </section>
 <section class="section" *ngIf="isLoaded">
-  <app-history-chart
-    [chartData]="chartData">
-  </app-history-chart>
+  <app-history-chart [chartData]="chartData"> </app-history-chart>
   <app-history-events
     [categories]="categories"
     [events]="filteredEvents"
@@ -26,10 +23,10 @@
   </app-history-events>
   <div *ngIf="isFilterVisible">
     <app-history-filter
-    [events]="events"
-    [categoryMap]="categoryMap"
-    (cancelFilter)="onCancelFilter()"
-    (applyFilter)="onApplyFilter($event)">
+      [events]="events"
+      [categoryMap]="categoryMap"
+      (cancelFilter)="onCancelFilter()"
+      (applyFilter)="onApplyFilter($event)">
     </app-history-filter>
   </div>
 </section>

@@ -8,10 +8,7 @@ import { User } from '../models/user.model';
 
 @Injectable()
 export class UsersService extends BaseApi {
-
-  constructor(
-    protected http: HttpClient
-  ) {
+  constructor(protected http: HttpClient) {
     super(http);
   }
 

@@ -18,10 +18,7 @@ export class PageBillComponent implements OnInit, OnDestroy {
   rates: CurrencyRatesModel = new CurrencyRatesModel(Date.now(), 0, 0, 0);
   isLoaded = false;
 
-  constructor(
-    private billService: BillService,
-    private title: Title,
-  ) {
+  constructor(private billService: BillService, private title: Title) {
     this.title.setTitle('Рахунок');
   }
 
@@ -29,17 +26,17 @@ export class PageBillComponent implements OnInit, OnDestroy {
     this.subscription = combineLatest([
       this.billService.getBill(),
       this.billService.getExchangeRates(),
-    ])
-      .subscribe(([bill, rates]) => {
-        this.bill = bill;
-        this.rates = rates;
-        this.isLoaded = true;
-      });
+    ]).subscribe(([bill, rates]) => {
+      this.bill = bill;
+      this.rates = rates;
+      this.isLoaded = true;
+    });
   }
 
   onRefresh() {
     this.isLoaded = false;
-    this.subscription2 = this.billService.getExchangeRates()
+    this.subscription2 = this.billService
+      .getExchangeRates()
       .subscribe(rates => {
         this.rates = rates;
         this.isLoaded = true;
@@ -52,5 +49,4 @@ export class PageBillComponent implements OnInit, OnDestroy {
       this.subscription2.unsubscribe();
     }
   }
-
 }

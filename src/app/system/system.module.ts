@@ -55,10 +55,6 @@ import { SystemComponent } from './system.component';
     PieChartModule,
     SharedModule,
   ],
-  providers: [
-    BillService,
-    CategoriesService,
-    AppEventService,
-  ],
+  providers: [BillService, CategoriesService, AppEventService],
 })
-export class SystemModule { }
+export class SystemModule {}

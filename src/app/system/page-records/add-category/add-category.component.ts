@@ -7,25 +7,25 @@ import { Category } from '../../shared/models/category.model';
 @Component({
   selector: 'app-add-category',
   templateUrl: './add-category.component.html',
-  styleUrls: ['./add-category.component.scss']
+  styleUrls: ['./add-category.component.scss'],
 })
 export class AddCategoryComponent {
   @Output() addCategory = new EventEmitter<Category>();
-  alertMessage: Message = {text: '', type: ''};
-
+  alertMessage: Message = { text: '', type: '' };
 
   onSubmit(form: NgForm) {
-    const {categoryName, categoryValue: categoryCapacity} = form.value;
-    this.addCategory.emit(new Category(categoryName, categoryCapacity < 0 ? 0 : categoryCapacity));
+    const { categoryName, categoryValue: categoryCapacity } = form.value;
+    this.addCategory.emit(
+      new Category(categoryName, categoryCapacity < 0 ? 0 : categoryCapacity)
+    );
     this.showAlertMessage('Категорію додано!');
     form.reset();
   }
 
   private showAlertMessage(text: string, type = 'success', time = 5000) {
-    this.alertMessage = {text, type};
+    this.alertMessage = { text, type };
     setTimeout(() => {
       this.alertMessage.text = '';
     }, time);
   }
-
 }
