@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 
@@ -18,7 +18,7 @@ export class LoginComponent extends FormControllerAbstract implements OnInit {
   alertMessage: Message = {text: '', type: ''};
 
   constructor(
-    private fb: FormBuilder,
+    private fb: UntypedFormBuilder,
     private usersService: UsersService,
     private authService: AuthService,
     private route: ActivatedRoute,

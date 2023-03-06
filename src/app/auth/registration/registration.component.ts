@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -17,7 +17,7 @@ import { FormControllerAbstract } from '../shared/form-controller-abstract';
 export class RegistrationComponent extends FormControllerAbstract implements OnInit {
 
   constructor(
-    private fb: FormBuilder,
+    private fb: UntypedFormBuilder,
     private usersService: UsersService,
     private router: Router,
     private title: Title,
