@@ -62,7 +62,7 @@ export class LoginComponent extends FormControllerAbstract implements OnInit {
       });
   }
 
-  private showAlertMessage(text: string, type: string = 'danger', time: number = 5000) {
+  private showAlertMessage(text: string, type = 'danger', time = 5000) {
     this.alertMessage = {text, type};
     setTimeout(() => {
       this.alertMessage.text = '';

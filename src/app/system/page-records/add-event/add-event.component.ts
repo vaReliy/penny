@@ -19,7 +19,6 @@ export class AddEventComponent implements OnInit {
   eventTypes = [];
   alertMessage: Message = {text: '', type: 'danger'};
 
-  constructor() { }
 
   ngOnInit() {
     this.generateEventTypes();
@@ -47,7 +46,7 @@ export class AddEventComponent implements OnInit {
     });
   }
 
-  private showAlertMessage(text: string, type: string = 'success', time: number = 5000) {
+  private showAlertMessage(text: string, type = 'success', time = 5000) {
     this.alertMessage = {text, type};
     setTimeout(() => {
       this.alertMessage.text = '';

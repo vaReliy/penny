@@ -1,20 +1,20 @@
-import { Component, OnInit } from '@angular/core';
-import { UntypedFormBuilder, Validators } from '@angular/forms';
-import { Title } from '@angular/platform-browser';
-import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Component } from '@angular/core'
+import { UntypedFormBuilder, Validators } from '@angular/forms'
+import { Title } from '@angular/platform-browser'
+import { Router } from '@angular/router'
+import { Observable } from 'rxjs'
+import { map } from 'rxjs/operators'
 
-import { User } from '../../shared/models/user.model';
-import { UsersService } from '../../shared/services/users.service';
-import { FormControllerAbstract } from '../shared/form-controller-abstract';
+import { User } from '../../shared/models/user.model'
+import { UsersService } from '../../shared/services/users.service'
+import { FormControllerAbstract } from '../shared/form-controller-abstract'
 
 @Component({
   selector: 'app-registration',
   templateUrl: './registration.component.html',
   styleUrls: ['./registration.component.scss']
 })
-export class RegistrationComponent extends FormControllerAbstract implements OnInit {
+export class RegistrationComponent extends FormControllerAbstract {
 
   constructor(
     private fb: UntypedFormBuilder,
@@ -32,9 +32,6 @@ export class RegistrationComponent extends FormControllerAbstract implements OnI
       name: this.fb.control(null, [Validators.required, Validators.minLength(4)]),
       agree: this.fb.control(null, [Validators.requiredTrue])
     });
-  }
-
-  ngOnInit() {
   }
 
   onSubmit() {

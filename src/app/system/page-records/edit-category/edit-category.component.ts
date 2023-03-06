@@ -1,25 +1,21 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { NgForm } from '@angular/forms';
+import { Component, EventEmitter, Input, Output } from '@angular/core'
+import { NgForm } from '@angular/forms'
 
-import { Message } from '../../../shared/models/message.model';
-import { Category } from '../../shared/models/category.model';
+import { Message } from '../../../shared/models/message.model'
+import { Category } from '../../shared/models/category.model'
 
 @Component({
   selector: 'app-edit-category',
   templateUrl: './edit-category.component.html',
   styleUrls: ['./edit-category.component.scss']
 })
-export class EditCategoryComponent implements OnInit {
+export class EditCategoryComponent   {
   @Input() categories: Category[];
   @Output() editCategory = new EventEmitter<Category>();
   selectedCategoryId: number;
   currentCategory: Category;
   alertMessage: Message = {text: '', type: ''};
 
-  constructor() { }
-
-  ngOnInit() {
-  }
 
   onOptionSelect() {
     this.currentCategory = this.categories.find(el => el.id === Number(this.selectedCategoryId));
@@ -39,7 +35,7 @@ export class EditCategoryComponent implements OnInit {
     form.reset();
   }
 
-  private showAlertMessage(text: string, type: string = 'success', time: number = 5000) {
+  private showAlertMessage(text: string, type = 'success', time = 5000) {
     this.alertMessage = {text, type};
     setTimeout(() => {
       this.alertMessage.text = '';

@@ -17,8 +17,6 @@ export class HistoryEventsComponent implements OnInit {
   searchType = '';
 
 
-  constructor() { }
-
   ngOnInit() {
     this.changeFilterType('amount');
   }

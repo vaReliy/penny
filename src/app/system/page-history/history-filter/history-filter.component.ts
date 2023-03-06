@@ -23,7 +23,6 @@ export class HistoryFilterComponent {
     { type: 'M', label: 'Місяць' },
   ];
 
-  constructor() { }
 
   getEventLabelByType(eventType: string) {
     return AppEvent.getLabel(eventType);

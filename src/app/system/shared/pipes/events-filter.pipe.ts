@@ -5,7 +5,7 @@ import { AppEvent } from '../models/app-event.model';
   name: 'appEventsFilter',
 })
 export class EventsFilterPipe implements PipeTransform {
-  transform(items: Array<any>, value: string, filterBy: string, categoryMap: Map<number, string>): any {
+  transform(items: string[], value: string, filterBy: string, categoryMap: Map<number, string>): string[] {
     if (items.length === 0 || !value) {
       return items;
     }

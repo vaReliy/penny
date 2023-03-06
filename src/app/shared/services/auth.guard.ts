@@ -19,7 +19,7 @@ export class AuthGuard implements CanActivate, CanActivateChild {
     private router: Router,
   ) { }
 
-  // tslint:disable-next-line:max-line-length
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
     if (this.authService.isLogin()) {
       return true;
@@ -33,7 +33,6 @@ export class AuthGuard implements CanActivate, CanActivateChild {
     }
   }
 
-  // tslint:disable-next-line:max-line-length
   canActivateChild(childRoute: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
     return this.canActivate(childRoute, state);
   }
