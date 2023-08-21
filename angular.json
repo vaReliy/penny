@@ -27,9 +27,7 @@
               "src/assets"
             ],
             "styles": [
-              "src/styles.scss",
-              "src/assets/css/vendor.css",
-              "src/assets/css/theme.css"
+              "src/styles.scss"
             ],
             "scripts": [],
             "vendorChunk": true,
