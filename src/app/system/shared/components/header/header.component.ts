@@ -1,24 +1,27 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../../../shared/services/auth.service';
+import { avatarMock, linksMock } from './header.mock';
 
 @Component({
   selector: 'app-header',
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HeaderComponent implements OnInit {
   date: Date = new Date();
-  name = '';
+  userName = '';
+  userAvatar = '';
+  links = linksMock;
 
   constructor(private authService: AuthService, private router: Router) {}
 
   ngOnInit() {
     const user = JSON.parse(window.localStorage.getItem('user'));
-    if (user && user.name) {
-      this.name = user.name;
-    }
+    this.userName = user?.name || '';
+    this.userAvatar = user?.userAvatar || avatarMock;
   }
 
   onLogout() {

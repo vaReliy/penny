@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PieChartModule } from '@swimlane/ngx-charts';
 
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { SharedModule } from '../shared/shared.module';
 import { BillCardComponent } from './page-bill/bill-card/bill-card.component';
 import { CurrencyCardComponent } from './page-bill/currency-card/currency-card.component';
@@ -18,7 +19,6 @@ import { AddEventComponent } from './page-records/add-event/add-event.component'
 import { EditCategoryComponent } from './page-records/edit-category/edit-category.component';
 import { PageRecordsComponent } from './page-records/page-records.component';
 import { HeaderComponent } from './shared/components/header/header.component';
-import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
 import { DropdownDirective } from './shared/directives/dropdown.directive';
 import { EventsFilterPipe } from './shared/pipes/events-filter.pipe';
 import { AppEventService } from './shared/services/app-event.service';
@@ -34,7 +34,6 @@ import { SystemComponent } from './system.component';
     PageHistoryComponent,
     PagePlannerComponent,
     PageRecordsComponent,
-    SidebarComponent,
     HeaderComponent,
     DropdownDirective,
     BillCardComponent,
@@ -54,6 +53,7 @@ import { SystemComponent } from './system.component';
     FormsModule,
     PieChartModule,
     SharedModule,
+    NgbModule,
   ],
   providers: [BillService, CategoriesService, AppEventService],
 })
