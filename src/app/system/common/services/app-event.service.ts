@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 
 import { BaseApi } from '../../../shared/core/base-api';
 import { AppEvent } from '../models/app-event.model';
+import { flatDtoToInstance } from './dto-transformer';
 
 @Injectable()
 export class AppEventService extends BaseApi {
@@ -17,16 +18,7 @@ export class AppEventService extends BaseApi {
       map(events => {
         const result = [];
         events.forEach((e: AppEvent) => {
-          result.push(
-            new AppEvent(
-              e.type,
-              e.amount,
-              e.category,
-              e.date,
-              e.description,
-              e.id
-            )
-          );
+          result.push(flatDtoToInstance<AppEvent>(e, AppEvent));
         });
         return result;
       })
@@ -35,33 +27,13 @@ export class AppEventService extends BaseApi {
 
   getEventById(id: number): Observable<AppEvent> {
     return this.GET(`events/${id}`).pipe(
-      map(
-        (e: AppEvent) =>
-          new AppEvent(
-            e.type,
-            e.amount,
-            e.category,
-            e.date,
-            e.description,
-            e.id
-          )
-      )
+      map((e: AppEvent) => flatDtoToInstance<AppEvent>(e, AppEvent))
     );
   }
 
   addEvent(event: AppEvent): Observable<AppEvent> {
     return this.POST('events', event).pipe(
-      map(
-        v =>
-          new AppEvent(
-            (v as AppEvent).type,
-            (v as AppEvent).amount,
-            (v as AppEvent).category,
-            (v as AppEvent).date,
-            (v as AppEvent).description,
-            (v as AppEvent).id
-          )
-      )
+      map(e => flatDtoToInstance<AppEvent>(e, AppEvent))
     );
   }
 }

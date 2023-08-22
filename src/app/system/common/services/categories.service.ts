@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 
 import { BaseApi } from '../../../shared/core/base-api';
 import { Category } from '../models/category.model';
+import { flatDtoToInstance } from './dto-transformer';
 
 @Injectable()
 export class CategoriesService extends BaseApi {
@@ -17,7 +18,7 @@ export class CategoriesService extends BaseApi {
       map(categories => {
         const result = [];
         categories.forEach((c: Category) => {
-          result.push(new Category(c.name, c.capacity, c.id));
+          result.push(flatDtoToInstance<Category>(c, Category));
         });
         return result;
       })
@@ -26,7 +27,7 @@ export class CategoriesService extends BaseApi {
 
   getCategoryById(id: number): Observable<Category> {
     return this.GET(`categories/${id}`).pipe(
-      map((c: Category) => new Category(c.name, c.capacity, c.id))
+      map((c: Category) => flatDtoToInstance<Category>(c, Category))
     );
   }
 

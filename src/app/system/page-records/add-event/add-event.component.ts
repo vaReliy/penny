@@ -13,6 +13,7 @@ import { Message } from '../../../shared/models/message.model';
 import { AppEvent } from '../../common/models/app-event.model';
 import { Bill } from '../../common/models/bill.model';
 import { Category } from '../../common/models/category.model';
+import { flatDtoToInstance } from '../../common/services/dto-transformer';
 
 @Component({
   selector: 'app-add-event',
@@ -42,9 +43,15 @@ export class AddEventComponent implements OnInit {
       return;
     }
     const date = dayjs().format('DD.MM.YYYY HH:mm:ss');
-    this.addAppEvent.emit(
-      new AppEvent(type, amount, +category, date, description)
-    );
+    const eDto = {
+      type,
+      amount,
+      date,
+      description,
+      category: +category,
+    };
+    const event = flatDtoToInstance<AppEvent>(eDto, AppEvent);
+    this.addAppEvent.emit(event);
     this.showAlertMessage(`Подію успішно додано!`);
     this.setDefaults(form);
   }

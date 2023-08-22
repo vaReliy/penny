@@ -4,8 +4,12 @@ import { BehaviorSubject, combineLatest } from 'rxjs';
 
 import { UnsubscriberComponent } from 'src/app/shared/core/unsubscriber';
 import { Bill } from '../common/models/bill.model';
-import { CurrencyRatesModel } from '../common/models/currency-rates.model';
+import {
+  CurrencyRatesModel,
+  getEmpptyCurrencyRatesModelDto,
+} from '../common/models/currency-rates.model';
 import { BillService } from '../common/services/bill.service';
+import { flatDtoToInstance } from '../common/services/dto-transformer';
 
 @Component({
   selector: 'app-page-bill',
@@ -15,7 +19,10 @@ import { BillService } from '../common/services/bill.service';
 })
 export class PageBillComponent extends UnsubscriberComponent implements OnInit {
   bill: Bill;
-  rates: CurrencyRatesModel = new CurrencyRatesModel(Date.now(), 0, 0, 0);
+  rates: CurrencyRatesModel = flatDtoToInstance<CurrencyRatesModel>(
+    getEmpptyCurrencyRatesModelDto(),
+    CurrencyRatesModel
+  );
   isLoaded$ = new BehaviorSubject<boolean>(false);
 
   constructor(private billService: BillService, private title: Title) {

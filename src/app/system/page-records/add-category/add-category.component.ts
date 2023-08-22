@@ -8,6 +8,7 @@ import { NgForm } from '@angular/forms';
 
 import { Message } from '../../../shared/models/message.model';
 import { Category } from '../../common/models/category.model';
+import { flatDtoToInstance } from '../../common/services/dto-transformer';
 
 @Component({
   selector: 'app-add-category',
@@ -21,9 +22,14 @@ export class AddCategoryComponent {
 
   onSubmit(form: NgForm) {
     const { categoryName, categoryValue: categoryCapacity } = form.value;
-    this.addCategory.emit(
-      new Category(categoryName, categoryCapacity < 0 ? 0 : categoryCapacity)
+    const category = flatDtoToInstance<Category>(
+      {
+        name: categoryName,
+        capacity: categoryCapacity < 0 ? 0 : categoryCapacity,
+      },
+      Category
     );
+    this.addCategory.emit(category);
     this.showAlertMessage('Категорію додано!');
     form.reset();
   }

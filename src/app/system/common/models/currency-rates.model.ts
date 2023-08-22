@@ -1,8 +1,13 @@
 export class CurrencyRatesModel {
-  constructor(
-    public updatedAt: number,
-    public UAH: number,
-    public USD: number,
-    public EUR: number
-  ) {}
+  public updatedAt: number;
+  public UAH: number;
+  public USD: number;
+  public EUR: number;
 }
+
+export const getEmpptyCurrencyRatesModelDto = () => ({
+  updatedAt: Date.now(),
+  UAH: 0,
+  USD: 0,
+  EUR: 0,
+});
