@@ -1,13 +1,6 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  EventEmitter,
-  Input,
-  Output,
-} from '@angular/core';
-
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AppEvent } from '../../common/models/app-event.model';
-import { HistoryFilterData } from '../page-history.component';
 
 @Component({
   selector: 'app-history-filter',
@@ -16,10 +9,9 @@ import { HistoryFilterData } from '../page-history.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HistoryFilterComponent {
-  @Input() categoryMap: Map<number, string>;
-  @Input() events: AppEvent[];
-  @Output() cancelFilter = new EventEmitter();
-  @Output() applyFilter = new EventEmitter<HistoryFilterData>();
+  categoryMap: Map<number, string>;
+  events: AppEvent[];
+
   selectedCategoryIds = new Set<string>();
   selectedEventsIds = new Set<string>();
   selectedPeriod: 'd' | 'w' | 'M' = 'd';
@@ -29,6 +21,8 @@ export class HistoryFilterComponent {
     { type: 'w', label: 'Тиждень' },
     { type: 'M', label: 'Місяць' },
   ];
+
+  constructor(public activeModal: NgbActiveModal) {}
 
   getEventLabelByType(eventType: string) {
     return AppEvent.getLabel(eventType);
@@ -46,12 +40,8 @@ export class HistoryFilterComponent {
       : this.selectedCategoryIds.delete(value);
   }
 
-  close() {
-    this.cancelFilter.emit();
-  }
-
   confirm() {
-    this.applyFilter.emit({
+    this.activeModal.close({
       types: this.selectedEventsIds,
       categories: this.selectedCategoryIds,
       period: this.selectedPeriod,

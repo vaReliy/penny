@@ -2,7 +2,7 @@
   <h3>Сторінка записів</h3>
 </div>
 
-<section class="" *ngIf="isLoaded$ | async; else loader">
+<section *ngIf="isLoaded$ | async; else loader">
   <div class="row row-col-media-from3-to2">
     <div class="col mb-4">
       <app-add-event

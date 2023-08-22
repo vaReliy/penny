@@ -1,56 +1,69 @@
-<div class="modal fade in">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button (click)="close()" type="button" class="close">
-          <span>×</span>
-        </button>
-        <h4 class="modal-title">Фільтр</h4>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label class="control-label" for="period">Оберіть період</label>
-          <select [(ngModel)]="selectedPeriod" class="form-control" id="period">
-            <option *ngFor="let p of periodTypes" [value]="p.type">
-              {{ p.label }}
-            </option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="control-label">Оберіть тип події</label>
-          <div *ngIf="events">
-            <label *ngFor="let eType of eventTypes">
-              <input
-                [value]="eType"
-                (change)="eventTypeHandler($event.target)"
-                class="checkbox"
-                type="checkbox" />
-              <span>{{ getEventLabelByType(eType) }}</span>
-            </label>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="control-label">Оберіть категорії</label>
-          <div *ngIf="categoryMap">
-            <label *ngFor="let item of categoryMap | keyvalue">
-              <input
-                [value]="item.key"
-                (change)="categoryTypeHandler($event.target)"
-                class="checkbox"
-                type="checkbox" />
-              <span>{{ item.value }}</span>
-            </label>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button (click)="close()" type="button" class="btn btn-secondary">
-            Скасувати
-          </button>
-          <button (click)="confirm()" type="button" class="btn btn-primary">
-            Застосувати
-          </button>
-        </div>
-      </div>
+<div class="card">
+  <div class="card-header">
+    <div class="d-flex justify-content-between">
+      <h5>Фільтр</h5>
+      <button
+        (click)="activeModal.close(null)"
+        type="button"
+        class="btn btn-close"></button>
     </div>
+  </div>
+
+  <div class="card-body">
+    <form>
+      <div class="form-group mb-3">
+        <label class="form-label" for="period">Оберіть період</label>
+        <select
+          ngbAutofocus
+          [(ngModel)]="selectedPeriod"
+          [ngModelOptions]="{ standalone: true }"
+          class="form-control fw-medium"
+          id="period">
+          <option *ngFor="let p of periodTypes" [value]="p.type">
+            {{ p.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group mb-3">
+        <label class="form-label">Оберіть тип події</label>
+        <div *ngIf="events">
+          <label *ngFor="let eType of eventTypes">
+            <input
+              [value]="eType"
+              (change)="eventTypeHandler($event.target)"
+              class="checkbox me-2"
+              type="checkbox" />
+            <span class="fw-medium me-3">{{ getEventLabelByType(eType) }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group mb-3">
+        <label class="form-label">Оберіть категорії</label>
+        <div *ngIf="categoryMap">
+          <label *ngFor="let item of categoryMap | keyvalue">
+            <input
+              [value]="item.key"
+              (change)="categoryTypeHandler($event.target)"
+              class="checkbox me-2"
+              type="checkbox" />
+            <span class="fw-medium me-3">{{ item.value }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-end">
+        <button
+          (click)="activeModal.close(null)"
+          type="button"
+          class="btn btn-secondary me-3">
+          Скасувати
+        </button>
+        <button (click)="confirm()" type="button" class="btn btn-primary">
+          Застосувати
+        </button>
+      </div>
+    </form>
   </div>
 </div>

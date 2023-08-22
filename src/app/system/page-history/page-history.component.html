@@ -1,33 +1,36 @@
-<div class="title-block">
-  <h3 class="title pull-left">
-    Сторінка історії <span class="sparkline bar"></span>
-  </h3>
-  <div class="pull-right" *ngIf="isLoaded$ | async as isLoaded">
+<div class="mb-4">
+  <h4>Сторінка історії</h4>
+
+  <div class="text-end mt-1 me-3" *ngIf="isLoaded$ | async as isLoaded">
     <button
       (click)="onFilter()"
-      [disabled]="!isLoaded || isFilterVisible"
-      class="btn-sm btn btn-primary-outline">
-      <i class="fa fa-filter"></i>
+      class="btn-sm btn btn-primary-outline me-2"
+      data-bs-toggle="modal">
+      <i class="fa fa-filter"></i>Filter
+    </button>
+    <button
+      (click)="onCancelFilter()"
+      class="btn-sm btn btn-primary-outline"
+      data-bs-toggle="modal">
+      <i class="fa fa-filter"></i>Reset
     </button>
   </div>
 </div>
 
-<section class="section" *ngIf="isLoaded$ | async; else loader">
-  <app-history-chart [chartData]="chartData"> </app-history-chart>
-  <app-history-events
-    [categories]="categories"
-    [events]="filteredEvents"
-    [categoryMap]="categoryMap">
-  </app-history-events>
-  <div *ngIf="isFilterVisible">
-    <app-history-filter
-      [events]="events"
-      [categoryMap]="categoryMap"
-      (cancelFilter)="onCancelFilter()"
-      (applyFilter)="onApplyFilter($event)">
-    </app-history-filter>
+<div class="" *ngIf="isLoaded$ | async; else loader">
+  <app-history-chart
+    [chartData]="chartData"
+    class="card bg-body-tertiary shadow mb-3">
+  </app-history-chart>
+
+  <div class="pb-3">
+    <app-history-events
+      [categories]="categories"
+      [events]="filtered$ | async"
+      [categoryMap]="categoryMap">
+    </app-history-events>
   </div>
-</section>
+</div>
 
 <ng-template #loader>
   <app-loader></app-loader>

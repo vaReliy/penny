@@ -10,6 +10,7 @@ import { NgForm } from '@angular/forms';
 import * as dayjs from 'dayjs';
 
 import { Message } from '../../../shared/models/message.model';
+import { DATE_FORMAT } from '../../common/constats';
 import { AppEvent } from '../../common/models/app-event.model';
 import { Bill } from '../../common/models/bill.model';
 import { Category } from '../../common/models/category.model';
@@ -41,7 +42,7 @@ export class AddEventComponent implements OnInit {
       );
       return;
     }
-    const date = dayjs().format('DD.MM.YYYY HH:mm:ss');
+    const date = dayjs().format(DATE_FORMAT);
     const eDto = {
       type,
       amount,
