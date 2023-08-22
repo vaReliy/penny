@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import * as moment from 'moment';
+import * as dayjs from 'dayjs';
+import * as isBetween from 'dayjs/plugin/isBetween';
 import { combineLatest, Subscription } from 'rxjs';
 
 import { AppEvent } from '../shared/models/app-event.model';
@@ -36,6 +37,7 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
     private title: Title
   ) {
     this.title.setTitle('Історія');
+    dayjs.extend(isBetween);
   }
 
   ngOnInit() {
@@ -72,8 +74,8 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
     this.toggleFilterVisibility(false);
     this.setOriginalEvents();
 
-    const startOf = moment().startOf(filterData.period).startOf('d');
-    const endOf = moment().endOf(filterData.period).endOf('d');
+    const startOf = dayjs().startOf(filterData.period).startOf('d');
+    const endOf = dayjs().endOf(filterData.period).endOf('d');
 
     this.filteredEvents = this.filteredEvents
       .filter((e: AppEvent) => {
@@ -83,8 +85,8 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
         return filterData.categories.has(e.category.toString());
       })
       .filter((e: AppEvent) => {
-        const momentDate = moment(e.date, 'DD.MM.YYYY HH:mm:ss');
-        return momentDate.isBetween(startOf, endOf);
+        const dayjsDate = dayjs(e.date, 'DD.MM.YYYY HH:mm:ss');
+        return dayjsDate.isBetween(startOf, endOf);
       });
     this.generateChartData();
   }

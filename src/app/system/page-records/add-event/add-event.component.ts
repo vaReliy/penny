@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import * as moment from 'moment';
+import * as dayjs from 'dayjs';
 
 import { Message } from '../../../shared/models/message.model';
 import { AppEvent } from '../../shared/models/app-event.model';
@@ -33,7 +33,7 @@ export class AddEventComponent implements OnInit {
       );
       return;
     }
-    const date = moment().format('DD.MM.YYYY HH:mm:ss');
+    const date = dayjs().format('DD.MM.YYYY HH:mm:ss');
     this.addAppEvent.emit(
       new AppEvent(type, amount, +category, date, description)
     );
