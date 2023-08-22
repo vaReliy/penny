@@ -1,57 +1,64 @@
-<div class="card">
-  <div class="card-header bordered">
-    <div class="header-block">
-      <h3 class="title">Додати категорію</h3>
+<div class="card bg-body-tertiary shadow">
+  <div class="card-title">
+    <div class="card-header">
+      <h4>Додати категорію</h4>
     </div>
   </div>
-  <div class="card-block">
+  <div class="card-body">
     <div
       class="alert alert-{{ alertMessage.type }}"
       *ngIf="alertMessage.text.length">
       {{ alertMessage.text }}
     </div>
     <form #form="ngForm" (ngSubmit)="onSubmit(form)">
-      <div
-        class="form-group"
-        [ngClass]="{
-          'has-error': categoryName.touched && categoryName.invalid
-        }">
-        <label class="control-label" for="category-name">Введіть назву</label>
-        <input
-          ngModel
-          name="categoryName"
-          #categoryName="ngModel"
-          type="text"
-          id="category-name"
-          class="form-control"
-          required />
-        <span
-          class="form-help-text"
-          *ngIf="categoryName.touched && categoryName.invalid">
-          Поле не може бути пустим
-        </span>
-      </div>
-      <div
-        class="form-group"
-        [ngClass]="{
-          'has-error': categoryCapacity.touched && categoryCapacity.invalid
-        }">
-        <label class="control-label" for="category-value">Введіть ліміт</label>
-        <input
-          ngModel
-          name="categoryValue"
-          #categoryCapacity="ngModel"
-          type="number"
-          value="0"
-          id="category-value"
-          class="form-control"
-          required
-          minlength="1" />
-        <span
-          class="form-help-text"
-          *ngIf="categoryCapacity.touched && categoryCapacity.invalid">
-          Поле не може бути пустим
-        </span>
+      <div class="mb-3">
+        <div
+          class="form-group mb-2"
+          [ngClass]="{
+            'has-error': categoryName.touched && categoryName.invalid
+          }">
+          <label class="form-label" for="category-name">Введіть назву</label>
+          <input
+            ngModel
+            name="categoryName"
+            #categoryName="ngModel"
+            type="text"
+            id="category-name"
+            class="form-control"
+            aria-describedby="categoryNameHelpInline"
+            required />
+          <span
+            id="categoryNameHelpInline"
+            class="form-text"
+            *ngIf="categoryName.touched && categoryName.invalid">
+            Поле не може бути пустим
+          </span>
+        </div>
+
+        <div
+          class="form-group"
+          [ngClass]="{
+            'has-error': categoryCapacity.touched && categoryCapacity.invalid
+          }">
+          <label class="form-label" for="category-value">Введіть ліміт</label>
+          <input
+            ngModel
+            name="categoryValue"
+            #categoryCapacity="ngModel"
+            type="number"
+            value="0"
+            id="category-value"
+            class="form-control"
+            aria-describedby="categoryValueHelpInline"
+            required
+            minlength="1" />
+          <span
+            id="categoryValueHelpInline"
+            class="form-text"
+            *ngIf="categoryCapacity.touched && categoryCapacity.invalid">
+            Поле не може бути пустим
+          </span>
+        </div>
       </div>
       <button [disabled]="form.invalid" type="submit" class="btn btn-primary">
         Додати

@@ -35,7 +35,6 @@ export class AddEventComponent implements OnInit {
   onSubmit(form: NgForm) {
     const { type, amount, category, description } = form.value;
     if (amount > this.currentBill.value) {
-      // tslint:disable-next-line:max-line-length
       this.showAlertMessage(
         `Недостатньо коштів для операції. Поточний рахунок: ${this.currentBill.value}${this.currentBill.currency}`,
         'danger'
