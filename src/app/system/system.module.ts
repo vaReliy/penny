@@ -18,12 +18,12 @@ import { AddCategoryComponent } from './page-records/add-category/add-category.c
 import { AddEventComponent } from './page-records/add-event/add-event.component';
 import { EditCategoryComponent } from './page-records/edit-category/edit-category.component';
 import { PageRecordsComponent } from './page-records/page-records.component';
-import { HeaderComponent } from './shared/components/header/header.component';
-import { DropdownDirective } from './shared/directives/dropdown.directive';
-import { EventsFilterPipe } from './shared/pipes/events-filter.pipe';
-import { AppEventService } from './shared/services/app-event.service';
-import { BillService } from './shared/services/bill.service';
-import { CategoriesService } from './shared/services/categories.service';
+import { HeaderComponent } from './common/components/header/header.component';
+import { DropdownDirective } from './common/directives/dropdown.directive';
+import { EventsFilterPipe } from './common/pipes/events-filter.pipe';
+import { AppEventService } from './common/services/app-event.service';
+import { BillService } from './common/services/bill.service';
+import { CategoriesService } from './common/services/categories.service';
 import { SystemRoutingModule } from './system-routing.module';
 import { SystemComponent } from './system.component';
 

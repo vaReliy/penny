@@ -1,12 +1,13 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
-import { Bill } from '../../shared/models/bill.model';
-import { CurrencyRatesModel } from '../../shared/models/currency-rates.model';
+import { Bill } from '../../common/models/bill.model';
+import { CurrencyRatesModel } from '../../common/models/currency-rates.model';
 
 @Component({
   selector: 'app-bill-card',
   templateUrl: './bill-card.component.html',
   styleUrls: ['./bill-card.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BillCardComponent {
   @Input() bill: Bill;

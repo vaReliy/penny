@@ -1,10 +1,8 @@
 <div class="title-block">
   <h3 class="title">Сторінка записів <span class="sparkline bar"></span></h3>
 </div>
-<section class="section text-center" *ngIf="!isLoaded">
-  <app-loader></app-loader>
-</section>
-<section class="section" *ngIf="isLoaded">
+
+<section class="section" *ngIf="isLoaded$ | async; else loader">
   <div class="row">
     <div class="col-md-6">
       <app-add-event
@@ -25,3 +23,7 @@
     </div>
   </div>
 </section>
+
+<ng-template #loader>
+  <app-loader></app-loader>
+</ng-template>

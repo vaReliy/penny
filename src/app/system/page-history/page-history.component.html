@@ -2,7 +2,7 @@
   <h3 class="title pull-left">
     Сторінка історії <span class="sparkline bar"></span>
   </h3>
-  <div class="pull-right">
+  <div class="pull-right" *ngIf="isLoaded$ | async as isLoaded">
     <button
       (click)="onFilter()"
       [disabled]="!isLoaded || isFilterVisible"
@@ -11,10 +11,8 @@
     </button>
   </div>
 </div>
-<section class="section text-center" *ngIf="!isLoaded">
-  <app-loader></app-loader>
-</section>
-<section class="section" *ngIf="isLoaded">
+
+<section class="section" *ngIf="isLoaded$ | async; else loader">
   <app-history-chart [chartData]="chartData"> </app-history-chart>
   <app-history-events
     [categories]="categories"
@@ -30,3 +28,7 @@
     </app-history-filter>
   </div>
 </section>
+
+<ng-template #loader>
+  <app-loader></app-loader>
+</ng-template>

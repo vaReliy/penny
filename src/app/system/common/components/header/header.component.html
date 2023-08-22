@@ -4,7 +4,7 @@
       class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
       <a
         href="/"
-        class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
+        class="d-flex align-items-center mb-2 mb-lg-0 textlight text-decoration-none">
         <!-- LOGO MOCK -->
         <div class="flex-column d-flex text-center">
           <span class="fs-1 pe-4 text-info">Penny</span>
@@ -17,19 +17,19 @@
         <li *ngFor="let link of links">
           <a
             [routerLink]="link.target"
-            routerLinkActive="active"
-            class="nav-link px-2 link-secondary text-white">
+            routerLinkActive="active-link"
+            class="nav-link px-2 link-secondary text-light">
             {{ link.name }}
           </a>
         </li>
       </ul>
 
-      <div ngbDropdown class="text-end text-white">
+      <div ngbDropdown class="text-end textlight" data-bs-theme="dark">
         <a
           ngbDropdownToggle
           role="button"
           id="profileDropdownMenu"
-          class="d-block text-white text-decoration-none">
+          class="d-block textlight text-decoration-none">
           <img
             [src]="userAvatar"
             alt="profile avatar"

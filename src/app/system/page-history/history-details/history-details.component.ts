@@ -1,20 +1,26 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
-import { AppEvent } from '../../shared/models/app-event.model';
-import { Bill } from '../../shared/models/bill.model';
-import { Category } from '../../shared/models/category.model';
-import { CurrencyEnum } from '../../shared/models/currency.enum';
-import { AppEventService } from '../../shared/services/app-event.service';
-import { BillService } from '../../shared/services/bill.service';
-import { CategoriesService } from '../../shared/services/categories.service';
+import { AppEvent } from '../../common/models/app-event.model';
+import { Bill } from '../../common/models/bill.model';
+import { Category } from '../../common/models/category.model';
+import { CurrencyEnum } from '../../common/models/currency.enum';
+import { AppEventService } from '../../common/services/app-event.service';
+import { BillService } from '../../common/services/bill.service';
+import { CategoriesService } from '../../common/services/categories.service';
 
 @Component({
   selector: 'app-history-details',
   templateUrl: './history-details.component.html',
   styleUrls: ['./history-details.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HistoryDetailsComponent implements OnInit, OnDestroy {
   isLoaded = false;

@@ -1,16 +1,24 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+} from '@angular/core';
 import { NgForm } from '@angular/forms';
 import * as dayjs from 'dayjs';
 
 import { Message } from '../../../shared/models/message.model';
-import { AppEvent } from '../../shared/models/app-event.model';
-import { Bill } from '../../shared/models/bill.model';
-import { Category } from '../../shared/models/category.model';
+import { AppEvent } from '../../common/models/app-event.model';
+import { Bill } from '../../common/models/bill.model';
+import { Category } from '../../common/models/category.model';
 
 @Component({
   selector: 'app-add-event',
   templateUrl: './add-event.component.html',
   styleUrls: ['./add-event.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AddEventComponent implements OnInit {
   @Input() categories: Category[];

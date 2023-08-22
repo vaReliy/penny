@@ -1,13 +1,19 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Output,
+} from '@angular/core';
 import { NgForm } from '@angular/forms';
 
 import { Message } from '../../../shared/models/message.model';
-import { Category } from '../../shared/models/category.model';
+import { Category } from '../../common/models/category.model';
 
 @Component({
   selector: 'app-add-category',
   templateUrl: './add-category.component.html',
   styleUrls: ['./add-category.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AddCategoryComponent {
   @Output() addCategory = new EventEmitter<Category>();

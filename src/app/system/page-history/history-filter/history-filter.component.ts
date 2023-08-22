@@ -1,12 +1,19 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+} from '@angular/core';
 
-import { AppEvent } from '../../shared/models/app-event.model';
+import { AppEvent } from '../../common/models/app-event.model';
 import { HistoryFilterData } from '../page-history.component';
 
 @Component({
   selector: 'app-history-filter',
   templateUrl: './history-filter.component.html',
   styleUrls: ['./history-filter.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HistoryFilterComponent {
   @Input() categoryMap: Map<number, string>;

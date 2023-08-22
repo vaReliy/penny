@@ -1,14 +1,15 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import * as dayjs from 'dayjs';
 import * as isBetween from 'dayjs/plugin/isBetween';
-import { combineLatest, Subscription } from 'rxjs';
+import { BehaviorSubject, combineLatest } from 'rxjs';
 
-import { AppEvent } from '../shared/models/app-event.model';
-import { Category } from '../shared/models/category.model';
-import { IChartData } from '../shared/models/IChartData';
-import { AppEventService } from '../shared/services/app-event.service';
-import { CategoriesService } from '../shared/services/categories.service';
+import { UnsubscriberComponent } from 'src/app/shared/core/unsubscriber';
+import { IChartData } from '../common/models/IChartData';
+import { AppEvent } from '../common/models/app-event.model';
+import { Category } from '../common/models/category.model';
+import { AppEventService } from '../common/services/app-event.service';
+import { CategoriesService } from '../common/services/categories.service';
 
 export interface HistoryFilterData {
   types: Set<string>;
@@ -20,28 +21,32 @@ export interface HistoryFilterData {
   selector: 'app-page-history',
   templateUrl: './page-history.component.html',
   styleUrls: ['./page-history.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PageHistoryComponent implements OnInit, OnDestroy {
-  isLoaded = false;
+export class PageHistoryComponent
+  extends UnsubscriberComponent
+  implements OnInit
+{
+  isLoaded$ = new BehaviorSubject<boolean>(false);
   categories: Category[];
   events: AppEvent[];
   filteredEvents: AppEvent[] = [];
   chartData: IChartData[];
   categoryMap: Map<number, string>;
   isFilterVisible = false;
-  private sub1: Subscription;
 
   constructor(
     private categoryService: CategoriesService,
     private eventService: AppEventService,
     private title: Title
   ) {
-    this.title.setTitle('Історія');
+    super();
+    title.setTitle('Історія');
     dayjs.extend(isBetween);
   }
 
   ngOnInit() {
-    this.sub1 = combineLatest([
+    this.subs = combineLatest([
       this.categoryService.getCategories(),
       this.eventService.getEvents(),
     ]).subscribe((data: [Category[], AppEvent[]]) => {
@@ -50,14 +55,8 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
       this.setOriginalEvents();
       this.generateChartData();
       this.categoryMap = this.generateCategoryMap();
-      this.isLoaded = true;
+      this.isLoaded$.next(true);
     });
-  }
-
-  ngOnDestroy(): void {
-    if (this.sub1) {
-      this.sub1.unsubscribe();
-    }
   }
 
   onFilter() {
