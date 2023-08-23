@@ -1,23 +1,21 @@
-<div class="title-block">
-  <h3 class="title">Сторінка записів <span class="sparkline bar"></span></h3>
+<div class="mb-4">
+  <h3>Сторінка записів</h3>
 </div>
-<section class="section text-center" *ngIf="!isLoaded">
-  <app-loader></app-loader>
-</section>
-<section class="section" *ngIf="isLoaded">
-  <div class="row">
-    <div class="col-md-6">
+
+<section *ngIf="isLoaded$ | async; else loader">
+  <div class="row row-col-media-from3-to2">
+    <div class="col mb-4">
       <app-add-event
         [categories]="categories"
         [currentBill]="bill"
         (addAppEvent)="onAddEvent($event)">
       </app-add-event>
     </div>
-    <div class="col-md-6">
+    <div class="col mb-4">
       <app-add-category (addCategory)="onAddCategory($event)">
       </app-add-category>
     </div>
-    <div class="col-md-6">
+    <div class="col mb-4">
       <app-edit-category
         [categories]="categories"
         (editCategory)="onEditCategory($event)">
@@ -25,3 +23,7 @@
     </div>
   </div>
 </section>
+
+<ng-template #loader>
+  <app-loader></app-loader>
+</ng-template>

@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 
+import { BehaviorSubject } from 'rxjs';
 import { Message } from '../../shared/models/message.model';
 import { User } from '../../shared/models/user.model';
 import { AuthService } from '../../shared/services/auth.service';
@@ -13,9 +14,10 @@ import { FormControllerAbstract } from '../shared/form-controller-abstract';
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent extends FormControllerAbstract implements OnInit {
-  alertMessage: Message = { text: '', type: '' };
+  alertMessage$ = new BehaviorSubject<Message | null>(null);
 
   constructor(
     private fb: UntypedFormBuilder,
@@ -37,7 +39,7 @@ export class LoginComponent extends FormControllerAbstract implements OnInit {
   }
 
   ngOnInit() {
-    this.route.queryParams.subscribe((params: Params) => {
+    this.subs = this.route.queryParams.subscribe((params: Params) => {
       if (params.email) {
         this.showAlertMessage(
           'Тепер ви можете увійти до системи!',
@@ -59,7 +61,7 @@ export class LoginComponent extends FormControllerAbstract implements OnInit {
   onSubmit() {
     const formData: { email: string; password: string } = this.form.value;
 
-    this.usersService
+    this.subs = this.usersService
       .getUserByEmail(formData.email, formData.password)
       .subscribe((user: User) => {
         if (user) {
@@ -74,9 +76,9 @@ export class LoginComponent extends FormControllerAbstract implements OnInit {
   }
 
   private showAlertMessage(text: string, type = 'danger', time = 5000) {
-    this.alertMessage = { text, type };
+    this.alertMessage$.next({ text, type });
     setTimeout(() => {
-      this.alertMessage.text = '';
+      this.alertMessage$.next(null);
     }, time);
   }
 }

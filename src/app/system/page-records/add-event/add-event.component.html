@@ -1,18 +1,18 @@
-<div class="card">
-  <div class="card-header bordered">
-    <div class="header-block">
-      <h3 class="title">Додати подію</h3>
+<div class="card bg-body-tertiary shadow">
+  <div class="card-title">
+    <div class="card-header">
+      <h4>Додати подію</h4>
     </div>
   </div>
-  <div class="card-block">
+  <div class="card-body">
     <div
       class="alert alert-{{ alertMessage.type }}"
       *ngIf="alertMessage.text.length">
       {{ alertMessage.text }}
     </div>
     <form #form="ngForm" (ngSubmit)="onSubmit(form)">
-      <div class="form-group">
-        <label class="control-label" for="add-event">Оберіть категорію</label>
+      <div class="form-group mb-3">
+        <label class="form-label" for="add-event">Оберіть категорію</label>
         <select
           ngModel
           name="category"
@@ -24,8 +24,9 @@
           </option>
         </select>
       </div>
-      <div class="form-group">
-        <label class="control-label">Оберіть тип</label>
+
+      <div class="form-group mb-3">
+        <label class="form-label">Оберіть тип</label>
         <div *ngFor="let t of eventTypes">
           <label>
             <input
@@ -35,31 +36,48 @@
               name="type"
               type="radio"
               required />
-            <span>{{ t.label }}</span>
+            <span class="ms-2 fw-medium">{{ t.label }}</span>
           </label>
         </div>
       </div>
-      <div class="form-group">
-        <label class="control-label" for="amount">Введіть суму</label>
+
+      <div class="form-group mb-3">
+        <label class="form-label" for="amount">Введіть суму</label>
         <input
           ngModel
           name="amount"
+          #amount="ngModel"
           type="number"
           id="amount"
           class="form-control"
           min="1"
           required />
+        <span
+          id="amountHelpInline"
+          class="form-text"
+          *ngIf="amount.touched && amount.invalid">
+          Поле не може бути пустим
+        </span>
       </div>
-      <div class="form-group">
-        <label class="control-label" for="amount">Опис</label>
+
+      <div class="form-group mb-3">
+        <label class="form-label" for="amount">Опис</label>
         <input
           ngModel
           name="description"
+          #name="ngModel"
           type="text"
           id="description"
           class="form-control"
           required />
+        <span
+          id="nameHelpInline"
+          class="form-text"
+          *ngIf="name.touched && name.invalid">
+          Поле не може бути пустим
+        </span>
       </div>
+
       <button [disabled]="form.invalid" type="submit" class="btn btn-primary">
         Додати
       </button>

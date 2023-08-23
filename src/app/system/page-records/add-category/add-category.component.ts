@@ -1,13 +1,20 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Output,
+} from '@angular/core';
 import { NgForm } from '@angular/forms';
 
 import { Message } from '../../../shared/models/message.model';
-import { Category } from '../../shared/models/category.model';
+import { Category } from '../../common/models/category.model';
+import { flatDtoToInstance } from '../../common/services/dto-transformer';
 
 @Component({
   selector: 'app-add-category',
   templateUrl: './add-category.component.html',
   styleUrls: ['./add-category.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AddCategoryComponent {
   @Output() addCategory = new EventEmitter<Category>();
@@ -15,9 +22,14 @@ export class AddCategoryComponent {
 
   onSubmit(form: NgForm) {
     const { categoryName, categoryValue: categoryCapacity } = form.value;
-    this.addCategory.emit(
-      new Category(categoryName, categoryCapacity < 0 ? 0 : categoryCapacity)
+    const category = flatDtoToInstance<Category>(
+      {
+        name: categoryName,
+        capacity: categoryCapacity < 0 ? 0 : categoryCapacity,
+      },
+      Category
     );
+    this.addCategory.emit(category);
     this.showAlertMessage('Категорію додано!');
     form.reset();
   }

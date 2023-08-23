@@ -1,13 +1,20 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import * as moment from 'moment';
-import { combineLatest, Subscription } from 'rxjs';
+import * as dayjs from 'dayjs';
+import * as customParseFormat from 'dayjs/plugin/customParseFormat';
+import * as isBetween from 'dayjs/plugin/isBetween';
+import { BehaviorSubject, combineLatest, of } from 'rxjs';
 
-import { AppEvent } from '../shared/models/app-event.model';
-import { Category } from '../shared/models/category.model';
-import { IChartData } from '../shared/models/IChartData';
-import { AppEventService } from '../shared/services/app-event.service';
-import { CategoriesService } from '../shared/services/categories.service';
+import { NgbModal, NgbModalConfig } from '@ng-bootstrap/ng-bootstrap';
+import { catchError, filter, first } from 'rxjs/operators';
+import { UnsubscriberComponent } from 'src/app/shared/core/unsubscriber';
+import { DATE_FORMAT } from '../common/constats';
+import { IChartData } from '../common/models/IChartData';
+import { AppEvent } from '../common/models/app-event.model';
+import { Category } from '../common/models/category.model';
+import { AppEventService } from '../common/services/app-event.service';
+import { CategoriesService } from '../common/services/categories.service';
+import { HistoryFilterComponent } from './history-filter/history-filter.component';
 
 export interface HistoryFilterData {
   types: Set<string>;
@@ -19,27 +26,34 @@ export interface HistoryFilterData {
   selector: 'app-page-history',
   templateUrl: './page-history.component.html',
   styleUrls: ['./page-history.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [NgbModalConfig, NgbModal],
 })
-export class PageHistoryComponent implements OnInit, OnDestroy {
-  isLoaded = false;
+export class PageHistoryComponent
+  extends UnsubscriberComponent
+  implements OnInit
+{
+  isLoaded$ = new BehaviorSubject<boolean>(false);
   categories: Category[];
   events: AppEvent[];
-  filteredEvents: AppEvent[] = [];
+  filtered$ = new BehaviorSubject<AppEvent[]>([]);
   chartData: IChartData[];
   categoryMap: Map<number, string>;
-  isFilterVisible = false;
-  private sub1: Subscription;
 
   constructor(
     private categoryService: CategoriesService,
     private eventService: AppEventService,
+    private modalService: NgbModal,
     private title: Title
   ) {
-    this.title.setTitle('Історія');
+    super();
+    title.setTitle('Історія');
+    dayjs.extend(customParseFormat);
+    dayjs.extend(isBetween);
   }
 
   ngOnInit() {
-    this.sub1 = combineLatest([
+    this.subs = combineLatest([
       this.categoryService.getCategories(),
       this.eventService.getEvents(),
     ]).subscribe((data: [Category[], AppEvent[]]) => {
@@ -48,34 +62,40 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
       this.setOriginalEvents();
       this.generateChartData();
       this.categoryMap = this.generateCategoryMap();
-      this.isLoaded = true;
+      this.isLoaded$.next(true);
     });
   }
 
-  ngOnDestroy(): void {
-    if (this.sub1) {
-      this.sub1.unsubscribe();
-    }
-  }
-
   onFilter() {
-    this.toggleFilterVisibility(true);
+    const modalRef = this.modalService.open(HistoryFilterComponent, {
+      backdrop: 'static',
+    });
+    modalRef.componentInstance.categoryMap = this.categoryMap;
+    modalRef.componentInstance.events = this.events;
+    this.subs = modalRef.closed
+      .pipe(
+        first(),
+        catchError(() => of(null)),
+        filter(v => !!v)
+      )
+      .subscribe(filterData => {
+        this.onApplyFilter(filterData);
+      });
   }
 
   onCancelFilter() {
-    this.toggleFilterVisibility(false);
     this.setOriginalEvents();
     this.generateChartData();
   }
 
-  onApplyFilter(filterData: HistoryFilterData) {
-    this.toggleFilterVisibility(false);
+  private onApplyFilter(filterData: HistoryFilterData) {
     this.setOriginalEvents();
 
-    const startOf = moment().startOf(filterData.period).startOf('d');
-    const endOf = moment().endOf(filterData.period).endOf('d');
+    const startOf = dayjs().startOf(filterData.period);
+    const endOf = dayjs().endOf(filterData.period);
 
-    this.filteredEvents = this.filteredEvents
+    const events = this.filtered$
+      .getValue()
       .filter((e: AppEvent) => {
         return filterData.types.has(e.type);
       })
@@ -83,16 +103,19 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
         return filterData.categories.has(e.category.toString());
       })
       .filter((e: AppEvent) => {
-        const momentDate = moment(e.date, 'DD.MM.YYYY HH:mm:ss');
-        return momentDate.isBetween(startOf, endOf);
+        const dayjsDate = dayjs(e.date, DATE_FORMAT);
+        return dayjsDate.isBetween(startOf, endOf);
       });
+
+    this.filtered$.next(events);
     this.generateChartData();
   }
 
   private generateChartData() {
     const data: IChartData[] = [];
     this.categories.forEach(c => {
-      const value = this.filteredEvents
+      const value = this.filtered$
+        .getValue()
         .filter(e => e.category === c.id && e.type === 'outcome')
         .reduce((sum, event) => {
           sum += event.amount;
@@ -111,11 +134,7 @@ export class PageHistoryComponent implements OnInit, OnDestroy {
     return map;
   }
 
-  private toggleFilterVisibility(value: boolean) {
-    this.isFilterVisible = value;
-  }
-
   private setOriginalEvents() {
-    this.filteredEvents = this.events.slice();
+    this.filtered$.next(this.events.slice());
   }
 }

@@ -1,54 +1,61 @@
-<div class="title-block">
-  <h3 class="title">Сторінка планування <span class="sparkline bar"></span></h3>
+<div class="mb-4">
+  <h3>Сторінка планування</h3>
 </div>
-<section class="section" *ngIf="!isLoaded">
-  <app-loader></app-loader>
-</section>
-<section class="section" *ngIf="isLoaded">
-  <div class="row">
-    <div class="col-md-12">
-      <div class="card">
-        <div class="card-header card-header-sm bordered">
-          <div class="header-block">
-            <h3 class="title">Витрати</h3>
-          </div>
-          <h5 class="planning-expenses pull-right">
-            Загальний залишок:
-            <span class="text-success"
-              >{{ bill.value | number : '1.2' }} {{ bill.currency }}</span
-            >
-          </h5>
+
+<div
+  class="card bg-body-tertiary shadow"
+  *ngIf="isLoadied$ | async; else loader">
+  <div class="card-title">
+    <div class="card-header">
+      <h4>Витрати</h4>
+    </div>
+    <h5 class="text-end mt-1 me-3">
+      Загальний залишок:
+      <span class="text-success">
+        {{ bill.value | number : '1.2' }}
+        <i class="fa-solid fa-hryvnia-sign mt-1 ms-1"></i
+      ></span>
+    </h5>
+  </div>
+
+  <div class="card-body">
+    <div *ngFor="let c of categories">
+      <div class="col-auto">
+        <div class="progress large-progress">
+          <div
+            class="progress-bar text-dark text-bold opacity-75 bg-{{
+              getProgressColor(c)
+            }}"
+            [ngStyle]="{ width: getProgressWidthValue(c) }"></div>
+          <span
+            class="position-absolute start-50 translate-middle-x fw-medium"
+            >{{ c.name }}</span
+          >
         </div>
-        <div class="card-block">
-          <div class="row" *ngFor="let c of categories">
-            <div class="col-xs-6">
-              <div class="n-progress">
-                <div
-                  class="progress-bar {{ getProgressColor(c) }}"
-                  [ngStyle]="{ width: getProgressWidthValue(c) }">
-                  <span>{{ c.name }}</span>
-                </div>
-              </div>
-            </div>
-            <div class="col-xs-6">
-              <p>
-                <span class="text-{{ getProgressColor(c) }}">{{
-                  getCategorySpendValue(c) | number : '1.2'
-                }}</span>
-                з
-                <span class="text-primary">{{
-                  c.capacity | number : '1.2'
-                }}</span>
-                | Залишок
-                <span class="text-{{ getProgressColor(c) }}">{{
-                  getCategoryLeftValue(c) | number : '1.2'
-                }}</span>
-                ({{ bill.currency }})
-              </p>
-            </div>
-          </div>
-        </div>
+      </div>
+
+      <div class="col-auto">
+        <p>
+          <span class="text-{{ getProgressColor(c) }}"
+            >{{ getCategorySpendValue(c) | number : '1.2'
+            }}<i class="fa-solid fa-hryvnia-sign mt-1 ms-1"></i
+          ></span>
+          з
+          <span class="fw-medium text-primary"
+            >{{ c.capacity | number : '1.2'
+            }}<i class="fa-solid fa-hryvnia-sign mt-1 ms-1"></i
+          ></span>
+          | Залишок
+          <span class="fw-medium text-{{ getProgressColor(c) }}"
+            >{{ getCategoryLeftValue(c) | number : '1.2'
+            }}<i class="fa-solid fa-hryvnia-sign mt-1 ms-1"></i
+          ></span>
+        </p>
       </div>
     </div>
   </div>
-</section>
+</div>
+
+<ng-template #loader>
+  <app-loader></app-loader>
+</ng-template>

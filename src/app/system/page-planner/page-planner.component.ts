@@ -1,25 +1,29 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import { combineLatest, Subscription } from 'rxjs';
+import { BehaviorSubject, combineLatest } from 'rxjs';
 
-import { AppEvent } from '../shared/models/app-event.model';
-import { Bill } from '../shared/models/bill.model';
-import { Category } from '../shared/models/category.model';
-import { AppEventService } from '../shared/services/app-event.service';
-import { BillService } from '../shared/services/bill.service';
-import { CategoriesService } from '../shared/services/categories.service';
+import { UnsubscriberComponent } from 'src/app/shared/core/unsubscriber';
+import { AppEvent } from '../common/models/app-event.model';
+import { Bill } from '../common/models/bill.model';
+import { Category } from '../common/models/category.model';
+import { AppEventService } from '../common/services/app-event.service';
+import { BillService } from '../common/services/bill.service';
+import { CategoriesService } from '../common/services/categories.service';
 
 @Component({
   selector: 'app-page-planner',
   templateUrl: './page-planner.component.html',
   styleUrls: ['./page-planner.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PagePlannerComponent implements OnInit, OnDestroy {
-  isLoaded = false;
+export class PagePlannerComponent
+  extends UnsubscriberComponent
+  implements OnInit
+{
+  isLoadied$ = new BehaviorSubject<boolean>(false);
   bill: Bill;
   events: AppEvent[];
   categories: Category[];
-  private sub1: Subscription;
 
   constructor(
     private billService: BillService,
@@ -27,11 +31,12 @@ export class PagePlannerComponent implements OnInit, OnDestroy {
     private categoriesService: CategoriesService,
     private title: Title
   ) {
-    this.title.setTitle('Планувальник');
+    super();
+    title.setTitle('Планувальник');
   }
 
   ngOnInit() {
-    this.sub1 = combineLatest([
+    this.subs = combineLatest([
       this.billService.getBill(),
       this.eventService.getEvents(),
       this.categoriesService.getCategories(),
@@ -39,7 +44,7 @@ export class PagePlannerComponent implements OnInit, OnDestroy {
       this.bill = data[0];
       this.events = data[1];
       this.categories = data[2];
-      this.isLoaded = true;
+      this.isLoadied$.next(true);
     });
   }
 
@@ -71,12 +76,6 @@ export class PagePlannerComponent implements OnInit, OnDestroy {
   getProgressColor(category: Category) {
     const percent = this.getProgressPercent(category);
     return percent > 90 ? 'danger' : percent > 60 ? 'warning' : 'success';
-  }
-
-  ngOnDestroy(): void {
-    if (this.sub1) {
-      this.sub1.unsubscribe();
-    }
   }
 
   private getPercent(value: number, base: number): number {

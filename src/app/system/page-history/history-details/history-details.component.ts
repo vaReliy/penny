@@ -1,37 +1,43 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
-import { AppEvent } from '../../shared/models/app-event.model';
-import { Bill } from '../../shared/models/bill.model';
-import { Category } from '../../shared/models/category.model';
-import { CurrencyEnum } from '../../shared/models/currency.enum';
-import { AppEventService } from '../../shared/services/app-event.service';
-import { BillService } from '../../shared/services/bill.service';
-import { CategoriesService } from '../../shared/services/categories.service';
+import { UnsubscriberComponent } from 'src/app/shared/core/unsubscriber';
+import { AppEvent } from '../../common/models/app-event.model';
+import { Bill } from '../../common/models/bill.model';
+import { Category } from '../../common/models/category.model';
+import { CurrencyEnum } from '../../common/models/currency.enum';
+import { AppEventService } from '../../common/services/app-event.service';
+import { BillService } from '../../common/services/bill.service';
+import { CategoriesService } from '../../common/services/categories.service';
 
 @Component({
   selector: 'app-history-details',
   templateUrl: './history-details.component.html',
   styleUrls: ['./history-details.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HistoryDetailsComponent implements OnInit, OnDestroy {
-  isLoaded = false;
+export class HistoryDetailsComponent
+  extends UnsubscriberComponent
+  implements OnInit
+{
+  isLoaded$ = new BehaviorSubject<boolean>(false);
   event: AppEvent;
   category: Category;
   currency: CurrencyEnum;
-  private s1: Subscription;
 
   constructor(
     private route: ActivatedRoute,
     private eventService: AppEventService,
     private categoriesService: CategoriesService,
     private billService: BillService
-  ) {}
+  ) {
+    super();
+  }
 
   ngOnInit() {
-    this.route.params
+    this.subs = this.route.params
       .pipe(
         mergeMap((param: Params) => this.eventService.getEventById(param.id)),
         mergeMap((event: AppEvent) => {
@@ -45,7 +51,7 @@ export class HistoryDetailsComponent implements OnInit, OnDestroy {
       )
       .subscribe((bill: Bill) => {
         this.currency = bill.currency;
-        this.isLoaded = true;
+        this.isLoaded$.next(true);
       });
   }
 
@@ -55,11 +61,5 @@ export class HistoryDetailsComponent implements OnInit, OnDestroy {
 
   getColorClass(eventType: string) {
     return eventType === AppEvent.TYPES[0] ? 'success' : 'danger';
-  }
-
-  ngOnDestroy(): void {
-    if (this.s1) {
-      this.s1.unsubscribe();
-    }
   }
 }

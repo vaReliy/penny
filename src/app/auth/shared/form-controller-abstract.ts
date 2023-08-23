@@ -1,6 +1,7 @@
 import { UntypedFormGroup } from '@angular/forms';
+import { UnsubscriberComponent } from 'src/app/shared/core/unsubscriber';
 
-export abstract class FormControllerAbstract {
+export abstract class FormControllerAbstract extends UnsubscriberComponent {
   form: UntypedFormGroup;
 
   hasControlInvalid(controlName: string): boolean {

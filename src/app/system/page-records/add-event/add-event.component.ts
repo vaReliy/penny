@@ -1,16 +1,26 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+} from '@angular/core';
 import { NgForm } from '@angular/forms';
-import * as moment from 'moment';
+import * as dayjs from 'dayjs';
 
 import { Message } from '../../../shared/models/message.model';
-import { AppEvent } from '../../shared/models/app-event.model';
-import { Bill } from '../../shared/models/bill.model';
-import { Category } from '../../shared/models/category.model';
+import { DATE_FORMAT } from '../../common/constats';
+import { AppEvent } from '../../common/models/app-event.model';
+import { Bill } from '../../common/models/bill.model';
+import { Category } from '../../common/models/category.model';
+import { flatDtoToInstance } from '../../common/services/dto-transformer';
 
 @Component({
   selector: 'app-add-event',
   templateUrl: './add-event.component.html',
   styleUrls: ['./add-event.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AddEventComponent implements OnInit {
   @Input() categories: Category[];
@@ -26,17 +36,22 @@ export class AddEventComponent implements OnInit {
   onSubmit(form: NgForm) {
     const { type, amount, category, description } = form.value;
     if (amount > this.currentBill.value) {
-      // tslint:disable-next-line:max-line-length
       this.showAlertMessage(
         `Недостатньо коштів для операції. Поточний рахунок: ${this.currentBill.value}${this.currentBill.currency}`,
         'danger'
       );
       return;
     }
-    const date = moment().format('DD.MM.YYYY HH:mm:ss');
-    this.addAppEvent.emit(
-      new AppEvent(type, amount, +category, date, description)
-    );
+    const date = dayjs().format(DATE_FORMAT);
+    const eDto = {
+      type,
+      amount,
+      date,
+      description,
+      category: +category,
+    };
+    const event = flatDtoToInstance<AppEvent>(eDto, AppEvent);
+    this.addAppEvent.emit(event);
     this.showAlertMessage(`Подію успішно додано!`);
     this.setDefaults(form);
   }

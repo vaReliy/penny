@@ -1,0 +1,64 @@
+<header class="p-3 bg-dark mb-3 border-bottom">
+  <div class="container">
+    <div
+      class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+      <a
+        href="/"
+        class="d-flex align-items-center mb-2 mb-lg-0 textlight text-decoration-none">
+        <!-- LOGO MOCK -->
+        <div class="flex-column d-flex text-center">
+          <span class="fs-1 pe-4 text-info">Penny</span>
+          <span class="fs-6 pe-4 logo-second">Домашня Бухгалтерія</span>
+        </div>
+        <!-- LOGO MOCK -->
+      </a>
+      <ul
+        class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+        <li *ngFor="let link of links">
+          <a
+            [routerLink]="link.target"
+            routerLinkActive="active-link"
+            class="nav-link fs-5 px-2 link-secondary text-light">
+            {{ link.name }}
+          </a>
+        </li>
+      </ul>
+
+      <div ngbDropdown class="text-end textlight" data-bs-theme="dark">
+        <a
+          ngbDropdownToggle
+          role="button"
+          id="profileDropdownMenu"
+          class="d-block textlight text-decoration-none">
+          <img
+            [src]="userAvatar"
+            alt="profile avatar"
+            width="32"
+            height="32"
+            class="rounded-circle" />
+          <!-- {{ userName }} -->
+        </a>
+        <ul
+          ngbDropdownMenu
+          class="text-small"
+          aria-labelledby="profileDropdownMenu">
+          <li>
+            <a class="dropdown-item" [routerLink]="['./records']">
+              <i class="fa fa-gear icon me-2"></i>
+              Створити запис
+            </a>
+          </li>
+
+          <div class="dropdown-divider"></div>
+
+          <li>
+            <a class="dropdown-item" (click)="onLogout()">
+              <i class="fa fa-power-off icon me-2"></i>
+              Вийти
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</header>

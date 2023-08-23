@@ -1,50 +1,56 @@
-<div class="col col-xs-12 col-sm-12 col-md-6 col-xl-5 stats-col">
-  <div class="card stats">
-    <div class="card-block">
-      <div class="title-block">
-        <h4 class="title">Рахунок</h4>
-      </div>
-      <div class="row row-sm stats-container">
-        <div class="col-xs-12 stat-col">
-          <div class="stat-icon"><i class="fa fa-bitcoin"></i></div>
-          <div class="stat">
-            <div class="value">
-              {{ bill?.value * rates?.UAH | number : '1.2-2' }}
-            </div>
-          </div>
-          <progress class="progress stat-progress" value="100" max="100">
-            <div class="progress">
-              <span class="progress-bar" style="width: 100%"></span>
-            </div>
-          </progress>
-        </div>
-        <div class="col-xs-12 stat-col">
-          <div class="stat-icon"><i class="fa fa-euro"></i></div>
-          <div class="stat">
-            <div class="value">
-              {{ bill?.value * rates?.EUR | number : '1.2-2' }}
-            </div>
-          </div>
-          <progress class="progress stat-progress" value="100" max="100">
-            <div class="progress">
-              <span class="progress-bar" style="width: 100%"></span>
-            </div>
-          </progress>
-        </div>
-        <div class="col-xs-12 stat-col">
-          <div class="stat-icon"><i class="fa fa-dollar"></i></div>
-          <div class="stat">
-            <div class="value">
-              {{ bill?.value * rates?.USD | number : '1.2-2' }}
-            </div>
-          </div>
-          <progress class="progress stat-progress" value="100" max="100">
-            <div class="progress">
-              <span class="progress-bar" style="width: 100%"></span>
-            </div>
-          </progress>
-        </div>
-      </div>
+<div class="card bg-body-tertiary shadow">
+  <div class="card-title">
+    <div class="card-header">
+      <h4>Рахунок</h4>
     </div>
   </div>
+
+  <div class="card-body">
+    <ng-container
+      *ngTemplateOutlet="
+        billProgress;
+        context: {
+          bill: bill?.value,
+          rate: rates?.UAH,
+          icon: 'fa-hryvnia-sign'
+        }
+      ">
+    </ng-container>
+
+    <ng-container
+      *ngTemplateOutlet="
+        billProgress;
+        context: {
+          bill: bill?.value,
+          rate: rates?.USD,
+          icon: 'fa-dollar-sign'
+        }
+      ">
+    </ng-container>
+
+    <ng-container
+      *ngTemplateOutlet="
+        billProgress;
+        context: {
+          bill: bill?.value,
+          rate: rates?.EUR,
+          icon: 'fa-euro-sign'
+        }
+      ">
+    </ng-container>
+  </div>
 </div>
+
+<ng-template #billProgress let-bill="bill" let-rate="rate" let-icon="icon">
+  <div class="col mb-3">
+    <div class="row">
+      <div class="d-inline-flex justify-content-end fw-bolder">
+        <i class="fa-solid {{ icon }} mt-1 me-2"></i>
+        <span class="me-2">
+          {{ bill * rate | number : '1.2-2' }}
+        </span>
+      </div>
+    </div>
+    <ngb-progressbar type="info" [value]="bill"></ngb-progressbar>
+  </div>
+</ng-template>

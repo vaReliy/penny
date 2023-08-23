@@ -5,12 +5,16 @@ import { catchError, map } from 'rxjs/operators';
 
 import { BaseApi } from '../../../shared/core/base-api';
 import { Bill } from '../models/bill.model';
-import { CurrencyRatesModel } from '../models/currency-rates.model';
+import {
+  CurrencyRatesModel,
+  getEmpptyCurrencyRatesModelDto,
+} from '../models/currency-rates.model';
 import {
   CurrencyInfoMonobank,
   getCurrencyCodeByName,
   getCurrencyNameByCode,
 } from '../models/CurrencyInfoMonobank';
+import { flatDtoToInstance } from './dto-transformer';
 
 @Injectable()
 export class BillService extends BaseApi {
@@ -19,21 +23,14 @@ export class BillService extends BaseApi {
   }
 
   getBill(): Observable<Bill> {
-    return this.GET('bill').pipe(map(v => new Bill(v.value, v.currency)));
+    return this.GET('bill').pipe(map(v => flatDtoToInstance<Bill>(v, Bill)));
   }
 
   updateBill(bill: Bill): Observable<Bill> {
     return this.POST('bill', bill).pipe(
-      map(v => new Bill(v.value, v.currency))
+      map(v => flatDtoToInstance<Bill>(v, Bill))
     );
   }
-
-  /*getExchangeRates(): Observable<CurrencyRatesModel> {
-    return this.GET('rates')
-      .pipe(
-        map((v: any) => new CurrencyRatesModel(v.UAH, v.USD / 1000000, v.EUR / 1000000)),
-      );
-  }*/
 
   getExchangeRates(): Observable<CurrencyRatesModel> {
     return this.http.get('https://api.monobank.ua/bank/currency').pipe(
@@ -53,12 +50,26 @@ export class BillService extends BaseApi {
           acc[el.name] = el.rate;
           return acc;
         }, {});
+        const { UAH, USD, EUR } = rates;
 
-        return new CurrencyRatesModel(date, rates.UAH, rates.USD, rates.EUR);
+        return flatDtoToInstance<CurrencyRatesModel>(
+          {
+            UAH,
+            USD,
+            EUR,
+            updatedAt: date,
+          },
+          CurrencyRatesModel
+        );
       }),
       catchError(e => {
         console.error(e);
-        return of(new CurrencyRatesModel(0, 0, 0, 0));
+        return of(
+          flatDtoToInstance<CurrencyRatesModel>(
+            getEmpptyCurrencyRatesModelDto(),
+            CurrencyRatesModel
+          )
+        );
       })
     );
   }
