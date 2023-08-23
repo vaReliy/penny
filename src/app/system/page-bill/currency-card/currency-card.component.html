@@ -1,7 +1,16 @@
 <div class="card bg-body-tertiary shadow">
   <div class="card-title">
     <div class="card-header">
-      <h4>Курс</h4>
+      <div class="d-flex justify-content-between">
+        <h4>Курс</h4>
+        <button
+          (click)="rateUpdate.emit({})"
+          placement="top"
+          ngbTooltip="Оновити курс"
+          class="btn-sm btn btn-primary-outline">
+          <i class="fa fa-refresh"></i>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -16,17 +25,17 @@
       </thead>
       <tbody>
         <tr>
-          <td>грн</td>
+          <td><i class="fa-solid fa-hryvnia-sign mt-1 me-2"></i></td>
           <td>{{ rates?.UAH | number : '1.2-2' }}</td>
           <td>{{ rates.updatedAt | date : 'dd.MM.yyyy hh:mm' }}</td>
         </tr>
         <tr>
-          <td>доллар</td>
+          <td><i class="fa-solid fa-dollar-sign mt-1 me-2"></i></td>
           <td>{{ rates?.USD | number : '1.2-2' }}</td>
           <td>{{ rates.updatedAt | date : 'dd.MM.yyyy hh:mm' }}</td>
         </tr>
         <tr>
-          <td>евро</td>
+          <td><i class="fa-solid fa-euro-sign mt-1 me-2"></i></td>
           <td>{{ rates?.EUR | number : '1.2-2' }}</td>
           <td>{{ rates.updatedAt | date : 'dd.MM.yyyy hh:mm' }}</td>
         </tr>

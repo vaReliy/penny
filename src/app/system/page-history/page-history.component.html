@@ -4,15 +4,19 @@
   <div class="text-end mt-1 me-3" *ngIf="isLoaded$ | async as isLoaded">
     <button
       (click)="onFilter()"
+      placement="top"
+      ngbTooltip="Застосувати фільтр"
       class="btn-sm btn btn-primary-outline me-2"
       data-bs-toggle="modal">
-      <i class="fa fa-filter"></i>Filter
+      <i class="fa fa-filter"></i>
     </button>
     <button
       (click)="onCancelFilter()"
+      placement="top"
+      ngbTooltip="Скинути фільтр"
       class="btn-sm btn btn-primary-outline"
       data-bs-toggle="modal">
-      <i class="fa fa-filter"></i>Reset
+      <i class="fa fa-delete-left"></i>
     </button>
   </div>
 </div>

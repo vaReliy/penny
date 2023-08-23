@@ -11,9 +11,10 @@
     </div>
     <h5 class="text-end mt-1 me-3">
       Загальний залишок:
-      <span class="text-success"
-        >{{ bill.value | number : '1.2' }} {{ bill.currency }}</span
-      >
+      <span class="text-success">
+        {{ bill.value | number : '1.2' }}
+        <i class="fa-solid fa-hryvnia-sign mt-1 ms-1"></i
+      ></span>
     </h5>
   </div>
 
@@ -35,18 +36,20 @@
 
       <div class="col-auto">
         <p>
-          <span class="text-{{ getProgressColor(c) }}">{{
-            getCategorySpendValue(c) | number : '1.2'
-          }}</span>
+          <span class="text-{{ getProgressColor(c) }}"
+            >{{ getCategorySpendValue(c) | number : '1.2'
+            }}<i class="fa-solid fa-hryvnia-sign mt-1 ms-1"></i
+          ></span>
           з
-          <span class="fw-medium text-primary">{{
-            c.capacity | number : '1.2'
-          }}</span>
+          <span class="fw-medium text-primary"
+            >{{ c.capacity | number : '1.2'
+            }}<i class="fa-solid fa-hryvnia-sign mt-1 ms-1"></i
+          ></span>
           | Залишок
-          <span class="fw-medium text-{{ getProgressColor(c) }}">{{
-            getCategoryLeftValue(c) | number : '1.2'
-          }}</span>
-          ({{ bill.currency }})
+          <span class="fw-medium text-{{ getProgressColor(c) }}"
+            >{{ getCategoryLeftValue(c) | number : '1.2'
+            }}<i class="fa-solid fa-hryvnia-sign mt-1 ms-1"></i
+          ></span>
         </p>
       </div>
     </div>

@@ -1,5 +1,10 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+} from '@angular/core';
 import { CurrencyRatesModel } from '../../common/models/currency-rates.model';
 
 @Component({
@@ -11,4 +16,6 @@ import { CurrencyRatesModel } from '../../common/models/currency-rates.model';
 export class CurrencyCardComponent {
   @Input() rates: CurrencyRatesModel;
   @Input() date: Date = new Date();
+
+  @Output() rateUpdate = new EventEmitter();
 }

@@ -12,7 +12,7 @@
         context: {
           bill: bill?.value,
           rate: rates?.UAH,
-          currency: 'B'
+          icon: 'fa-hryvnia-sign'
         }
       ">
     </ng-container>
@@ -23,7 +23,7 @@
         context: {
           bill: bill?.value,
           rate: rates?.USD,
-          currency: '$'
+          icon: 'fa-dollar-sign'
         }
       ">
     </ng-container>
@@ -34,22 +34,18 @@
         context: {
           bill: bill?.value,
           rate: rates?.EUR,
-          currency: 'Є'
+          icon: 'fa-euro-sign'
         }
       ">
     </ng-container>
   </div>
 </div>
 
-<ng-template
-  #billProgress
-  let-bill="bill"
-  let-rate="rate"
-  let-currency="currency">
+<ng-template #billProgress let-bill="bill" let-rate="rate" let-icon="icon">
   <div class="col mb-3">
     <div class="row">
       <div class="d-inline-flex justify-content-end fw-bolder">
-        <span><i class="fa fa-bitcoin me-2"></i>{{ currency }}</span>
+        <i class="fa-solid {{ icon }} mt-1 me-2"></i>
         <span class="me-2">
           {{ bill * rate | number : '1.2-2' }}
         </span>
