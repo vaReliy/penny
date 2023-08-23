@@ -1,19 +1,21 @@
-<div class="title-block">
-  <h3 class="title pull-left">
-    Сторінка рахунку <span class="sparkline bar"></span>
-  </h3>
-  <div class="pull-right">
+<div class="mb-4">
+  <h4>Сторінка рахунку</h4>
+  <div class="d-flex justify-content-end">
     <button (click)="onRefresh()" class="btn-sm btn btn-primary-outline">
-      <i class="fa fa-refresh"></i>
+      <i class="fa fa-refresh">Refresh</i>
     </button>
   </div>
 </div>
-<section class="section">
-  <div class="row" *ngIf="isLoaded$ | async; else loader">
+
+<div class="row row-col-media-from3-to2" *ngIf="isLoaded$ | async; else loader">
+  <div class="col mb-4">
     <app-bill-card [bill]="bill" [rates]="rates"> </app-bill-card>
+  </div>
+
+  <div class="col mb-4">
     <app-currency-card [rates]="rates"> </app-currency-card>
   </div>
-</section>
+</div>
 
 <ng-template #loader>
   <app-loader></app-loader>

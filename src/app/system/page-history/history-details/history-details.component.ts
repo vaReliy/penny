@@ -1,13 +1,9 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnDestroy,
-  OnInit,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
+import { UnsubscriberComponent } from 'src/app/shared/core/unsubscriber';
 import { AppEvent } from '../../common/models/app-event.model';
 import { Bill } from '../../common/models/bill.model';
 import { Category } from '../../common/models/category.model';
@@ -22,22 +18,26 @@ import { CategoriesService } from '../../common/services/categories.service';
   styleUrls: ['./history-details.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HistoryDetailsComponent implements OnInit, OnDestroy {
-  isLoaded = false;
+export class HistoryDetailsComponent
+  extends UnsubscriberComponent
+  implements OnInit
+{
+  isLoaded$ = new BehaviorSubject<boolean>(false);
   event: AppEvent;
   category: Category;
   currency: CurrencyEnum;
-  private s1: Subscription;
 
   constructor(
     private route: ActivatedRoute,
     private eventService: AppEventService,
     private categoriesService: CategoriesService,
     private billService: BillService
-  ) {}
+  ) {
+    super();
+  }
 
   ngOnInit() {
-    this.route.params
+    this.subs = this.route.params
       .pipe(
         mergeMap((param: Params) => this.eventService.getEventById(param.id)),
         mergeMap((event: AppEvent) => {
@@ -51,7 +51,7 @@ export class HistoryDetailsComponent implements OnInit, OnDestroy {
       )
       .subscribe((bill: Bill) => {
         this.currency = bill.currency;
-        this.isLoaded = true;
+        this.isLoaded$.next(true);
       });
   }
 
@@ -61,11 +61,5 @@ export class HistoryDetailsComponent implements OnInit, OnDestroy {
 
   getColorClass(eventType: string) {
     return eventType === AppEvent.TYPES[0] ? 'success' : 'danger';
-  }
-
-  ngOnDestroy(): void {
-    if (this.s1) {
-      this.s1.unsubscribe();
-    }
   }
 }

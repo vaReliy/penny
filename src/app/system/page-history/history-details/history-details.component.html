@@ -1,42 +1,55 @@
-<div class="section text-center" *ngIf="!isLoaded">
-  <app-loader></app-loader>
+<div class="mb-4">
+  <h3>
+    <a [routerLink]="'../history'"><i class="fa fa-arrow-left"></i></a>
+    Сторінка запису № {{ event.id }}
+    <span class="sparkline bar"></span>
+  </h3>
 </div>
-<div class="section" *ngIf="isLoaded">
-  <div class="title-block">
-    <h3 class="title">
-      <a [routerLink]="'/system/history'"><i class="fa fa-arrow-left"></i></a>
-      Сторінка запису № {{ event.id }}
-      <span class="sparkline bar"></span>
-    </h3>
-  </div>
-  <section class="section">
-    <div class="row">
-      <div class="col-xs-6 col-xs-offset-3">
-        <div class="card card-{{ getColorClass(event.type) }}">
-          <div class="card-header">
-            <div class="header-block">
-              <p class="title">{{ getEventLabel(event.type) }}</p>
-            </div>
-          </div>
-          <div class="card-block">
-            <ul>
-              <li>
-                Сума:
-                <strong
-                  >{{ event.amount | number : '1.2' }} {{ currency }}</strong
-                >
-              </li>
-              <li>
-                Категорія: <strong>{{ category.name }}</strong>
-              </li>
-              <li>
-                Опис: <strong>{{ event.description }}</strong>
-              </li>
-            </ul>
-          </div>
-          <div class="card-footer">{{ event.date }}</div>
-        </div>
-      </div>
+
+<div
+  class="card bg-body-tertiary shadow"
+  *ngIf="isLoaded$ | async; else loader">
+  <div class="row">
+    <div class="col-xs-6 col-xs-offset-3">
+      <div class="card card-{{ getColorClass(event.type) }}"></div>
     </div>
-  </section>
+  </div>
+
+  <div class="card-header">
+    <div class="card-title">
+      <h4>{{ getEventLabel(event.type) }}</h4>
+    </div>
+  </div>
+  <div class="card-body">
+    <ul>
+      <li>
+        <div class="d-inline-flex">
+          <span class="me-1">Сума:</span>
+          <span class="fw-bolder me-1">{{
+            event.amount | number : '1.2'
+          }}</span>
+          <span class="fw-bolder">{{ currency }}</span>
+        </div>
+      </li>
+      <li>
+        <div class="d-inline-flex">
+          <span class="me-1">Категорія:</span>
+          <span class="fw-bolder me-1">{{ category.name }}</span>
+        </div>
+      </li>
+      <li>
+        <div class="d-inline-flex">
+          <span class="me-1">Опис:</span>
+          <span class="fw-bolder me-1">{{ event.description }}</span>
+        </div>
+      </li>
+    </ul>
+  </div>
+  <div class="card-footer">
+    <span class="fst-italic">{{ event.date }}</span>
+  </div>
 </div>
+
+<ng-template #loader>
+  <app-loader></app-loader>
+</ng-template>
