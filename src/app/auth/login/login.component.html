@@ -1,12 +1,13 @@
-<p class="text-xs-center">Увійдіть для роботи</p>
+<p class="text-center">Увійдіть для роботи</p>
+
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
   <div
-    class="alert alert-{{ alertMessage.type }}"
-    *ngIf="alertMessage.text.length">
-    {{ alertMessage.text }}
+    *ngIf="alertMessage$ | async as alert"
+    class="alert alert-{{ alert.type }}">
+    {{ alert.text }}
   </div>
   <div
-    class="form-group"
+    class="form-group mb-3"
     [ngClass]="{ 'has-error': hasControlInvalid('email') }">
     <label for="email">Email</label>
     <input
@@ -15,7 +16,7 @@
       id="email"
       placeholder="Введіть ваш email"
       formControlName="email" />
-    <span class="form-help-text" *ngIf="hasControlInvalid('email')">
+    <span class="form-text" *ngIf="hasControlInvalid('email')">
       <span *ngIf="hasControlValidationError('email', 'required')">{{
         showErrorMessage('required')
       }}</span>
@@ -24,8 +25,9 @@
       }}</span>
     </span>
   </div>
+
   <div
-    class="form-group"
+    class="form-group mb-3"
     [ngClass]="{ 'has-error': hasControlInvalid('password') }">
     <label for="password">Пароль</label>
     <input
@@ -34,7 +36,7 @@
       id="password"
       placeholder="Пароль"
       formControlName="password" />
-    <span class="form-help-text" *ngIf="hasControlInvalid('password')">
+    <span class="form-text" *ngIf="hasControlInvalid('password')">
       <span *ngIf="hasControlValidationError('password', 'required')">{{
         showErrorMessage('required')
       }}</span>
@@ -46,16 +48,17 @@
       }}</span>
     </span>
   </div>
-  <div class="form-group">
+
+  <div class="form-group mb-3">
     <button
       type="submit"
       class="btn btn-block btn-primary"
-      [disabled]="form.invalid">
+      [disabled]="!form.valid">
       Увійти
     </button>
   </div>
   <div class="form-group">
-    <p class="text-muted text-xs-center">
+    <p class="fst-italic fw-lighter">
       Відсутній аккаунт?
       <a [routerLink]="'../registration'">Зареєструватись!</a>
     </p>
