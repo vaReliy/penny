@@ -1,7 +1,7 @@
 <header class="p-3 bg-dark mb-3 border-bottom">
   <div class="container">
     <div
-      class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+      class="d-flex flex-wrap align-items-center justify-content-between justify-content-lg-start">
       <a
         href="/"
         class="d-flex align-items-center mb-2 mb-lg-0 textlight text-decoration-none">
@@ -12,8 +12,10 @@
         </div>
         <!-- LOGO MOCK -->
       </a>
+
+      <!-- HORIZONTAL LINKS -->
       <ul
-        class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+        class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0 d-none d-lg-flex">
         <li *ngFor="let link of links">
           <a
             [routerLink]="link.target"
@@ -23,8 +25,69 @@
           </a>
         </li>
       </ul>
+      <!-- HORIZONTAL LINKS -->
 
-      <div ngbDropdown class="text-end textlight" data-bs-theme="dark">
+      <!-- MOBILE MENU -->
+      <div ngbDropdown class="d-lg-none" data-bs-theme="dark">
+        <button
+          ngbDropdownToggle
+          id="mobileDropdownMenu"
+          class="btn text-white-50">
+          <i class="fa fa-bars"></i>
+        </button>
+        <div
+          ngbDropdownMenu
+          aria-labelledby="mobileDropdownMenu"
+          class="position-fixed w-100 h-100 border-0 top-0 transform-none flex-col">
+          <button
+            ngbDropdownToggle
+            class="btn mobile-menu d-flex flex-row align-self-end fs-4 lh-lg">
+            <i class="fa fa-close"></i>
+          </button>
+          <ul class="nav flex-column align-items-center text-light fs-2">
+            <li *ngFor="let link of links">
+              <a
+                ngbDropdownToggle
+                [routerLink]="link.target"
+                routerLinkActive="active-link"
+                class="mobile-menu link-secondary text-light no-line-decoration px-3">
+                {{ link.name }}
+              </a>
+            </li>
+
+            <div class="dropdown-divider"></div>
+
+            <li>
+              <a
+                ngbDropdownToggle
+                class="mobile-menu dropdown-item"
+                [routerLink]="['./records']">
+                <i class="fa fa-gear icon me-2"></i>
+                Створити запис
+              </a>
+            </li>
+
+            <div class="dropdown-divider"></div>
+
+            <li>
+              <a
+                ngbDropdownToggle
+                class="mobile-menu dropdown-item"
+                (click)="onLogout()">
+                <i class="fa fa-power-off icon me-2"></i>
+                Вийти
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <!-- MOBILE MENU -->
+
+      <!-- PROFILE BUTON -->
+      <div
+        ngbDropdown
+        class="text-end textlight d-none d-lg-flex"
+        data-bs-theme="dark">
         <a
           ngbDropdownToggle
           role="button"
@@ -59,6 +122,7 @@
           </li>
         </ul>
       </div>
+      <!-- PROFILE BUTON -->
     </div>
   </div>
 </header>
