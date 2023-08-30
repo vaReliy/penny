@@ -7,3 +7,20 @@
   background-color: rgba(13, 202, 240,0.75);
   border-radius: 2rem;
 }
+
+.mobile-menu.dropdown-toggle::after {
+  content: none;
+}
+
+.transform-none {
+  transform: none !important;
+}
+
+.flex-col.show {
+  display: flex;
+  flex-direction: column;
+}
+
+.no-line-decoration {
+  text-decoration-line: none;
+}

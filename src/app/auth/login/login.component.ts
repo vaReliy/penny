@@ -67,7 +67,7 @@ export class LoginComponent extends FormControllerAbstract implements OnInit {
         if (user) {
           this.authService.login();
           window.localStorage.setItem('user', JSON.stringify(user));
-          this.router.navigate(['/system', 'bill']);
+          this.router.navigate(['/', 'system', 'bill']);
         } else {
           this.showAlertMessage('Невірний email або пароль');
         }
