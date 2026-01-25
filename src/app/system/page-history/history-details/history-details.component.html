@@ -8,49 +8,46 @@
 </div>
 
 @if (isLoaded$ | async) {
-  <div
-    class="card bg-body-tertiary shadow"
-    >
-    <div class="row">
-      <div class="col-xs-6 col-xs-offset-3">
-        <div class="card card-{{ getColorClass(event.type) }}"></div>
-      </div>
-    </div>
-    <div class="card-header">
-      <div class="card-title">
-        <h4>{{ getEventLabel(event.type) }}</h4>
-      </div>
-    </div>
-    <div class="card-body">
-      <ul>
-        <li>
-          <div class="d-inline-flex">
-            <span class="me-1">Сума:</span>
-            <span class="fw-bolder me-1">{{
-              event.amount | number : '1.2'
-            }}</span>
-            <span class="fw-bolder">{{ currency }}</span>
-          </div>
-        </li>
-        <li>
-          <div class="d-inline-flex">
-            <span class="me-1">Категорія:</span>
-            <span class="fw-bolder me-1">{{ category.name }}</span>
-          </div>
-        </li>
-        <li>
-          <div class="d-inline-flex">
-            <span class="me-1">Опис:</span>
-            <span class="fw-bolder me-1">{{ event.description }}</span>
-          </div>
-        </li>
-      </ul>
-    </div>
-    <div class="card-footer">
-      <span class="fst-italic">{{ event.date }}</span>
+<div class="card bg-body-tertiary shadow">
+  <div class="row">
+    <div class="col-xs-6 col-xs-offset-3">
+      <div class="card card-{{ getColorClass(event.type) }}"></div>
     </div>
   </div>
+  <div class="card-header">
+    <div class="card-title">
+      <h4>{{ getEventLabel(event.type) }}</h4>
+    </div>
+  </div>
+  <div class="card-body">
+    <ul>
+      <li>
+        <div class="d-inline-flex">
+          <span class="me-1">Сума:</span>
+          <span class="fw-bolder me-1">{{
+            event.amount | number : '1.2'
+          }}</span>
+          <span class="fw-bolder">{{ currency }}</span>
+        </div>
+      </li>
+      <li>
+        <div class="d-inline-flex">
+          <span class="me-1">Категорія:</span>
+          <span class="fw-bolder me-1">{{ category.name }}</span>
+        </div>
+      </li>
+      <li>
+        <div class="d-inline-flex">
+          <span class="me-1">Опис:</span>
+          <span class="fw-bolder me-1">{{ event.description }}</span>
+        </div>
+      </li>
+    </ul>
+  </div>
+  <div class="card-footer">
+    <span class="fst-italic">{{ event.date }}</span>
+  </div>
+</div>
 } @else {
-  <app-loader></app-loader>
+<app-loader></app-loader>
 }
-

@@ -2,10 +2,9 @@
 
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
   @if (alertMessage$ | async; as alert) {
-    <div
-      class="alert alert-{{ alert.type }}">
-      {{ alert.text }}
-    </div>
+  <div class="alert alert-{{ alert.type }}">
+    {{ alert.text }}
+  </div>
   }
   <div
     class="form-group mb-3"
@@ -18,18 +17,13 @@
       placeholder="Введіть ваш email"
       formControlName="email" />
     @if (hasControlInvalid('email')) {
-      <span class="form-text">
-        @if (hasControlValidationError('email', 'required')) {
-          <span>{{
-            showErrorMessage('required')
-          }}</span>
-        }
-        @if (hasControlValidationError('email', 'email')) {
-          <span>{{
-            showErrorMessage('email')
-          }}</span>
-        }
-      </span>
+    <span class="form-text">
+      @if (hasControlValidationError('email', 'required')) {
+      <span>{{ showErrorMessage('required') }}</span>
+      } @if (hasControlValidationError('email', 'email')) {
+      <span>{{ showErrorMessage('email') }}</span>
+      }
+    </span>
     }
   </div>
 
@@ -44,21 +38,18 @@
       placeholder="Пароль"
       formControlName="password" />
     @if (hasControlInvalid('password')) {
-      <span class="form-text">
-        @if (hasControlValidationError('password', 'required')) {
-          <span>{{
-            showErrorMessage('required')
-          }}</span>
-        }
-        @if (hasControlValidationError('password', 'minlength')) {
-          <span>{{
-            showErrorMessage(
-            'minlength',
-            form.get('password')['errors']['minlength']
-            )
-          }}</span>
-        }
-      </span>
+    <span class="form-text">
+      @if (hasControlValidationError('password', 'required')) {
+      <span>{{ showErrorMessage('required') }}</span>
+      } @if (hasControlValidationError('password', 'minlength')) {
+      <span>{{
+        showErrorMessage(
+          'minlength',
+          form.get('password')['errors']['minlength']
+        )
+      }}</span>
+      }
+    </span>
     }
   </div>
 

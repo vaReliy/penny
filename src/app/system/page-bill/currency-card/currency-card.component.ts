@@ -8,11 +8,10 @@ import {
 import { CurrencyRatesModel } from '../../common/models/currency-rates.model';
 
 @Component({
-    selector: 'app-currency-card',
-    templateUrl: './currency-card.component.html',
-    styleUrls: ['./currency-card.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  selector: 'app-currency-card',
+  templateUrl: './currency-card.component.html',
+  styleUrls: ['./currency-card.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CurrencyCardComponent {
   @Input() rates: CurrencyRatesModel;

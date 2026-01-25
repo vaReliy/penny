@@ -11,11 +11,10 @@ import { Category } from '../../common/models/category.model';
 import { flatDtoToInstance } from '../../common/services/dto-transformer';
 
 @Component({
-    selector: 'app-add-category',
-    templateUrl: './add-category.component.html',
-    styleUrls: ['./add-category.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  selector: 'app-add-category',
+  templateUrl: './add-category.component.html',
+  styleUrls: ['./add-category.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AddCategoryComponent {
   @Output() addCategory = new EventEmitter<Category>();

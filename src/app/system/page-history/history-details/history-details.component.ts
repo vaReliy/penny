@@ -13,11 +13,10 @@ import { BillService } from '../../common/services/bill.service';
 import { CategoriesService } from '../../common/services/categories.service';
 
 @Component({
-    selector: 'app-history-details',
-    templateUrl: './history-details.component.html',
-    styleUrls: ['./history-details.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  selector: 'app-history-details',
+  templateUrl: './history-details.component.html',
+  styleUrls: ['./history-details.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HistoryDetailsComponent
   extends UnsubscriberComponent

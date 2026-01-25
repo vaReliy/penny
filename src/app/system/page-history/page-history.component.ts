@@ -23,12 +23,11 @@ export interface HistoryFilterData {
 }
 
 @Component({
-    selector: 'app-page-history',
-    templateUrl: './page-history.component.html',
-    styleUrls: ['./page-history.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [NgbModalConfig, NgbModal],
-    standalone: false
+  selector: 'app-page-history',
+  templateUrl: './page-history.component.html',
+  styleUrls: ['./page-history.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [NgbModalConfig, NgbModal],
 })
 export class PageHistoryComponent
   extends UnsubscriberComponent

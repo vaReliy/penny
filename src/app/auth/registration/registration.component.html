@@ -12,27 +12,22 @@
       id="email"
       placeholder="Введіть email" />
     @if (form.invalid && hasControlInvalid('email')) {
-      <span class="form-text">
-        @if (form.invalid && hasControlValidationError('email', 'required')) {
-          <span
-            >
-            {{ showErrorMessage('required') }}
-          </span>
-        }
-        @if (form.invalid && hasControlValidationError('email', 'email')) {
-          <span>
-            {{ showErrorMessage('email') }}
-          </span>
-        }
-        @if (
-          form.invalid && hasControlValidationError('email', 'isUserEmailExist')
-          ) {
-          <span
-            >
-            {{ showErrorMessage('isUserEmailExist') }}
-          </span>
-        }
+    <span class="form-text">
+      @if (form.invalid && hasControlValidationError('email', 'required')) {
+      <span>
+        {{ showErrorMessage('required') }}
       </span>
+      } @if (form.invalid && hasControlValidationError('email', 'email')) {
+      <span>
+        {{ showErrorMessage('email') }}
+      </span>
+      } @if ( form.invalid && hasControlValidationError('email',
+      'isUserEmailExist') ) {
+      <span>
+        {{ showErrorMessage('isUserEmailExist') }}
+      </span>
+      }
+    </span>
     }
   </div>
 
@@ -47,31 +42,24 @@
       id="password"
       placeholder="Введіть пароль" />
     @if (form.invalid && hasControlInvalid('password')) {
-      <span
-        class="form-text"
-        >
-        @if (
-          form.invalid && hasControlValidationError('password', 'required')
-          ) {
-          <span
-            >
-            {{ showErrorMessage('required') }}
-          </span>
-        }
-        @if (
-          form.invalid && hasControlValidationError('password', 'minlength')
-          ) {
-          <span
-            >
-            {{
-            showErrorMessage(
+    <span class="form-text">
+      @if ( form.invalid && hasControlValidationError('password', 'required') )
+      {
+      <span>
+        {{ showErrorMessage('required') }}
+      </span>
+      } @if ( form.invalid && hasControlValidationError('password', 'minlength')
+      ) {
+      <span>
+        {{
+          showErrorMessage(
             'minlength',
             form.get('password')['errors']['minlength']
-            )
-            }}
-          </span>
-        }
+          )
+        }}
       </span>
+      }
+    </span>
     }
   </div>
 
@@ -86,22 +74,19 @@
       id="name"
       placeholder="Введіть ім'я" />
     @if (form.invalid && hasControlInvalid('name')) {
-      <span class="form-text">
-        @if (form.invalid && hasControlValidationError('name', 'required')) {
-          <span
-            >
-            {{ showErrorMessage('required') }}
-          </span>
-        }
-        @if (form.invalid && hasControlValidationError('name', 'minlength')) {
-          <span
-            >
-            {{
-            showErrorMessage('minlength', form.get('name')['errors']['minlength'])
-            }}
-          </span>
-        }
+    <span class="form-text">
+      @if (form.invalid && hasControlValidationError('name', 'required')) {
+      <span>
+        {{ showErrorMessage('required') }}
       </span>
+      } @if (form.invalid && hasControlValidationError('name', 'minlength')) {
+      <span>
+        {{
+          showErrorMessage('minlength', form.get('name')['errors']['minlength'])
+        }}
+      </span>
+      }
+    </span>
     }
   </div>
 

@@ -6,11 +6,9 @@
   </div>
   <div class="card-body">
     @if (alertMessage.text.length) {
-      <div
-        class="alert alert-{{ alertMessage.type }}"
-        >
-        {{ alertMessage.text }}
-      </div>
+    <div class="alert alert-{{ alertMessage.type }}">
+      {{ alertMessage.text }}
+    </div>
     }
     <form #form="ngForm" (ngSubmit)="onSubmit(form)">
       <div class="form-group mb-3">
@@ -24,9 +22,9 @@
           class="form-control"
           id="edit-category">
           @for (c of categories; track c) {
-            <option [value]="c.id">
-              {{ c.name }}
-            </option>
+          <option [value]="c.id">
+            {{ c.name }}
+          </option>
           }
         </select>
       </div>
@@ -46,11 +44,7 @@
           class="form-control"
           required />
         @if (categoryName.touched && categoryName.invalid) {
-          <span
-            class="form-text"
-            >
-            Поле не може бути пустим
-          </span>
+        <span class="form-text"> Поле не може бути пустим </span>
         }
       </div>
 
@@ -71,11 +65,7 @@
           required
           minlength="1" />
         @if (categoryCapacity.touched && categoryCapacity.invalid) {
-          <span
-            class="form-text"
-            >
-            Поле не може бути пустим
-          </span>
+        <span class="form-text"> Поле не може бути пустим </span>
         }
       </div>
 

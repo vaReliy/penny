@@ -11,11 +11,10 @@ import { BillService } from '../common/services/bill.service';
 import { CategoriesService } from '../common/services/categories.service';
 
 @Component({
-    selector: 'app-page-records',
-    templateUrl: './page-records.component.html',
-    styleUrls: ['./page-records.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  selector: 'app-page-records',
+  templateUrl: './page-records.component.html',
+  styleUrls: ['./page-records.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PageRecordsComponent
   extends UnsubscriberComponent

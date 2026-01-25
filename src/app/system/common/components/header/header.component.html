@@ -17,14 +17,14 @@
       <ul
         class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0 d-none d-lg-flex">
         @for (link of links; track link) {
-          <li>
-            <a
-              [routerLink]="link.target"
-              routerLinkActive="active-link"
-              class="nav-link fs-5 px-2 link-secondary text-light">
-              {{ link.name }}
-            </a>
-          </li>
+        <li>
+          <a
+            [routerLink]="link.target"
+            routerLinkActive="active-link"
+            class="nav-link fs-5 px-2 link-secondary text-light">
+            {{ link.name }}
+          </a>
+        </li>
         }
       </ul>
       <!-- HORIZONTAL LINKS -->
@@ -48,15 +48,15 @@
           </button>
           <ul class="nav flex-column align-items-center text-light fs-2">
             @for (link of links; track link) {
-              <li>
-                <a
-                  ngbDropdownToggle
-                  [routerLink]="link.target"
-                  routerLinkActive="active-link"
-                  class="mobile-menu link-secondary text-light no-line-decoration px-3">
-                  {{ link.name }}
-                </a>
-              </li>
+            <li>
+              <a
+                ngbDropdownToggle
+                [routerLink]="link.target"
+                routerLinkActive="active-link"
+                class="mobile-menu link-secondary text-light no-line-decoration px-3">
+                {{ link.name }}
+              </a>
+            </li>
             }
 
             <div class="dropdown-divider"></div>

@@ -6,11 +6,9 @@
   </div>
   <div class="card-body">
     @if (alertMessage.text.length) {
-      <div
-        class="alert alert-{{ alertMessage.type }}"
-        >
-        {{ alertMessage.text }}
-      </div>
+    <div class="alert alert-{{ alertMessage.type }}">
+      {{ alertMessage.text }}
+    </div>
     }
     <form #form="ngForm" (ngSubmit)="onSubmit(form)">
       <div class="mb-3">
@@ -30,12 +28,9 @@
             aria-describedby="categoryNameHelpInline"
             required />
           @if (categoryName.touched && categoryName.invalid) {
-            <span
-              id="categoryNameHelpInline"
-              class="form-text"
-              >
-              Поле не може бути пустим
-            </span>
+          <span id="categoryNameHelpInline" class="form-text">
+            Поле не може бути пустим
+          </span>
           }
         </div>
 
@@ -57,12 +52,9 @@
             required
             minlength="1" />
           @if (categoryCapacity.touched && categoryCapacity.invalid) {
-            <span
-              id="categoryValueHelpInline"
-              class="form-text"
-              >
-              Поле не може бути пустим
-            </span>
+          <span id="categoryValueHelpInline" class="form-text">
+            Поле не може бути пустим
+          </span>
           }
         </div>
       </div>

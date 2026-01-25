@@ -6,11 +6,9 @@
   </div>
   <div class="card-body">
     @if (alertMessage.text.length) {
-      <div
-        class="alert alert-{{ alertMessage.type }}"
-        >
-        {{ alertMessage.text }}
-      </div>
+    <div class="alert alert-{{ alertMessage.type }}">
+      {{ alertMessage.text }}
+    </div>
     }
     <form #form="ngForm" (ngSubmit)="onSubmit(form)">
       <div class="form-group mb-3">
@@ -22,9 +20,9 @@
           id="add-event"
           required>
           @for (c of categories; track c) {
-            <option [value]="c.id">
-              {{ c.name }}
-            </option>
+          <option [value]="c.id">
+            {{ c.name }}
+          </option>
           }
         </select>
       </div>
@@ -32,18 +30,18 @@
       <div class="form-group mb-3">
         <label class="form-label">Оберіть тип</label>
         @for (t of eventTypes; track t) {
-          <div>
-            <label>
-              <input
-                [ngModel]="'outcome'"
-                [value]="t.type"
-                class="radio"
-                name="type"
-                type="radio"
-                required />
-              <span class="ms-2 fw-medium">{{ t.label }}</span>
-            </label>
-          </div>
+        <div>
+          <label>
+            <input
+              [ngModel]="'outcome'"
+              [value]="t.type"
+              class="radio"
+              name="type"
+              type="radio"
+              required />
+            <span class="ms-2 fw-medium">{{ t.label }}</span>
+          </label>
+        </div>
         }
       </div>
 
@@ -59,12 +57,9 @@
           min="1"
           required />
         @if (amount.touched && amount.invalid) {
-          <span
-            id="amountHelpInline"
-            class="form-text"
-            >
-            Поле не може бути пустим
-          </span>
+        <span id="amountHelpInline" class="form-text">
+          Поле не може бути пустим
+        </span>
         }
       </div>
 
@@ -79,12 +74,9 @@
           class="form-control"
           required />
         @if (name.touched && name.invalid) {
-          <span
-            id="nameHelpInline"
-            class="form-text"
-            >
-            Поле не може бути пустим
-          </span>
+        <span id="nameHelpInline" class="form-text">
+          Поле не може бути пустим
+        </span>
         }
       </div>
 

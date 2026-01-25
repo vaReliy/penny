@@ -2,42 +2,41 @@
   <h4>Сторінка історії</h4>
 
   @if (isLoaded$ | async; as isLoaded) {
-    <div class="text-end mt-1 me-3">
-      <button
-        (click)="onFilter()"
-        placement="top"
-        ngbTooltip="Застосувати фільтр"
-        class="btn-sm btn btn-primary-outline me-2"
-        data-bs-toggle="modal">
-        <i class="fa fa-filter"></i>
-      </button>
-      <button
-        (click)="onCancelFilter()"
-        placement="top"
-        ngbTooltip="Скинути фільтр"
-        class="btn-sm btn btn-primary-outline"
-        data-bs-toggle="modal">
-        <i class="fa fa-delete-left"></i>
-      </button>
-    </div>
+  <div class="text-end mt-1 me-3">
+    <button
+      (click)="onFilter()"
+      placement="top"
+      ngbTooltip="Застосувати фільтр"
+      class="btn-sm btn btn-primary-outline me-2"
+      data-bs-toggle="modal">
+      <i class="fa fa-filter"></i>
+    </button>
+    <button
+      (click)="onCancelFilter()"
+      placement="top"
+      ngbTooltip="Скинути фільтр"
+      class="btn-sm btn btn-primary-outline"
+      data-bs-toggle="modal">
+      <i class="fa fa-delete-left"></i>
+    </button>
+  </div>
   }
 </div>
 
 @if (isLoaded$ | async) {
-  <div class="">
-    <app-history-chart
-      [chartData]="chartData"
-      class="card bg-body-tertiary shadow mb-3">
-    </app-history-chart>
-    <div class="pb-3">
-      <app-history-events
-        [categories]="categories"
-        [events]="filtered$ | async"
-        [categoryMap]="categoryMap">
-      </app-history-events>
-    </div>
+<div class="">
+  <app-history-chart
+    [chartData]="chartData"
+    class="card bg-body-tertiary shadow mb-3">
+  </app-history-chart>
+  <div class="pb-3">
+    <app-history-events
+      [categories]="categories"
+      [events]="filtered$ | async"
+      [categoryMap]="categoryMap">
+    </app-history-events>
   </div>
+</div>
 } @else {
-  <app-loader></app-loader>
+<app-loader></app-loader>
 }
-

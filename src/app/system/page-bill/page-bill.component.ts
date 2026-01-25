@@ -12,11 +12,10 @@ import { BillService } from '../common/services/bill.service';
 import { flatDtoToInstance } from '../common/services/dto-transformer';
 
 @Component({
-    selector: 'app-page-bill',
-    templateUrl: './page-bill.component.html',
-    styleUrls: ['./page-bill.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  selector: 'app-page-bill',
+  templateUrl: './page-bill.component.html',
+  styleUrls: ['./page-bill.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PageBillComponent extends UnsubscriberComponent implements OnInit {
   bill: Bill;

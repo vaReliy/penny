@@ -2,8 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { AppEvent } from '../models/app-event.model';
 
 @Pipe({
-    name: 'appEventsFilter',
-    standalone: false
+  name: 'appEventsFilter',
 })
 export class EventsFilterPipe implements PipeTransform {
   transform(

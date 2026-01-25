@@ -3,11 +3,10 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AppEvent } from '../../common/models/app-event.model';
 
 @Component({
-    selector: 'app-history-filter',
-    templateUrl: './history-filter.component.html',
-    styleUrls: ['./history-filter.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  selector: 'app-history-filter',
+  templateUrl: './history-filter.component.html',
+  styleUrls: ['./history-filter.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HistoryFilterComponent {
   categoryMap: Map<number, string>;

@@ -3,16 +3,15 @@
 </div>
 
 @if (isLoaded$ | async) {
-  <div class="row row-col-media-from3-to2">
-    <div class="col mb-4">
-      <app-bill-card [bill]="bill" [rates]="rates"> </app-bill-card>
-    </div>
-    <div class="col mb-4">
-      <app-currency-card [rates]="rates" (rateUpdate)="onRefresh()">
-      </app-currency-card>
-    </div>
+<div class="row row-col-media-from3-to2">
+  <div class="col mb-4">
+    <app-bill-card [bill]="bill" [rates]="rates"> </app-bill-card>
   </div>
+  <div class="col mb-4">
+    <app-currency-card [rates]="rates" (rateUpdate)="onRefresh()">
+    </app-currency-card>
+  </div>
+</div>
 } @else {
-  <app-loader></app-loader>
+<app-loader></app-loader>
 }
-

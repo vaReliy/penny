@@ -11,11 +11,10 @@ import { BillService } from '../common/services/bill.service';
 import { CategoriesService } from '../common/services/categories.service';
 
 @Component({
-    selector: 'app-page-planner',
-    templateUrl: './page-planner.component.html',
-    styleUrls: ['./page-planner.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  selector: 'app-page-planner',
+  templateUrl: './page-planner.component.html',
+  styleUrls: ['./page-planner.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PagePlannerComponent
   extends UnsubscriberComponent
