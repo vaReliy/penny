@@ -1,41 +1,43 @@
 <div class="mb-4">
   <h4>Сторінка історії</h4>
 
-  <div class="text-end mt-1 me-3" *ngIf="isLoaded$ | async as isLoaded">
-    <button
-      (click)="onFilter()"
-      placement="top"
-      ngbTooltip="Застосувати фільтр"
-      class="btn-sm btn btn-primary-outline me-2"
-      data-bs-toggle="modal">
-      <i class="fa fa-filter"></i>
-    </button>
-    <button
-      (click)="onCancelFilter()"
-      placement="top"
-      ngbTooltip="Скинути фільтр"
-      class="btn-sm btn btn-primary-outline"
-      data-bs-toggle="modal">
-      <i class="fa fa-delete-left"></i>
-    </button>
-  </div>
+  @if (isLoaded$ | async; as isLoaded) {
+    <div class="text-end mt-1 me-3">
+      <button
+        (click)="onFilter()"
+        placement="top"
+        ngbTooltip="Застосувати фільтр"
+        class="btn-sm btn btn-primary-outline me-2"
+        data-bs-toggle="modal">
+        <i class="fa fa-filter"></i>
+      </button>
+      <button
+        (click)="onCancelFilter()"
+        placement="top"
+        ngbTooltip="Скинути фільтр"
+        class="btn-sm btn btn-primary-outline"
+        data-bs-toggle="modal">
+        <i class="fa fa-delete-left"></i>
+      </button>
+    </div>
+  }
 </div>
 
-<div class="" *ngIf="isLoaded$ | async; else loader">
-  <app-history-chart
-    [chartData]="chartData"
-    class="card bg-body-tertiary shadow mb-3">
-  </app-history-chart>
-
-  <div class="pb-3">
-    <app-history-events
-      [categories]="categories"
-      [events]="filtered$ | async"
-      [categoryMap]="categoryMap">
-    </app-history-events>
+@if (isLoaded$ | async) {
+  <div class="">
+    <app-history-chart
+      [chartData]="chartData"
+      class="card bg-body-tertiary shadow mb-3">
+    </app-history-chart>
+    <div class="pb-3">
+      <app-history-events
+        [categories]="categories"
+        [events]="filtered$ | async"
+        [categoryMap]="categoryMap">
+      </app-history-events>
+    </div>
   </div>
-</div>
-
-<ng-template #loader>
+} @else {
   <app-loader></app-loader>
-</ng-template>
+}
+

@@ -9,10 +9,11 @@ import { AppEvent } from '../../common/models/app-event.model';
 import { Category } from '../../common/models/category.model';
 
 @Component({
-  selector: 'app-history-events',
-  templateUrl: './history-events.component.html',
-  styleUrls: ['./history-events.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-history-events',
+    templateUrl: './history-events.component.html',
+    styleUrls: ['./history-events.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class HistoryEventsComponent implements OnInit {
   @Input() events: AppEvent[];

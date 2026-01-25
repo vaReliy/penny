@@ -46,25 +46,26 @@
           </tr>
         </thead>
         <tbody>
-          <tr
-            *ngFor="
-              let e of events
-                | appEventsFilter : searchValue : searchType : categoryMap;
-              let i = index
-            ">
-            <th scope="row">{{ i + 1 }}</th>
-            <td>{{ e.amount | number : '1.2-2' }}</td>
-            <td>{{ e.date }}</td>
-            <td>{{ getCategoryName(e.category) }}</td>
-            <td>
-              <span class="label label-{{ getColorClass(e.type) }}">{{
-                getEventLabel(e.type)
-              }}</span>
-            </td>
-            <td class="text-center">
-              <a [routerLink]="e.id" class="btn btn-outline-info">Відкрити</a>
-            </td>
-          </tr>
+          @for (
+            e of events
+            | appEventsFilter : searchValue : searchType : categoryMap; track
+            e; let i = $index) {
+            <tr
+              >
+              <th scope="row">{{ i + 1 }}</th>
+              <td>{{ e.amount | number : '1.2-2' }}</td>
+              <td>{{ e.date }}</td>
+              <td>{{ getCategoryName(e.category) }}</td>
+              <td>
+                <span class="label label-{{ getColorClass(e.type) }}">{{
+                  getEventLabel(e.type)
+                }}</span>
+              </td>
+              <td class="text-center">
+                <a [routerLink]="e.id" class="btn btn-outline-info">Відкрити</a>
+              </td>
+            </tr>
+          }
         </tbody>
       </table>
     </div>

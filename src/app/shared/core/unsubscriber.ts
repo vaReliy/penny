@@ -2,7 +2,8 @@ import { Component, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 
 @Component({
-  template: '',
+    template: '',
+    standalone: false
 })
 export class UnsubscriberComponent implements OnDestroy {
   private subcriptionList: Subscription[] = [];

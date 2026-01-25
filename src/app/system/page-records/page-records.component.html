@@ -2,28 +2,29 @@
   <h3>Сторінка записів</h3>
 </div>
 
-<section *ngIf="isLoaded$ | async; else loader">
-  <div class="row row-col-media-from3-to2">
-    <div class="col mb-4">
-      <app-add-event
-        [categories]="categories"
-        [currentBill]="bill"
-        (addAppEvent)="onAddEvent($event)">
-      </app-add-event>
+@if (isLoaded$ | async) {
+  <section>
+    <div class="row row-col-media-from3-to2">
+      <div class="col mb-4">
+        <app-add-event
+          [categories]="categories"
+          [currentBill]="bill"
+          (addAppEvent)="onAddEvent($event)">
+        </app-add-event>
+      </div>
+      <div class="col mb-4">
+        <app-add-category (addCategory)="onAddCategory($event)">
+        </app-add-category>
+      </div>
+      <div class="col mb-4">
+        <app-edit-category
+          [categories]="categories"
+          (editCategory)="onEditCategory($event)">
+        </app-edit-category>
+      </div>
     </div>
-    <div class="col mb-4">
-      <app-add-category (addCategory)="onAddCategory($event)">
-      </app-add-category>
-    </div>
-    <div class="col mb-4">
-      <app-edit-category
-        [categories]="categories"
-        (editCategory)="onEditCategory($event)">
-      </app-edit-category>
-    </div>
-  </div>
-</section>
-
-<ng-template #loader>
+  </section>
+} @else {
   <app-loader></app-loader>
-</ng-template>
+}
+

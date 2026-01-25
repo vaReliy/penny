@@ -5,11 +5,13 @@
     </div>
   </div>
   <div class="card-body">
-    <div
-      class="alert alert-{{ alertMessage.type }}"
-      *ngIf="alertMessage.text.length">
-      {{ alertMessage.text }}
-    </div>
+    @if (alertMessage.text.length) {
+      <div
+        class="alert alert-{{ alertMessage.type }}"
+        >
+        {{ alertMessage.text }}
+      </div>
+    }
     <form #form="ngForm" (ngSubmit)="onSubmit(form)">
       <div class="form-group mb-3">
         <label class="form-label" for="add-event">Оберіть категорію</label>
@@ -19,26 +21,30 @@
           class="form-control"
           id="add-event"
           required>
-          <option *ngFor="let c of categories" [value]="c.id">
-            {{ c.name }}
-          </option>
+          @for (c of categories; track c) {
+            <option [value]="c.id">
+              {{ c.name }}
+            </option>
+          }
         </select>
       </div>
 
       <div class="form-group mb-3">
         <label class="form-label">Оберіть тип</label>
-        <div *ngFor="let t of eventTypes">
-          <label>
-            <input
-              [ngModel]="'outcome'"
-              [value]="t.type"
-              class="radio"
-              name="type"
-              type="radio"
-              required />
-            <span class="ms-2 fw-medium">{{ t.label }}</span>
-          </label>
-        </div>
+        @for (t of eventTypes; track t) {
+          <div>
+            <label>
+              <input
+                [ngModel]="'outcome'"
+                [value]="t.type"
+                class="radio"
+                name="type"
+                type="radio"
+                required />
+              <span class="ms-2 fw-medium">{{ t.label }}</span>
+            </label>
+          </div>
+        }
       </div>
 
       <div class="form-group mb-3">
@@ -52,12 +58,14 @@
           class="form-control"
           min="1"
           required />
-        <span
-          id="amountHelpInline"
-          class="form-text"
-          *ngIf="amount.touched && amount.invalid">
-          Поле не може бути пустим
-        </span>
+        @if (amount.touched && amount.invalid) {
+          <span
+            id="amountHelpInline"
+            class="form-text"
+            >
+            Поле не може бути пустим
+          </span>
+        }
       </div>
 
       <div class="form-group mb-3">
@@ -70,12 +78,14 @@
           id="description"
           class="form-control"
           required />
-        <span
-          id="nameHelpInline"
-          class="form-text"
-          *ngIf="name.touched && name.invalid">
-          Поле не може бути пустим
-        </span>
+        @if (name.touched && name.invalid) {
+          <span
+            id="nameHelpInline"
+            class="form-text"
+            >
+            Поле не може бути пустим
+          </span>
+        }
       </div>
 
       <button [disabled]="form.invalid" type="submit" class="btn btn-primary">

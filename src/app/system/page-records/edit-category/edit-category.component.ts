@@ -11,10 +11,11 @@ import { Message } from '../../../shared/models/message.model';
 import { Category } from '../../common/models/category.model';
 
 @Component({
-  selector: 'app-edit-category',
-  templateUrl: './edit-category.component.html',
-  styleUrls: ['./edit-category.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-edit-category',
+    templateUrl: './edit-category.component.html',
+    styleUrls: ['./edit-category.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class EditCategoryComponent {
   @Input() categories: Category[];

@@ -17,10 +17,11 @@ import { Category } from '../../common/models/category.model';
 import { flatDtoToInstance } from '../../common/services/dto-transformer';
 
 @Component({
-  selector: 'app-add-event',
-  templateUrl: './add-event.component.html',
-  styleUrls: ['./add-event.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-add-event',
+    templateUrl: './add-event.component.html',
+    styleUrls: ['./add-event.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class AddEventComponent implements OnInit {
   @Input() categories: Category[];

@@ -10,10 +10,11 @@ import { UsersService } from '../../shared/services/users.service';
 import { FormControllerAbstract } from '../shared/form-controller-abstract';
 
 @Component({
-  selector: 'app-registration',
-  templateUrl: './registration.component.html',
-  styleUrls: ['./registration.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-registration',
+    templateUrl: './registration.component.html',
+    styleUrls: ['./registration.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class RegistrationComponent extends FormControllerAbstract {
   constructor(

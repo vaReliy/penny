@@ -11,21 +11,29 @@
       class="form-control underlined"
       id="email"
       placeholder="Введіть email" />
-    <span class="form-text" *ngIf="form.invalid && hasControlInvalid('email')">
-      <span
-        *ngIf="form.invalid && hasControlValidationError('email', 'required')">
-        {{ showErrorMessage('required') }}
-      </span>
-      <span *ngIf="form.invalid && hasControlValidationError('email', 'email')">
-        {{ showErrorMessage('email') }}
-      </span>
-      <span
-        *ngIf="
+    @if (form.invalid && hasControlInvalid('email')) {
+      <span class="form-text">
+        @if (form.invalid && hasControlValidationError('email', 'required')) {
+          <span
+            >
+            {{ showErrorMessage('required') }}
+          </span>
+        }
+        @if (form.invalid && hasControlValidationError('email', 'email')) {
+          <span>
+            {{ showErrorMessage('email') }}
+          </span>
+        }
+        @if (
           form.invalid && hasControlValidationError('email', 'isUserEmailExist')
-        ">
-        {{ showErrorMessage('isUserEmailExist') }}
+          ) {
+          <span
+            >
+            {{ showErrorMessage('isUserEmailExist') }}
+          </span>
+        }
       </span>
-    </span>
+    }
   </div>
 
   <div
@@ -38,27 +46,33 @@
       class="form-control underlined"
       id="password"
       placeholder="Введіть пароль" />
-    <span
-      class="form-text"
-      *ngIf="form.invalid && hasControlInvalid('password')">
+    @if (form.invalid && hasControlInvalid('password')) {
       <span
-        *ngIf="
+        class="form-text"
+        >
+        @if (
           form.invalid && hasControlValidationError('password', 'required')
-        ">
-        {{ showErrorMessage('required') }}
-      </span>
-      <span
-        *ngIf="
+          ) {
+          <span
+            >
+            {{ showErrorMessage('required') }}
+          </span>
+        }
+        @if (
           form.invalid && hasControlValidationError('password', 'minlength')
-        ">
-        {{
-          showErrorMessage(
+          ) {
+          <span
+            >
+            {{
+            showErrorMessage(
             'minlength',
             form.get('password')['errors']['minlength']
-          )
-        }}
+            )
+            }}
+          </span>
+        }
       </span>
-    </span>
+    }
   </div>
 
   <div
@@ -71,18 +85,24 @@
       class="form-control underlined"
       id="name"
       placeholder="Введіть ім'я" />
-    <span class="form-text" *ngIf="form.invalid && hasControlInvalid('name')">
-      <span
-        *ngIf="form.invalid && hasControlValidationError('name', 'required')">
-        {{ showErrorMessage('required') }}
+    @if (form.invalid && hasControlInvalid('name')) {
+      <span class="form-text">
+        @if (form.invalid && hasControlValidationError('name', 'required')) {
+          <span
+            >
+            {{ showErrorMessage('required') }}
+          </span>
+        }
+        @if (form.invalid && hasControlValidationError('name', 'minlength')) {
+          <span
+            >
+            {{
+            showErrorMessage('minlength', form.get('name')['errors']['minlength'])
+            }}
+          </span>
+        }
       </span>
-      <span
-        *ngIf="form.invalid && hasControlValidationError('name', 'minlength')">
-        {{
-          showErrorMessage('minlength', form.get('name')['errors']['minlength'])
-        }}
-      </span>
-    </span>
+    }
   </div>
 
   <div class="form-group mb-3">

@@ -11,10 +11,11 @@ import { UsersService } from '../../shared/services/users.service';
 import { FormControllerAbstract } from '../shared/form-controller-abstract';
 
 @Component({
-  selector: 'app-login',
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-login',
+    templateUrl: './login.component.html',
+    styleUrls: ['./login.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class LoginComponent extends FormControllerAbstract implements OnInit {
   alertMessage$ = new BehaviorSubject<Message | null>(null);
