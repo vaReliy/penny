@@ -1,3 +1,14 @@
+#!/usr/bin/env node
+
+/**
+ * Workflow YAML Validation Script
+ * 
+ * Validates the syntax and structure of the PR Management workflow.
+ * 
+ * Requirements: npm install js-yaml (dev dependency, not in package.json)
+ * Usage: node .github/scripts/validate-workflow.js
+ */
+
 const yaml = require('js-yaml');
 const fs = require('fs');
 
