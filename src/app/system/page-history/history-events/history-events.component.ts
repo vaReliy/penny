@@ -13,6 +13,7 @@ import { Category } from '../../common/models/category.model';
   templateUrl: './history-events.component.html',
   styleUrls: ['./history-events.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
 export class HistoryEventsComponent implements OnInit {
   @Input() events: AppEvent[];

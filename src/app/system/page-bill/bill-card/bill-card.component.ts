@@ -8,6 +8,7 @@ import { CurrencyRatesModel } from '../../common/models/currency-rates.model';
   templateUrl: './bill-card.component.html',
   styleUrls: ['./bill-card.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
 export class BillCardComponent {
   @Input() bill: Bill;

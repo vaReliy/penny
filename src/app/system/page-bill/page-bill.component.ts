@@ -16,6 +16,7 @@ import { flatDtoToInstance } from '../common/services/dto-transformer';
   templateUrl: './page-bill.component.html',
   styleUrls: ['./page-bill.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
 export class PageBillComponent extends UnsubscriberComponent implements OnInit {
   bill: Bill;

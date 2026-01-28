@@ -6,6 +6,7 @@ import { Title } from '@angular/platform-browser';
   templateUrl: './not-found.component.html',
   styleUrls: ['./not-found.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
 export class NotFoundComponent {
   constructor(private title: Title) {

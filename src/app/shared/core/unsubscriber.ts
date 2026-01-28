@@ -3,6 +3,7 @@ import { Subscription } from 'rxjs';
 
 @Component({
   template: '',
+  standalone: false,
 })
 export class UnsubscriberComponent implements OnDestroy {
   private subcriptionList: Subscription[] = [];

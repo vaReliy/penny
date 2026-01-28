@@ -9,6 +9,7 @@ import { avatarMock, linksMock } from './header.mock';
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
 export class HeaderComponent implements OnInit {
   date: Date = new Date();

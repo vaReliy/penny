@@ -15,6 +15,7 @@ import { flatDtoToInstance } from '../../common/services/dto-transformer';
   templateUrl: './add-category.component.html',
   styleUrls: ['./add-category.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
 export class AddCategoryComponent {
   @Output() addCategory = new EventEmitter<Category>();

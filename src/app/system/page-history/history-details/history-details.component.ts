@@ -17,6 +17,7 @@ import { CategoriesService } from '../../common/services/categories.service';
   templateUrl: './history-details.component.html',
   styleUrls: ['./history-details.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
 export class HistoryDetailsComponent
   extends UnsubscriberComponent

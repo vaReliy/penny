@@ -7,6 +7,7 @@ import { AppEvent } from '../../common/models/app-event.model';
   templateUrl: './history-filter.component.html',
   styleUrls: ['./history-filter.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
 export class HistoryFilterComponent {
   categoryMap: Map<number, string>;
@@ -29,15 +30,19 @@ export class HistoryFilterComponent {
   }
 
   eventTypeHandler({ checked, value }) {
-    checked
-      ? this.selectedEventsIds.add(value)
-      : this.selectedEventsIds.delete(value);
+    if (checked) {
+      this.selectedEventsIds.add(value);
+    } else {
+      this.selectedEventsIds.delete(value);
+    }
   }
 
   categoryTypeHandler({ checked, value }) {
-    checked
-      ? this.selectedCategoryIds.add(value)
-      : this.selectedCategoryIds.delete(value);
+    if (checked) {
+      this.selectedCategoryIds.add(value);
+    } else {
+      this.selectedCategoryIds.delete(value);
+    }
   }
 
   confirm() {
