@@ -1,0 +1,40 @@
+name: PR Management Agent
+
+on:
+  schedule:
+    # Run daily at 00:00 UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    # Allow manual triggering
+  pull_request:
+    types: [opened, reopened, synchronize]
+    # Only run on PRs from bot accounts
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  manage-prs:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]' || github.actor == 'github-actions[bot]' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      
+      - name: Run PR Management Script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node .github/scripts/manage-prs.js
