@@ -11,7 +11,6 @@
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
 // Configuration
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
@@ -166,7 +165,8 @@ async function analyzePR(pr) {
       console.log(`  ❌ ${packageName}: PR version ${prVersion} < current ${currentVersion}`);
       obsoletePackages.push({ packageName, prVersion, currentVersion, reason: 'Lower version' });
     } else if (comparison === 0) {
-      console.log(`  ⚠️  ${packageName}: PR version ${prVersion} = current ${currentVersion}`);
+      console.log(`  ℹ️  ${packageName}: PR version ${prVersion} = current ${currentVersion}`);
+      // Note: Equal versions are considered obsolete as the base branch already has this version
       obsoletePackages.push({ packageName, prVersion, currentVersion, reason: 'Same version' });
     } else {
       console.log(`  ✅ ${packageName}: PR version ${prVersion} > current ${currentVersion}`);
@@ -251,6 +251,13 @@ function generateObsoleteComment(pr, analysis, upgradePR) {
 
 // Main execution
 async function main() {
+  // Validate GITHUB_TOKEN
+  if (!GITHUB_TOKEN) {
+    console.error('❌ Error: GITHUB_TOKEN environment variable is not set');
+    console.error('Please set GITHUB_TOKEN with a valid GitHub Personal Access Token');
+    process.exit(1);
+  }
+  
   console.log('🤖 PR Management Agent Starting...');
   console.log(`Repository: ${REPO_OWNER}/${REPO_NAME}`);
   
@@ -299,6 +306,9 @@ async function main() {
         console.log(`✅ Successfully processed PR #${pr.number}`);
       } catch (error) {
         console.error(`❌ Error processing PR #${pr.number}:`, error.message);
+        if (error.message.includes('GitHub API error')) {
+          console.error('   Full error details:', error.message);
+        }
       }
     }
   }

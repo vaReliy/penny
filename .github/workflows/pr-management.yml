@@ -18,6 +18,9 @@ permissions:
 jobs:
   manage-prs:
     runs-on: ubuntu-latest
+    # Run on schedule/manual trigger OR for PRs from bot accounts only
+    # This ensures the agent can process all open PRs on schedule while
+    # also reacting to new bot PRs immediately
     if: github.actor == 'dependabot[bot]' || github.actor == 'github-actions[bot]' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     
     steps:
