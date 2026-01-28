@@ -19,16 +19,20 @@
           [ngModelOptions]="{ standalone: true }"
           class="form-control fw-medium"
           id="period">
-          <option *ngFor="let p of periodTypes" [value]="p.type">
+          @for (p of periodTypes; track p) {
+          <option [value]="p.type">
             {{ p.label }}
           </option>
+          }
         </select>
       </div>
 
       <div class="form-group mb-3">
         <label class="form-label">Оберіть тип події</label>
-        <div *ngIf="events">
-          <label *ngFor="let eType of eventTypes">
+        @if (events) {
+        <div>
+          @for (eType of eventTypes; track eType) {
+          <label>
             <input
               [value]="eType"
               (change)="eventTypeHandler($event.target)"
@@ -36,13 +40,17 @@
               type="checkbox" />
             <span class="fw-medium me-3">{{ getEventLabelByType(eType) }}</span>
           </label>
+          }
         </div>
+        }
       </div>
 
       <div class="form-group mb-3">
         <label class="form-label">Оберіть категорії</label>
-        <div *ngIf="categoryMap">
-          <label *ngFor="let item of categoryMap | keyvalue">
+        @if (categoryMap) {
+        <div>
+          @for (item of categoryMap | keyvalue; track item) {
+          <label>
             <input
               [value]="item.key"
               (change)="categoryTypeHandler($event.target)"
@@ -50,7 +58,9 @@
               type="checkbox" />
             <span class="fw-medium me-3">{{ item.value }}</span>
           </label>
+          }
         </div>
+        }
       </div>
 
       <div class="d-flex justify-content-end">

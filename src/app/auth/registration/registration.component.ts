@@ -14,6 +14,7 @@ import { FormControllerAbstract } from '../shared/form-controller-abstract';
   templateUrl: './registration.component.html',
   styleUrls: ['./registration.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
 export class RegistrationComponent extends FormControllerAbstract {
   constructor(

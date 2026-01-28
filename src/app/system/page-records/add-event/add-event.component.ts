@@ -21,6 +21,7 @@ import { flatDtoToInstance } from '../../common/services/dto-transformer';
   templateUrl: './add-event.component.html',
   styleUrls: ['./add-event.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
 export class AddEventComponent implements OnInit {
   @Input() categories: Category[];

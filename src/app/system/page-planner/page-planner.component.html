@@ -2,9 +2,8 @@
   <h3>Сторінка планування</h3>
 </div>
 
-<div
-  class="card bg-body-tertiary shadow"
-  *ngIf="isLoadied$ | async; else loader">
+@if (isLoadied$ | async) {
+<div class="card bg-body-tertiary shadow">
   <div class="card-title">
     <div class="card-header">
       <h4>Витрати</h4>
@@ -17,9 +16,9 @@
       ></span>
     </h5>
   </div>
-
   <div class="card-body">
-    <div *ngFor="let c of categories">
+    @for (c of categories; track c) {
+    <div>
       <div class="col-auto">
         <div class="progress large-progress">
           <div
@@ -33,7 +32,6 @@
           >
         </div>
       </div>
-
       <div class="col-auto">
         <p>
           <span class="text-{{ getProgressColor(c) }}"
@@ -53,9 +51,9 @@
         </p>
       </div>
     </div>
+    }
   </div>
 </div>
-
-<ng-template #loader>
-  <app-loader></app-loader>
-</ng-template>
+} @else {
+<app-loader></app-loader>
+}

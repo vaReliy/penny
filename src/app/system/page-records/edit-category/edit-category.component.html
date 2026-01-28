@@ -5,11 +5,11 @@
     </div>
   </div>
   <div class="card-body">
-    <div
-      class="alert alert-{{ alertMessage.type }}"
-      *ngIf="alertMessage.text.length">
+    @if (alertMessage.text.length) {
+    <div class="alert alert-{{ alertMessage.type }}">
       {{ alertMessage.text }}
     </div>
+    }
     <form #form="ngForm" (ngSubmit)="onSubmit(form)">
       <div class="form-group mb-3">
         <label class="form-label" for="edit-category">
@@ -21,9 +21,11 @@
           (change)="onOptionSelect()"
           class="form-control"
           id="edit-category">
-          <option *ngFor="let c of categories" [value]="c.id">
+          @for (c of categories; track c) {
+          <option [value]="c.id">
             {{ c.name }}
           </option>
+          }
         </select>
       </div>
 
@@ -41,11 +43,9 @@
           id="category-name"
           class="form-control"
           required />
-        <span
-          class="form-text"
-          *ngIf="categoryName.touched && categoryName.invalid">
-          Поле не може бути пустим
-        </span>
+        @if (categoryName.touched && categoryName.invalid) {
+        <span class="form-text"> Поле не може бути пустим </span>
+        }
       </div>
 
       <div
@@ -64,11 +64,9 @@
           class="form-control"
           required
           minlength="1" />
-        <span
-          class="form-text"
-          *ngIf="categoryCapacity.touched && categoryCapacity.invalid">
-          Поле не може бути пустим
-        </span>
+        @if (categoryCapacity.touched && categoryCapacity.invalid) {
+        <span class="form-text"> Поле не може бути пустим </span>
+        }
       </div>
 
       <button [disabled]="form.invalid" type="submit" class="btn btn-primary">

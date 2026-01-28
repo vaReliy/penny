@@ -2,17 +2,16 @@
   <h4>Сторінка рахунку</h4>
 </div>
 
-<div class="row row-col-media-from3-to2" *ngIf="isLoaded$ | async; else loader">
+@if (isLoaded$ | async) {
+<div class="row row-col-media-from3-to2">
   <div class="col mb-4">
     <app-bill-card [bill]="bill" [rates]="rates"> </app-bill-card>
   </div>
-
   <div class="col mb-4">
     <app-currency-card [rates]="rates" (rateUpdate)="onRefresh()">
     </app-currency-card>
   </div>
 </div>
-
-<ng-template #loader>
-  <app-loader></app-loader>
-</ng-template>
+} @else {
+<app-loader></app-loader>
+}

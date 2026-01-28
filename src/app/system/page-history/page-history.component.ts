@@ -28,6 +28,7 @@ export interface HistoryFilterData {
   styleUrls: ['./page-history.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [NgbModalConfig, NgbModal],
+  standalone: false,
 })
 export class PageHistoryComponent
   extends UnsubscriberComponent

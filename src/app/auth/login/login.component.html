@@ -1,11 +1,11 @@
 <p class="text-center">Увійдіть для роботи</p>
 
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
-  <div
-    *ngIf="alertMessage$ | async as alert"
-    class="alert alert-{{ alert.type }}">
+  @if (alertMessage$ | async; as alert) {
+  <div class="alert alert-{{ alert.type }}">
     {{ alert.text }}
   </div>
+  }
   <div
     class="form-group mb-3"
     [ngClass]="{ 'has-error': hasControlInvalid('email') }">
@@ -16,14 +16,15 @@
       id="email"
       placeholder="Введіть ваш email"
       formControlName="email" />
-    <span class="form-text" *ngIf="hasControlInvalid('email')">
-      <span *ngIf="hasControlValidationError('email', 'required')">{{
-        showErrorMessage('required')
-      }}</span>
-      <span *ngIf="hasControlValidationError('email', 'email')">{{
-        showErrorMessage('email')
-      }}</span>
+    @if (hasControlInvalid('email')) {
+    <span class="form-text">
+      @if (hasControlValidationError('email', 'required')) {
+      <span>{{ showErrorMessage('required') }}</span>
+      } @if (hasControlValidationError('email', 'email')) {
+      <span>{{ showErrorMessage('email') }}</span>
+      }
     </span>
+    }
   </div>
 
   <div
@@ -36,17 +37,20 @@
       id="password"
       placeholder="Пароль"
       formControlName="password" />
-    <span class="form-text" *ngIf="hasControlInvalid('password')">
-      <span *ngIf="hasControlValidationError('password', 'required')">{{
-        showErrorMessage('required')
-      }}</span>
-      <span *ngIf="hasControlValidationError('password', 'minlength')">{{
+    @if (hasControlInvalid('password')) {
+    <span class="form-text">
+      @if (hasControlValidationError('password', 'required')) {
+      <span>{{ showErrorMessage('required') }}</span>
+      } @if (hasControlValidationError('password', 'minlength')) {
+      <span>{{
         showErrorMessage(
           'minlength',
           form.get('password')['errors']['minlength']
         )
       }}</span>
+      }
     </span>
+    }
   </div>
 
   <div class="form-group mb-3">

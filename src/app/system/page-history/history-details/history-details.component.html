@@ -7,15 +7,13 @@
   </h3>
 </div>
 
-<div
-  class="card bg-body-tertiary shadow"
-  *ngIf="isLoaded$ | async; else loader">
+@if (isLoaded$ | async) {
+<div class="card bg-body-tertiary shadow">
   <div class="row">
     <div class="col-xs-6 col-xs-offset-3">
       <div class="card card-{{ getColorClass(event.type) }}"></div>
     </div>
   </div>
-
   <div class="card-header">
     <div class="card-title">
       <h4>{{ getEventLabel(event.type) }}</h4>
@@ -50,7 +48,6 @@
     <span class="fst-italic">{{ event.date }}</span>
   </div>
 </div>
-
-<ng-template #loader>
-  <app-loader></app-loader>
-</ng-template>
+} @else {
+<app-loader></app-loader>
+}

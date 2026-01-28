@@ -5,11 +5,11 @@
     </div>
   </div>
   <div class="card-body">
-    <div
-      class="alert alert-{{ alertMessage.type }}"
-      *ngIf="alertMessage.text.length">
+    @if (alertMessage.text.length) {
+    <div class="alert alert-{{ alertMessage.type }}">
       {{ alertMessage.text }}
     </div>
+    }
     <form #form="ngForm" (ngSubmit)="onSubmit(form)">
       <div class="mb-3">
         <div
@@ -27,12 +27,11 @@
             class="form-control"
             aria-describedby="categoryNameHelpInline"
             required />
-          <span
-            id="categoryNameHelpInline"
-            class="form-text"
-            *ngIf="categoryName.touched && categoryName.invalid">
+          @if (categoryName.touched && categoryName.invalid) {
+          <span id="categoryNameHelpInline" class="form-text">
             Поле не може бути пустим
           </span>
+          }
         </div>
 
         <div
@@ -52,12 +51,11 @@
             aria-describedby="categoryValueHelpInline"
             required
             minlength="1" />
-          <span
-            id="categoryValueHelpInline"
-            class="form-text"
-            *ngIf="categoryCapacity.touched && categoryCapacity.invalid">
+          @if (categoryCapacity.touched && categoryCapacity.invalid) {
+          <span id="categoryValueHelpInline" class="form-text">
             Поле не може бути пустим
           </span>
+          }
         </div>
       </div>
       <button [disabled]="form.invalid" type="submit" class="btn btn-primary">

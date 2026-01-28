@@ -15,6 +15,7 @@ import { FormControllerAbstract } from '../shared/form-controller-abstract';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
 export class LoginComponent extends FormControllerAbstract implements OnInit {
   alertMessage$ = new BehaviorSubject<Message | null>(null);

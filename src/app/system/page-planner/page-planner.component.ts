@@ -15,6 +15,7 @@ import { CategoriesService } from '../common/services/categories.service';
   templateUrl: './page-planner.component.html',
   styleUrls: ['./page-planner.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
 export class PagePlannerComponent
   extends UnsubscriberComponent

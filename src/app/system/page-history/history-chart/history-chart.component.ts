@@ -7,6 +7,7 @@ import { IChartData } from '../../common/models/IChartData';
   templateUrl: './history-chart.component.html',
   styleUrls: ['./history-chart.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
 export class HistoryChartComponent {
   @Input() chartData: IChartData[];

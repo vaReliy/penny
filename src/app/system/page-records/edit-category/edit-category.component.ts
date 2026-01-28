@@ -15,6 +15,7 @@ import { Category } from '../../common/models/category.model';
   templateUrl: './edit-category.component.html',
   styleUrls: ['./edit-category.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
 export class EditCategoryComponent {
   @Input() categories: Category[];

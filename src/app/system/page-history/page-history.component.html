@@ -1,7 +1,8 @@
 <div class="mb-4">
   <h4>Сторінка історії</h4>
 
-  <div class="text-end mt-1 me-3" *ngIf="isLoaded$ | async as isLoaded">
+  @if (isLoaded$ | async; as isLoaded) {
+  <div class="text-end mt-1 me-3">
     <button
       (click)="onFilter()"
       placement="top"
@@ -19,14 +20,15 @@
       <i class="fa fa-delete-left"></i>
     </button>
   </div>
+  }
 </div>
 
-<div class="" *ngIf="isLoaded$ | async; else loader">
+@if (isLoaded$ | async) {
+<div class="">
   <app-history-chart
     [chartData]="chartData"
     class="card bg-body-tertiary shadow mb-3">
   </app-history-chart>
-
   <div class="pb-3">
     <app-history-events
       [categories]="categories"
@@ -35,7 +37,6 @@
     </app-history-events>
   </div>
 </div>
-
-<ng-template #loader>
-  <app-loader></app-loader>
-</ng-template>
+} @else {
+<app-loader></app-loader>
+}

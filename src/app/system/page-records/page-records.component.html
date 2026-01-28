@@ -2,7 +2,8 @@
   <h3>Сторінка записів</h3>
 </div>
 
-<section *ngIf="isLoaded$ | async; else loader">
+@if (isLoaded$ | async) {
+<section>
   <div class="row row-col-media-from3-to2">
     <div class="col mb-4">
       <app-add-event
@@ -23,7 +24,6 @@
     </div>
   </div>
 </section>
-
-<ng-template #loader>
-  <app-loader></app-loader>
-</ng-template>
+} @else {
+<app-loader></app-loader>
+}

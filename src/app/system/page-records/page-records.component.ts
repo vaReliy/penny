@@ -15,6 +15,7 @@ import { CategoriesService } from '../common/services/categories.service';
   templateUrl: './page-records.component.html',
   styleUrls: ['./page-records.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
 export class PageRecordsComponent
   extends UnsubscriberComponent
