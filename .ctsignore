@@ -1,0 +1,28 @@
+# .ctsignore — gitignore-syntax paths that `cts-sync.sh update` will never touch.
+
+# Use for: customized CTS files, pruned CTS files (prevents re-adding them),
+
+# and project-only additions placed under payload directories.
+
+# A leading "/" anchors to the project root: "/AGENTS.md" protects only the
+
+# root file; a bare "AGENTS.md" would also match nested files with that name.
+
+# Pruned: project uses Angular only — Vue/React agents+skills removed.
+
+.claude/agents/vue-developer.md
+.claude/agents/react-developer.md
+.claude/skills/vue-expert/
+.claude/skills/react-expert/
+
+# Customized for Penny: generic stack (Postgres/Prisma) overridden to
+
+# Mongo/Mongoose/Typegoose, onion architecture, LIVR validation. Never re-add upstream.
+
+/AGENTS.md
+/rules/architecture.md
+/rules/validation-authorization.md
+
+# Project-only, outside the CTS payload — not touched by sync either way, noted for clarity.
+
+docs/rebuild/
