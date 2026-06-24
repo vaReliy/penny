@@ -20,22 +20,104 @@ export default [
           enforceBuildableLibDependency: true,
           allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
           depConstraints: [
+            // scope: domain isolation (cross-domain only via scope:shared)
             {
               sourceTag: 'scope:shared',
               onlyDependOnLibsWithTags: ['scope:shared'],
             },
             {
-              sourceTag: 'scope:shop',
-              onlyDependOnLibsWithTags: ['scope:shop', 'scope:shared'],
+              sourceTag: 'scope:identity',
+              onlyDependOnLibsWithTags: ['scope:identity', 'scope:shared'],
+            },
+            // platform: web ⊥ server; both may use shared
+            {
+              sourceTag: 'platform:shared',
+              onlyDependOnLibsWithTags: ['platform:shared'],
             },
             {
-              sourceTag: 'scope:api',
-              onlyDependOnLibsWithTags: ['scope:api', 'scope:shared'],
+              sourceTag: 'platform:server',
+              onlyDependOnLibsWithTags: ['platform:server', 'platform:shared'],
+            },
+            {
+              sourceTag: 'platform:web',
+              onlyDependOnLibsWithTags: ['platform:web', 'platform:shared'],
+            },
+            // type: onion (backend)
+            {
+              sourceTag: 'type:infrastructure',
+              onlyDependOnLibsWithTags: [
+                'type:infrastructure',
+                'type:application',
+                'type:core',
+                'type:contracts',
+                'type:kernel',
+                'type:util',
+              ],
+            },
+            {
+              sourceTag: 'type:application',
+              onlyDependOnLibsWithTags: [
+                'type:application',
+                'type:core',
+                'type:contracts',
+                'type:kernel',
+                'type:util',
+              ],
+              bannedExternalImports: [
+                '@nestjs/*',
+                '@angular/*',
+                'mongoose',
+                'mongodb',
+                '@typegoose/*',
+              ],
+            },
+            {
+              sourceTag: 'type:core',
+              onlyDependOnLibsWithTags: [
+                'type:core',
+                'type:kernel',
+                'type:util',
+              ],
+              bannedExternalImports: [
+                '@nestjs/*',
+                '@angular/*',
+                'mongoose',
+                'mongodb',
+                '@typegoose/*',
+              ],
+            },
+            // type: onion (frontend)
+            {
+              sourceTag: 'type:feature',
+              onlyDependOnLibsWithTags: [
+                'type:feature',
+                'type:ui',
+                'type:data',
+                'type:util',
+              ],
+            },
+            {
+              sourceTag: 'type:ui',
+              onlyDependOnLibsWithTags: ['type:ui', 'type:util'],
             },
             {
               sourceTag: 'type:data',
-              onlyDependOnLibsWithTags: ['type:data'],
+              onlyDependOnLibsWithTags: [
+                'type:data',
+                'type:util',
+                'type:contracts',
+              ],
             },
+            // type: shared leaves
+            {
+              sourceTag: 'type:kernel',
+              onlyDependOnLibsWithTags: ['type:kernel', 'type:util'],
+            },
+            {
+              sourceTag: 'type:contracts',
+              onlyDependOnLibsWithTags: ['type:contracts', 'type:util'],
+            },
+            { sourceTag: 'type:util', onlyDependOnLibsWithTags: ['type:util'] },
           ],
         },
       ],
@@ -43,16 +125,23 @@ export default [
   },
   {
     files: [
-      '**/*.ts',
-      '**/*.tsx',
-      '**/*.cts',
-      '**/*.mts',
-      '**/*.js',
-      '**/*.jsx',
-      '**/*.cjs',
-      '**/*.mjs',
+      'libs/*/feature/**/*.ts',
+      'libs/*/feature-*/**/*.ts',
+      'libs/*/ui/**/*.ts',
+      'libs/*/ui-*/**/*.ts',
+      'libs/*/data/**/*.ts',
+      'libs/*/data-*/**/*.ts',
     ],
-    // Override or add rules here
-    rules: {},
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "MemberExpression[object.name='localStorage'], MemberExpression[object.object.name='window'][object.property.name='localStorage']",
+          message:
+            'Do not read/write auth tokens via localStorage in web libs — use the in-memory/secure token store.',
+        },
+      ],
+    },
   },
 ];
