@@ -6,7 +6,9 @@
     "node": "22.23.1"
   },
   "packageManager": "pnpm@11.9.0",
-  "scripts": {},
+  "scripts": {
+    "prepare": "husky"
+  },
   "private": true,
   "dependencies": {
     "@angular-devkit/build-angular": "21.2.7",
@@ -30,6 +32,8 @@
     "@angular/cli": "21.2.7",
     "@angular/compiler-cli": "21.2.9",
     "@angular/language-service": "21.2.9",
+    "@commitlint/cli": "21.0.2",
+    "@commitlint/config-conventional": "21.0.2",
     "@eslint/js": "^9.8.0",
     "@nestjs/schematics": "^11.0.0",
     "@nx/angular": "23.0.1",
@@ -61,9 +65,11 @@
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^10.0.0",
     "eslint-plugin-playwright": "^1.6.2",
+    "husky": "9.1.7",
     "jiti": "2.4.2",
     "jsdom": "~22.1.0",
     "jsonc-eslint-parser": "^2.1.0",
+    "lint-staged": "17.0.8",
     "nx": "23.0.1",
     "prettier": "^3.8.1",
     "ts-node": "10.9.1",
