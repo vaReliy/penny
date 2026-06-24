@@ -40,6 +40,18 @@ shims/bin dir on `PATH`, e.g. for mise:
 `export PATH="$HOME/.local/share/mise/shims:$PATH"`. Husky sources this file before
 every hook run.
 
+## Dependency policy
+
+- **Exact pins only.** `pnpm-workspace.yaml` sets `saveExact: true`; no `^`/`~` ranges are
+  allowed in any `package.json`. CI runs `node tools/check-exact-pins.mjs` to enforce this.
+- **Install scripts are default-denied.** `strictDepBuilds: true` in `pnpm-workspace.yaml`
+  blocks lifecycle scripts for any dependency not explicitly listed in `allowBuilds`. If a
+  new dependency needs to run a build/install script, review it, then run
+  `pnpm approve-builds` and commit the resulting `allowBuilds` entry.
+- **Renovate** (`renovate.json`) proposes upgrades as exact-pin PRs, grouped by
+  ecosystem, with a 7-day minimum release age before a new version is even proposed.
+  Nothing automerges.
+
 ## Getting started
 
 ```

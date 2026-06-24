@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  NX_DAEMON: false
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Derive Nx affected base/head
+        uses: nrwl/nx-set-shas@v5
+        with:
+          main-branch-name: 'main'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Check exact pins
+        run: node tools/check-exact-pins.mjs
+
+      - name: Lint, test, build affected projects
+        run: pnpm nx affected -t lint,test,build
+
+      - name: Audit dependencies (non-blocking)
+        run: pnpm audit || true

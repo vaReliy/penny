@@ -35,7 +35,7 @@ importers:
         specifier: 21.2.7
         version: 21.2.7(e479a64f20df40673604187a9a6de656)
       rxjs:
-        specifier: ~7.8.0
+        specifier: 7.8.2
         version: 7.8.2
       zone.js:
         specifier: 0.16.0
@@ -72,10 +72,10 @@ importers:
         specifier: 21.0.2
         version: 21.0.2
       '@eslint/js':
-        specifier: ^9.8.0
+        specifier: 9.39.4
         version: 9.39.4
       '@nestjs/schematics':
-        specifier: ^11.0.0
+        specifier: 11.1.0
         version: 11.1.0(chokidar@5.0.0)(prettier@3.8.4)(typescript@5.9.3)
       '@nx/angular':
         specifier: 23.0.1
@@ -120,10 +120,10 @@ importers:
         specifier: 23.0.1
         version: 23.0.1(@swc-node/register@1.11.1(@swc/core@1.15.8(@swc/helpers@0.5.18))(@swc/types@0.1.27)(typescript@5.9.3))(@swc/core@1.15.8(@swc/helpers@0.5.18))
       '@oxc-project/runtime':
-        specifier: ^0.115.0
+        specifier: 0.115.0
         version: 0.115.0
       '@playwright/test':
-        specifier: ^1.36.0
+        specifier: 1.61.0
         version: 1.61.0
       '@schematics/angular':
         specifier: 21.2.7
@@ -138,31 +138,31 @@ importers:
         specifier: 0.5.18
         version: 0.5.18
       '@types/node':
-        specifier: ^22.0.0
+        specifier: 22.20.0
         version: 22.20.0
       '@typescript-eslint/utils':
-        specifier: ^8.40.0
+        specifier: 8.62.0
         version: 8.62.0(eslint@9.39.4(jiti@2.4.2))(typescript@5.9.3)
       '@vitest/coverage-v8':
-        specifier: ~4.1.0
+        specifier: 4.1.9
         version: 4.1.9(vitest@4.1.9)
       '@vitest/ui':
-        specifier: ~4.1.0
+        specifier: 4.1.9
         version: 4.1.9(vitest@4.1.9)
       angular-eslint:
         specifier: 21.3.1
         version: 21.3.1(@angular/cli@21.2.7(@types/node@22.20.0)(chokidar@5.0.0))(chokidar@5.0.0)(eslint@9.39.4(jiti@2.4.2))(typescript-eslint@8.62.0(eslint@9.39.4(jiti@2.4.2))(typescript@5.9.3))(typescript@5.9.3)
       esbuild:
-        specifier: ^0.27.0
+        specifier: 0.27.7
         version: 0.27.7
       eslint:
-        specifier: ^9.8.0
+        specifier: 9.39.4
         version: 9.39.4(jiti@2.4.2)
       eslint-config-prettier:
-        specifier: ^10.0.0
+        specifier: 10.1.8
         version: 10.1.8(eslint@9.39.4(jiti@2.4.2))
       eslint-plugin-playwright:
-        specifier: ^1.6.2
+        specifier: 1.8.3
         version: 1.8.3(eslint@9.39.4(jiti@2.4.2))
       husky:
         specifier: 9.1.7
@@ -171,10 +171,10 @@ importers:
         specifier: 2.4.2
         version: 2.4.2
       jsdom:
-        specifier: ~22.1.0
+        specifier: 22.1.0
         version: 22.1.0
       jsonc-eslint-parser:
-        specifier: ^2.1.0
+        specifier: 2.4.2
         version: 2.4.2
       lint-staged:
         specifier: 17.0.8
@@ -183,28 +183,28 @@ importers:
         specifier: 23.0.1
         version: 23.0.1(@swc-node/register@1.11.1(@swc/core@1.15.8(@swc/helpers@0.5.18))(@swc/types@0.1.27)(typescript@5.9.3))(@swc/core@1.15.8(@swc/helpers@0.5.18))
       prettier:
-        specifier: ^3.8.1
+        specifier: 3.8.4
         version: 3.8.4
       ts-node:
         specifier: 10.9.1
         version: 10.9.1(@swc/core@1.15.8(@swc/helpers@0.5.18))(@types/node@22.20.0)(typescript@5.9.3)
       tslib:
-        specifier: ^2.3.0
+        specifier: 2.8.1
         version: 2.8.1
       typescript:
-        specifier: ~5.9.2
+        specifier: 5.9.3
         version: 5.9.3
       typescript-eslint:
-        specifier: ^8.40.0
+        specifier: 8.62.0
         version: 8.62.0(eslint@9.39.4(jiti@2.4.2))(typescript@5.9.3)
       vite:
         specifier: 8.0.9
         version: 8.0.9(@types/node@22.20.0)(esbuild@0.27.7)(jiti@2.4.2)(less@4.5.1)(sass-embedded@1.100.0)(sass@1.97.3)(terser@5.48.0)(yaml@2.9.0)
       vite-tsconfig-paths:
-        specifier: ^5.1.4
+        specifier: 5.1.4
         version: 5.1.4(typescript@5.9.3)(vite@8.0.9(@types/node@22.20.0)(esbuild@0.27.7)(jiti@2.4.2)(less@4.5.1)(sass-embedded@1.100.0)(sass@1.97.3)(terser@5.48.0)(yaml@2.9.0))
       vitest:
-        specifier: ~4.1.0
+        specifier: 4.1.9
         version: 4.1.9(@types/node@22.20.0)(@vitest/coverage-v8@4.1.9)(@vitest/ui@4.1.9)(jsdom@22.1.0)(vite@8.0.9(@types/node@22.20.0)(esbuild@0.27.7)(jiti@2.4.2)(less@4.5.1)(sass-embedded@1.100.0)(sass@1.97.3)(terser@5.48.0)(yaml@2.9.0))
 
 packages:
@@ -19053,7 +19053,7 @@ snapshots:
       normalize-path: 3.0.0
       schema-utils: 4.3.3
       serialize-javascript: 7.0.6
-      tinyglobby: 0.2.15
+      tinyglobby: 0.2.17
       webpack: 5.105.2(@swc/core@1.15.8(@swc/helpers@0.5.18))(esbuild@0.27.7)(lightningcss@1.32.0)(postcss@8.5.6)
 
   core-js-compat@3.49.0:
@@ -23013,7 +23013,7 @@ snapshots:
       picomatch: 4.0.4
       postcss: 8.5.15
       rollup: 4.62.2
-      tinyglobby: 0.2.15
+      tinyglobby: 0.2.17
     optionalDependencies:
       '@types/node': 22.20.0
       fsevents: 2.3.3
@@ -23032,7 +23032,7 @@ snapshots:
       picomatch: 4.0.4
       postcss: 8.5.15
       rollup: 4.62.2
-      tinyglobby: 0.2.15
+      tinyglobby: 0.2.17
     optionalDependencies:
       '@types/node': 22.20.0
       fsevents: 2.3.3

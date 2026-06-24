@@ -1,0 +1,32 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "rangeStrategy": "pin",
+  "minimumReleaseAge": "7 days",
+  "automerge": false,
+  "schedule": ["before 6am on wednesday"],
+  "packageRules": [
+    {
+      "matchPackageNames": ["*"],
+      "groupName": "other"
+    },
+    {
+      "matchPackageNames": [
+        "/^@angular//",
+        "/^@schematics\\/angular$/",
+        "/^angular-eslint$/",
+        "/^zone\\.js$/",
+        "/^rxjs$/"
+      ],
+      "groupName": "angular"
+    },
+    {
+      "matchPackageNames": ["/^@nestjs//"],
+      "groupName": "nest"
+    },
+    {
+      "matchPackageNames": ["/^@nx//", "/^nx$/"],
+      "groupName": "nx"
+    }
+  ]
+}
