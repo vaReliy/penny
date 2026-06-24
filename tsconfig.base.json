@@ -12,7 +12,12 @@
     "module": "esnext",
     "lib": ["es2020", "dom"],
     "skipLibCheck": true,
-    "skipDefaultLibCheck": true
+    "skipDefaultLibCheck": true,
+    "paths": {
+      "shared-errors": ["./libs/shared/errors/src/index.ts"],
+      "shared-util": ["./libs/shared/util/src/index.ts"],
+      "shared-contracts": ["./libs/shared/contracts/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }

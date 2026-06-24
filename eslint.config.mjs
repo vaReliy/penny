@@ -117,7 +117,33 @@ export default [
               sourceTag: 'type:contracts',
               onlyDependOnLibsWithTags: ['type:contracts', 'type:util'],
             },
+            {
+              sourceTag: 'type:errors',
+              onlyDependOnLibsWithTags: ['type:errors', 'type:util'],
+            },
             { sourceTag: 'type:util', onlyDependOnLibsWithTags: ['type:util'] },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['**/vite.config.*', '**/vitest.config.*'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@nx/vite/plugins/nx-tsconfig-paths.plugin',
+              message:
+                'Deprecated, removed in Nx v24 — use `resolve.tsconfigPaths: true` in the Vite config instead.',
+            },
+            {
+              name: '@nx/vite/plugins/nx-copy-assets.plugin',
+              message:
+                "Deprecated, removed in Nx v24 — use Vite's `publicDir` option or `vite-plugin-static-copy` instead.",
+            },
           ],
         },
       ],
