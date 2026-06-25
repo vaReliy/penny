@@ -99,14 +99,15 @@ Platform enforcement is tag-based; the `localStorage` ban anchors on frontend-la
 **Backend onion (dependency → means "may depend on"):**
 
 ```
-infrastructure → application → core → kernel/contracts/util
+infrastructure → application → core → kernel/contracts/errors/util
 ```
 
 - `type:infrastructure` — transports (HTTP, messaging), ORM, external service clients; may depend on all layers
 - `type:application` — use-cases, handlers, orchestration; may depend on core and below
 - `type:core` — pure domain logic, entities, value objects; may depend on kernel and below
-- `type:kernel` — stable domain abstractions; may depend only on util
+- `type:kernel` — stable domain abstractions; may depend on errors and util. Implemented in `libs/shared/kernel`: `BaseService<TParams, TResult>`, `ServiceContext`, `IRepository<TEntity, TId>`, validation registration, and error hierarchy extensions.
 - `type:contracts` — API schemas, shared enums; may depend only on util
+- `type:errors` — the platform error hierarchy (`BaseError` and subclasses); may depend only on util; usable from every onion layer since every layer throws errors
 - `type:util` — helpers, guards, formatters; may depend only on util (leaf layer)
 
 **Frontend onion (dependency →):**

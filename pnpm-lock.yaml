@@ -34,6 +34,9 @@ importers:
       '@angular/ssr':
         specifier: 21.2.7
         version: 21.2.7(e479a64f20df40673604187a9a6de656)
+      livr:
+        specifier: 2.10.2
+        version: 2.10.2
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
@@ -9648,6 +9651,12 @@ packages:
         integrity: sha512-ME4Fb83LgEgwNw96RKNvKV4VTLuXfoKudAmm2lP8Kk87KaMK0/Xrx/aAkMWmT8mDb+3MlFDspfbCs7adjRxA2g==,
       }
     engines: { node: '>=20.0.0' }
+
+  livr@2.10.2:
+    resolution:
+      {
+        integrity: sha512-oRkb9DkcZo+8rp5DnhcuvSSMSq/upK+h/d1TFhUrMLQKRk6YqALKNLk53ca146+/PfX500FJfA4K2nW+Cn2GvQ==,
+      }
 
   lmdb@3.5.1:
     resolution:
@@ -20815,6 +20824,8 @@ snapshots:
       log-update: 6.1.0
       rfdc: 1.4.1
       wrap-ansi: 9.0.2
+
+  livr@2.10.2: {}
 
   lmdb@3.5.1:
     dependencies:

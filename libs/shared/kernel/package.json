@@ -1,0 +1,13 @@
+{
+  "name": "shared-kernel",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "livr": "2.10.2",
+    "shared-errors": "0.0.1",
+    "tslib": "^2.3.0"
+  }
+}

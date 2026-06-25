@@ -51,6 +51,7 @@ export default [
                 'type:core',
                 'type:contracts',
                 'type:kernel',
+                'type:errors',
                 'type:util',
               ],
             },
@@ -61,6 +62,7 @@ export default [
                 'type:core',
                 'type:contracts',
                 'type:kernel',
+                'type:errors',
                 'type:util',
               ],
               bannedExternalImports: [
@@ -76,6 +78,7 @@ export default [
               onlyDependOnLibsWithTags: [
                 'type:core',
                 'type:kernel',
+                'type:errors',
                 'type:util',
               ],
               bannedExternalImports: [
@@ -111,7 +114,18 @@ export default [
             // type: shared leaves
             {
               sourceTag: 'type:kernel',
-              onlyDependOnLibsWithTags: ['type:kernel', 'type:util'],
+              onlyDependOnLibsWithTags: [
+                'type:kernel',
+                'type:errors',
+                'type:util',
+              ],
+              bannedExternalImports: [
+                '@nestjs/*',
+                '@angular/*',
+                'mongoose',
+                'mongodb',
+                '@typegoose/*',
+              ],
             },
             {
               sourceTag: 'type:contracts',
