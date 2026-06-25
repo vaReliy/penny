@@ -72,4 +72,34 @@ class NotFoundError extends AppError {
     super(`${resource} not found`, 'NOT_FOUND', 404);
   }
 }
+
+## Comments
+
+Comments are the exception, not the default. Well-named code is the primary documentation (Clean Code principle). Write a comment only when the WHY cannot be expressed through renaming or restructuring.
+
+### Acceptable comments
+
+- **Hidden constraint / invariant / algorithm rationale**: a timing requirement, library bug workaround, security invariant, or algorithm choice that would surprise a reader — "why this and not the simpler thing." General algorithm tutorials belong as a link (RFC, spec URL), not inline.
+- **`// TODO: <self-contained description>`** — deferred work; remove when done.
+- **`// FIXME: <self-contained description>`** — known issue; remove when fixed.
+- **Symbol cross-reference**: `// see SomeClass for detail` — class/function name alone, no task reference.
+- Legal/license headers.
+
+### Never write
+
+- Comments that restate what the code does (`// iterate over users`).
+- Task IDs, decision IDs, or task file references in any form: `D9`, `D10`, `task 11`, `task 12`, `added for task X`, `per decision D14`.
+- Caller/usage annotations: `// used by AuthController`, `// called from login flow`.
+- Closing-brace labels: `// end if`, `// end for`.
+- Anything that requires the task backlog to make sense.
+
+### TODO / FIXME hygiene
+
+Describe the work, not the task number. After completing deferred work, delete the `TODO`/`FIXME` comment — stale markers are noise.
+
+| ✓ Acceptable | ✗ Never |
+|---|---|
+| `// TODO: add rate limiting once Redis is wired up` | `// TODO: see task 14` |
+| `// see VerifyTelegramLoginService for the HMAC detail` | `// see VerifyTelegramLoginService, task 11` |
+| `// timingSafeEqual: prevents timing oracle on HMAC check` | `// added per D9 decision` |
 ```

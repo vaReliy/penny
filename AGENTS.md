@@ -19,6 +19,7 @@ PR description rules: `rules/git-operations.md`.
 - Files kebab-case; classes/types/interfaces PascalCase; `I`-prefix for repo/service abstractions.
 - Constants SCREAMING_SNAKE_CASE; enums as `as const` objects.
 - No magic numbers — named constants with JSDoc.
+- Comments are the exception: write one only when the WHY is non-obvious and cannot be expressed through renaming. Never reference task IDs, decision IDs, or task file paths in comments (`D9`, `task 11`, etc.) — these go stale. Use `// TODO:` / `// FIXME:` for deferred work with a self-contained description; remove them once the work is done.
 
 Details: `rules/code-style.md`.
 

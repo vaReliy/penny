@@ -25,3 +25,14 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 - **Why it matters upstream**: The routing table's "Infra/CI/Docker → devops" entry is too broad. Other consumers of claude-ts will encounter mixed infra+code tasks (e.g., integrating a new database driver, adding a Redis queue connection factory, or refactoring config loading). Without explicit guidance on when to split tasks, tasks will continue to route entirely to `devops`, resulting in library code written without proper Clean Architecture layering, DI patterns, or dependency discipline.
 - **Suggested upstream change**: In `rules/workflow.md` Agent Quick Routing table, after the "DevOps / Docker / CI" entry, add a note: "Mixed infra + code tasks: split scope — compose/CI files → devops; application library modules (connection factories, config loaders, drivers) → backend-developer. Infra agent should route code paths back to backend-developer if discovered during implementation."
 - **Status**: pending-port
+
+---
+
+## 2026-06-25 — Enhancement: comment hygiene rule + broaden claude-ts trigger
+
+- **Component**: `AGENTS.md` + `rules/code-style.md` + `rules/workflow.md`
+- **Type**: Enhancement
+- **What happened**: Added explicit comment hygiene rule to `AGENTS.md` Code Style Essentials (one bullet) and expanded `rules/code-style.md` with a full Comments section. Rule: comments are the exception; write only when WHY is non-obvious and cannot be expressed through renaming; never reference task/decision IDs (`D9`, `D10`, `task 11`) or task file paths; `// TODO:` / `// FIXME:` must be self-contained and removed when done; cross-references use symbol name only. Also broadened `rules/workflow.md`'s claude-ts changelog trigger from `.claude/agents/**` + `.claude/skills/**` only to all claude-ts-inherited files (`AGENTS.md`, `CLAUDE.md`, `rules/**`, `.claude/agents/**`, `.claude/skills/**`).
+- **Why it matters upstream**: Sub-agents (cold start, no auto-memory access) had no rule against writing stale task/decision ID references in code comments. The rule existed only in orchestrator auto-memory, which sub-agents cannot read. Moving it into `AGENTS.md` (always loaded) and `rules/code-style.md` (on-demand detail) ensures all implementing and reviewing agents enforce it. Broadening the claude-ts trigger ensures rule changes to inherited files are captured automatically without manual reminders.
+- **Suggested upstream change**: Apply the one-bullet addition to AGENTS.md Code Style Essentials, add the full Comments section to rules/code-style.md, and update the knowledge capture decision rule in rules/workflow.md to trigger on all claude-ts-inherited files, not just .claude/agents/** and .claude/skills/**.
+- **Status**: pending-port

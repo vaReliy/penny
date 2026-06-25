@@ -223,7 +223,7 @@ No `tester` or `qa` for infra-only changes.
 - Added a module, endpoint, or schema model → update project context docs
 - Discovered a subtle bug (off-by-one, race condition, config gotcha) → save to auto-memory as `project` type
 - Durable, project-relevant learning whose final home (`PROJECT_CONTEXT.md` / `CLAUDE.md` / a rule / a skill) is unclear → append an entry to `docs/KNOWLEDGE_INBOX.md` (see Knowledge Inbox below). Claude-session-specific gotchas still go to auto-memory; learnings with an obvious home go straight there — the inbox is only for "durable but unplaced".
-- Discovered a bug, gap, or improvement in a `.claude/agents/**` or `.claude/skills/**` file inherited from claude-ts → append to `docs/KNOWLEDGE_INBOX.md` tagged `Belongs in (guess): claude-ts-upstream`, not auto-memory — during distillation, move it to `docs/CLAUDE_TS_CHANGELOG.md` so it survives in the repo until PR'd back upstream.
+- Discovered a bug, gap, or improvement in a file inherited from the claude-ts template (`AGENTS.md`, `CLAUDE.md`, `rules/**`, `.claude/agents/**`, `.claude/skills/**`) → write the entry **directly to `docs/CLAUDE_TS_CHANGELOG.md`** (not the inbox) so it survives in the repo until PR'd back upstream. Use the format already established in that file.
 - Everything else → `CHANGELOG.md` only
 - If nothing non-obvious was learned → `CHANGELOG.md` only, no auto-memory needed
 
