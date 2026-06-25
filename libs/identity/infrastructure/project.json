@@ -1,0 +1,26 @@
+{
+  "name": "identity-infrastructure",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/identity/infrastructure/src",
+  "projectType": "library",
+  "tags": ["scope:identity", "type:infrastructure", "platform:server"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/identity/infrastructure",
+        "main": "libs/identity/infrastructure/src/index.ts",
+        "tsConfig": "libs/identity/infrastructure/tsconfig.lib.json",
+        "assets": []
+      }
+    },
+    "vite:test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "libs/identity/infrastructure",
+        "command": "vitest"
+      }
+    }
+  }
+}
