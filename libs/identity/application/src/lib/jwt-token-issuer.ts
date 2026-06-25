@@ -50,7 +50,7 @@ function isTokenClaims(payload: unknown): payload is TokenClaims {
  * HS256 {@link ITokenIssuer} implementation backed by the `jsonwebtoken`
  * package. Produces a stateless token — `sub`, `status`, `roles`, and a
  * `jsonwebtoken`-managed `exp` claim — with no server-side session record
- * (D10). The signing secret is supplied by the constructor caller, which
+ * The signing secret is supplied by the constructor caller, which
  * must source it from `ServiceContext.config`, never from `process.env`
  * directly, keeping this class itself free of any config-loading concern.
  */

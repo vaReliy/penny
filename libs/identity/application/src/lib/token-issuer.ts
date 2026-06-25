@@ -2,7 +2,7 @@ import type { UserStatus } from 'identity-core';
 
 /**
  * Claims encoded into every session token. Kept minimal and stateless —
- * the platform never persists a server-side session record (D10): a
+ * the platform never persists a server-side session record: a
  * middleware re-loads the user from the DB on each request using `sub` to
  * enforce the live `status` gate, rather than trusting `status`/`roles`
  * from an old token.

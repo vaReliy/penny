@@ -35,12 +35,12 @@ export interface LoginWithTelegramDeps {
 
 /**
  * Turns an already-verified Telegram identity (see
- * `VerifyTelegramLoginService`, task 11) into a Penny `User`: finds the
+ * `VerifyTelegramLoginService`) into a Penny `User`: finds the
  * user by their durable `telegramId`, creating a new `pending` user if none
  * exists yet, or refreshing mutable profile fields on an existing one.
  *
  * Framework-free `application` service — no DI decorators. Deliberately
- * does NOT mint a session/JWT here: per D9, only `active` users may
+ * does NOT mint a session/JWT here: only `active` users may
  * authenticate, so the interface layer (HTTP controller) is responsible for
  * inspecting the returned `status` and routing non-`active` users to an
  * access-status page instead of calling `ITokenIssuer.issue`.

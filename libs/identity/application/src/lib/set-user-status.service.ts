@@ -32,7 +32,7 @@ function buildUnknownUserError(userId: string): NotFoundError {
 
 /**
  * Shared base for the admin-only `pending -> active`/`pending -> rejected`
- * transitions (D9). Framework-free `application` service — no DI
+ * transitions. Framework-free `application` service — no DI
  * decorators. Not exported directly; concrete subclasses
  * (`ApproveUserService`/`RejectUserService`) fix the target status, since
  * each maps to its own distinct admin action/audit trail at the interface
@@ -84,7 +84,7 @@ abstract class SetUserStatusService extends BaseService<
   }
 }
 
-/** Approves a `pending` user, transitioning them to `active` (D9). */
+/** Approves a `pending` user, transitioning them to `active`. */
 export class ApproveUserService extends SetUserStatusService {
   protected override readonly targetStatus = UserStatus.ACTIVE;
 
@@ -93,7 +93,7 @@ export class ApproveUserService extends SetUserStatusService {
   }
 }
 
-/** Rejects a `pending` user, transitioning them to `rejected` (D9). */
+/** Rejects a `pending` user, transitioning them to `rejected`. */
 export class RejectUserService extends SetUserStatusService {
   protected override readonly targetStatus = UserStatus.REJECTED;
 
