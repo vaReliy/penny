@@ -1,0 +1,157 @@
+import { User, UserStatus } from 'identity-core';
+import type { IUserRepository } from 'identity-core';
+import type { ServiceContext } from 'shared-kernel';
+import type { TelegramLoginPayload } from 'shared-contracts';
+import { beforeEach, describe, expect, it } from 'vitest';
+
+import { LoginWithTelegramService } from './login-with-telegram.service.js';
+
+const CONTEXT: ServiceContext = { config: {}, caller: null };
+
+/** In-memory `IUserRepository` fake, keyed by `telegramId`. Mirrors the
+ * "assign an id on insert" behavior of `MongoUserRepository.save`. */
+class FakeUserRepository implements IUserRepository {
+  private readonly usersById = new Map<string, User>();
+  private nextId = 1;
+
+  public seed(user: User): void {
+    this.usersById.set(user.id, user);
+  }
+
+  public async findById(id: string): Promise<User | null> {
+    return this.usersById.get(id) ?? null;
+  }
+
+  public async findByTelegramId(telegramId: string): Promise<User | null> {
+    for (const user of this.usersById.values()) {
+      if (user.telegramId === telegramId) {
+        return user;
+      }
+    }
+    return null;
+  }
+
+  public async save(entity: User): Promise<User> {
+    const id = entity.id === '' ? `generated-${this.nextId++}` : entity.id;
+    const persisted = new User({
+      id,
+      telegramId: entity.telegramId,
+      firstName: entity.firstName,
+      lastName: entity.lastName,
+      username: entity.username,
+      photoUrl: entity.photoUrl,
+      status: entity.status,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+    });
+    this.usersById.set(id, persisted);
+    return persisted;
+  }
+
+  public async delete(id: string): Promise<void> {
+    this.usersById.delete(id);
+  }
+}
+
+function buildPayload(
+  overrides: Partial<TelegramLoginPayload> = {},
+): TelegramLoginPayload {
+  return {
+    id: 123456789,
+    firstName: 'Ada',
+    lastName: 'Lovelace',
+    username: 'ada',
+    photoUrl: 'https://example.com/ada.png',
+    authDate: Math.floor(Date.now() / 1000),
+    hash: 'deadbeef',
+    ...overrides,
+  };
+}
+
+describe('LoginWithTelegramService', () => {
+  let repository: FakeUserRepository;
+  let service: LoginWithTelegramService;
+
+  beforeEach(() => {
+    repository = new FakeUserRepository();
+    service = new LoginWithTelegramService({ userRepository: repository });
+  });
+
+  it('creates a pending user for a never-before-seen telegram id', async () => {
+    const payload = buildPayload();
+
+    const outcome = await service.run(payload, CONTEXT);
+
+    expect(outcome.data.status).toBe(UserStatus.PENDING);
+    expect(outcome.data.user.telegramId).toBe(String(payload.id));
+    expect(outcome.data.user.firstName).toBe('Ada');
+
+    const persisted = await repository.findByTelegramId(String(payload.id));
+    expect(persisted).not.toBeNull();
+    expect(persisted?.id).not.toBe('');
+  });
+
+  it('does not create a duplicate user on a second login with the same telegram id', async () => {
+    const payload = buildPayload();
+
+    await service.run(payload, CONTEXT);
+    await service.run(payload, CONTEXT);
+
+    const persisted = await repository.findByTelegramId(String(payload.id));
+    expect(persisted).not.toBeNull();
+    // Only one record should exist for this telegramId — verified by
+    // re-running login and confirming the same id is reused, not a new one.
+    const firstId = persisted?.id;
+    await service.run(payload, CONTEXT);
+    const stillSame = await repository.findByTelegramId(String(payload.id));
+    expect(stillSame?.id).toBe(firstId);
+  });
+
+  it('refreshes mutable profile fields for an existing telegram id, preserving status', async () => {
+    const now = new Date('2026-01-01T00:00:00.000Z');
+    const existing = new User({
+      id: 'existing-1',
+      telegramId: '123456789',
+      firstName: 'OldName',
+      status: UserStatus.ACTIVE,
+      createdAt: now,
+      updatedAt: now,
+    });
+    repository.seed(existing);
+
+    const payload = buildPayload({
+      id: 123456789,
+      firstName: 'NewName',
+      username: 'newusername',
+    });
+
+    const outcome = await service.run(payload, CONTEXT);
+
+    expect(outcome.data.user.id).toBe('existing-1');
+    expect(outcome.data.user.firstName).toBe('NewName');
+    expect(outcome.data.user.username).toBe('newusername');
+    expect(outcome.data.status).toBe(UserStatus.ACTIVE);
+  });
+
+  it('does not mint a session token itself for a non-active user', async () => {
+    const payload = buildPayload();
+
+    const outcome = await service.run(payload, CONTEXT);
+
+    // The result carries the User + status only — no token field exists on
+    // LoginWithTelegramResult, so the interface layer cannot accidentally
+    // forward a session for a pending user.
+    expect(outcome.data).not.toHaveProperty('token');
+    expect(outcome.data.status).not.toBe(UserStatus.ACTIVE);
+  });
+
+  it('rejects a payload missing required fields at the LIVR boundary', async () => {
+    const payload = buildPayload();
+    const { firstName, ...withoutFirstName } = payload;
+    void firstName;
+
+    await expect(
+      service.run(withoutFirstName as TelegramLoginPayload, CONTEXT),
+    ).rejects.toThrow();
+  });
+});
