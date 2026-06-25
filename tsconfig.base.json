@@ -17,7 +17,8 @@
       "shared-errors": ["./libs/shared/errors/src/index.ts"],
       "shared-util": ["./libs/shared/util/src/index.ts"],
       "shared-contracts": ["./libs/shared/contracts/src/index.ts"],
-      "shared-kernel": ["./libs/shared/kernel/src/index.ts"]
+      "shared-kernel": ["./libs/shared/kernel/src/index.ts"],
+      "identity-core": ["./libs/identity/core/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

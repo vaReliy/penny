@@ -1,0 +1,19 @@
+{
+  "name": "identity-core",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/identity/core/src",
+  "projectType": "library",
+  "tags": ["scope:identity", "type:core", "platform:server"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/identity/core",
+        "main": "libs/identity/core/src/index.ts",
+        "tsConfig": "libs/identity/core/tsconfig.lib.json",
+        "assets": []
+      }
+    }
+  }
+}
