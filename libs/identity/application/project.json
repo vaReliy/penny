@@ -1,0 +1,19 @@
+{
+  "name": "identity-application",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/identity/application/src",
+  "projectType": "library",
+  "tags": ["scope:identity", "type:application", "platform:server"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/identity/application",
+        "main": "libs/identity/application/src/index.ts",
+        "tsConfig": "libs/identity/application/tsconfig.lib.json",
+        "assets": []
+      }
+    }
+  }
+}
