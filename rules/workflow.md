@@ -223,6 +223,7 @@ No `tester` or `qa` for infra-only changes.
 - Added a module, endpoint, or schema model → update project context docs
 - Discovered a subtle bug (off-by-one, race condition, config gotcha) → save to auto-memory as `project` type
 - Durable, project-relevant learning whose final home (`PROJECT_CONTEXT.md` / `CLAUDE.md` / a rule / a skill) is unclear → append an entry to `docs/KNOWLEDGE_INBOX.md` (see Knowledge Inbox below). Claude-session-specific gotchas still go to auto-memory; learnings with an obvious home go straight there — the inbox is only for "durable but unplaced".
+- Discovered a bug, gap, or improvement in a `.claude/agents/**` or `.claude/skills/**` file inherited from claude-ts → append to `docs/KNOWLEDGE_INBOX.md` tagged `Belongs in (guess): claude-ts-upstream`, not auto-memory — during distillation, move it to `docs/CLAUDE_TS_CHANGELOG.md` so it survives in the repo until PR'd back upstream.
 - Everything else → `CHANGELOG.md` only
 - If nothing non-obvious was learned → `CHANGELOG.md` only, no auto-memory needed
 
@@ -263,12 +264,12 @@ Append-only queue for durable, project-relevant learnings whose final home isn't
 ## YYYY-MM-DD — [area] short fact
 
 Why: …
-Belongs in (guess): PROJECT_CONTEXT | CLAUDE.md | rule | skill | discard
+Belongs in (guess): PROJECT_CONTEXT | CLAUDE.md | rule | skill | claude-ts-upstream | discard
 ```
 
 Append new entries using the same 3-line format (header line + `Why:` + `Belongs in (guess):`).
 
-**Automatic distillation:** during every Phase 6, check `docs/KNOWLEDGE_INBOX.md`. If it has more than 10 entries or exceeds ~3 KB, distill it as part of this phase (a `cheap`-tier agent may be dispatched for this): move each entry into its permanent home (`PROJECT_CONTEXT.md`, `CLAUDE.md`, a rule, or a skill — or discard if no longer useful), then delete the entry from the inbox. Also distill on explicit request ("distill the knowledge inbox") or at the end of a roadmap phase.
+**Automatic distillation:** during every Phase 6, check `docs/KNOWLEDGE_INBOX.md`. If it has more than 10 entries or exceeds ~3 KB, distill it as part of this phase (a `cheap`-tier agent may be dispatched for this): move each entry into its permanent home (`PROJECT_CONTEXT.md`, `CLAUDE.md`, a rule, a skill, or `docs/CLAUDE_TS_CHANGELOG.md` for upstream-bound learnings — or discard if no longer useful), then delete the entry from the inbox. Also distill on explicit request ("distill the knowledge inbox") or at the end of a roadmap phase.
 
 **Hard constraint:** never `@`-reference `docs/KNOWLEDGE_INBOX.md` from `CLAUDE.md` or `AGENTS.md` — that would force-load it into every conversation as noise. Reference it only as a plain path in on-demand indexes.
 
@@ -276,6 +277,7 @@ Append new entries using the same 3-line format (header line + `Why:` + `Belongs
 
 - Auto-memory — Claude-private workflow preferences / session gotchas (vendor-local, per-machine)
 - `docs/KNOWLEDGE_INBOX.md` — project-durable knowledge **in transit** (agent-agnostic, travels with the repo)
+- `docs/CLAUDE_TS_CHANGELOG.md` — permanent ledger of claude-ts template divergences/fixes, ready to port upstream — entries persist until actually ported, unlike the inbox
 - `PROJECT_CONTEXT.md` (or equivalent) — distilled, stable domain truth
 - `CHANGELOG.md` — what changed and why, per task
 
