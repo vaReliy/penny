@@ -189,6 +189,25 @@ describe('VerifyTelegramLoginService', () => {
     ).rejects.toBeInstanceOf(AuthenticationError);
   });
 
+  it('accepts a payload carrying extra unknown fields (LIVR strips them before HMAC)', async () => {
+    // Regression guard for L2: buildDataCheckString uses Object.entries(payload)
+    // where payload is the LIVR-validated output. LIVR only copies schema-declared
+    // fields into its result object, so any extra wire fields are stripped before
+    // execute() runs — they never reach the data-check-string.
+    // If this test fails, unknown fields are leaking into the HMAC input.
+    const service = new VerifyTelegramLoginService();
+    const payload = buildValidPayload();
+    const withExtra = {
+      ...payload,
+      extra_field: 'injected',
+    } as RawTelegramLoginPayload;
+
+    const outcome = await service.run(withExtra, CONTEXT);
+
+    expect(outcome.data.id).toBe(payload.id);
+    expect(outcome.data).not.toHaveProperty('extra_field');
+  });
+
   it('rejects a payload missing the required hash field at the LIVR boundary', async () => {
     const service = new VerifyTelegramLoginService();
     const fullPayload = buildValidPayload();

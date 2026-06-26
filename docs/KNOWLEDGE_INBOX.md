@@ -27,6 +27,26 @@ Belongs in: rules/architecture.md (module format section)
 Why: `vi.stubEnv` saves and restores env vars on `vi.unstubAllEnvs()`; `delete process.env[KEY]` operates outside that tracking. Pattern found in `apps/api/src/config/api-config.spec.ts`. Fix: treat empty string as absent in production env readers (`portRaw ? … : default` instead of `portRaw !== undefined ? … : default`), then use `vi.stubEnv(KEY, '')` to simulate absence without deletion.
 Belongs in: rules/testing.md
 
+## 2026-06-26 — api: no cookie-parser dep needed for httpOnly session cookies
+
+Why: `res.cookie()` (setting) is built into Express and works without `cookie-parser`. Reading the cookie server-side in a NestJS guard can be done by parsing `req.headers['cookie']` manually (`split(';')` → find `name=value`), avoiding an extra dependency. `cookie-parser` is only needed if you want `req.cookies` populated everywhere. Pattern landed in `apps/api/src/auth/session.guard.ts`.
+Belongs in (guess): rules/architecture.md (auth section) or PROJECT_CONTEXT
+
+## 2026-06-26 — api: NestJS guard can clear cookies before throwing by accessing response via ExecutionContext
+
+Why: `canActivate` receives `ExecutionContext`, which exposes `context.switchToHttp().getResponse<Response>()`. Calling `res.clearCookie(...)` before `throw new AuthenticationError(...)` ensures the Set-Cookie header is included in the 401 response — the exception propagates to the global filter which finalises the response, so the cookie-clear header is preserved. Pattern landed in `apps/api/src/auth/session.guard.ts`.
+Belongs in (guess): rules/architecture.md (auth/guards section)
+
+## 2026-06-26 — identity: LIVR optional `['string']` rule passes null through; `!== undefined` filter does not catch it
+
+Why: LIVR treats `null` input on an optional field as "not provided" (skips rule execution) but does not strip the key from the validated output — `validParams` still carries `{ username: null }`. Filtering with `value !== undefined` misses it. In `buildDataCheckString` this produces `username=null` in the HMAC string; Telegram's server omits the key entirely → HMAC mismatch → `AuthenticationError`. Fails closed (no bypass), but misleading error. Telegram's widget never sends `null` for absent fields so the practical risk is negligible today. If a stricter guard is wanted: `value !== undefined && value !== null`, or add a `not_empty` LIVR rule to the optional field slots.
+Belongs in (guess): rules/validation-authorization.md or PROJECT_CONTEXT
+
+## 2026-06-26 — workflow: pipeline re-entry point after a fix determines which agents to run
+
+Why: When a fix is needed after the quality gate, the orchestrator must re-enter the pipeline at the right stage — not just patch inline and skip downstream steps. Rule: (1) trivial change (comment, doc-only) → orchestrator handles directly, no downstream needed; (2) source logic change → re-enter at `backend-developer` → `tester` → `reviewer` + `security-scanner` → user review; (3) test-only change → re-enter at `tester` → `reviewer` + `security-scanner` → user review. Writing tests directly and then running reviewer/security-scanner is half-right — the gate ran but `tester` was bypassed as the authoring agent, which undermines independent authorship and review separation.
+Belongs in (guess): rules/workflow.md (quality gate / fix-retry section)
+
 ## 2026-06-25 — identity: no central roles registry — 'admin' is a plain string constant
 
 Why: `ApproveUserService`/`RejectUserService` check `context.caller.roles.includes(ADMIN_ROLE)` where `ADMIN_ROLE = 'admin'`. No existing roles enum or registry was found. Future role additions should either establish one central `Roles` constant in `shared-kernel` or accept this convention. Currently works but risks drift.

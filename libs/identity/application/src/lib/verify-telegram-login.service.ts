@@ -129,6 +129,7 @@ export class VerifyTelegramLoginService extends BaseService<
   private buildDataCheckString(payload: RawTelegramLoginPayload): string {
     return Object.entries(payload)
       .filter(([key]) => key !== HASH_FIELD)
+      .filter(([, value]) => value !== undefined)
       .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
       .map(([key, value]) => `${key}=${String(value)}`)
       .join('\n');
