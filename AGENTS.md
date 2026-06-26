@@ -14,7 +14,7 @@ PR description rules: `rules/git-operations.md`.
 ## Code Style Essentials
 
 - Strict TS, no `any` — use `unknown` + narrow.
-- `.js` extensions in imports (NodeNext); `type` imports for types/interfaces.
+- `.js` extensions in relative imports — enforced **backend-only** via ESLint; resolver is `bundler`, not NodeNext. `type` imports for types/interfaces.
 - Named exports only; barrel exports via `index.ts`.
 - Files kebab-case; classes/types/interfaces PascalCase; `I`-prefix for repo/service abstractions.
 - Constants SCREAMING_SNAKE_CASE; enums as `as const` objects.

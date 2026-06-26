@@ -64,6 +64,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-06-26 — Enhancement: bundler-contract prescription in nx-generators.md §2 + AGENTS.md .js-extension clarification
+
+- **Component**: `rules/nx-generators.md` §2 / `AGENTS.md` Code Style Essentials
+- **Type**: Enhancement
+- **What happened**: The existing `rules/nx-generators.md` §2 prescribed the deprecated Nest-app tsconfig override (`module: commonjs` + `moduleResolution: node10` + `ignoreDeprecations: "5.0"`). This was the correct workaround at the time but was superseded once the decision to standardize on `moduleResolution: "bundler"` was locked. The rule was rewritten to state the bundler contract: base inherits `bundler`+`esnext`; Nest apps must **not** override module/moduleResolution; webpack emits CJS regardless of the TS resolver. The `AGENTS.md` line "`.js` extensions in imports (NodeNext)" was also clarified to "enforced backend-only via ESLint; resolver is `bundler`, not NodeNext" — the original wording implied the resolver itself was NodeNext, which was never true and confused the two concerns.
+- **Why it matters upstream**: Any claude-ts consumer who generates a Nest app will follow §2 and introduce the deprecated override. The `AGENTS.md` wording also causes agents to conflate "we enforce `.js` extensions" (an ESLint gate) with "we use the NodeNext resolver" (a tsconfig setting) — a confusion that led to the node10 override being introduced in the first place.
+- **Suggested upstream change**: In `rules/nx-generators.md` §2, replace the Nest-app `node10`/`commonjs`/`ignoreDeprecations` prescription with a bundler-contract block: (1) base sets `bundler`+`esnext`; (2) Nest apps inherit — no override; (3) webpack output is CJS regardless; (4) libs are ESM via `"type":"module"` + `index.ts` barrels; (5) `.js` relative-import extensions are enforced by ESLint, not by the resolver. In `AGENTS.md` Code Style Essentials, replace "`.js` extensions in imports (NodeNext)" with "`.js` extensions in relative imports — enforced backend-only via ESLint; resolver is `bundler`, not NodeNext".
+- **Status**: pending-port
+
+---
+
 ## 2026-06-26 — Fix: "trivial" triage shortcut bypasses quality gate on executable config changes
 
 - **Component**: `CLAUDE.md` Orchestrator Triage rule 1

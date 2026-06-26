@@ -13,7 +13,7 @@ Run the audit + exact-pin procedure in `rules/dependencies.md` before handoff. S
 ## 2. Fix the generated tsconfig
 
 The repo base (`tsconfig.base.json`) is intentionally minimal: no `strict` block,
-`"moduleResolution": "bundler"` (tuned for Vite/Angular libs). A generated project does
+`"moduleResolution": "bundler"` + `"module": "esnext"`. A generated project does
 **NOT** inherit strictness — declare it explicitly in the project's `tsconfig.json`:
 
 ```json
@@ -29,14 +29,19 @@ The repo base (`tsconfig.base.json`) is intentionally minimal: no `strict` block
 }
 ```
 
-For a **Nest app** (CommonJS via webpack), the resolution differs from a lib — do **not**
-copy a lib's `"bundler"` value:
+**Module-format contract (applies to every app and lib in this monorepo):**
 
-- `"module": "commonjs"`
-- `"moduleResolution": "node10"` (non-deprecated rename of `"node"`), **OR** keep `"node"`
-  and add `"ignoreDeprecations": "5.0"` to silence `TS5110`.
-
-Never leave the bare deprecated `"moduleResolution": "node"` — it warns on every `tsc` run.
+- `tsconfig.base.json` sets `"moduleResolution": "bundler"` + `"module": "esnext"` for the
+  whole workspace. All projects inherit this.
+- A webpack-bundled **Nest app** must **not** override `module`/`moduleResolution`. Do
+  **not** add `"module": "commonjs"`, `"moduleResolution": "node10"` (or `"node"`/`"node16"`),
+  or `"ignoreDeprecations"`. Webpack already emits a CommonJS Node bundle at runtime — the
+  TypeScript resolver setting does not change the runtime format.
+- **Libs** are ESM (`"type": "module"` in `package.json`) and inherit `bundler`; they are
+  consumed from source via tsconfig `paths` and bundled into apps — never published
+  standalone, so `nodenext` is not needed.
+- `.js` extensions on relative imports are enforced **backend-only** via ESLint (D26/D29).
+  Angular/Nx paths use barrel `index.ts` exports and do not need the extension.
 
 ## 3. Wire process bootstrap (LIVR)
 
