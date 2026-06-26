@@ -17,15 +17,10 @@ Belongs in (guess): PROJECT_CONTEXT | rule (architecture)
 Why: `LoginWithTelegramService.execute` does `findByTelegramId` then conditionally creates — concurrent first-logins race to insert. `MongoUserRepository.save` handles duplicate-key (code 11000) by throwing `DomainError.conflict`, not a silent overwrite. But this is only safe if a unique index on `telegramId` actually exists in the Mongo schema. Verify `@prop({ unique: true })` or equivalent is on the `telegramId` field.
 Belongs in (guess): PROJECT_CONTEXT | dba review
 
-## 2026-06-26 — api: monorepo has a latent ESM/CJS split that blocks moduleResolution migration
+## 2026-06-26 — api: `moduleResolution: "bundler"` is correct for a Webpack-bundled NestJS app (RESOLVED)
 
-Why: `tsconfig.base.json` emits `"module": "esnext"` (ESM) for all shared libs; `apps/api` overrides to `"module": "commonjs"` (CJS). Migrating `apps/api` to `moduleResolution: "node16"` exposed 10+ TS1479 errors — CJS cannot `require()` ESM modules. `"ignoreDeprecations": "5.0"` was added as a deferral; it breaks at TS 6.0. Real fix: either move `apps/api` to ESM (`"type": "module"` + NestJS ESM mode) or rebuild shared libs as CJS.
-Belongs in: rules/architecture.md (module format section) or PROJECT_CONTEXT
-
-## 2026-06-26 — api: `ignoreDeprecations` value "5.0" vs "6.0" depends on installed TypeScript
-
-Why: TypeScript 5.9.3 (project) accepts only `"5.0"` for `ignoreDeprecations`; the VS Code bundled language server (newer) suggests `"6.0"`. Using `"6.0"` in tsconfig causes TS5103 in the CLI build. Resolve IDE/CLI mismatch via "TypeScript: Select TypeScript Version → Use Workspace Version" in VS Code.
-Belongs in: rules/code-style.md or AGENTS.md setup note
+Why: The earlier diagnosis ("latent ESM/CJS split blocks migration") was wrong about the runtime. `apps/api` is built by `NxAppWebpackPlugin`, which bundles all lib imports into a single CJS Node bundle regardless of the TypeScript `module` setting. TS1479 ("CJS cannot require() ESM") only fires under `moduleResolution: "node16"` because that mode checks `package.json#type` at resolution time; `"bundler"` skips that check and is the correct, non-deprecated choice for any Webpack-bundled output. Fixed: removed `module: "commonjs"`, `moduleResolution: "node10"`, and `ignoreDeprecations: "5.0"` from `apps/api/tsconfig.json`; app now inherits `moduleResolution: "bundler"` + `module: "esnext"` from the base.
+Belongs in: rules/architecture.md (module format section)
 
 ## 2026-06-26 — testing: `delete process.env[KEY]` bypasses vi.stubEnv restoration
 
