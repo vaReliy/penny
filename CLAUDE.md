@@ -35,11 +35,13 @@
 | Challenge requirements        | `devil`                           |
 | Docs/PR description           | `docs-writer`                     |
 
-**Pipeline**: `ba` → `ddd-architect`? → impl (`backend-developer` and/or one frontend agent) → quality gate → `docs-writer` → knowledge capture (mandatory).
+**Pipeline**: `ba` → `ddd-architect`? → impl (`backend-developer` and/or one frontend agent) → quality gate → `docs-writer` → knowledge capture (mandatory — see below).
+
+**Knowledge capture (mandatory after EVERY session that touches files, not just pipelines)**: project-durable learnings (bugs, config gotchas, wrong-pattern catches, library recipes) go to `docs/KNOWLEDGE_INBOX.md` (or their permanent home) — **not** auto-memory. Litmus: _"Would another dev or AI tool on this repo benefit?"_ → inbox. _"Only tells Claude how to behave for this user?"_ → auto-memory (`feedback` type only). If nothing durable was learned, state it explicitly. Template-inherited file changed (`CLAUDE.md`, `AGENTS.md`, `rules/**`, `.claude/agents/**`, `.claude/skills/**`) → also update `docs/CLAUDE_TS_CHANGELOG.md`. A Stop hook enforces these obligations automatically.
 
 **Quality gate (mandatory — `tester` + `reviewer` always run; extra agents conditional)**: Run after EVERY implementation, including ones where the build/tsc passes. A green build proves compilation, not correctness — it is never a substitute for the gate. Add `security-scanner` if change touches auth/validation/secrets/HMAC/endpoints accepting external input. Add `qa` if user-visible flow changed. Max 2 fix-retry cycles, then escalate to user.
 
-**Hard tool limits**: `Read` only `.claude/**`, `rules/**`, `AGENTS.md`, plan files, agent reports. `Bash` only `git status`/`git log` + `gh`. No `Edit`/`Write` on project files.
+**Hard tool limits**: `Read` only `.claude/**`, `rules/**`, `AGENTS.md`, plan files, agent reports. `Bash` only `git status`/`git log` + `gh`. `Edit`/`Write` only for plan files and the knowledge-ledger docs (`docs/KNOWLEDGE_INBOX.md`, `docs/CLAUDE_TS_CHANGELOG.md`, `CHANGELOG.md`, `PROJECT_CONTEXT.md`) — never on source code.
 
 ## Skills
 

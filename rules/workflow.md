@@ -91,14 +91,14 @@ ba → ddd-architect? → impl-{slug} team ══╣
                      knowledge capture  ← orchestrator (mandatory)
 ```
 
-| Phase                | Mode                                    | Agent(s)                                      | Output                            |
-| -------------------- | --------------------------------------- | --------------------------------------------- | --------------------------------- |
-| 1. Requirements      | sequential                              | `ba`                                          | User stories, scope, API contract |
-| 2. Architecture      | sequential _(skip if no arch decision)_ | `ddd-architect`                               | Domain model, placement           |
-| 3. Implementation    | **team** `impl-{slug}`                  | `backend-developer` + frontend agent(s) if UI | Code + ESLint + tsc               |
-| 4. Quality Gate      | **team** `qg-{slug}` (conditional)      | `tester`, `reviewer` + conditional            | Parallel reports                  |
-| 5. Documentation     | sequential                              | `docs-writer`                                 | PR description + `gh pr create`   |
-| 6. Knowledge Capture | orchestrator (mandatory — never skip)   | —                                             | Updated docs + auto-memory        |
+| Phase                | Mode                                    | Agent(s)                                      | Output                              |
+| -------------------- | --------------------------------------- | --------------------------------------------- | ----------------------------------- |
+| 1. Requirements      | sequential                              | `ba`                                          | User stories, scope, API contract   |
+| 2. Architecture      | sequential _(skip if no arch decision)_ | `ddd-architect`                               | Domain model, placement             |
+| 3. Implementation    | **team** `impl-{slug}`                  | `backend-developer` + frontend agent(s) if UI | Code + ESLint + tsc                 |
+| 4. Quality Gate      | **team** `qg-{slug}` (conditional)      | `tester`, `reviewer` + conditional            | Parallel reports                    |
+| 5. Documentation     | sequential                              | `docs-writer`                                 | PR description + `gh pr create`     |
+| 6. Knowledge Capture | orchestrator (mandatory — never skip)   | —                                             | Updated docs + inbox/permanent home |
 
 ### Implementation Team (Phase 3)
 
@@ -213,29 +213,31 @@ devops ══╗
 
 No `tester` or `qa` for infra-only changes.
 
-## Phase 6: Knowledge Capture (Mandatory After Every Pipeline)
+## Phase 6: Knowledge Capture (Mandatory After Every Session That Touches Code)
 
-**This phase is non-negotiable.** After every feature, bugfix, or CI/CD pipeline completes — the orchestrator MUST capture learnings before declaring the task done.
+**This phase is non-negotiable.** After every feature, bugfix, or CI/CD pipeline completes — and after ANY session where source, config, or template-inherited files were changed — the orchestrator MUST capture learnings before declaring the task done. This applies equally to formal pipeline runs and to direct/trivial edits: the trigger is "did real files change?", not "did we run a pipeline?".
 
 ### What to update
 
-| Artifact                             | When to update                      | What goes in                                                          |
-| ------------------------------------ | ----------------------------------- | --------------------------------------------------------------------- |
-| `CHANGELOG.md`                       | **Always**                          | Concise summary of what changed and why; one entry per task           |
-| `PROJECT_CONTEXT.md` (or equivalent) | Architecture/domain changed         | New modules, domain rule changes, infra changes, historical incidents |
-| `docs/KNOWLEDGE_INBOX.md`            | Durable learning, home unclear      | A 3-line entry (see Knowledge Inbox below)                            |
-| Auto-memory (`project` type)         | Non-obvious decision or gotcha      | One-time discoveries that are not in code comments                    |
-| Auto-memory (`feedback` type)        | Workflow correction or confirmation | Agent behavior to repeat or avoid                                     |
+| Artifact                             | When to update                                    | What goes in                                                          |
+| ------------------------------------ | ------------------------------------------------- | --------------------------------------------------------------------- |
+| `CHANGELOG.md`                       | **Always**                                        | Concise summary of what changed and why; one entry per task           |
+| `PROJECT_CONTEXT.md` (or equivalent) | Architecture/domain changed                       | New modules, domain rule changes, infra changes, historical incidents |
+| `docs/KNOWLEDGE_INBOX.md`            | Durable, project-relevant learning (default path) | A 3-line entry (see Knowledge Inbox below)                            |
+| `docs/CLAUDE_TS_CHANGELOG.md`        | Template-inherited file changed                   | Divergence/fix log entry (see entry format in that file)              |
+| Auto-memory (`feedback` type)        | Personal workflow preference — this user only     | Agent behavior to repeat or avoid for this user's sessions            |
 
 ### Decision rules
 
+**Litmus test before routing a learning:** ask — _"Would another developer or AI tool on this repo benefit from this, regardless of vendor?"_ If yes → `docs/KNOWLEDGE_INBOX.md` (or its permanent home). If the answer is only _"this tells Claude how to behave for this specific user across sessions"_ → auto-memory (`feedback` type). This is the rare exception, not the default.
+
 - Changed a UseCase, domain rule, or layer boundary → update project context docs
 - Added a module, endpoint, or schema model → update project context docs
-- Discovered a subtle bug (off-by-one, race condition, config gotcha) → save to auto-memory as `project` type
-- Durable, project-relevant learning whose final home (`PROJECT_CONTEXT.md` / `CLAUDE.md` / a rule / a skill) is unclear → append an entry to `docs/KNOWLEDGE_INBOX.md` (see Knowledge Inbox below). Claude-session-specific gotchas still go to auto-memory; learnings with an obvious home go straight there — the inbox is only for "durable but unplaced".
+- Discovered a subtle bug, config gotcha, wrong-pattern catch, or library recipe → append to `docs/KNOWLEDGE_INBOX.md` (or directly to its permanent home if clear). **Do NOT route to auto-memory** — these are project-durable, agent-agnostic learnings.
+- Durable, project-relevant learning whose final home (`PROJECT_CONTEXT.md` / `CLAUDE.md` / a rule / a skill) is unclear → append an entry to `docs/KNOWLEDGE_INBOX.md` (see Knowledge Inbox below).
 - Discovered a bug, gap, or improvement in a file inherited from the claude-ts template (`AGENTS.md`, `CLAUDE.md`, `rules/**`, `.claude/agents/**`, `.claude/skills/**`) → write the entry **directly to `docs/CLAUDE_TS_CHANGELOG.md`** (not the inbox) so it survives in the repo until PR'd back upstream. Use the format already established in that file.
 - Everything else → `CHANGELOG.md` only
-- If nothing non-obvious was learned → `CHANGELOG.md` only, no auto-memory needed
+- If nothing non-obvious was learned → `CHANGELOG.md` only; state this explicitly so the obligation is acknowledged
 
 ### What NOT to save
 
@@ -285,11 +287,11 @@ Append new entries using the same 3-line format (header line + `Why:` + `Belongs
 
 **Division of labor:**
 
-- Auto-memory — Claude-private workflow preferences / session gotchas (vendor-local, per-machine)
-- `docs/KNOWLEDGE_INBOX.md` — project-durable knowledge **in transit** (agent-agnostic, travels with the repo)
+- `docs/KNOWLEDGE_INBOX.md` — **default target** for project-durable knowledge in transit (agent-agnostic, travels with the repo; any AI tool may append)
 - `docs/CLAUDE_TS_CHANGELOG.md` — permanent ledger of claude-ts template divergences/fixes, ready to port upstream — entries persist until actually ported, unlike the inbox
 - `PROJECT_CONTEXT.md` (or equivalent) — distilled, stable domain truth
 - `CHANGELOG.md` — what changed and why, per task
+- Auto-memory (`feedback` type only) — **narrow exception**: personal Claude workflow preferences for this user's sessions only. Never use for project-level learnings (bugs, gotchas, library recipes, wrong patterns) — those go in the inbox or their permanent home regardless of vendor.
 
 ## Team Conventions
 

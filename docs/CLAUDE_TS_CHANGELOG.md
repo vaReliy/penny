@@ -75,6 +75,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-06-26 — Enhancement: Stop hook + spec fixes for reliable knowledge capture
+
+- **Component**: `rules/workflow.md` Phase 6 / `CLAUDE.md` Orchestrator Core / all `.claude/agents/*.md` Report Format sections / new `.claude/hooks/knowledge-capture-nudge.sh`
+- **Type**: Enhancement
+- **What happened**: Agents consistently wrote project-level learnings to private auto-memory instead of `docs/KNOWLEDGE_INBOX.md`. Three structural causes: (1) `rules/workflow.md:234-235` routed config gotchas to auto-memory and had an escape hatch ("Claude-session-specific gotchas still go to auto-memory") that let any learning be rationalized as private; (2) Phase 6 was framed as "after every pipeline" so direct edits never triggered capture; (3) none of the 16 agent definitions mentioned the inbox. Fix: created `.claude/hooks/knowledge-capture-nudge.sh` (Stop hook that blocks once per session per unmet obligation — inbox + CLAUDE_TS_CHANGELOG); rewrote Phase 6 spec to decouple from pipeline, remove the auto-memory escape hatch, and add a litmus test ("would another dev or AI benefit?" → inbox); amended `CLAUDE.md` Hard tool limits to carve out ledger docs as orchestrator-writable; added a `## Learnings` handoff bullet to the Report Format section of all 12 implementation agents.
+- **Why it matters upstream**: This is a universal claude-ts problem. Private auto-memory is machine/user-local; any learning stored there is invisible to teammates and other AI tools. The spec's auto-memory routing and pipeline-only framing mean the knowledge gap is structural, not just a model failure. Other consumers will hit the same pattern: learnings evaporate after each session.
+- **Suggested upstream change**: (a) Add Stop hook scaffolding (`knowledge-capture-nudge.sh`) to the template. (b) Rewrite Phase 6 heading to "after every session that touches files" (not "pipeline"). (c) Remove auto-memory as a first-class output of Phase 6; demote it to `feedback` type only. (d) Add the litmus test to the Decision rules section. (e) Add the `## Learnings` handoff bullet to every agent's Report Format section. (f) Add the ledger-doc write carve-out to `CLAUDE.md` Hard tool limits.
+- **Status**: pending-port
+
+---
+
 ## 2026-06-26 — Fix: "trivial" triage shortcut bypasses quality gate on executable config changes
 
 - **Component**: `CLAUDE.md` Orchestrator Triage rule 1

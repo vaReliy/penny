@@ -23,6 +23,11 @@
             "type": "command",
             "command": "docker compose exec app npx prettier --write . --log-level warn",
             "statusMessage": "Formatting code with Prettier..."
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/knowledge-capture-nudge.sh",
+            "statusMessage": "Checking knowledge-capture obligations..."
           }
         ]
       }
