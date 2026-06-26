@@ -112,9 +112,11 @@ Team name: `impl-{feature-slug}` (e.g. `impl-user-registration`)
 
 **Handoff checklist (orchestrator verifies before advancing to Phase 4):**
 
-- [ ] `grep -E '"\^|"~' package.json` returns empty — no ranges introduced
+- [ ] `grep -E '"\^|"~' package.json` returns empty — no ranges introduced. Full audit procedure: `rules/dependencies.md`.
 - [ ] `npx nx build <project> --skip-nx-cache` exits 0
-- [ ] Generated tsconfigs have `strict: true` and match the project's established pattern (compare against a sibling lib's `tsconfig.json`)
+- [ ] Generated tsconfig explicitly declares the strict block (the repo base omits it): `strict`, `noImplicitOverride`, `noPropertyAccessFromIndexSignature`, `noImplicitReturns`, `noFallthroughCasesInSwitch`, `forceConsistentCasingInFileNames`. For an app, also verify `module`/`moduleResolution` per `rules/nx-generators.md` — apps differ from libs, do NOT blindly copy a lib's `"bundler"` resolution.
+
+Passing this checklist authorizes advancing to the quality gate (Phase 4) — it does **not** authorize declaring the task done. The gate still runs.
 
 **Frontend agent selection:**
 | Project framework | Agent |
@@ -143,11 +145,11 @@ Spawn 3 teammates: `ba`, `ddd-architect`, `devil`.
 - `devil` accepts response → silent on that point
 - `devil` escalates ignored challenge → orchestrator decides before proceeding to implementation phase
 
-### Quality Gate Team (Conditional)
+### Quality Gate Team (Mandatory)
 
 Team name: `qg-{feature-slug}` (e.g. `qg-user-registration`)
 
-**Never skip.** "The build passes" is not a substitute for the quality gate. A successful webpack/tsc build proves compilation, not correctness. The orchestrator must dispatch this team before reporting a task complete.
+**Never skip.** "The build passes" is not a substitute for the quality gate. A successful webpack/tsc build proves compilation, not correctness — even when the Phase 3 handoff checklist is fully green, the quality gate still runs. The orchestrator must dispatch this team before reporting a task complete.
 
 Always spawn: `tester`, `reviewer`.
 Conditionally add:
