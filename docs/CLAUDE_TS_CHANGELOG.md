@@ -36,3 +36,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 - **Why it matters upstream**: Sub-agents (cold start, no auto-memory access) had no rule against writing stale task/decision ID references in code comments. The rule existed only in orchestrator auto-memory, which sub-agents cannot read. Moving it into `AGENTS.md` (always loaded) and `rules/code-style.md` (on-demand detail) ensures all implementing and reviewing agents enforce it. Broadening the claude-ts trigger ensures rule changes to inherited files are captured automatically without manual reminders.
 - **Suggested upstream change**: Apply the one-bullet addition to AGENTS.md Code Style Essentials, add the full Comments section to rules/code-style.md, and update the knowledge capture decision rule in rules/workflow.md to trigger on all claude-ts-inherited files, not just .claude/agents/** and .claude/skills/**.
 - **Status**: pending-port
+
+---
+
+## 2026-06-26 — Enhancement: dep-pin audit rule + quality gate "never skip" + Phase 3 handoff checklist
+
+- **Component**: `AGENTS.md` Code Style Essentials / `rules/workflow.md` Phase 3 + Quality Gate
+- **Type**: Enhancement
+- **What happened**: Three gaps discovered during task 13 implementation review:
+  1. `AGENTS.md` Code Style Essentials had no rule about exact-pinning npm dependencies. Nx generators write caret ranges (`^`) by default for injected deps (e.g. `webpack`, `webpack-cli`), and sub-agents passed these through without auditing. Added an explicit bullet with the audit command (`grep -E '"\^|"~' package.json`) and resolution steps (`pnpm why <pkg>` for the exact version).
+  2. `rules/workflow.md` Quality Gate section had no "never skip" language. The orchestrator accepted a webpack build pass as sufficient, skipping `tester` + `reviewer`. Added: "Never skip. 'The build passes' is not a substitute for the quality gate."
+  3. `rules/workflow.md` Phase 3 lacked a handoff checklist. Added three items: dep-pin grep exits empty, build exits 0, generated tsconfigs match the sibling-lib strict pattern.
+- **Why it matters upstream**: All three gaps apply to any claude-ts consumer: (a) generators universally write caret ranges; (b) build-pass-equals-done is a common shortcut that lets tsconfig and correctness issues through; (c) the checklist forces the orchestrator to verify the generator's output before advancing.
+- **Suggested upstream change**: (a) Add exact-pin bullet to `AGENTS.md` Code Style Essentials with audit command. (b) Add "Never skip" note to the Quality Gate section of `rules/workflow.md`. (c) Add the three-item handoff checklist to Phase 3 of `rules/workflow.md`.
+- **Status**: pending-port

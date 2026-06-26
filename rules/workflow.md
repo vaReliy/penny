@@ -110,6 +110,12 @@ Team name: `impl-{feature-slug}` (e.g. `impl-user-registration`)
 - Backend + UI change → TeamCreate with `backend-developer` + the relevant frontend agent(s)
 - Frontend-only change → run the relevant frontend agent sequentially (no team needed)
 
+**Handoff checklist (orchestrator verifies before advancing to Phase 4):**
+
+- [ ] `grep -E '"\^|"~' package.json` returns empty — no ranges introduced
+- [ ] `npx nx build <project> --skip-nx-cache` exits 0
+- [ ] Generated tsconfigs have `strict: true` and match the project's established pattern (compare against a sibling lib's `tsconfig.json`)
+
 **Frontend agent selection:**
 | Project framework | Agent |
 |-------------------|-------|
@@ -140,6 +146,8 @@ Spawn 3 teammates: `ba`, `ddd-architect`, `devil`.
 ### Quality Gate Team (Conditional)
 
 Team name: `qg-{feature-slug}` (e.g. `qg-user-registration`)
+
+**Never skip.** "The build passes" is not a substitute for the quality gate. A successful webpack/tsc build proves compilation, not correctness. The orchestrator must dispatch this team before reporting a task complete.
 
 Always spawn: `tester`, `reviewer`.
 Conditionally add:

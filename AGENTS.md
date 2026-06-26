@@ -20,6 +20,7 @@ PR description rules: `rules/git-operations.md`.
 - Constants SCREAMING_SNAKE_CASE; enums as `as const` objects.
 - No magic numbers — named constants with JSDoc.
 - Comments are the exception: write one only when the WHY is non-obvious and cannot be expressed through renaming. Never reference task IDs, decision IDs, or task file paths in comments (`D9`, `task 11`, etc.) — these go stale. Use `// TODO:` / `// FIXME:` for deferred work with a self-contained description; remove them once the work is done.
+- **Exact-pin all `package.json` deps** — no `^` or `~` ranges, ever. After any `pnpm add` / generator run, grep `package.json` for `\^` and `~` and replace every match with the exact resolved version from `pnpm-lock.yaml` (`pnpm why <pkg>` prints it). This applies to dependencies, devDependencies, and peerDependencies alike.
 
 Details: `rules/code-style.md`.
 
