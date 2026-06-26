@@ -7,12 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- **`apps/api` tsconfig** — standardized on `moduleResolution: "bundler"` (inherited from `tsconfig.base.json`); removed deprecated `module: "commonjs"`, `moduleResolution: "node10"`, and `ignoreDeprecations: "5.0"`. Runtime output is unchanged — Nx/Webpack still emits a CommonJS Node bundle.
-
 ### Added
 
+- **Backend-only `.js`-extension ESLint gate** — `no-restricted-syntax` rule in `eslint.config.mjs` errors on any relative `import`/`export` statement missing the `.js` extension in `apps/api`, `apps/cli`, and server/shared libs (`libs/**/core`, `libs/**/application`, `libs/**/infrastructure`, `libs/**/kernel`, `libs/**/errors`, `libs/**/contracts`, `libs/**/validation`, `libs/**/util`). Angular's `moduleResolution: bundler` resolves extensionless imports silently, so the rule is intentionally excluded from `apps/web` and `platform:web` libs (`libs/**/feature`, `libs/**/ui`, `libs/**/data`).
 - **`libs/shared/kernel`** — Core abstractions for clean architecture: `BaseService<TParams, TResult>` abstract class (request validation via LIVR → authorization → execution → typed result), `ServiceContext<TConfig>` interface for dependency injection (constructed by the interface layer, never reads `process.env`), `IRepository<TEntity, TId>` generic ORM-agnostic repository interface, `registerLivrRules()` bootstrap hook for validation rule registration at application startup, and `ServiceValidationError` extending the existing `ValidationError` from `libs/shared/errors`.
 - **Nx linting boundaries** — Fixed ESLint rules to permit `type:infrastructure`, `type:application`, `type:core`, and `type:kernel` to depend on `type:errors` (previously incorrectly closed off). Added `bannedExternalImports` to `type:kernel` (`@nestjs/*`, `@angular/*`, `mongo`, `mongoose`) to enforce framework-freedom at the kernel layer via lint.
 - **`livr` runtime dependency** — First backend runtime dependency, added to root `package.json` for validation rule registration and execution in kernel layer.

@@ -189,4 +189,44 @@ export default [
       ],
     },
   },
+  // .js extension gate — backend only (NestJS apps + server/shared libs).
+  // Angular's moduleResolution:bundler resolves extensionless imports silently,
+  // so this rule is intentionally excluded from apps/web and platform:web libs.
+  {
+    files: [
+      'apps/api/**/*.ts',
+      'apps/cli/**/*.ts',
+      'libs/**/core/**/*.ts',
+      'libs/**/application/**/*.ts',
+      'libs/**/infrastructure/**/*.ts',
+      'libs/**/kernel/**/*.ts',
+      'libs/**/errors/**/*.ts',
+      'libs/**/contracts/**/*.ts',
+      'libs/**/validation/**/*.ts',
+      'libs/**/util/**/*.ts',
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            'ImportDeclaration[source.value=/^\\.\\.?\\//]:not([source.value=/\\.js$/])',
+          message:
+            'Relative imports must use the .js extension (NodeNext idiom). Add .js to the specifier.',
+        },
+        {
+          selector:
+            'ExportNamedDeclaration[source.value=/^\\.\\.?\\//]:not([source.value=/\\.js$/])',
+          message:
+            'Relative re-exports must use the .js extension (NodeNext idiom). Add .js to the specifier.',
+        },
+        {
+          selector:
+            'ExportAllDeclaration[source.value=/^\\.\\.?\\//]:not([source.value=/\\.js$/])',
+          message:
+            'Relative re-exports must use the .js extension (NodeNext idiom). Add .js to the specifier.',
+        },
+      ],
+    },
+  },
 ];

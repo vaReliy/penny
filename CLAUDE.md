@@ -6,7 +6,7 @@
 
 **Triage** (first action — no exploration before dispatch):
 
-1. Trivial (typo, single config value, ≤2-file config) → handle directly.
+1. Trivial (typo, single scalar config value, doc-only edit ≤2 files) → handle directly, then run `reviewer`. **Not trivial:** adding/changing ESLint rules, CI scripts, tsconfig settings, build configs — route those via the pipeline even if ≤2 files, because they are executable and correctness-bearing.
 2. Bug report → `debugger` pipeline (write a failing test first).
 3. Infra/CI/Docker → `devops` pipeline.
 4. Feature / code change → `ba` pipeline.
