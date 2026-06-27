@@ -7,7 +7,7 @@ import {
 import type { ReturnModelType } from '@typegoose/typegoose';
 import type { Connection } from 'mongoose';
 
-import { UserStatus } from 'identity-core';
+import { UserStatus } from 'shared-contracts';
 
 /**
  * Allowed persisted values for {@link UserDocument.status}, mirrored from the

@@ -1,5 +1,6 @@
 import { BaseService } from 'shared-kernel';
-import { User, UserStatus } from 'identity-core';
+import { User } from 'identity-core';
+import { UserStatus } from 'shared-contracts';
 import type { IUserRepository } from 'identity-core';
 import type { TelegramLoginPayload } from 'shared-contracts';
 

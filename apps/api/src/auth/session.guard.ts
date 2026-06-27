@@ -4,7 +4,7 @@ import type { Request, Response } from 'express';
 
 import type { ITokenIssuer, TokenClaims } from 'identity-application';
 import type { IUserRepository } from 'identity-core';
-import { UserStatus } from 'identity-core';
+import { UserStatus } from 'shared-contracts';
 import { AuthenticationError } from 'shared-errors';
 import type { SessionUser } from 'shared-contracts';
 

@@ -1,14 +1,7 @@
 /**
- * Lifecycle status of a platform {@link User}.
- *
- * - `pending` — registered but not yet approved/rejected by an admin.
- * - `active` — approved; may authenticate and use the platform.
- * - `rejected` — denied access; terminal state.
+ * Re-exports `UserStatus` from the monorepo's single source of truth.
+ * The authoritative definition lives in `shared-contracts`; nothing in
+ * `identity/core` or any other library should define its own copy.
  */
-export const UserStatus = {
-  PENDING: 'pending',
-  ACTIVE: 'active',
-  REJECTED: 'rejected',
-} as const;
-
-export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus];
+export { UserStatus } from 'shared-contracts';
+export type { UserStatusType } from 'shared-contracts';

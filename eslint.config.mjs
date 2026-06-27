@@ -78,6 +78,7 @@ export default [
               sourceTag: 'type:core',
               onlyDependOnLibsWithTags: [
                 'type:core',
+                'type:contracts',
                 'type:kernel',
                 'type:errors',
                 'type:util',

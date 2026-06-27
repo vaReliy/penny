@@ -7,10 +7,9 @@ Append-only queue for durable, project-relevant learnings whose final home isn't
 Why: a comment that says "no longer does X" / "now does Y" / "used to be Z" describes the diff that produced the current code, not the current invariant — it reads fine right after the change but rots the moment the next change lands, since nobody remembers to revisit prose. Comments should state the present-tense rule/contract ("does not do X; callers must do Y"), never the change history (that belongs in the commit message/PR description).
 Belongs in (guess): rule (rules/code-style.md, as a review checklist item) or reviewer agent instructions
 
-## 2026-06-25 — identity: UserStatus type drift between shared-contracts and identity-core
+## 2026-06-25 — identity: UserStatus type drift between shared-contracts and identity-core (RESOLVED 2026-06-27)
 
-Why: `shared-contracts/src/lib/user-status.ts` defines `UserStatus = 'active' | 'pending' | 'banned'` (stale, from earlier design); `identity-core/src/lib/user-status.ts` has the live enum (`pending | active | rejected`). The identity application layer correctly uses `identity-core`'s version — but callers referencing `shared-contracts` will get a wrong type. Needs cleanup: `shared-contracts` should re-export or replace with `identity-core`'s version.
-Belongs in (guess): PROJECT_CONTEXT | rule (architecture)
+Why: `shared-contracts/src/lib/user-status.ts` defined `UserStatus = 'active' | 'pending' | 'banned'` (stale, from earlier design); `identity-core/src/lib/user-status.ts` had the live enum (`pending | active | rejected`). Fixed: `shared-contracts` is now the single authoritative `as const` definition (PENDING/ACTIVE/REJECTED); `identity/core` re-exports from there; all consumers redirected.
 
 ## 2026-06-25 — identity: telegramId unique index required on MongoUserRepository
 
@@ -95,6 +94,21 @@ Belongs in: rules/architecture.md (auth/cookies section)
 ## 2026-06-27 — identity: telegramId unique index race condition resolved (RESOLVED)
 
 Why: Previous inbox entry from 2026-06-25 flagged the race. Now fixed: `MongoUserRepository.save()` uses atomic `findOneAndUpdate+upsert` with E11000 retry; non-sparse unique index; unit tests cover the retry path with mocked Mongoose model.
+
+## 2026-06-27 — nx: every lib that directly imports a shared lib needs its own package.json entry
+
+Why: When `shared-contracts` became the authoritative `UserStatus` source, the implementer added `"shared-contracts": "0.0.1"` to `identity-core/package.json` but missed `identity-infrastructure/package.json`, which also has direct imports (`user.model.ts`, `user.mapper.ts`). `@nx/dependency-checks` catches this as a hard lint error. Rule: after adding a new intra-monorepo import path alias to any lib, check that lib's `package.json#dependencies` — not just the most obvious consumer.
+Belongs in (guess): rules/dependencies.md | AGENTS.md checklist
+
+## 2026-06-27 — nx: `type:core → type:contracts` boundary rule must be explicitly allowed when contracts is the shared kernel
+
+Why: The default NX `onlyDependOnLibsWithTags` for `type:core` did not include `type:contracts`. Promoting `shared-contracts` to the authoritative domain-primitive source required adding `'type:contracts'` to the `type:core` allowlist in `eslint.config.mjs`. Same applies to `type:infrastructure` (was already allowed). Whenever making a `type:contracts` lib a dependency of a higher-purity layer, update the boundary rule or the lint gate will block the build.
+Belongs in (guess): rules/architecture.md (NX boundary section) | PROJECT_CONTEXT
+
+## 2026-06-27 — typescript: bare `export { X }` re-exports both value and type when X is a declaration merge
+
+Why: In `identity-core/src/lib/user-status.ts`, `export { UserStatus } from 'shared-contracts'` covers both the const object (value namespace) and the `UserStatus` type alias (type namespace) in a single statement — no `export type { UserStatus }` needed alongside it. This works because the source file has a declaration merge (const + same-name type alias). Callers can use both `UserStatus.ACTIVE` (value) and `status: UserStatus` (type) from one import binding.
+Belongs in (guess): rules/code-style.md (re-exports section)
 
 ## 2026-06-27 — api: NestJS LogLevel allowlist → pino threshold translation uses minimum-level reduction
 

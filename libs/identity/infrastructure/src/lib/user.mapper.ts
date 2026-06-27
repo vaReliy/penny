@@ -1,7 +1,7 @@
 import type { DocumentType } from '@typegoose/typegoose';
 
 import { User } from 'identity-core';
-import type { UserStatus } from 'identity-core';
+import type { UserStatus } from 'shared-contracts';
 
 import type { UserModel } from './user.model.js';
 

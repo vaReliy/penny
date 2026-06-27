@@ -7,7 +7,7 @@ import type {
   ITokenIssuer,
   RawTelegramLoginPayload,
 } from 'identity-application';
-import { UserStatus } from 'identity-core';
+import { UserStatus } from 'shared-contracts';
 
 import { TOKENS } from '../identity/tokens.js';
 import { API_CONFIG } from '../config/api-config.js';

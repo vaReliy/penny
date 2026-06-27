@@ -1,4 +1,4 @@
-import type { UserStatus } from 'identity-core';
+import type { UserStatus } from 'shared-contracts';
 
 /**
  * Claims encoded into every session token. Kept minimal and stateless —

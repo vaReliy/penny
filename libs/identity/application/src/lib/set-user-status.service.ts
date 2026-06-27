@@ -1,6 +1,6 @@
 import { AuthenticationError, NotFoundError } from 'shared-errors';
 import { BaseService } from 'shared-kernel';
-import { UserStatus } from 'identity-core';
+import { UserStatus } from 'shared-contracts';
 import type { IUserRepository, User } from 'identity-core';
 import type { ServiceContext } from 'shared-kernel';
 

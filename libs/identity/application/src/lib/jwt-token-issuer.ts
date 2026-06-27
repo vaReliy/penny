@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 
 import { AuthenticationError } from 'shared-errors';
-import { UserStatus } from 'identity-core';
+import { UserStatus } from 'shared-contracts';
 
 import type { ITokenIssuer, TokenClaims } from './token-issuer.js';
 
