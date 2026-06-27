@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Mandatory pre-flight reads for all agents** — every agent definition now opens with a `## Pre-flight` section. All agents read `docs/KNOWLEDGE_INBOX.md` before acting; technical agents (backend-developer, angular-developer, tester, qa, devops, dba, debugger, refactoring-expert, integration-architect, queue-specialist) additionally read `rules/architecture.md` + `rules/code-style.md` before writing code. `rules/workflow.md` updated with a dispatch note explaining that agents read these from disk, not from inline orchestrator context, so the knowledge reflects the repo's current state.
+
 ### Changed
 
 - **Quality gate contract** — reviewer and security-scanner now emit two mandatory sections (`## Fix Now` / `## Emit as Task`) classifying every finding by origin (introduced vs pre-existing). Orchestrator actions are now deterministic: Fix Now triggers fix-retry (max 2, then hard stop); Emit as Task triggers task file creation and gate closure. Bug Fix Pipeline verify resolution rule updated to match. Scope annotations added to each agent's severity-grouped output format to eliminate ambiguity with the new origin-grouped pipeline format.

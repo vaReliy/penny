@@ -19,6 +19,15 @@ Write robust, maintainable test suites using Vitest for unit tests, feature test
 
 **Important**: For E2E browser tests, visual regression, and Playwright automation, use the `qa` agent instead.
 
+## Pre-flight
+
+Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated project-specific conventions and discovered issues that apply to all agents.
+
+Before writing or modifying any code, additionally read:
+
+- `rules/architecture.md`
+- `rules/code-style.md`
+
 ## Scope Boundary
 
 | This Agent (Tester)                       | QA Agent                 |

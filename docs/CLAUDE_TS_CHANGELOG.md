@@ -17,6 +17,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-06-28 — Enhancement: mandatory pre-flight reads for all agent definitions
+
+- **Component**: all `.claude/agents/**` + `rules/workflow.md`
+- **Type**: Enhancement
+- **What happened**: Technical agents (backend-developer, angular-developer, qa, devops, tester, refactoring-expert, integration-architect, queue-specialist, dba, debugger) were writing code without reading accumulated project conventions first, causing avoidable reviewer findings that extended the fix-retry cycle. Added a `## Pre-flight` section to every agent definition. All agents now read `docs/KNOWLEDGE_INBOX.md` before acting; technical agents additionally read `rules/architecture.md` + `rules/code-style.md` before writing any code. Added a dispatch note to `rules/workflow.md` reminding the orchestrator that agents read these from disk (not inline context) to reflect the current repo state.
+- **Why it matters upstream**: Any claude-ts consumer accumulates project-specific conventions in KNOWLEDGE_INBOX over time. Without this pre-flight, agents ignore that knowledge and reproduce the same violations — wasting review cycles on issues already documented.
+- **Suggested upstream change**: Add `## Pre-flight` section to all agent definitions immediately after the opening description paragraph. Non-technical agents: KNOWLEDGE_INBOX read only. Technical agents: KNOWLEDGE_INBOX + `rules/architecture.md` + `rules/code-style.md`. Add dispatch note to `rules/workflow.md` `### Implementation Team (Phase 3)` section.
+- **Status**: pending-port
+
+---
+
 ## 2026-06-27 — Enhancement: quality gate two-section finding classification contract
 
 - **Component**: `rules/workflow.md` / `reviewer` agent / `security-scanner` agent
@@ -137,6 +148,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 - **What happened**: Review cycles compounded into "infinite loops" because (1) reviewer treated all findings as "fix now" regardless of origin, and (2) technical agents had no mandatory pre-flight reads of accumulated project conventions. Root cause confirmed via a grill session: the orchestrator was fixing pre-existing discoveries inline, each fix adding new review surface, creating a structurally guaranteed loop. Decisions: reviewer and security-scanner must output two explicit sections (`## Fix Now` / `## Emit as Task`); classification criterion is origin only (introduced by changeset vs pre-existing); 2-cycle limit applies to Fix Now items only; cheap-override for pre-existing fixes requires a 4-point mechanical check (≤1 file, no new tests, no new deps, purely mechanical); all agents read `docs/KNOWLEDGE_INBOX.md` before acting; technical agents also read `rules/architecture.md` + `rules/code-style.md`. Task files emitted: `2026-06-27-20-01-quality-gate-reviewer-classification.md` and `2026-06-27-20-02-agent-preflight-reads.md`.
 - **Why it matters upstream**: Any claude-ts consumer will hit the same compounding-review-cycle problem. The flat finding list gives the orchestrator no signal about whether to fix inline or defer, so it defaults to fixing everything inline. The structural fix — two-section output + origin classification + mandatory pre-flight reads — is universally applicable.
 - **Suggested upstream change**: (a) Add `## Fix Now` / `## Emit as Task` two-section output requirement to the reviewer and security-scanner agent definitions. (b) Add origin-classification criterion and cheap-override 4-point checklist to `rules/workflow.md` quality gate section. (c) Add mandatory `docs/KNOWLEDGE_INBOX.md` pre-flight read to all agent definitions. (d) Add mandatory `rules/architecture.md` + `rules/code-style.md` pre-flight reads to all technical agent definitions.
+- **Status**: pending-port
+
+---
+
+## 2026-06-28 — Fix: CLAUDE.md quality gate omitted cheap-override reference
+
+- **Component**: `CLAUDE.md` Orchestrator Core quality gate paragraph
+- **Type**: Fix
+- **What happened**: The `## Emit as Task` clause in `CLAUDE.md`'s quality gate one-liner had no mention of the cheap-override exception defined in `rules/workflow.md`. An orchestrator reading only `CLAUDE.md` (always-loaded context) would always emit a task file even for pre-existing findings that qualify for the 4-point mechanical override, missing the shortcut. Fixed by appending `(cheap-override exception: see rules/workflow.md)` to the Emit as Task clause.
+- **Why it matters upstream**: `CLAUDE.md` is always-loaded; `rules/workflow.md` is on-demand. Any clause with an important exception defined only in the on-demand file is invisible to the orchestrator in sessions where that file isn't read. The pattern of adding a parenthetical pointer keeps `CLAUDE.md` concise while making the exception discoverable.
+- **Suggested upstream change**: In `CLAUDE.md` quality gate paragraph, after `## Emit as Task` clause description, append `(cheap-override exception: see rules/workflow.md)` — or the equivalent for whatever cheap-override logic exists in the consumer's workflow rules.
 - **Status**: pending-port
 
 ---

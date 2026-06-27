@@ -17,6 +17,15 @@ tools:
 
 Design and optimize PostgreSQL schemas, Prisma migrations, indexes, and ORM relationships.
 
+## Pre-flight
+
+Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated project-specific conventions and discovered issues that apply to all agents.
+
+Before writing or modifying any code, additionally read:
+
+- `rules/architecture.md`
+- `rules/code-style.md`
+
 ## Scope Boundary
 
 | This Agent (DBA)      | Backend Developer   | DevOps Agent       |

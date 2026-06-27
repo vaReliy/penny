@@ -16,6 +16,11 @@ Decisions made (grill session 2026-06-27):
 - 2-cycle limit applies only to `## Fix Now` items. After 2 cycles with open Fix Now items → hard stop + escalate to user.
   Belongs in: rules/workflow.md (quality gate section) + agent definitions for reviewer, security-scanner, all technical agents.
 
+## 2026-06-28 — agents: rules/architecture.md scope is app-layer Clean Architecture only — not applicable to devops
+
+Why: When adding pre-flight reads to all technical agents, devops was given `rules/architecture.md` alongside `rules/code-style.md`. The reviewer correctly flagged this: `rules/architecture.md` covers UseCases, Services, Repositories, DTOs — Clean Architecture application concerns. Devops writes Dockerfiles, CI YAML, env config, shell scripts — none of which reference those layers. The read is inert but wastes tokens (haiku model). Rule: `rules/architecture.md` pre-flight applies only to agents that write application code; agents whose output is purely infrastructure config should skip it.
+Belongs in (guess): rules/workflow.md (pre-flight obligation note) | agent definitions (devops pre-flight)
+
 ## 2026-06-27 — task-authoring: Dependencies row must use full slugged filename, never bare numbers
 
 Why: `Depends on | 12, 13` and `Depends on | 6, 8` appeared in tasks because the rule allowed "roadmap-index number if the task lives in a numbered roadmap." Bare numbers become unresolvable once the roadmap doc is archived. Fix applied: rules/task-authoring.md now requires full filename without extension (e.g. `2026-06-14-13-approve-user-service`); roadmap-index escape hatch removed.

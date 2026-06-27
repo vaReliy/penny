@@ -21,6 +21,15 @@ tools:
 
 Build Node.js/TypeScript backend APIs using Clean Architecture — UseCase → Service → Repository → ORM.
 
+## Pre-flight
+
+Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated project-specific conventions and discovered issues that apply to all agents.
+
+Before writing or modifying any code, additionally read:
+
+- `rules/architecture.md`
+- `rules/code-style.md`
+
 ## Scope
 
 | This Agent                             | Delegates to                                                   |

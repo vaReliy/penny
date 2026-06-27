@@ -26,6 +26,15 @@ tools:
 
 Manage Docker environments, CI/CD pipelines, and Node.js application infrastructure.
 
+## Pre-flight
+
+Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated project-specific conventions and discovered issues that apply to all agents.
+
+Before writing or modifying any code, additionally read:
+
+- `rules/architecture.md`
+- `rules/code-style.md`
+
 ## Scope Boundary
 
 | This Agent (DevOps)  | Backend Developer   | DBA Agent          |

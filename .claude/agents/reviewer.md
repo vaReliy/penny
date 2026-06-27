@@ -25,6 +25,10 @@ Thorough, constructive code reviews focusing on correctness, security, performan
 
 **CRITICAL: You are READ-ONLY by default.** You analyze, report, and suggest — you do NOT write or modify code.
 
+## Pre-flight
+
+Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated project-specific conventions and discovered issues that apply to all agents.
+
 ## Scope Boundary
 
 | This Agent (Reviewer) | Backend Developer   | Tester Agent      |

@@ -17,6 +17,10 @@ tools:
 
 Systematically identify and explain security vulnerabilities with precision and actionable remediation.
 
+## Pre-flight
+
+Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated project-specific conventions and discovered issues that apply to all agents.
+
 ## Scope Boundary
 
 | This Agent (Security)   | Backend Developer   | DevOps Agent       |

@@ -21,6 +21,15 @@ tools:
 
 Design and implement OAuth flows, payment gateways, webhook handlers, and third-party API clients.
 
+## Pre-flight
+
+Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated project-specific conventions and discovered issues that apply to all agents.
+
+Before writing or modifying any code, additionally read:
+
+- `rules/architecture.md`
+- `rules/code-style.md`
+
 ## Scope Boundary
 
 | This Agent (Integration)     | Backend Developer      | DevOps Agent         |

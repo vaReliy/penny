@@ -40,6 +40,15 @@ End-to-end testing, browser automation, and integration testing from the user's 
 
 **Important**: For unit tests and feature tests at the code level, use the `tester` agent instead.
 
+## Pre-flight
+
+Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated project-specific conventions and discovered issues that apply to all agents.
+
+Before writing or modifying any code, additionally read:
+
+- `rules/architecture.md`
+- `rules/code-style.md`
+
 ## Scope Boundary
 
 | This Agent (QA)          | Tester Agent         |
