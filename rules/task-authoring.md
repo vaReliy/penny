@@ -30,13 +30,13 @@ These sort before `…-N.md` because `-` (0x2D) < `.` (0x2E) in ASCII/C collatio
 ## Header (Canonical — 5 Rows + Optional Context)
 
 ```
-| Field         | Value                                           |
-| ---           | ---                                             |
-| Clean session | **Yes**                                         |
-| Executor model | **Sonnet (standard)**                          |
-| Repo          | `penny`, branch `skeleton`                      |
-| Depends on    | 2026-06-14-13, 2026-06-14-14                    |
-| On completion | Suggest a commit message. **Do NOT commit.**    |
+| Field         | Value                                                          |
+| ---           | ---                                                            |
+| Clean session | **Yes**                                                        |
+| Executor model | **Sonnet (standard)**                                         |
+| Repo          | `penny`, branch `skeleton`                                     |
+| Depends on    | 2026-06-14-13-approve-user-service, 2026-06-14-14-reject-user |
+| On completion | Suggest a commit message. **Do NOT commit.**                   |
 ```
 
 **Security caveat:** Security-critical tasks add `— 🔒 security-scanner required` after the executor tier, and `⚠️ Owner security review pass.` to the On-completion row.
@@ -63,4 +63,4 @@ The executing agent suggests a one-line commit message and does NOT commit. The 
 
 ## Dependencies
 
-The `Depends on` row cites the **full task identifier** (e.g. `2026-06-14-13`) or the roadmap-index number if the task lives in a numbered roadmap — never a bare cross-date number.
+The `Depends on` row cites the **full task filename without extension** (e.g. `2026-06-14-13-approve-user-service`). Never use bare sequence numbers (`12`, `13`) or date-only identifiers without a slug — these become unresolvable once the originating roadmap doc is archived.

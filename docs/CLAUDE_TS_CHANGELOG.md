@@ -108,6 +108,28 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-06-27 — Fix: task-authoring Dependencies row allowed unresolvable bare numbers
+
+- **Component**: `rules/task-authoring.md` Dependencies section
+- **Type**: Fix
+- **What happened**: The `Depends on` row allowed "roadmap-index number if the task lives in a numbered roadmap" as an alternative to full task identifiers. This produced bare numbers (`12, 13`, `6, 8`) in real task files. Once the originating roadmap doc is archived, these numbers are unresolvable — no file search can find them. Fixed: removed the escape hatch; the rule now requires the full filename without extension including slug (e.g. `2026-06-14-13-approve-user-service`). Header example updated to show a slugged identifier. Existing task files with bare numbers should be updated opportunistically.
+- **Why it matters upstream**: Any claude-ts consumer using the task-authoring convention will hit the same drift: agents copy the allowed alternative form, and dependency chains become opaque the moment source roadmap docs are cleaned up.
+- **Suggested upstream change**: In `rules/task-authoring.md` Dependencies section, replace `"…or the roadmap-index number if the task lives in a numbered roadmap"` with `"Never use bare sequence numbers or date-only identifiers without a slug — these become unresolvable once the originating roadmap doc is archived."` Update header example to show a full slugged filename.
+- **Status**: pending-port
+
+---
+
+## 2026-06-27 — Enhancement: quality gate reviewer/security-scanner two-section output + agent pre-flight reads
+
+- **Component**: `rules/workflow.md` quality gate / all agent definitions (reviewer, security-scanner, technical agents)
+- **Type**: Enhancement
+- **What happened**: Review cycles compounded into "infinite loops" because (1) reviewer treated all findings as "fix now" regardless of origin, and (2) technical agents had no mandatory pre-flight reads of accumulated project conventions. Root cause confirmed via a grill session: the orchestrator was fixing pre-existing discoveries inline, each fix adding new review surface, creating a structurally guaranteed loop. Decisions: reviewer and security-scanner must output two explicit sections (`## Fix Now` / `## Emit as Task`); classification criterion is origin only (introduced by changeset vs pre-existing); 2-cycle limit applies to Fix Now items only; cheap-override for pre-existing fixes requires a 4-point mechanical check (≤1 file, no new tests, no new deps, purely mechanical); all agents read `docs/KNOWLEDGE_INBOX.md` before acting; technical agents also read `rules/architecture.md` + `rules/code-style.md`. Task files emitted: `2026-06-27-20-01-quality-gate-reviewer-classification.md` and `2026-06-27-20-02-agent-preflight-reads.md`.
+- **Why it matters upstream**: Any claude-ts consumer will hit the same compounding-review-cycle problem. The flat finding list gives the orchestrator no signal about whether to fix inline or defer, so it defaults to fixing everything inline. The structural fix — two-section output + origin classification + mandatory pre-flight reads — is universally applicable.
+- **Suggested upstream change**: (a) Add `## Fix Now` / `## Emit as Task` two-section output requirement to the reviewer and security-scanner agent definitions. (b) Add origin-classification criterion and cheap-override 4-point checklist to `rules/workflow.md` quality gate section. (c) Add mandatory `docs/KNOWLEDGE_INBOX.md` pre-flight read to all agent definitions. (d) Add mandatory `rules/architecture.md` + `rules/code-style.md` pre-flight reads to all technical agent definitions.
+- **Status**: pending-port
+
+---
+
 ## 2026-06-27 — task-authoring rule (Penny override)
 
 - **Component**: `rules/task-authoring.md` (new file) + `AGENTS.md` on-demand index

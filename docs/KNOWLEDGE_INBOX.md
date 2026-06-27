@@ -2,6 +2,25 @@
 
 Append-only queue for durable, project-relevant learnings whose final home isn't clear yet. Distilled into PROJECT_CONTEXT.md / CLAUDE.md / a rule / a skill, then deleted from here — this file should trend toward empty.
 
+## 2026-06-27 — workflow: quality gate fix-retry cycles cause "infinite loops" when developer lacks pre-flight context
+
+Why: Review cycles compound when (1) technical agents don't read KNOWLEDGE_INBOX / rules before coding, and (2) reviewer treats all findings as "fix now" regardless of origin. Root cause confirmed via task `2026-06-14-15-04-user-status-drift` spawning 5 subtasks — valid pre-existing discoveries, not regressions. Each inline fix adds new review surface, so the loop is structurally guaranteed.
+Decisions made (grill session 2026-06-27):
+
+- All agents must read `docs/KNOWLEDGE_INBOX.md` before acting (knowledge of discovered issues).
+- Technical agents (backend-developer, angular-developer, qa, devops, tester) also read `rules/architecture.md` + `rules/code-style.md` as mandatory pre-flight.
+- Reviewer and security-scanner output two explicit sections: `## Fix Now` / `## Emit as Task`.
+- Classification criterion: origin only — introduced by this changeset → Fix Now; pre-existing → Emit as Task.
+- Severity/priority handled at task ordering level (task-authoring.md), not at gate classification.
+- "Cheap in current session" override allowed only if: ≤1 file, no new tests, no new deps, purely mechanical change — orchestrator decides, not the reviewer.
+- 2-cycle limit applies only to `## Fix Now` items. After 2 cycles with open Fix Now items → hard stop + escalate to user.
+  Belongs in: rules/workflow.md (quality gate section) + agent definitions for reviewer, security-scanner, all technical agents.
+
+## 2026-06-27 — task-authoring: Dependencies row must use full slugged filename, never bare numbers
+
+Why: `Depends on | 12, 13` and `Depends on | 6, 8` appeared in tasks because the rule allowed "roadmap-index number if the task lives in a numbered roadmap." Bare numbers become unresolvable once the roadmap doc is archived. Fix applied: rules/task-authoring.md now requires full filename without extension (e.g. `2026-06-14-13-approve-user-service`); roadmap-index escape hatch removed.
+Belongs in: rules/task-authoring.md (already applied).
+
 ## 2026-06-25 — code review: flag history-flavored words in doc comments
 
 Why: a comment that says "no longer does X" / "now does Y" / "used to be Z" describes the diff that produced the current code, not the current invariant — it reads fine right after the change but rots the moment the next change lands, since nobody remembers to revisit prose. Comments should state the present-tense rule/contract ("does not do X; callers must do Y"), never the change history (that belongs in the commit message/PR description).
