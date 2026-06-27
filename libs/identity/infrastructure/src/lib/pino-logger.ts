@@ -23,6 +23,7 @@ export interface PinoLoggerConfig {
 export function createPinoLogger(config: PinoLoggerConfig): pino.Logger {
   if (config.mode === 'development') {
     return pino({
+      level: 'debug',
       transport: {
         target: 'pino-pretty',
         options: {

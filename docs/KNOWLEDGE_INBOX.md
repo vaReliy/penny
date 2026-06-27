@@ -61,3 +61,13 @@ Belongs in: rules/architecture.md (logging section) | PROJECT_CONTEXT
 
 Why: Three root causes made agents consistently write learnings to private auto-memory instead of docs/KNOWLEDGE_INBOX.md: (1) rules/workflow.md routed "config gotchas" to auto-memory and had an escape hatch "Claude-session-specific gotchas still go to auto-memory" that rationalized almost any learning; (2) Phase 6 was framed as "after every pipeline" so direct/trivial edits never triggered it; (3) none of the 16 agent definitions mentioned the inbox. Instructions are probabilistic — the harness system prompt pulls strongly toward private memory. Only a Stop hook (which the harness enforces) creates a deterministic checkpoint. Fix applied: `.claude/hooks/knowledge-capture-nudge.sh` blocks once per session per unmet obligation (inbox / CLAUDE_TS_CHANGELOG); rules/workflow.md escape hatch removed; litmus test added; CLAUDE.md write-limit carve-out added; all 12 implementation agents now include a `## Learnings` handoff bullet in their Report Format.
 Belongs in: rules/workflow.md (already applied) + CLAUDE_TS_CHANGELOG (pending-port entry below)
+
+## 2026-06-27 — api: NestJS `new Logger(name)` auto-delegates to the globally registered LoggerService
+
+Why: `createParamDecorator` factories and manually-instantiated filters (`BaseErrorFilter`, `UnknownErrorFilter` constructed with `new` in `main.ts`) cannot receive DI-injected loggers. However, NestJS `Logger` instances created via `new Logger(name)` internally forward every call to whichever `LoggerService` is registered with `app.useLogger()` — so they automatically route through pino once the adapter is wired. Converting them to `@Inject(LoggerService)` is not needed for log-unification goals; it is only beneficial for full DI testability.
+Belongs in (guess): rules/architecture.md (logging section)
+
+## 2026-06-27 — api: NestJS LogLevel allowlist → pino threshold translation uses minimum-level reduction
+
+Why: NestJS's `setLogLevels(levels: LogLevel[])` takes an explicit allowlist (e.g. `['warn', 'error']`), but pino's `logger.level` is a threshold (all levels at or above it are emitted). The correct translation is to map each NestJS level to a pino level, then pick the minimum pino level from the array — that threshold allows the widest set of events that satisfies the NestJS allowlist. Implemented via a `PINO_LEVEL_VALUE: Record<pino.Level, number>` numeric lookup and `Array.reduce` to find the minimum. An empty array should be a no-op (guard with early return).
+Belongs in (guess): rules/architecture.md (logging section) | skill (pino integration recipe)
