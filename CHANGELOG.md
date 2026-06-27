@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Quality gate contract** — reviewer and security-scanner now emit two mandatory sections (`## Fix Now` / `## Emit as Task`) classifying every finding by origin (introduced vs pre-existing). Orchestrator actions are now deterministic: Fix Now triggers fix-retry (max 2, then hard stop); Emit as Task triggers task file creation and gate closure. Bug Fix Pipeline verify resolution rule updated to match. Scope annotations added to each agent's severity-grouped output format to eliminate ambiguity with the new origin-grouped pipeline format.
+
 ### Added
 
 - **`apps/api/src/logger/pino-nest-logger.ts`** — NestJS `LoggerService` adapter bridging to a pino root instance. Methods map `log→info`, `error→error`, `warn→warn`, `debug→debug`, `verbose→trace`, `fatal→fatal`. `setLogLevels(levels)` maps NestJS's allowlist model to pino's threshold model.

@@ -56,11 +56,13 @@ Systematically identify and explain security vulnerabilities with precision and 
 | **Data**          | PII not logged; parameterized ORM queries; API responses don't leak internal entity IDs or stack traces       |
 | **Dependencies**  | `npm audit` clean; no `node_modules` committed; lockfile (`package-lock.json`) committed                      |
 
-## Reporting Format
+## Reporting Format (for standalone security audits)
 
 Sections: Critical Findings → High Priority → Medium → Low/Recommendations → Summary (counts + posture).
 
 For each finding: **Location** (file:line) · **Severity** · **Description** · **Impact** · **Remediation** · **Reference** (OWASP/CWE).
+
+> For pipeline reports to orchestrator, use `## Finding Classification` below instead.
 
 > See `rules/docker-commands.md` for all commands.
 
@@ -82,3 +84,22 @@ Reports back to orchestrator: terse fragments, bullets, no prose, ≤300 words.
 - If you discovered something durable and non-obvious (config recipe, wrong-pattern gotcha, test anti-pattern, library constraint), add a `## Learnings` section at the end of your report — the orchestrator records it in `docs/KNOWLEDGE_INBOX.md`.
 - EXEMPT from compression: code, migrations, API contracts, user stories consumed
   by next phase, PR descriptions — these stay complete and precise.
+
+## Finding Classification (mandatory — always two sections)
+
+Every finding must be classified by origin and placed in exactly one section:
+
+```
+## Fix Now
+- [finding] — introduced by this changeset; must be resolved before gate passes
+
+## Emit as Task
+- [finding] — pre-existing issue, not introduced here; task file: <suggested-filename>
+```
+
+Rules:
+
+- A finding goes to `## Fix Now` if it was **introduced by the current changeset** (any severity).
+- A finding goes to `## Emit as Task` if it **pre-existed** the current changeset.
+- Both sections must always be present, even if empty (`_none_`).
+- Classification criterion: **origin only** — severity/priority is set in the emitted task file, not here.

@@ -183,11 +183,23 @@ Conditionally add:
 Each works independently — no inter-agent messages needed.
 Wait for all to complete, then collect reports.
 
-**Resolution:**
+**Quality gate output contract:**
 
-- All pass → proceed to phase 5
-- ANY 🔴 Critical or 🟡 Important → shutdown team → route findings to the responsible implementation agent (backend or frontend) → re-run quality gate
-- **Max 2 retry cycles.** If quality gate fails after 2 fix cycles, stop and escalate to user.
+Reviewer and security-scanner emit two sections in every report:
+
+```
+## Fix Now
+- [finding] — introduced by this changeset; must be resolved before gate passes
+
+## Emit as Task
+- [finding] — pre-existing issue, not introduced here; task file: <suggested-filename>
+```
+
+**Orchestrator actions (deterministic — no judgment calls):**
+
+- `## Fix Now` items present → shutdown team → route to responsible implementation agent → re-run quality gate. Max 2 retry cycles. After 2 cycles with open Fix Now items → **hard stop**: surface remaining list to user, do NOT self-patch.
+- `## Emit as Task` items present → orchestrator creates one task file per finding (following `rules/task-authoring.md`), then **closes the gate** for the current task. Cheap override: orchestrator may fix inline (skipping task emission) only if ALL of: ≤1 file, no new tests, no new deps, purely mechanical change (delete param, rename constant, remove flag).
+- All sections empty (`_none_`) → proceed to phase 5.
 
 ## Bug Fix Pipeline
 
@@ -214,7 +226,7 @@ debugger → responsible agent ═══╗
 - `backend-developer` — bug in UseCase / Service / Repository / route handler
 - `vue-developer` / `react-developer` / `angular-developer` — bug in frontend component / store / composable
 
-Same resolution rule: Critical/Important → back to phase 2. Max 2 retries.
+Same resolution rule (origin-based): `## Fix Now` items → back to phase 2. Max 2 cycles. After 2 cycles with open Fix Now items → hard stop, surface to user. `## Emit as Task` items → create task file per finding, close the verify phase.
 
 ## CI/CD Pipeline
 

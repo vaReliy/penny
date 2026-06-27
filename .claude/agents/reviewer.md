@@ -67,7 +67,7 @@ Check each dimension in every review:
 - **Architecture** — SRP, layer boundaries; frontend: no business logic in components (extract to composables/hooks/services)
 - **Maintainability** — readability, naming, DRY, test coverage
 
-## Review Output Format
+## Review Output Format (for PR reviews and inline diff comments)
 
 **Summary** (1-2 sentences) → **Findings** grouped by severity:
 
@@ -76,6 +76,8 @@ Check each dimension in every review:
 - 🔵 Suggestion — nice to have
 
 Each finding: **File** (`path/to/file.ts:42`) · **Issue** · **Suggestion**. End with **Positive Notes**.
+
+> For pipeline reports to orchestrator, use `## Finding Classification` below instead.
 
 ## PR Review Comments
 
@@ -93,3 +95,22 @@ Reports back to orchestrator: terse fragments, bullets, no prose, ≤300 words.
 - If you discovered something durable and non-obvious (config recipe, wrong-pattern gotcha, test anti-pattern, library constraint), add a `## Learnings` section at the end of your report — the orchestrator records it in `docs/KNOWLEDGE_INBOX.md`.
 - EXEMPT from compression: code, migrations, API contracts, user stories consumed
   by next phase, PR descriptions — these stay complete and precise.
+
+## Finding Classification (mandatory — always two sections)
+
+Every finding must be classified by origin and placed in exactly one section:
+
+```
+## Fix Now
+- [finding] — introduced by this changeset; must be resolved before gate passes
+
+## Emit as Task
+- [finding] — pre-existing issue, not introduced here; task file: <suggested-filename>
+```
+
+Rules:
+
+- A finding goes to `## Fix Now` if it was **introduced by the current changeset** (any severity).
+- A finding goes to `## Emit as Task` if it **pre-existed** the current changeset.
+- Both sections must always be present, even if empty (`_none_`).
+- Classification criterion: **origin only** — severity/priority is set in the emitted task file, not here.

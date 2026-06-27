@@ -17,6 +17,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-06-27 — Enhancement: quality gate two-section finding classification contract
+
+- **Component**: `rules/workflow.md` / `reviewer` agent / `security-scanner` agent
+- **Type**: Enhancement
+- **What happened**: Quality gate "max 2 fix-retry cycles, then escalate" prose caused infinite review loops — reviewer treated all findings as Fix Now regardless of origin. Pre-existing findings triggered fix cycles that added new review surface, structurally guaranteeing the loop would continue. Fix: reviewer and security-scanner now emit `## Fix Now` (introduced by this changeset) / `## Emit as Task` (pre-existing). Orchestrator actions are deterministic per section: Fix Now → retry impl (max 2 cycles, then hard stop, no self-patch); Emit as Task → task file per finding, gate closes. Bug Fix Pipeline verify resolution also updated to origin-based routing. Scope annotations added to each agent's legacy severity-grouped output format to eliminate ambiguity with the new pipeline format.
+- **Why it matters upstream**: Any claude-ts consumer running multi-file features will hit the review loop pathology. The fix is purely additive (two sections + scope annotations) and requires no source code changes.
+- **Suggested upstream change**: Apply `## Finding Classification (mandatory — always two sections)` to `reviewer.md` and `security-scanner.md`; replace quality gate Resolution block in `rules/workflow.md` with the deterministic contract; add scope annotation "(for PR reviews)" / "(for standalone audits)" to each agent's legacy output format section; update Bug Fix Pipeline verify line to use origin-based language.
+- **Status**: pending-port
+
+---
+
 ## 2026-06-25 — Conflict: devops overrouting on mixed infra + code tasks
 
 - **Component**: orchestrator routing table / `rules/workflow.md` Agent Quick Routing
