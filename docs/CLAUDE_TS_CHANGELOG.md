@@ -97,6 +97,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-06-27 — Enhancement: nx command policy — always use nx targets, never direct tool invocations
+
+- **Component**: `rules/workflow.md` / `rules/testing.md` / `rules/docker-commands.md`
+- **Type**: Enhancement
+- **What happened**: All three files contained direct tool invocations (`npx vitest run`, `npx eslint .`, `npx tsc --noEmit`, `npm run build`) that agents were expected to copy. This is unsafe in an Nx monorepo: agents must guess the correct config path, working directory, and flags. Wrong guesses frequently exit 0 silently (e.g., `vitest run` with no matched files returns success). Added a "Command Execution Policy (Nx Targets)" section to `rules/workflow.md` with a ✅/❌ table, the rationale, useful flags, and project name reference. Updated `rules/testing.md` "Running Tests" section to use `nx test <project>` with a note on single-file pass-through via `--`. Updated `rules/docker-commands.md` Code Quality, Testing, and Build sections to use nx targets; Stryker and Prettier remain as direct invocations (no nx plugin/target exists for them in this repo) with explanatory notes.
+- **Why it matters upstream**: Any claude-ts consumer running an Nx monorepo will copy direct-invocation examples from the rules files and hit the same class of failure: tests pass with 0 files matched, type-check silently runs against the wrong tsconfig, lint scopes the wrong directory. The fix is universal: rules files in an Nx workspace should prescribe `nx <target> <project>` as the single canonical invocation form.
+- **Suggested upstream change**: Add a "Command Execution Policy (Nx Targets)" section to `rules/workflow.md` (after Core Principles) with the ✅/❌ table. Replace all direct `npx vitest`/`npx eslint`/`npx tsc`/`npm run build` examples in `rules/testing.md` and `rules/docker-commands.md` with `nx test`/`nx lint`/`nx build` equivalents. Keep Stryker as a direct Docker invocation with a comment noting no nx plugin.
+- **Status**: pending-port
+
+---
+
 ## 2026-06-27 — task-authoring rule (Penny override)
 
 - **Component**: `rules/task-authoring.md` (new file) + `AGENTS.md` on-demand index

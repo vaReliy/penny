@@ -65,6 +65,29 @@ If none apply (e.g. typo fix, config value) — skip the pipeline.
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
 - **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
 
+## Command Execution Policy (Nx Targets)
+
+**Always invoke project targets via `nx`. Never call underlying tools directly.**
+
+| Task            | ✅ Use                               | ❌ Never use                          |
+| --------------- | ------------------------------------ | ------------------------------------- |
+| Build           | `nx build <project>`                 | `tsc -p tsconfig.json`, `webpack …`   |
+| Type-check only | `nx build <project> --skip-nx-cache` | `pnpm tsc --noEmit`, `npx tsc …`      |
+| Test            | `nx test <project>`                  | `npx vitest run --config …`, `jest …` |
+| Lint            | `nx lint <project>`                  | `npx eslint apps/…/src`, `eslint .`   |
+| E2E             | `nx e2e <project>`                   | `npx playwright test`                 |
+| All projects    | `nx run-many --target=<t>`           | —                                     |
+
+**Why:** nx targets encode the executor, config path, and working directory. Direct commands require the agent to know all three — wrong guesses often exit 0 with no output (e.g., `vitest run` with no matched files silently succeeds). Nx eliminates the guess.
+
+**Useful flags:**
+
+- `--skip-nx-cache` — bypass cache when verifying correctness (Phase 3 handoff, CI)
+- `--projects=<name>` with `run-many` — scope to specific projects
+- `--verbose` — show full executor output for debugging
+
+**Project names** (from `nx show projects`): `api`, `api-e2e`, `smoke-e2e`, `identity`, `shared` and any libs added later. When in doubt run `nx show projects` to list them.
+
 ## Execution Model
 
 - **Sequential steps** → Agent tool with `subagent_type` (output feeds next step)

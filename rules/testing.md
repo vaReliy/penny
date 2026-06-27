@@ -37,13 +37,27 @@ test/
 
 E2E tests live in `e2e/` and are owned by the `qa` agent.
 
-## Running Tests (all in Docker)
+## Running Tests
+
+Use nx targets — never invoke vitest/jest directly (see `rules/workflow.md` → Command Execution Policy).
 
 ```bash
-docker compose exec app npx vitest run                    # all tests
-docker compose exec app npx vitest run --coverage         # with coverage
-docker compose exec app npx vitest run --reporter=verbose test/unit/create-post.spec.ts
-docker compose exec app npx stryker run                   # mutation testing
+nx test api                             # run unit + integration tests for the api project
+nx test api --skip-nx-cache             # bypass cache (use when verifying correctness)
+nx test identity                        # run tests for the identity lib
+nx run-many --target=test               # run tests for all projects
+```
+
+For a single file, pass the vitest `--testFile` option through nx:
+
+```bash
+nx test api -- --reporter=verbose --testFile=test/unit/create-post.spec.ts
+```
+
+Mutation testing (no nx plugin — run directly):
+
+```bash
+docker compose exec app npx stryker run
 ```
 
 ## Writing Tests
@@ -108,3 +122,5 @@ docker compose exec app npx stryker run
 ```
 
 Fix surviving mutants by improving test assertions to test behavior, not implementation.
+
+> Stryker has no nx plugin in this repo — invoke it directly inside Docker only.
