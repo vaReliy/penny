@@ -1,10 +1,12 @@
+import type pino from 'pino';
+
 import type { ReturnModelType } from '@typegoose/typegoose';
 import type { Connection } from 'mongoose';
 import { isValidObjectId } from 'mongoose';
 
 import type { IUserRepository } from 'identity-core';
 import { User } from 'identity-core';
-import { DomainError, InfrastructureError } from 'shared-errors';
+import { InfrastructureError } from 'shared-errors';
 
 import { UserMapper } from './user.mapper.js';
 import { getUserModel, type UserModel } from './user.model.js';
@@ -46,16 +48,18 @@ function isMongoDriverError(error: unknown): error is MongoDriverError {
  * itself. Every public method returns/accepts domain `User` entities only;
  * Mongoose/BSON types never escape this class (see `UserMapper`).
  *
- * Driver errors are translated to `shared-errors` types: duplicate-key
- * violations (e.g. the unique `telegramId` index) become `DomainError`
- * conflicts, everything else becomes an `InfrastructureError`. Raw
- * Mongoose/MongoServerError instances never propagate to callers.
+ * Driver errors are translated to `shared-errors` types: all failures,
+ * including unexpected duplicate-key violations on the `telegramId` index,
+ * become `InfrastructureError`. Raw Mongoose/MongoServerError instances
+ * never propagate to callers.
  */
 export class MongoUserRepository implements IUserRepository {
   private readonly model: ReturnModelType<typeof UserModel>;
+  private readonly logger: pino.Logger;
 
-  public constructor(connection: Connection) {
+  public constructor(connection: Connection, logger: pino.Logger) {
     this.model = getUserModel(connection);
+    this.logger = logger;
   }
 
   public async findById(id: string): Promise<User | null> {
@@ -81,47 +85,90 @@ export class MongoUserRepository implements IUserRepository {
   }
 
   /**
-   * Persists `entity`: creates a new document when `entity.id` is not a
-   * valid ObjectId (not yet persisted), otherwise updates the existing
-   * document matching that id. The update path uses an explicit
-   * `$set`/`$unset` (see `UserMapper.toPersistenceUpdate`) so that clearing
-   * an optional profile field actually removes it from the document instead
-   * of being silently dropped. Returns the persisted domain entity (mapped
-   * from the resulting document).
+   * Persists `entity`: delegates to `updateById` when `entity.id` is a valid
+   * ObjectId (already persisted), otherwise delegates to `upsertByTelegramId`
+   * for the create path. Returns the persisted domain entity.
    *
-   * @throws {DomainError} If persisting violates the unique `telegramId` index.
    * @throws {InfrastructureError} If the update path's id has no matching
-   * document, or on any other driver/connection failure.
+   * document, on any driver/connection failure, or on an unexpected E11000
+   * duplicate-key collision after a concurrent-insert retry (DUPLICATE_TELEGRAM_ID).
    */
   public async save(entity: User): Promise<User> {
+    return isValidObjectId(entity.id)
+      ? this.updateById(entity)
+      : this.upsertByTelegramId(entity);
+  }
+
+  /**
+   * Updates the existing document matching `entity.id`. Uses an explicit
+   * `$set`/`$unset` (see `UserMapper.toPersistenceUpdate`) so that clearing
+   * an optional profile field actually removes it from the document instead
+   * of being silently dropped.
+   */
+  private async updateById(entity: User): Promise<User> {
     try {
-      const doc = isValidObjectId(entity.id)
-        ? await this.model
-            .findByIdAndUpdate(
-              entity.id,
-              UserMapper.toPersistenceUpdate(entity),
-              {
-                new: true,
-              },
-            )
-            .exec()
-        : await this.model.create(UserMapper.toPersistence(entity));
-
+      const doc = await this.model
+        .findByIdAndUpdate(entity.id, UserMapper.toPersistenceUpdate(entity), {
+          new: true,
+        })
+        .exec();
       if (!doc) {
-        throw new InfrastructureError(
-          `Failed to persist user "${entity.id}": document not found for update.`,
+        this.logger.error(
+          { userId: entity.id },
+          'MongoUserRepository.save: document not found for update',
         );
+        throw new InfrastructureError();
       }
-
       return UserMapper.toDomain(doc);
     } catch (error) {
+      if (error instanceof InfrastructureError) throw error;
+      throw this.toInfrastructureError(error, 'save');
+    }
+  }
+
+  /**
+   * Inserts a new document via an atomic upsert keyed on `telegramId`.
+   *
+   * If two concurrent callers both evaluate "no document" before either
+   * insert commits, MongoDB will raise E11000 on the losing writer. In that
+   * case we retry with a plain `findOne` to return the winner's document,
+   * making the operation idempotent from the caller's perspective.
+   */
+  private async upsertByTelegramId(entity: User): Promise<User> {
+    try {
+      const doc = await this.model
+        .findOneAndUpdate(
+          { telegramId: entity.telegramId },
+          { $setOnInsert: UserMapper.toPersistence(entity) },
+          { upsert: true, new: true },
+        )
+        .exec();
+      // doc cannot be null: upsert:true + new:true always returns a document.
+      return UserMapper.toDomain(doc!);
+    } catch (error) {
       if (
-        error instanceof InfrastructureError ||
-        error instanceof DomainError
+        isMongoDriverError(error) &&
+        error.code === MONGO_DUPLICATE_KEY_CODE
       ) {
-        throw error;
+        try {
+          // Concurrent writer won the upsert race. Read the winner's document.
+          const existing = await this.model
+            .findOne({ telegramId: entity.telegramId })
+            .exec();
+          if (existing) {
+            return UserMapper.toDomain(existing);
+          }
+          this.logger.error(
+            { telegramId: entity.telegramId },
+            'MongoUserRepository.save: DUPLICATE_TELEGRAM_ID — concurrent insert collision after upsert retry',
+          );
+          throw new InfrastructureError();
+        } catch (retryError) {
+          if (retryError instanceof InfrastructureError) throw retryError;
+          throw this.toInfrastructureError(retryError, 'save');
+        }
       }
-      throw this.toPersistenceError(error, entity.telegramId);
+      throw this.toInfrastructureError(error, 'save');
     }
   }
 
@@ -137,21 +184,15 @@ export class MongoUserRepository implements IUserRepository {
     }
   }
 
-  /** Maps a save/create/update driver error to `DomainError` or `InfrastructureError`. */
-  private toPersistenceError(error: unknown, telegramId: string): Error {
-    if (isMongoDriverError(error) && error.code === MONGO_DUPLICATE_KEY_CODE) {
-      return DomainError.conflict(
-        `A user with telegramId "${telegramId}" already exists.`,
-      );
-    }
-    return this.toInfrastructureError(error, 'save');
-  }
-
-  /** Wraps any non-domain error from a read/delete operation as `InfrastructureError`. */
-  private toInfrastructureError(error: unknown, operation: string): Error {
-    const message = isMongoDriverError(error) ? error.message : undefined;
-    return new InfrastructureError(
-      `MongoUserRepository.${operation} failed${message ? `: ${message}` : '.'}`,
+  /** Logs full error detail internally and returns a generic `InfrastructureError` (no internal detail exposed to callers). */
+  private toInfrastructureError(
+    error: unknown,
+    operation: string,
+  ): InfrastructureError {
+    this.logger.error(
+      { err: error },
+      `MongoUserRepository.${operation} failed`,
     );
+    return new InfrastructureError();
   }
 }

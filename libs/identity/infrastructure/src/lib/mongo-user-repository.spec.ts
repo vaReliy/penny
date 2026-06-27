@@ -1,6 +1,8 @@
 import { User, UserStatus } from 'identity-core';
-import { DomainError } from 'shared-errors';
+import pino from 'pino';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+
+const silentLogger = pino({ level: 'silent' });
 
 import {
   createMongoConnection,
@@ -8,6 +10,7 @@ import {
   type MongoConnectionConfig,
 } from './mongo-connection.js';
 import { MongoUserRepository } from './mongo-user-repository.js';
+import { getUserModel } from './user.model.js';
 import type { Connection } from 'mongoose';
 
 /**
@@ -45,7 +48,7 @@ describe('MongoUserRepository (integration)', () => {
 
   beforeAll(async () => {
     connection = await createMongoConnection(config);
-    repository = new MongoUserRepository(connection);
+    repository = new MongoUserRepository(connection, silentLogger);
   });
 
   afterAll(async () => {
@@ -169,13 +172,85 @@ describe('MongoUserRepository (integration)', () => {
     ).resolves.toBeUndefined();
   });
 
-  it('maps a unique telegramId violation to a DomainError', async () => {
+  it('save with an existing telegramId is idempotent and returns the persisted entity', async () => {
     const telegramId = '999888777';
-    await repository.save(buildUser({ telegramId }));
+    const first = await repository.save(buildUser({ telegramId }));
 
-    await expect(repository.save(buildUser({ telegramId }))).rejects.toThrow(
-      DomainError,
-    );
+    // Second save for the same telegramId must not throw and must return the existing entity.
+    const second = await repository.save(buildUser({ telegramId }));
+
+    expect(second).toBeInstanceOf(User);
+    expect(second.id).toBe(first.id);
+    expect(second.telegramId).toBe(telegramId);
+
+    await repository.delete(first.id);
+  });
+
+  it('concurrent saves for the same telegramId result in exactly one document', async () => {
+    // Note: Promise.all serialises both calls via the event loop before they reach MongoDB.
+    // This proves sequential idempotency, not true concurrent safety.
+    // True concurrent safety (the upsert-race retry) is covered by the unit test below.
+    const telegramId = '777888999';
+
+    const [a, b] = await Promise.all([
+      repository.save(buildUser({ telegramId })),
+      repository.save(buildUser({ telegramId })),
+    ]);
+
+    // Both promises must resolve without throwing.
+    expect(a).toBeInstanceOf(User);
+    expect(b).toBeInstanceOf(User);
+
+    // Both returned the same persisted document.
+    expect(a.id).toBe(b.id);
+    expect(a.telegramId).toBe(telegramId);
+
+    // Exactly one document exists with this telegramId.
+    const found = await repository.findByTelegramId(telegramId);
+    expect(found).not.toBeNull();
+    expect(found?.telegramId).toBe(telegramId);
+
+    await repository.delete(a.id);
+  });
+
+  it('raw driver E11000 confirms the error shape the retry catch relies on; repository.save() for an occupied telegramId resolves via upsert (not the retry path)', async () => {
+    // Purpose 1: verify that a real MongoDB E11000 carries exactly
+    // `{ code: 11000, name: 'MongoServerError' }` — the shape that
+    // `isMongoDriverError` + `MONGO_DUPLICATE_KEY_CODE` check in the catch
+    // block. If the driver ever changes this shape, this test will break
+    // before the retry logic silently stops working.
+    //
+    // Purpose 2: confirm that repository.save() resolves for a telegramId
+    // that is already occupied (upsert path returns the existing document).
+    //
+    // Note: the *retry* path (findOneAndUpdate throws E11000 → findOne
+    // reads the winner) requires two truly concurrent MongoDB connections
+    // and cannot be triggered via Promise.all in a single Node.js process.
+    // That branch is exercised by the unit test in
+    // mongo-user-repository.unit.spec.ts.
+    const telegramId = '654654654';
+    const model = getUserModel(connection);
+
+    await model.create({ telegramId, status: 'pending' });
+
+    // Force E11000 by inserting the same telegramId again via raw model.
+    let duplicateError: unknown;
+    try {
+      await model.create({ telegramId, status: 'pending' });
+    } catch (err) {
+      duplicateError = err;
+    }
+    expect(duplicateError).toBeDefined();
+    expect((duplicateError as { code?: number }).code).toBe(11000);
+    expect((duplicateError as { name?: string }).name).toBe('MongoServerError');
+
+    // repository.save() for an occupied telegramId must resolve via the
+    // $setOnInsert upsert path (returns the pre-existing document), not throw.
+    const saved = await repository.save(buildUser({ telegramId }));
+    expect(saved).toBeInstanceOf(User);
+    expect(saved.telegramId).toBe(telegramId);
+
+    await repository.delete(saved.id);
   });
 
   it('returns null for findById/findByTelegramId when no match exists', async () => {

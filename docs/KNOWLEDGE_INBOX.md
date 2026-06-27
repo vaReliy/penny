@@ -67,6 +67,35 @@ Belongs in: rules/workflow.md (already applied) + CLAUDE_TS_CHANGELOG (pending-p
 Why: `createParamDecorator` factories and manually-instantiated filters (`BaseErrorFilter`, `UnknownErrorFilter` constructed with `new` in `main.ts`) cannot receive DI-injected loggers. However, NestJS `Logger` instances created via `new Logger(name)` internally forward every call to whichever `LoggerService` is registered with `app.useLogger()` — so they automatically route through pino once the adapter is wired. Converting them to `@Inject(LoggerService)` is not needed for log-unification goals; it is only beneficial for full DI testability.
 Belongs in (guess): rules/architecture.md (logging section)
 
+## 2026-06-27 — identity: MongoDB findOneAndUpdate+upsert is not fully atomic across concurrent connections
+
+Why: `findOneAndUpdate({ filter }, { $setOnInsert: … }, { upsert: true, new: true })` is atomic within a single MongoDB primary (no interleaved writes), but two distinct driver connections can both evaluate "no document" before either insert commits, causing E11000 on the loser. The safe find-or-create pattern is: attempt upsert → on E11000 retry with `findOne` (the winner's document now exists). The retry `findOne` itself must also be wrapped in error handling, or a secondary failure during the retry escapes raw. Node.js `Promise.all` on a single connection does NOT reproduce this race (event loop serializes both calls before they hit MongoDB); true concurrent safety requires real multi-connection load or mock-based unit tests. `$setOnInsert` is the right operator: it only writes fields on insert, so concurrent losers get the winner's document unchanged.
+Belongs in: rules/testing.md (integration test limits) | PROJECT_CONTEXT
+
+## 2026-06-27 — identity: sparse:true on a unique index is wrong for required fields
+
+Why: `sparse: true` excludes documents missing the indexed field from the unique index, allowing multiple null-field documents. For an application-required field (`@prop({ required: true })`), this weakens the DB-level invariant: raw driver inserts that bypass Mongoose validation can create multiple null-value documents without triggering E11000. Unless the field is genuinely optional, always use a non-sparse unique index.
+Belongs in: rules/architecture.md (MongoDB patterns)
+
+## 2026-06-27 — identity: InfrastructureError must carry no dynamic content — log internally, throw generic
+
+Why: `BaseErrorFilter` serializes `InfrastructureError.message` directly into the HTTP response body. Any `new InfrastructureError(dynamicString)` where `dynamicString` contains MongoDB driver messages, entity IDs, or Telegram IDs therefore reaches clients — violating the `SerializedError` contract and leaking PII/schema details. Pattern: call `this.logger.error({ err: error, ...context }, 'descriptive message')` before throwing `new InfrastructureError()` (no-arg generic default). The pino `err` key triggers automatic `err.message`/`err.stack` serialization. Applies to every infrastructure adapter, not just `MongoUserRepository`. Fix: inject `pino.Logger` into the repository constructor; strip all dynamic strings from `InfrastructureError` constructor calls.
+Belongs in: rules/architecture.md (error handling section) | rules/validation-authorization.md
+
+## 2026-06-27 — api: pino logger must live in DI, not bootstrap — use app.get() after NestFactory.create()
+
+Why: creating `pinoLogger` in `bootstrap()` before `NestFactory.create()` means no other module can inject it via DI, leading to multiple independent pino instances. The correct pattern: call `NestFactory.create(AppModule, { bufferLogs: true })` first, then `app.get<pino.Logger>(PINO_LOGGER)` to retrieve the singleton from DI; `bufferLogs: true` queues bootstrap logs until `app.useLogger()` is called, at which point they flush through the real logger. `LoggerModule` owns the provider and exports `PINO_LOGGER`; all consumers import `LoggerModule`.
+Belongs in: rules/architecture.md (logging section)
+
+## 2026-06-27 — api: `secure` cookie flag must derive from runtime mode, not be hardcoded
+
+Why: `secure: true` on a cookie is silently dropped by browsers over plain HTTP. In local dev (HTTP), this means session cookies are never set. Fix: `secure: config.mode === 'production'`. The `mode` field belongs in `ApiConfig` and is derived from `NODE_ENV` in `loadApiConfig()` — the one place all env reads are confined.
+Belongs in: rules/architecture.md (auth/cookies section)
+
+## 2026-06-27 — identity: telegramId unique index race condition resolved (RESOLVED)
+
+Why: Previous inbox entry from 2026-06-25 flagged the race. Now fixed: `MongoUserRepository.save()` uses atomic `findOneAndUpdate+upsert` with E11000 retry; non-sparse unique index; unit tests cover the retry path with mocked Mongoose model.
+
 ## 2026-06-27 — api: NestJS LogLevel allowlist → pino threshold translation uses minimum-level reduction
 
 Why: NestJS's `setLogLevels(levels: LogLevel[])` takes an explicit allowlist (e.g. `['warn', 'error']`), but pino's `logger.level` is a threshold (all levels at or above it are emitted). The correct translation is to map each NestJS level to a pino level, then pick the minimum pino level from the array — that threshold allows the widest set of events that satisfies the NestJS allowlist. Implemented via a `PINO_LEVEL_VALUE: Record<pino.Level, number>` numeric lookup and `Array.reduce` to find the minimum. An empty array should be a no-op (guard with early return).

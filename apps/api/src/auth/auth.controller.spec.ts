@@ -64,6 +64,7 @@ describe('AuthController', () => {
       mongoUri: '',
       mongoDbName: '',
       port: 3000,
+      mode: 'development',
     };
 
     loginWithTelegram = {
@@ -98,7 +99,7 @@ describe('AuthController', () => {
       expect(name).toBe(AUTH_COOKIE_NAME);
       expect(opts).toMatchObject({
         httpOnly: true,
-        secure: true,
+        secure: false,
         sameSite: 'lax',
       });
     });
@@ -118,6 +119,25 @@ describe('AuthController', () => {
         status: 'active',
         roles: [],
       });
+    });
+
+    it('sets secure: true on the cookie when mode is "production"', async () => {
+      const user = makeUser(UserStatus.ACTIVE);
+      (loginWithTelegram.run as ReturnType<typeof vi.fn>).mockResolvedValue({
+        data: { user, status: UserStatus.ACTIVE },
+      });
+
+      config = { ...config, mode: 'production' };
+      controller = makeController();
+      const { res, cookie } = makeRes();
+      await controller.telegramLogin({} as never, res);
+
+      const [, , opts] = (cookie as ReturnType<typeof vi.fn>).mock.calls[0] as [
+        string,
+        string,
+        Record<string, unknown>,
+      ];
+      expect(opts).toMatchObject({ secure: true });
     });
   });
 

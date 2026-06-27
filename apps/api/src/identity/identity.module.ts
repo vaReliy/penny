@@ -1,5 +1,6 @@
 import { Injectable, Inject, Module } from '@nestjs/common';
 import type { OnApplicationShutdown } from '@nestjs/common';
+import type pino from 'pino';
 import type { Connection } from 'mongoose';
 
 import {
@@ -19,6 +20,8 @@ import type { ITokenIssuer } from 'identity-application';
 
 import { API_CONFIG } from '../config/api-config.js';
 import type { ApiConfig } from '../config/api-config.js';
+import { LoggerModule } from '../logger/logger.module.js';
+import { PINO_LOGGER } from '../logger/logger.tokens.js';
 import { TOKENS } from './tokens.js';
 
 @Injectable()
@@ -33,6 +36,7 @@ class MongoShutdownHook implements OnApplicationShutdown {
 }
 
 @Module({
+  imports: [LoggerModule],
   providers: [
     {
       provide: TOKENS.MongoConnection,
@@ -45,9 +49,11 @@ class MongoShutdownHook implements OnApplicationShutdown {
     },
     {
       provide: TOKENS.UserRepository,
-      useFactory: (connection: Connection): IUserRepository =>
-        new MongoUserRepository(connection),
-      inject: [TOKENS.MongoConnection],
+      useFactory: (
+        connection: Connection,
+        logger: pino.Logger,
+      ): IUserRepository => new MongoUserRepository(connection, logger),
+      inject: [TOKENS.MongoConnection, PINO_LOGGER],
     },
     {
       provide: TOKENS.TokenIssuer,

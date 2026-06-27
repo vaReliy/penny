@@ -5,6 +5,7 @@ export interface ApiConfig {
   readonly jwtSecret: string;
   readonly botToken: string;
   readonly port: number;
+  readonly mode: 'production' | 'development';
 }
 
 /** Symbol-keyed DI token for `ApiConfig`. */
@@ -40,5 +41,7 @@ export function loadApiConfig(): ApiConfig {
     jwtSecret,
     botToken,
     port,
+    mode:
+      process.env['NODE_ENV'] === 'production' ? 'production' : 'development',
   };
 }

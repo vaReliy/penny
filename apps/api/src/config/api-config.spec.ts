@@ -34,6 +34,7 @@ describe('loadApiConfig()', () => {
       jwtSecret: 'super-secret-jwt-key',
       botToken: '123456:ABCDEF',
       port: 4000,
+      mode: 'development',
     });
   });
 
@@ -90,5 +91,11 @@ describe('loadApiConfig()', () => {
     expect(() => loadApiConfig()).toThrowError(
       'Missing env var: TELEGRAM_BOT_TOKEN',
     );
+  });
+
+  it('returns mode "production" when NODE_ENV is "production"', () => {
+    stubValidEnv();
+    vi.stubEnv('NODE_ENV', 'production');
+    expect(loadApiConfig().mode).toBe('production');
   });
 });

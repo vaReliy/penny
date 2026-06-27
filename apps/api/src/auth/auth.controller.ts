@@ -62,7 +62,7 @@ export class AuthController {
       });
       res.cookie(AUTH_COOKIE_NAME, token, {
         httpOnly: true,
-        secure: true,
+        secure: this.config.mode === 'production',
         sameSite: 'lax',
         maxAge: AUTH_COOKIE_MAX_AGE_MS,
         path: '/',
