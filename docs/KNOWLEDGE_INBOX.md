@@ -138,3 +138,18 @@ Belongs in (guess): rules/code-style.md (re-exports section)
 
 Why: NestJS's `setLogLevels(levels: LogLevel[])` takes an explicit allowlist (e.g. `['warn', 'error']`), but pino's `logger.level` is a threshold (all levels at or above it are emitted). The correct translation is to map each NestJS level to a pino level, then pick the minimum pino level from the array — that threshold allows the widest set of events that satisfies the NestJS allowlist. Implemented via a `PINO_LEVEL_VALUE: Record<pino.Level, number>` numeric lookup and `Array.reduce` to find the minimum. An empty array should be a no-op (guard with early return).
 Belongs in (guess): rules/architecture.md (logging section) | skill (pino integration recipe)
+
+## 2026-06-28 — nx: `@nx/vitest:vitest` executor does not exist in @nx/vitest@23.0.1
+
+Why: The correct executor name is `@nx/vite:test` (not `@nx/vitest:vitest`). For explicit `test` targets in app `project.json`, use `nx:run-commands` with `vitest run --config vitest.config.mts` scoped to the app's `cwd`. Inferred targets (via Nx plugin) work correctly but explicit targets must use the right executor or they silently fail to register.
+Belongs in (guess): rules/nx-generators.md (test target section)
+
+## 2026-06-28 — pnpm monorepo: nest-commander (and workspace-root-only deps) require `-w` flag
+
+Why: In a pnpm monorepo with `node-linker=hoisted`, `pnpm add <pkg> --save-exact` without `-w` is rejected because there is no `package.json` in the app subfolder — all deps live at the workspace root. Always use `pnpm add <pkg> --save-exact -w` when adding shared or app deps in this repo.
+Belongs in (guess): rules/dependencies.md
+
+## 2026-06-28 — cli: slim CliConfig pattern for apps that share IdentityModule but don't need JWT/Telegram vars
+
+Why: CLI apps that call `ApproveUserService`/`RejectUserService` only need `MONGO_URI` and `MONGO_DB_NAME`. Creating a separate `loadCliConfig()` that validates only those vars (while using the same `API_CONFIG` symbol token) lets the CLI reuse `CliIdentityModule` without requiring unrelated secrets. Each NestJS app has its own DI container so symbol identity is per-app, not global.
+Belongs in (guess): PROJECT_CONTEXT (cli app architecture notes)
