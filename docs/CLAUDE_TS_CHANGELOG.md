@@ -94,3 +94,14 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 - **Why it matters upstream**: The ≤2-file count is not a reliable proxy for risk. Executable config files (ESLint, CI, build tooling) are correctness-bearing regardless of how many files change — a one-line ESLint selector error silently misscopes a lint gate across the entire monorepo. Any claude-ts consumer will hit this: a human or agent classifies a config change as trivial, skips delegation, and the quality gate never runs.
 - **Suggested upstream change**: In `CLAUDE.md` Triage rule 1, replace `"Trivial (typo, single config value, ≤2-file config) → handle directly."` with `"Trivial (typo, single scalar config value, doc-only edit ≤2 files) → handle directly, then run reviewer. **Not trivial:** adding/changing ESLint rules, CI scripts, tsconfig settings, build configs — route those via the pipeline even if ≤2 files, because they are executable and correctness-bearing."`
 - **Status**: pending-port
+
+---
+
+## 2026-06-27 — task-authoring rule (Penny override)
+
+- **Component**: `rules/task-authoring.md` (new file) + `AGENTS.md` on-demand index
+- **Type**: Enhancement / new rule
+- **What happened**: Added a rule codifying that every plan/grill/grooming session must emit backlog task files; defines naming (`YYYY-MM-DD-NN-slug`), routing (rebuild vs general todo), sub-index insertion ordering, header format, body sections, splitting criteria, and standing "suggest commit, don't commit" completion rule.
+- **Why it matters upstream**: Template repos benefit from a standard task-authoring convention so AI-assisted planning sessions produce immediately executable, consistently formatted task files.
+- **Suggested upstream change**: Add a `rules/task-authoring.md` template to the claude-ts template payload; the project overrides routing/branch details.
+- **Status**: pending-port

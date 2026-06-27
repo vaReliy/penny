@@ -43,6 +43,7 @@ Read when relevant (never preloaded):
 - `rules/workflow.md` — before creating teams / running pipelines
 - `rules/architecture.md` — layer placement questions
 - `rules/testing.md` — writing/structuring tests
+- `rules/task-authoring.md` — emitting backlog task files from plan/grill/grooming sessions
 - `rules/validation-authorization.md` — input validation, guards
 - `rules/migrations-queue.md` — ORM migrations, BullMQ jobs
 - `rules/docker-commands.md` — running anything in containers
