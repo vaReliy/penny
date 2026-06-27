@@ -32,7 +32,6 @@ Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated projec
 
 Before writing or modifying any code, additionally read:
 
-- `rules/architecture.md`
 - `rules/code-style.md`
 
 ## Scope Boundary

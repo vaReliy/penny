@@ -17,6 +17,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-06-28 — Fix: devops agent pre-flight read of rules/architecture.md removed
+
+- **Component**: `.claude/agents/devops.md`
+- **Type**: Fix
+- **What happened**: The blanket pre-flight enhancement (all technical agents read `rules/architecture.md` + `rules/code-style.md`) was applied to `devops` without scoping check. `rules/architecture.md` covers Clean Architecture layers (UseCases, Services, DTOs, bounded contexts) — none of which applies to the devops agent's scope (Dockerfiles, CI YAML, shell scripts, env config). The read was inert but consumed tokens on every haiku invocation.
+- **Why it matters upstream**: Any claude-ts consumer that adds `rules/architecture.md` to the blanket pre-flight list will hit the same waste for infra-only agents. The upstream enhancement entry should carve out devops (and similarly scoped agents) from the architecture.md read.
+- **Suggested upstream change**: In the upstream pre-flight enhancement, split the "additionally read" list by agent type: application agents (`backend-developer`, `angular-developer`, `tester`, `refactoring-expert`, etc.) read `rules/architecture.md` + `rules/code-style.md`; infrastructure agents (`devops`, `dba`) read only `rules/code-style.md`.
+- **Status**: pending-port
+
+---
+
 ## 2026-06-28 — Enhancement: mandatory pre-flight reads for all agent definitions
 
 - **Component**: all `.claude/agents/**` + `rules/workflow.md`
