@@ -1,0 +1,13 @@
+{
+  "name": "identity-feature-access-status",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/identity/feature-access-status/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:identity", "platform:web"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

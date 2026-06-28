@@ -25,7 +25,13 @@
         "./libs/identity/infrastructure/src/index.ts"
       ],
       "identity-feature-login": ["./libs/identity/feature-login/src/index.ts"],
-      "identity-data-access": ["./libs/identity/data-access/src/index.ts"]
+      "identity-data-access": ["./libs/identity/data-access/src/index.ts"],
+      "identity-feature-access-status": [
+        "./libs/identity/feature-access-status/src/index.ts"
+      ],
+      "identity-feature-greeting": [
+        "./libs/identity/feature-greeting/src/index.ts"
+      ]
     }
   },
   "exclude": ["node_modules", "tmp"]

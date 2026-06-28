@@ -1,0 +1,12 @@
+@if (status === null) {
+<p>Loading...</p>
+} @else if (status === 'pending') {
+<p>
+  Your access is awaiting approval. An admin will review your request shortly.
+</p>
+} @else {
+<p>
+  Your access request has been declined. Please contact support if you believe
+  this is an error.
+</p>
+}

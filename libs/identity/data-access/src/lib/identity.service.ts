@@ -34,4 +34,10 @@ export class IdentityService {
       withCredentials: true,
     });
   }
+
+  public getHello(): Observable<{ readonly message: string }> {
+    return this.http.get<{ readonly message: string }>('/api/hello', {
+      withCredentials: true,
+    });
+  }
 }

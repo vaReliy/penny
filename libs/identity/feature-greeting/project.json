@@ -1,0 +1,13 @@
+{
+  "name": "identity-feature-greeting",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/identity/feature-greeting/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:identity", "platform:web"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

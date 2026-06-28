@@ -1,0 +1,7 @@
+@if (state().kind === 'loading') {
+<p>Loading...</p>
+} @else if (state().kind === 'success') {
+<p>{{ greetingMessage() }}</p>
+} @else {
+<p>Failed to load greeting. Please try again.</p>
+}

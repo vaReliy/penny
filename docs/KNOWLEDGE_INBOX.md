@@ -179,6 +179,41 @@ Belongs in (guess): rules/nx-generators.md (test target section)
 Why: In a pnpm monorepo with `node-linker=hoisted`, `pnpm add <pkg> --save-exact` without `-w` is rejected because there is no `package.json` in the app subfolder — all deps live at the workspace root. Always use `pnpm add <pkg> --save-exact -w` when adding shared or app deps in this repo.
 Belongs in (guess): rules/dependencies.md
 
+## 2026-06-28 — nx: @nx/angular:component stub spec imports class without "Component" suffix — always fix before running
+
+Why: The generated stub spec (`greeting-page.spec.ts`) imports `GreetingPage` instead of `GreetingPageComponent`. The actual exported class always has the `Component` suffix. The stub silently fails at import (TypeScript error) rather than producing a useful test failure — it looks like a test gap rather than a bad import. Always verify the import name against the barrel `index.ts` before writing test logic.
+Belongs in (guess): rules/nx-generators.md (post-generator corrections section)
+
+## 2026-06-28 — angular: ngOnInit for data fetching now; toSignal() is the target pattern
+
+Why: Task 17 shipped components using `ngOnInit` + manual property assignment for Observable-based data fetching. This is correct and testable, but not the idiomatic Angular 17+ direction. The target pattern is `toSignal(observable.pipe(startWith({kind:'loading'}), catchError(…)), { requireSync: true })` at field declaration level — no lifecycle hook, no subscription management, no AsyncPipe. `requireSync: true` ensures the initial value is never `undefined` (required when `startWith` or `catchError` guarantees an emission). Task `2026-06-28-01-angular-toSignal-refactor` tracks the migration. Until that task lands, `ngOnInit` is acceptable; do NOT mix both patterns in the same component.
+Belongs in (guess): rules/code-style.md (Angular component data-fetch pattern) | skill (angular-expert)
+
+## 2026-06-28 — angular: dev-server proxy config goes in proxy.conf.json, not vite.config.mts
+
+Why: `apps/web/vite.config.mts` is vitest-only in this repo (no `server.proxy` key). The Angular dev-server (`@angular/build:dev-server`) reads proxy rules from a separate `proxy.conf.json` file, referenced via `"proxyConfig": "apps/web/proxy.conf.json"` in the `serve` target options of `apps/web/project.json`. Without this, `/api/**` calls from the Angular app return 404 in local dev because there is no server to handle them.
+Belongs in (guess): rules/nx-generators.md (post-generator proxy section) | PROJECT_CONTEXT
+
+## 2026-06-28 — angular: strict templates do not narrow discriminated-union signal values inside @if blocks
+
+Why: `@if (state().kind === 'success') { {{ state().message }} }` fails strict template type-checking even though the `@if` condition narrows the discriminant at runtime — the Angular template compiler does not propagate that narrowing into the interpolation. Workaround: expose a typed `computed()` signal on the component (`readonly greetingMessage = computed(() => this.state().kind === 'success' ? this.state().message : null)`) and bind to that in the template. Avoids `$any()` casts and preserves strict mode.
+Belongs in (guess): rules/code-style.md (Angular template patterns) | skill (angular-expert)
+
+## 2026-06-28 — nx: @nx/angular:component uses --path, not --project in Nx v23
+
+Why: `nx g @nx/angular:component --project=<name>` was silently ignored or errored in Nx v23. The correct flag is `--path=libs/<lib>/src/lib/<component-folder>/<component-name>` (path to the component file without extension). This changed from v21/v22 where `--project` was the primary flag.
+Belongs in (guess): rules/nx-generators.md
+
+## 2026-06-28 — nx: @nx/angular:lib generator silently ignores positional arg when --directory is absent
+
+Why: Running `nx g @nx/angular:lib identity/feature-access-status` (positional) strips the `libs/` prefix and places the lib in the wrong location. Always pair `--name=<project-name>` with `--directory=libs/<path>` explicitly. The generator confirms the resolved root in its output — verify it matches the intended path before proceeding.
+Belongs in (guess): rules/nx-generators.md
+
+## 2026-06-28 — nx: new Angular libs must be scaffolded via nx g, never created manually
+
+Why: Manual lib creation (project.json, tsconfig files, eslint.config.mjs, vite.config.mts written by hand) does not register the project in the NX workspace graph, omits the tsconfig inheritance chain, and produces targets whose executors may not match the rest of the repo. The result builds locally but never appears in `nx affected` and may silently misconfigure lint/test runners. Always use `nx g @nx/angular:lib <path> --tags=… --style=scss --standalone --no-interactive`, then audit for caret/tilde ranges and verify the strict TS block per rules/nx-generators.md.
+Belongs in (guess): rules/nx-generators.md | CLAUDE.md (orchestrator guidance for angular-developer dispatch)
+
 ## 2026-06-28 — cli: slim CliConfig pattern for apps that share IdentityModule but don't need JWT/Telegram vars
 
 Why: CLI apps that call `ApproveUserService`/`RejectUserService` only need `MONGO_URI` and `MONGO_DB_NAME`. Creating a separate `loadCliConfig()` that validates only those vars (while using the same `API_CONFIG` symbol token) lets the CLI reuse `CliIdentityModule` without requiring unrelated secrets. Each NestJS app has its own DI container so symbol identity is per-app, not global.

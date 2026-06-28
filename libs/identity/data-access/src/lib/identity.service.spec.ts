@@ -111,4 +111,22 @@ describe('IdentityService', () => {
       req.flush(null);
     });
   });
+
+  describe('getHello', () => {
+    it('sends GET to /api/hello with withCredentials and returns the response body', () => {
+      let body: { message: string } | undefined;
+
+      service.getHello().subscribe((response) => {
+        body = response;
+      });
+
+      const req = httpController.expectOne('/api/hello');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+
+      req.flush({ message: 'Hello, World' });
+
+      expect(body).toEqual({ message: 'Hello, World' });
+    });
+  });
 });

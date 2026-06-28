@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`libs/identity/feature-access-status`** — `AccessStatusPageComponent` (standalone, Angular 17+, SCSS) showing distinct pending/rejected messaging driven by `GET /auth/me`; subscription lifecycle managed with `takeUntilDestroyed(destroyRef)`.
+- **`libs/identity/feature-greeting`** — `GreetingPageComponent` (standalone) calling `GET /api/hello`; renders personalized greeting with loading/success/error states via discriminated-union signal; `catchError` in pipe keeps error handling declarative.
+- **`statusGuard: CanActivateFn`** in `libs/identity/data-access` — cookie-based status routing: 401 → `/login`; `pending`/`rejected` → `/access-status`; `active` → allow. Bidirectional: active user on `/access-status` bounced to `/greeting`.
+- **`getHello()` method** on `IdentityService` — `GET /api/hello` with `withCredentials: true`.
+- **`apps/web/proxy.conf.json`** — dev-server proxy routing both `/api` and `/auth` to `http://localhost:3000`; wired into `apps/web/project.json` serve target via `proxyConfig`.
+- **Route table update** (`apps/web/src/app/app.routes.ts`) — root redirects to `/greeting`; `/access-status` and `/greeting` protected by `statusGuard`; `/login` remains open.
+- **Playwright E2E** (`apps/web-e2e/src/auth-flow.spec.ts`) — 5 scenarios × 3 browsers (Chromium/Firefox/WebKit) = 15 tests: unauthenticated redirect, pending redirect, rejected redirect, active greeting, active bounced from access-status. All mocked via `page.route()` — no real session required.
+- **Unit tests** — `status.guard.spec.ts` (6/6 branches), `greeting-page.spec.ts` (loading/success/error), `getHello()` in `identity.service.spec.ts`.
+
+### Added
+
 - **`apps/web`** — Angular 17+ standalone app (no NgModules, signals); shell with `AppComponent` + `RouterOutlet`, `app.config.ts` (`provideHttpClient()` + `provideRouter`), lazy `/login` route.
 - **`libs/identity/feature-login`** — `LoginPageComponent` (standalone, signals, `platform:web`, `type:feature`) embedding the Telegram Login Widget via dynamic `<script>` injection; handles auth callback query params and delegates to `IdentityService`.
 - **`libs/identity/data-access`** — `IdentityService` (`platform:web`, `type:data`) with `withCredentials: true` on all HTTP methods: `submitTelegramLogin`, `getMe`, `logout`; `TELEGRAM_BOT_USERNAME` `InjectionToken<string>` for build-time bot config sourced from `apps/web/src/environments/environment.ts`.
