@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 
 import { NestFactory } from '@nestjs/core';
+import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
 import pinoHttp from 'pino-http';
 import type pino from 'pino';
@@ -11,6 +12,7 @@ import { AppModule } from './app/app.module.js';
 import { BaseErrorFilter } from './filters/base-error.filter.js';
 import { UnknownErrorFilter } from './filters/unknown-error.filter.js';
 import { API_CONFIG } from './config/api-config.js';
+import { CSP_DIRECTIVES } from './middleware/csp-policy.js';
 import { PinoNestLogger } from './logger/pino-nest-logger.js';
 import { PINO_LOGGER } from './logger/logger.tokens.js';
 import type { ApiConfig } from './config/api-config.js';
@@ -32,6 +34,12 @@ async function bootstrap(): Promise<void> {
   // Share the same root pino instance with pino-http so HTTP request logs and
   // framework logs land in a single stream with a consistent format.
   app.use(pinoHttp({ logger: pinoLogger }));
+
+  // Helmet sets secure HTTP response headers. CSP restricts sources to permit
+  // the Telegram Login Widget (script-src, frame-src, img-src) while blocking
+  // all other external origins. HTTP header delivery is XSS-resistant unlike
+  // <meta> tags.
+  app.use(helmet({ contentSecurityPolicy: { directives: CSP_DIRECTIVES } }));
 
   // Strip $-prefixed and dot-prefixed keys from req.body/params/query to prevent
   // NoSQL operator injection reaching any route handler.

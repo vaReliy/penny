@@ -131,6 +131,21 @@ Belongs in (guess): rules/architecture-backend.md (NestJS guard patterns)
 Why: Adding a `@SkipCsrf()` decorator (which calls `SetMetadata` internally) to a controller causes the controller's spec to crash at import time if `@nestjs/common` is mocked without `SetMetadata`. The stub must include `SetMetadata: vi.fn().mockReturnValue(() => undefined)`. Pattern: any NestJS spec that mocks `@nestjs/common` needs `SetMetadata` in the factory whenever any decorator in the import chain calls it at module-load time.
 Belongs in (guess): rules/testing.md (NestJS mock patterns)
 
+## 2026-06-29 — security: CSP `form-action` does not inherit from `default-src`
+
+Why: Unlike most fetch directives, `form-action` is not covered by `default-src` fallback per CSP Level 2 spec. Omitting it leaves form submission unconstrained even when `default-src 'self'` is set. Always add `form-action: ["'self'"]` explicitly to any Helmet `contentSecurityPolicy` config.
+Belongs in (guess): rules/code-style-backend.md (CSP/Helmet section)
+
+## 2026-06-29 — testing: Helmet `contentSecurityPolicy` middleware is testable against raw `node:http` — no Express or NestJS needed
+
+Why: `helmet` exports `contentSecurityPolicy` as a standalone middleware typed as `(req: IncomingMessage, res: ServerResponse, next) => void`. Using a raw `http.createServer` with `server.listen(0)` (ephemeral port) avoids both the pnpm Express hoisting issue (Express not at workspace root) and the esbuild `emitDecoratorMetadata` limitation for NestJS decorators in Vitest. Pattern: `beforeAll` starts the server, `afterAll` closes it, `res.resume()` drains the response before reading headers.
+Belongs in (guess): rules/testing.md (NestJS integration test patterns)
+
+## 2026-06-29 — security: Angular apps require `style-src 'unsafe-inline'`; removal requires per-request nonces wired into Angular templates
+
+Why: Angular's default `ViewEncapsulation.Emulated` inserts `<style>` blocks at runtime (e.g., Angular Material, component styles in SSR, and some lazy-loaded chunks). Removing `'unsafe-inline'` from `style-src` breaks these at runtime. Proper replacement is `'nonce-{generated-nonce}'` — requires Helmet's `nonce` option and the Angular build pipeline to inject the nonce into every generated `<style>` tag. This is non-trivial scope; track as a separate task rather than bundling into a CSP hardening task.
+Belongs in (guess): PROJECT_CONTEXT (security roadmap note)
+
 ## 2026-06-28 — cli: slim CliConfig pattern for apps that share IdentityModule but don't need JWT/Telegram vars
 
 Why: CLI apps that call `ApproveUserService`/`RejectUserService` only need `MONGO_URI` and `MONGO_DB_NAME`. Creating a separate `loadCliConfig()` that validates only those vars (while using the same `API_CONFIG` symbol token) lets the CLI reuse `CliIdentityModule` without requiring unrelated secrets. Each NestJS app has its own DI container so symbol identity is per-app, not global.
