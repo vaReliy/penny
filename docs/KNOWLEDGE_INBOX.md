@@ -106,6 +106,26 @@ Belongs in (guess): rules/nx-generators.md | CLAUDE.md (orchestrator guidance fo
 Why: When `nx g @nx/js:lib` was skipped in favour of hand-crafting `project.json` + tsconfigs (e.g., for `shared-infrastructure`), the NX workspace graph still auto-detects the project. Unlike Angular libs (which must use `nx g @nx/angular:lib`), plain TypeScript libs that follow the existing `shared-kernel`/`shared-contracts` structure can be safely created manually without breaking `nx affected` or graph inference. However, Angular libs must always use the generator (see earlier inbox entry).
 Belongs in (guess): rules/nx-generators.md (manual lib creation note for JS/TS-only libs)
 
+## 2026-06-28 — security: `timingSafeEqual` pre-check must compare Buffer byte lengths, not string `.length`
+
+Why: `string.length` counts Unicode code points; `Buffer.from(str).length` counts UTF-8 bytes. A crafted header with 32 two-byte chars (`'ä'.repeat(32)`) has `.length === 32` matching a 64-char hex cookie token, but `Buffer.from(...).length === 64` — `timingSafeEqual` throws `ERR_CRYPTO_TIMING_SAFE_EQUAL_LENGTH` (→ 500) instead of returning `false` (→ 403). Pattern: always create both Buffers first, then compare `.byteLength` before calling `timingSafeEqual`.
+Belongs in (guess): rules/code-style-backend.md (security patterns section)
+
+## 2026-06-28 — security: cookie-pair invariant — every setter path must have a matching clearer path
+
+Why: `auth.controller.ts` sets both `AUTH_COOKIE_NAME` (httpOnly) and `XSRF_COOKIE_NAME` (readable) on login. Initial impl only cleared `AUTH_COOKIE_NAME` in `logout()` and `SessionGuard` invalidation branches — leaving a stale, 1-hour-lived XSRF cookie after logout/expiry. Rule: when two cookies are always issued together, audit every `clearCookie` call site (logout handler, session guard error branches) to confirm both are cleared. Add as a checklist item whenever a second cookie joins an existing auth pair.
+Belongs in (guess): rules/code-style-backend.md (cookie/auth section)
+
+## 2026-06-28 — nestjs: global guards that use Reflector must use APP_GUARD, not `app.useGlobalGuards(new Guard())`
+
+Why: `app.useGlobalGuards(new CsrfGuard())` instantiates the guard outside the NestJS DI container. `Reflector` cannot be injected into it, so `getAllAndOverride()` (needed to read `@SetMetadata` / `@SkipCsrf()` decorator metadata) is unavailable. Fix: register via `{ provide: APP_GUARD, useClass: CsrfGuard }` in a module's `providers` array — this resolves the guard through DI so `Reflector` is injected normally.
+Belongs in (guess): rules/architecture-backend.md (NestJS guard patterns)
+
+## 2026-06-28 — testing: `vi.mock('@nestjs/common')` in controller specs must stub `SetMetadata`
+
+Why: Adding a `@SkipCsrf()` decorator (which calls `SetMetadata` internally) to a controller causes the controller's spec to crash at import time if `@nestjs/common` is mocked without `SetMetadata`. The stub must include `SetMetadata: vi.fn().mockReturnValue(() => undefined)`. Pattern: any NestJS spec that mocks `@nestjs/common` needs `SetMetadata` in the factory whenever any decorator in the import chain calls it at module-load time.
+Belongs in (guess): rules/testing.md (NestJS mock patterns)
+
 ## 2026-06-28 — cli: slim CliConfig pattern for apps that share IdentityModule but don't need JWT/Telegram vars
 
 Why: CLI apps that call `ApproveUserService`/`RejectUserService` only need `MONGO_URI` and `MONGO_DB_NAME`. Creating a separate `loadCliConfig()` that validates only those vars (while using the same `API_CONFIG` symbol token) lets the CLI reuse `CliIdentityModule` without requiring unrelated secrets. Each NestJS app has its own DI container so symbol identity is per-app, not global.

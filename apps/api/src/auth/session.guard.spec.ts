@@ -6,7 +6,7 @@ vi.mock('@nestjs/common', () => ({
 }));
 
 import { SessionGuard } from './session.guard.js';
-import { AUTH_COOKIE_NAME } from './cookie.constants.js';
+import { AUTH_COOKIE_NAME, XSRF_COOKIE_NAME } from './cookie.constants.js';
 import { AuthenticationError } from 'shared-errors';
 import { UserStatus } from 'identity-core';
 import type { ExecutionContext } from '@nestjs/common';
@@ -113,6 +113,7 @@ describe('SessionGuard.canActivate', () => {
       AuthenticationError,
     );
     expect(clearCookie).toHaveBeenCalledWith(AUTH_COOKIE_NAME, { path: '/' });
+    expect(clearCookie).toHaveBeenCalledWith(XSRF_COOKIE_NAME, { path: '/' });
   });
 
   it('clears cookie and throws AuthenticationError when user not found', async () => {
@@ -124,6 +125,7 @@ describe('SessionGuard.canActivate', () => {
       AuthenticationError,
     );
     expect(clearCookie).toHaveBeenCalledWith(AUTH_COOKIE_NAME, { path: '/' });
+    expect(clearCookie).toHaveBeenCalledWith(XSRF_COOKIE_NAME, { path: '/' });
   });
 
   it('clears cookie and throws AuthenticationError when user is rejected', async () => {
@@ -135,6 +137,7 @@ describe('SessionGuard.canActivate', () => {
       AuthenticationError,
     );
     expect(clearCookie).toHaveBeenCalledWith(AUTH_COOKIE_NAME, { path: '/' });
+    expect(clearCookie).toHaveBeenCalledWith(XSRF_COOKIE_NAME, { path: '/' });
   });
 
   it('clears cookie and throws AuthenticationError when user is pending', async () => {
@@ -146,6 +149,7 @@ describe('SessionGuard.canActivate', () => {
       AuthenticationError,
     );
     expect(clearCookie).toHaveBeenCalledWith(AUTH_COOKIE_NAME, { path: '/' });
+    expect(clearCookie).toHaveBeenCalledWith(XSRF_COOKIE_NAME, { path: '/' });
   });
 
   it('returns true and sets req.user for a valid active user', async () => {

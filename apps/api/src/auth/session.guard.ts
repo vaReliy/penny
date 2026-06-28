@@ -9,7 +9,7 @@ import { AuthenticationError } from 'shared-errors';
 import type { SessionUser } from 'shared-contracts';
 
 import { TOKENS } from '../identity/tokens.js';
-import { AUTH_COOKIE_NAME } from './cookie.constants.js';
+import { AUTH_COOKIE_NAME, XSRF_COOKIE_NAME } from './cookie.constants.js';
 
 @Injectable()
 export class SessionGuard implements CanActivate {
@@ -35,6 +35,7 @@ export class SessionGuard implements CanActivate {
       claims = this.tokenIssuer.verify(token);
     } catch {
       res.clearCookie(AUTH_COOKIE_NAME, { path: '/' });
+      res.clearCookie(XSRF_COOKIE_NAME, { path: '/' });
       throw new AuthenticationError('Session token is invalid or has expired.');
     }
 
@@ -42,6 +43,7 @@ export class SessionGuard implements CanActivate {
 
     if (!user || user.status !== UserStatus.ACTIVE) {
       res.clearCookie(AUTH_COOKIE_NAME, { path: '/' });
+      res.clearCookie(XSRF_COOKIE_NAME, { path: '/' });
       throw new AuthenticationError('Access denied.');
     }
 

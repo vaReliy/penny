@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto';
+
 import { Controller, Post, Body, Inject, Res, HttpCode } from '@nestjs/common';
 import type { Response } from 'express';
 
@@ -15,7 +17,9 @@ import type { ApiConfig } from '../config/api-config.js';
 import {
   AUTH_COOKIE_NAME,
   AUTH_COOKIE_MAX_AGE_MS,
+  XSRF_COOKIE_NAME,
 } from './cookie.constants.js';
+import { SkipCsrf } from './skip-csrf.decorator.js';
 
 interface TelegramLoginResponse {
   readonly status: string;
@@ -38,6 +42,7 @@ export class AuthController {
   // resource exhaustion and amplified DB load on repeated Telegram login attempts.
   @Post('telegram')
   @HttpCode(200)
+  @SkipCsrf()
   public async telegramLogin(
     @Body() body: RawTelegramLoginPayload,
     @Res({ passthrough: true }) res: Response,
@@ -67,6 +72,14 @@ export class AuthController {
         maxAge: AUTH_COOKIE_MAX_AGE_MS,
         path: '/',
       });
+      const csrfToken = randomBytes(32).toString('hex');
+      res.cookie(XSRF_COOKIE_NAME, csrfToken, {
+        httpOnly: false,
+        secure: this.config.mode === 'production',
+        sameSite: 'lax',
+        maxAge: AUTH_COOKIE_MAX_AGE_MS,
+        path: '/',
+      });
     }
 
     return { status };
@@ -76,5 +89,6 @@ export class AuthController {
   @HttpCode(204)
   public logout(@Res({ passthrough: true }) res: Response): void {
     res.clearCookie(AUTH_COOKIE_NAME, { path: '/' });
+    res.clearCookie(XSRF_COOKIE_NAME, { path: '/' });
   }
 }

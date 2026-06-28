@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('shared-contracts', () => ({
+  UserStatus: { PENDING: 'pending', ACTIVE: 'active', REJECTED: 'rejected' },
+}));
+
 vi.mock('@nestjs/common', () => ({
   Controller: () => () => undefined,
   Post: () => () => undefined,
@@ -7,11 +11,12 @@ vi.mock('@nestjs/common', () => ({
   Res: () => () => undefined,
   HttpCode: () => () => undefined,
   Inject: () => () => undefined,
+  SetMetadata: vi.fn().mockReturnValue(() => undefined),
 }));
 
 import { AuthController } from './auth.controller.js';
-import { AUTH_COOKIE_NAME } from './cookie.constants.js';
-import { UserStatus } from 'identity-core';
+import { AUTH_COOKIE_NAME, XSRF_COOKIE_NAME } from './cookie.constants.js';
+import { UserStatus } from 'shared-contracts';
 import type { ApiConfig } from '../config/api-config.js';
 import type {
   VerifyTelegramLoginService,
@@ -93,7 +98,7 @@ describe('AuthController', () => {
       const result = await controller.telegramLogin({} as never, res);
 
       expect(result).toEqual({ status: 'active' });
-      expect(cookie).toHaveBeenCalledOnce();
+      expect(cookie).toHaveBeenCalledTimes(2);
       const [name, , opts] = (cookie as ReturnType<typeof vi.fn>).mock
         .calls[0] as [string, string, Record<string, unknown>];
       expect(name).toBe(AUTH_COOKIE_NAME);
@@ -174,12 +179,14 @@ describe('AuthController', () => {
   });
 
   describe('POST /auth/logout', () => {
-    it('calls res.clearCookie with token and path "/"', () => {
+    it('clears both the auth cookie and the XSRF cookie with path "/"', () => {
       controller = makeController();
       const { res, clearCookie } = makeRes();
       controller.logout(res);
 
       expect(clearCookie).toHaveBeenCalledWith(AUTH_COOKIE_NAME, { path: '/' });
+      expect(clearCookie).toHaveBeenCalledWith(XSRF_COOKIE_NAME, { path: '/' });
+      expect(clearCookie).toHaveBeenCalledTimes(2);
     });
   });
 });

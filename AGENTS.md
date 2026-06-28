@@ -24,6 +24,10 @@ PR description rules: `rules/git-operations.md`.
 
 Details: `rules/code-style.md`.
 
+## Verification Commands
+
+**Before running any build, test, lint, or type-check command, read `rules/workflow.md` § "Command Execution Policy (Nx Targets)".** That section is the single source of truth for the ✅/❌ command table, useful flags, and project names. Never use raw tool invocations (`tsc`, `eslint`, `vitest`, `webpack`, `playwright`) — always use `nx` targets.
+
 ## Model Tiers
 
 Generic tiers used across rules and task files; each AI vendor maps them to concrete models.

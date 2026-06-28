@@ -3,11 +3,12 @@ import { Module } from '@nestjs/common';
 import { IdentityModule } from '../identity/identity.module.js';
 import { AuthController } from './auth.controller.js';
 import { SessionGuard } from './session.guard.js';
+import { CsrfGuard } from './csrf.guard.js';
 
 @Module({
   imports: [IdentityModule],
   controllers: [AuthController],
-  providers: [SessionGuard],
-  exports: [SessionGuard],
+  providers: [SessionGuard, CsrfGuard],
+  exports: [SessionGuard, CsrfGuard],
 })
 export class AuthModule {}

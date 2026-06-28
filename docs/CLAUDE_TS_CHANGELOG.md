@@ -281,6 +281,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-06-28 — Enhancement: AGENTS.md — Verification Commands section (nx targets, always-loaded)
+
+- **Component**: `AGENTS.md`
+- **Type**: Enhancement
+- **What happened**: Sub-agents were falling back to raw `npx tsc …` / `npx eslint …` / `npx vitest run …` invocations despite `rules/workflow.md` containing an explicit ✅/❌ command policy table. Root cause: `rules/workflow.md` is on-demand (only read "before creating teams/running pipelines"); agents dispatched for implementation or testing never loaded it and had no other source for the canonical commands. Fix: added a "Verification Commands" section to `AGENTS.md` (always-loaded) with a **mandatory directive** to read `rules/workflow.md` § "Command Execution Policy (Nx Targets)" before running any verification command. The table itself stays exclusively in `rules/workflow.md` — no duplication. This also corrects a discrepancy: `rules/workflow.md`'s table listed `nx test <project>` as the test command, but the `api` project registers its test target as `vite:test` (confirmed via `pnpm nx show project api`); `pnpm nx test api` silently resolves to nothing.
+- **Why it matters upstream**: Any always-loaded file (AGENTS.md, CLAUDE.md) is the only reliable delivery mechanism for rules that must apply in every agent invocation, including cold-start agents with no pipeline context. Rules in on-demand files only work when the orchestrator briefs agents explicitly — which is fragile. The `vite:test` vs `test` target-name issue is universal: Nx registers the vitest target name via `testTargetName` in `nx.json`; if a project sets a non-default name, `nx test` silently succeeds with 0 tests run.
+- **Suggested upstream change**: (a) Add a "Verification Commands" section to `AGENTS.md` immediately before "Model Tiers" with a mandatory read directive pointing to `rules/workflow.md` § "Command Execution Policy (Nx Targets)" — no table duplication. (b) In `rules/workflow.md` Command Execution Policy, add a caveat to the Test row: "confirm target name via `pnpm nx show project <name>` — custom `testTargetName` in `nx.json` changes the default."
+- **Status**: pending-port
+
+---
+
 ## 2026-06-28 — Enhancement: workflow.md — explicit split-dispatch guidance for mixed infra+code tasks (reinforcement)
 
 - **Component**: `rules/workflow.md` routing guidance
