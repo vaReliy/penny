@@ -113,6 +113,28 @@ it('POST /posts returns 201', async () => {
 - **Environment**: `vitest.config.ts` with test-specific settings
 - **Coverage**: c8/istanbul, reports in `coverage/` directory
 
+## Environment Variable Stubbing
+
+When testing production env readers (e.g., config functions that read `process.env`), use `vi.stubEnv()` for correct restoration behavior:
+
+**❌ DO NOT do this:**
+
+```typescript
+delete process.env.PORT; // vi.stubEnv does not track direct deletion
+// test code
+vi.unstubAllEnvs(); // PORT is already gone — not restored
+```
+
+**✅ DO this instead:**
+
+```typescript
+vi.stubEnv('PORT', ''); // Empty string simulates absence
+// In the env reader: portRaw ? parseInt(portRaw, 10) : DEFAULT_PORT
+vi.unstubAllEnvs(); // Correctly restored
+```
+
+Rationale: `vi.stubEnv` saves and restores env vars via `vi.unstubAllEnvs()`. Direct `delete process.env[KEY]` operates outside that tracking and leaves the var permanently deleted — breaking subsequent tests or production code that reads the same var. Treat empty string as "absent" in your env readers instead.
+
 ## Mutation Testing
 
 Minimum mutation score: **80%** for covered code.

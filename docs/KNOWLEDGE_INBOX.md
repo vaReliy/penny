@@ -1,35 +1,5 @@
 # Knowledge Inbox
 
-## 2026-06-28 — orchestrator: Mongoose/ORM connection factory code belongs to backend-developer, not devops
-
-Why: When a task mixes docker-compose/CI config with an application-level DB connection factory (e.g. a Mongoose/Typegoose factory in `libs/*/infrastructure`), the orchestrator must split the dispatch. Routing the whole task to `devops` produces rough implementations: global mongoose singleton instead of `createConnection()`, unpinned dependency versions, healthcheck workarounds rather than diagnosis. The `backend-developer` agent applies strict TS conventions, DI boundaries, and Nx tag compliance that `devops` does not.
-Belongs in: rules/workflow.md (routing guidance — split mixed infra+library tasks)
-
-## 2026-06-28 — identity: IUserRepository has intentionally separate write paths for status vs profile
-
-Why: `save()` (via `updateById`) writes all fields including `status` — it is only safe to call from `SetUserStatusService` (approve/reject). `updateProfile()` writes only profile fields (`firstName`, `lastName`, `username`, `photoUrl`) and structurally cannot touch `status` or `telegramId`. The split exists to prevent the login path from reverting an approved user's status back to `pending` in a concurrent-write race. Do not consolidate these back to a single `save()` for the returning-user path in `LoginWithTelegramService`.
-Belongs in: PROJECT_CONTEXT (identity layer architecture section)
-
-## 2026-06-28 — nx: `nx vite:test` is the correct target name for Vitest in this repo (not `nx test`)
-
-Why: The Nx plugin registers the test target as `vite:test` (configured via `testTargetName: "vite:test"` in `nx.json`). Running `pnpm nx test <project>` silently resolves to nothing. Always use `pnpm nx vite:test <project> --skip-nx-cache` for unit test runs in this repo.
-Belongs in: rules/nx-generators.md (test target section) — supersedes the 2026-06-28 entry about `@nx/vitest:vitest` executor
-
-## 2026-06-28 — angular: all style files must use SCSS (not CSS)
-
-Why: Repo standard. `@nx/angular:app` and `@nx/angular:lib` generators default to CSS; the generated files must be renamed `.css` → `.scss` and all `styleUrl`/`styles` references updated. Also update `apps/*/project.json` `"styles"` array. Pass `--style=scss` to generators to reduce post-gen work.
-Belongs in: rules/nx-generators.md (post-generator corrections section)
-
-## 2026-06-28 — nx: `@nx/angular:app` generator requires `--name` flag for the project name, not a positional arg
-
-Why: `pnpm nx g @nx/angular:app web --directory=apps/web …` fails with "Schema does not support positional arguments". Correct invocation: `pnpm nx g @nx/angular:app --name=web --directory=apps/web …`. Same applies to `@nx/angular:lib`.
-Belongs in: rules/nx-generators.md
-
-## 2026-06-28 — nx: generated Angular vite.config.mts imports deprecated @nx/vite plugins — must replace with resolve.tsconfigPaths
-
-Why: `@nx/angular:app` and `@nx/angular:lib` generators inject `nxViteTsPaths()` and `nxCopyAssetsPlugin()` from `@nx/vite/plugins/…` which are banned by the repo's ESLint `no-restricted-imports` rule (removed in Nx v24). Replace with `resolve: { tsconfigPaths: true }` in the vite config and drop the `nxCopyAssetsPlugin` call. This is a mandatory post-generator fix.
-Belongs in: rules/nx-generators.md
-
 Append-only queue for durable, project-relevant learnings whose final home isn't clear yet. Distilled into PROJECT_CONTEXT.md / CLAUDE.md / a rule / a skill, then deleted from here — this file should trend toward empty.
 
 ## 2026-06-27 — workflow: quality gate fix-retry cycles cause "infinite loops" when developer lacks pre-flight context
@@ -51,34 +21,15 @@ Decisions made (grill session 2026-06-27):
 Why: When adding pre-flight reads to all technical agents, devops was given `rules/architecture.md` alongside `rules/code-style.md`. The reviewer correctly flagged this: `rules/architecture.md` covers UseCases, Services, Repositories, DTOs — Clean Architecture application concerns. Devops writes Dockerfiles, CI YAML, env config, shell scripts — none of which reference those layers. The read is inert but wastes tokens (haiku model). Rule: `rules/architecture.md` pre-flight applies only to agents that write application code; agents whose output is purely infrastructure config should skip it.
 Belongs in (guess): rules/workflow.md (pre-flight obligation note) | agent definitions (devops pre-flight)
 
-## 2026-06-27 — task-authoring: Dependencies row must use full slugged filename, never bare numbers
-
-Why: `Depends on | 12, 13` and `Depends on | 6, 8` appeared in tasks because the rule allowed "roadmap-index number if the task lives in a numbered roadmap." Bare numbers become unresolvable once the roadmap doc is archived. Fix applied: rules/task-authoring.md now requires full filename without extension (e.g. `2026-06-14-13-approve-user-service`); roadmap-index escape hatch removed.
-Belongs in: rules/task-authoring.md (already applied).
-
 ## 2026-06-25 — code review: flag history-flavored words in doc comments
 
 Why: a comment that says "no longer does X" / "now does Y" / "used to be Z" describes the diff that produced the current code, not the current invariant — it reads fine right after the change but rots the moment the next change lands, since nobody remembers to revisit prose. Comments should state the present-tense rule/contract ("does not do X; callers must do Y"), never the change history (that belongs in the commit message/PR description).
 Belongs in (guess): rule (rules/code-style.md, as a review checklist item) or reviewer agent instructions
 
-## 2026-06-25 — identity: UserStatus type drift between shared-contracts and identity-core (RESOLVED 2026-06-27)
-
-Why: `shared-contracts/src/lib/user-status.ts` defined `UserStatus = 'active' | 'pending' | 'banned'` (stale, from earlier design); `identity-core/src/lib/user-status.ts` had the live enum (`pending | active | rejected`). Fixed: `shared-contracts` is now the single authoritative `as const` definition (PENDING/ACTIVE/REJECTED); `identity/core` re-exports from there; all consumers redirected.
-
 ## 2026-06-25 — identity: telegramId unique index required on MongoUserRepository
 
 Why: `LoginWithTelegramService.execute` does `findByTelegramId` then conditionally creates — concurrent first-logins race to insert. `MongoUserRepository.save` handles duplicate-key (code 11000) by throwing `DomainError.conflict`, not a silent overwrite. But this is only safe if a unique index on `telegramId` actually exists in the Mongo schema. Verify `@prop({ unique: true })` or equivalent is on the `telegramId` field.
 Belongs in (guess): PROJECT_CONTEXT | dba review
-
-## 2026-06-26 — api: `moduleResolution: "bundler"` is correct for a Webpack-bundled NestJS app (RESOLVED)
-
-Why: The earlier diagnosis ("latent ESM/CJS split blocks migration") was wrong about the runtime. `apps/api` is built by `NxAppWebpackPlugin`, which bundles all lib imports into a single CJS Node bundle regardless of the TypeScript `module` setting. TS1479 ("CJS cannot require() ESM") only fires under `moduleResolution: "node16"` because that mode checks `package.json#type` at resolution time; `"bundler"` skips that check and is the correct, non-deprecated choice for any Webpack-bundled output. Fixed: removed `module: "commonjs"`, `moduleResolution: "node10"`, and `ignoreDeprecations: "5.0"` from `apps/api/tsconfig.json`; app now inherits `moduleResolution: "bundler"` + `module: "esnext"` from the base.
-Belongs in: rules/architecture.md (module format section)
-
-## 2026-06-26 — testing: `delete process.env[KEY]` bypasses vi.stubEnv restoration
-
-Why: `vi.stubEnv` saves and restores env vars on `vi.unstubAllEnvs()`; `delete process.env[KEY]` operates outside that tracking. Pattern found in `apps/api/src/config/api-config.spec.ts`. Fix: treat empty string as absent in production env readers (`portRaw ? … : default` instead of `portRaw !== undefined ? … : default`), then use `vi.stubEnv(KEY, '')` to simulate absence without deletion.
-Belongs in: rules/testing.md
 
 ## 2026-06-26 — identity: LIVR optional `['string']` rule passes null through; `!== undefined` filter does not catch it
 
@@ -90,10 +41,6 @@ Belongs in (guess): rules/validation-authorization.md or PROJECT_CONTEXT
 Why: When a fix is needed after the quality gate, the orchestrator must re-enter the pipeline at the right stage — not just patch inline and skip downstream steps. Rule: (1) trivial change (comment, doc-only) → orchestrator handles directly, no downstream needed; (2) source logic change → re-enter at `backend-developer` → `tester` → `reviewer` + `security-scanner` → user review; (3) test-only change → re-enter at `tester` → `reviewer` + `security-scanner` → user review. Writing tests directly and then running reviewer/security-scanner is half-right — the gate ran but `tester` was bypassed as the authoring agent, which undermines independent authorship and review separation.
 Belongs in (guess): rules/workflow.md (quality gate / fix-retry section)
 
-## 2026-06-25 — identity: no central roles registry — 'admin' is a plain string constant (RESOLVED 2026-06-28)
-
-Why: `ApproveUserService`/`RejectUserService` check `context.caller.roles.includes(ADMIN_ROLE)` where `ADMIN_ROLE = 'admin'`. Fixed: `Role` const object added to `shared-contracts`; `TokenClaims.roles` typed `readonly RoleType[]`; all callers updated.
-
 ## 2026-06-28 — identity: narrowing a JWT array claim type requires a parallel runtime ReadonlySet guard
 
 Why: `isTokenClaims()` already validates `status` against `VALID_USER_STATUSES: ReadonlySet`. When `TokenClaims.roles` was narrowed from `string[]` to `readonly RoleType[]`, the same pattern was initially omitted — a validly-signed token with `roles: ['superadmin']` passed the guard. Fix: `VALID_ROLES: ReadonlySet<string> = new Set(Object.values(Role))` + `.every(v => VALID_ROLES.has(v))` in the predicate. Rule: every compile-time array-enum claim narrowing must have a matching runtime set-membership check in the type guard.
@@ -103,10 +50,6 @@ Belongs in (guess): rules/validation-authorization.md (JWT claim validation sect
 
 Why: Three root causes made agents consistently write learnings to private auto-memory instead of docs/KNOWLEDGE_INBOX.md: (1) rules/workflow.md routed "config gotchas" to auto-memory and had an escape hatch "Claude-session-specific gotchas still go to auto-memory" that rationalized almost any learning; (2) Phase 6 was framed as "after every pipeline" so direct/trivial edits never triggered it; (3) none of the 16 agent definitions mentioned the inbox. Instructions are probabilistic — the harness system prompt pulls strongly toward private memory. Only a Stop hook (which the harness enforces) creates a deterministic checkpoint. Fix applied: `.claude/hooks/knowledge-capture-nudge.sh` blocks once per session per unmet obligation (inbox / CLAUDE_TS_CHANGELOG); rules/workflow.md escape hatch removed; litmus test added; CLAUDE.md write-limit carve-out added; all 12 implementation agents now include a `## Learnings` handoff bullet in their Report Format.
 Belongs in: rules/workflow.md (already applied) + CLAUDE_TS_CHANGELOG (pending-port entry below)
-
-## 2026-06-27 — identity: telegramId unique index race condition resolved (RESOLVED)
-
-Why: Previous inbox entry from 2026-06-25 flagged the race. Now fixed: `MongoUserRepository.save()` uses atomic `findOneAndUpdate+upsert` with E11000 retry; non-sparse unique index; unit tests cover the retry path with mocked Mongoose model.
 
 ## 2026-06-27 — nx: every lib that directly imports a shared lib needs its own package.json entry
 

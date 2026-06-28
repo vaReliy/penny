@@ -43,7 +43,32 @@ The repo base (`tsconfig.base.json`) is intentionally minimal: no `strict` block
 - `.js` extensions on relative imports are enforced **backend-only** via ESLint (D26/D29).
   Angular/Nx paths use barrel `index.ts` exports and do not need the extension.
 
-## 3. Wire process bootstrap (LIVR)
+## 3. Post-generator corrections by framework
+
+### Vitest Test Target Configuration
+
+The Nx plugin registers the test target as `vite:test` (configured via `testTargetName: "vite:test"` in `nx.json`). Running `pnpm nx test <project>` silently resolves to nothing. Always use `pnpm nx vite:test <project> --skip-nx-cache` for unit test runs in this repo.
+
+### Angular Style Files — SCSS Only
+
+Repo standard: all style files must use SCSS (not CSS). The `@nx/angular:app` and `@nx/angular:lib` generators default to CSS; generated files must be renamed `.css` → `.scss` and all `styleUrl`/`styles` references updated. Also update `apps/*/project.json` `"styles"` array. Pass `--style=scss` to generators to reduce post-gen work.
+
+### Angular Generator Flag Requirements
+
+- `@nx/angular:app` and `@nx/angular:lib` require `--name` flag for the project name (not a positional arg). Correct: `pnpm nx g @nx/angular:app --name=web --directory=apps/web …`. Positional arguments fail with "Schema does not support positional arguments".
+- `@nx/angular:component` uses `--path=libs/<lib>/src/lib/<component-folder>/<component-name>` (path to the component file without extension), not `--project`. This changed in Nx v23.
+
+### Angular-Generated vite.config.mts Cleanup
+
+`@nx/angular:app` and `@nx/angular:lib` generators inject `nxViteTsPaths()` and `nxCopyAssetsPlugin()` from `@nx/vite/plugins/…` which are banned by the repo's ESLint `no-restricted-imports` rule (removed in Nx v24). These are mandatory post-generator fixes:
+
+1. Remove imports of `@nx/vite/plugins/…`
+2. Replace with `resolve: { tsconfigPaths: true }` in the vite config
+3. Drop the `nxCopyAssetsPlugin()` call
+
+Also audit the generated stub spec file — it may import the class name without the "Component" suffix (e.g., `GreetingPage` instead of `GreetingPageComponent`). Correct the import before writing test logic.
+
+## 5. Wire process bootstrap (LIVR)
 
 A new process entrypoint (`main.ts`, CLI, queue worker) must call `registerLivrRules()`
 from `shared-kernel` **exactly once** at startup, before any `BaseService` or
@@ -53,7 +78,7 @@ from `shared-kernel` **exactly once** at startup, before any `BaseService` or
 
 See `rules/validation-authorization.md` → _LIVR bootstrap_ section for the call site.
 
-## 4. Audit companion projects
+## 6. Audit companion projects
 
 Generators scaffold sibling projects (e.g. `apps/<name>-e2e`). Audit them too:
 
@@ -61,7 +86,7 @@ Generators scaffold sibling projects (e.g. `apps/<name>-e2e`). Audit them too:
   underlying lint issue (e.g. `no-var → const/let`) instead of suppressing the whole file.
 - Delete a companion project you don't intend to use rather than leaving it lint-disabled.
 
-## 5. A green build does not close the task
+## 7. A green build does not close the task
 
 `nx build` exiting 0 proves compilation, not correctness. The quality gate
 (`tester` + `reviewer`, see `rules/workflow.md`) still runs. Advance to Phase 4 — do

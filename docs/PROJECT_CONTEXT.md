@@ -12,8 +12,9 @@ Architectural state of record for Penny platform rebuild. This document captures
 
 ### Repository Interface (`libs/identity/core`)
 
-- **`IUserRepository<TUser>`** — ORM-agnostic abstraction: `find(id)`, `findByTelegramId(id)`, `save(user)`, `exists(id)`.
+- **`IUserRepository<TUser>`** — ORM-agnostic abstraction: `find(id)`, `findByTelegramId(id)`, `save(user)`, `exists(id)`, `updateProfile(id, fields)`.
 - **NO `updateStatus` method** — The approved pattern is: load entity → call domain method (`approve()`/`reject()`) → `save()`. This enforces domain rule validation and prevents accidental state corruption.
+- **Intentional write path separation** — `save()` (via `updateById`) writes all fields including `status` and is only safe to call from `SetUserStatusService` (approve/reject). `updateProfile()` writes only profile fields (`firstName`, `lastName`, `username`, `photoUrl`) and structurally cannot touch `status` or `telegramId`. This split prevents the login path from reverting an approved user's status back to `pending` in a concurrent-write race. Do not consolidate these back to a single `save()` for the returning-user path in `LoginWithTelegramService`.
 
 ### Application Layer (`libs/identity/application`)
 

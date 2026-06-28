@@ -252,3 +252,40 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 - **Why it matters upstream**: The split allows agents to pre-flight only the rules relevant to their platform, improving token efficiency and keeping context focused. Reviewer reads all to evaluate both platforms; backend-focused security scanner reads backend rules since most app security touches backend (auth, validation, error handling).
 - **Suggested upstream change**: For each agent, update the Pre-flight section to list all applicable rules files per the pattern established above.
 - **Status**: pending-port
+
+---
+
+## 2026-06-28 — Enhancement: nx-generators.md — Vitest target name, SCSS enforcement, generator flag fixes, deprecated @nx/vite plugin removal
+
+- **Component**: `rules/nx-generators.md`
+- **Type**: Enhancement
+- **What happened**: Four post-generator correction rules distilled from KNOWLEDGE_INBOX into `rules/nx-generators.md`:
+  1. **Vitest target name**: The Nx plugin registers as `vite:test` (via `testTargetName` in `nx.json`), not `test`. `pnpm nx test <project>` silently resolves to nothing; always use `pnpm nx vite:test <project> --skip-nx-cache`. Supersedes any earlier `@nx/vitest:vitest` executor references (that executor name does not exist in `@nx/vitest@23`).
+  2. **SCSS enforcement**: `@nx/angular:app` and `@nx/angular:lib` default to CSS. Generated `.css` files must be renamed `.scss`; `styleUrl`/`styles` references and `project.json` `"styles"` array updated. Pass `--style=scss` to generators.
+  3. **`--name` flag required**: `nx g @nx/angular:app <positional>` fails with "Schema does not support positional arguments". Correct form: `--name=<name> --directory=<path>`. Same for `@nx/angular:lib`.
+  4. **Deprecated `@nx/vite` plugins**: Generators inject `nxViteTsPaths()` and `nxCopyAssetsPlugin()` (removed in Nx v24, banned by repo ESLint). Replace with `resolve: { tsconfigPaths: true }` and drop the copy-assets call.
+- **Why it matters upstream**: All four are universal Nx post-generator footguns: wrong test target name, CSS default, positional-arg schema breakage, and deprecated plugin injection affect any claude-ts consumer using `@nx/angular` on Nx v23+.
+- **Suggested upstream change**: Add a "Post-generator corrections (Angular)" subsection to `rules/nx-generators.md` covering all four items with before/after examples.
+- **Status**: pending-port
+
+---
+
+## 2026-06-28 — Enhancement: testing.md — vi.stubEnv vs delete process.env anti-pattern
+
+- **Component**: `rules/testing.md`
+- **Type**: Enhancement
+- **What happened**: `vi.stubEnv` tracks env var saves/restores for `vi.unstubAllEnvs()`; `delete process.env[KEY]` operates outside that tracking and leaves state leaked across tests. Found in `apps/api/src/config/api-config.spec.ts`. Correct pattern: treat empty string as absent in production readers (`portRaw ? … : default`), then use `vi.stubEnv(KEY, '')` to simulate absence without deletion.
+- **Why it matters upstream**: This is a Vitest-specific footgun that affects any test file simulating missing env vars. Without the rule, agents write `delete process.env[KEY]` as the intuitive workaround and introduce cross-test state pollution.
+- **Suggested upstream change**: Add an "Environment Variable Stubbing" section to `rules/testing.md` documenting the anti-pattern and the `vi.stubEnv(KEY, '')` + empty-string-as-absent fix.
+- **Status**: pending-port
+
+---
+
+## 2026-06-28 — Enhancement: workflow.md — explicit split-dispatch guidance for mixed infra+code tasks (reinforcement)
+
+- **Component**: `rules/workflow.md` routing guidance
+- **Type**: Enhancement
+- **What happened**: The existing "Conflict: devops overrouting" entry (2026-06-25) documented the root cause; this session adds the concrete prescriptive rule to `rules/workflow.md`: when a task mixes docker-compose/CI with an application-level DB connection factory (Mongoose/Typegoose in `libs/*/infrastructure`), the orchestrator must split dispatch — compose/CI files → `devops`; TypeScript library modules → `backend-developer`. The `devops` agent writes global mongoose singletons and unpinned dep versions; `backend-developer` applies DI boundaries, strict TS, and Nx tag compliance.
+- **Why it matters upstream**: Reinforces and concretizes the earlier 2026-06-25 routing-conflict entry. The prescriptive language ("split the dispatch", named agent targets) makes the rule actionable in sessions where only `rules/workflow.md` is loaded.
+- **Suggested upstream change**: Merge with the 2026-06-25 Conflict entry's suggested upstream change: add the split-dispatch note to the routing table in `rules/workflow.md` immediately after the DevOps row.
+- **Status**: pending-port

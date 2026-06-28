@@ -123,6 +123,15 @@ ba → ddd-architect? → impl-{slug} team ══╣
 
 When dispatching a technical agent (`backend-developer`, `angular-developer`, `tester`, `qa`, `devops`, `dba`, `debugger`, `refactoring-expert`, `integration-architect`, `queue-specialist`), the agent definition already includes mandatory pre-flight reads (`docs/KNOWLEDGE_INBOX.md` + `rules/architecture.md` + `rules/code-style.md`). Do not pass these as inline context — the agent reads them from disk so they reflect the current state of the repo.
 
+### Routing Mixed Infrastructure + Application Code
+
+When a task blends infrastructure config (Docker Compose, CI YAML) with application-level code (database connection factory, DI setup), the orchestrator must split dispatch:
+
+- **Infrastructure + container orchestration** → `devops` (writes Dockerfiles, CI YAML, env configs, scripts)
+- **Application-level DB connection factory** (e.g., Mongoose/Typegoose connection pool in `libs/*/infrastructure`) → `backend-developer` (applies strict TS conventions, DI boundaries, Nx tag compliance)
+
+Routing the whole task to `devops` produces rough implementations: global mongoose singleton instead of `createConnection()`, unpinned dependency versions, healthcheck workarounds rather than diagnosis. The `backend-developer` agent applies architectural rigor that `devops` does not — split the dispatch to preserve code quality.
+
 ### Implementation Team (Phase 3)
 
 Team name: `impl-{feature-slug}` (e.g. `impl-user-registration`)
