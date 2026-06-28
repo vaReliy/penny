@@ -1,10 +1,11 @@
 import type { Routes } from '@angular/router';
-import { statusGuard } from 'identity-data-access';
+import { loginGuard, statusGuard } from 'identity-data-access';
 
 export const appRoutes: Routes = [
   { path: '', redirectTo: 'greeting', pathMatch: 'full' },
   {
     path: 'login',
+    canActivate: [loginGuard],
     loadComponent: () =>
       import('identity-feature-login').then((m) => m.LoginPageComponent),
   },

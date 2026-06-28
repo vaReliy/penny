@@ -111,6 +111,35 @@ test.describe('auth flow — status routing guard', () => {
     ).toBeVisible();
   });
 
+  test('active user navigating directly to /login is redirected to /greeting', async ({
+    page,
+  }) => {
+    await page.route(ME_URL, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(activeUser),
+      }),
+    );
+
+    await page.route(HELLO_URL, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          message: 'Hello, Valerii — you are user #123456',
+        }),
+      }),
+    );
+
+    await page.goto('/login');
+    await page.waitForURL('**/greeting');
+
+    await expect(
+      page.getByText('Hello, Valerii — you are user #123456'),
+    ).toBeVisible();
+  });
+
   test('active user navigating directly to /access-status is bounced to /greeting', async ({
     page,
   }) => {

@@ -2,6 +2,11 @@
 
 Append-only queue for durable, project-relevant learnings whose final home isn't clear yet. Distilled into PROJECT_CONTEXT.md / CLAUDE.md / a rule / a skill, then deleted from here — this file should trend toward empty.
 
+## 2026-06-28 — angular: CanActivateFn with zero explicit parameters avoids unused-variable lint noise
+
+Why: `@typescript-eslint/no-unused-vars` is configured with `args: "after-used"` (Nx default). In a `CanActivateFn`, when neither `route` nor `state` is needed, declaring underscore-prefixed params (`_route`, `_state`) still triggers warnings. TypeScript structural typing allows a narrower signature — declaring `(): Observable<boolean | UrlTree> => { ... }` with no parameters satisfies `CanActivateFn` because the router call site passes the arguments at runtime regardless. Only add `state` (or `route`) to the signature when actually consumed; omit both when not needed.
+Belongs in (guess): rules/code-style-angular.md
+
 ## 2026-06-27 — workflow: quality gate fix-retry cycles cause "infinite loops" when developer lacks pre-flight context
 
 Why: Review cycles compound when (1) technical agents don't read KNOWLEDGE_INBOX / rules before coding, and (2) reviewer treats all findings as "fix now" regardless of origin. Root cause confirmed via task `2026-06-14-15-04-user-status-drift` spawning 5 subtasks — valid pre-existing discoveries, not regressions. Each inline fix adds new review surface, so the loop is structurally guaranteed.

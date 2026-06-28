@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`loginGuard: CanActivateFn`** in `libs/identity/data-access` — protects the `/login` route from already-authenticated users: `active` → `/greeting`; `pending`/`rejected` → `/access-status`; 401/unauthenticated → allowed through. Complements the existing `statusGuard` (which guards the opposite direction). Exported from the data-access barrel.
+- **Route update** (`apps/web/src/app/app.routes.ts`) — `/login` now has `canActivate: [loginGuard]`.
+- **Unit tests** (`login.guard.spec.ts`) — 4 tests covering all three branches (active, pending/rejected, unauthenticated error), using `TestBed.runInInjectionContext` + real `Router` for `UrlTree` assertions.
+- **E2E scenario** (`auth-flow.spec.ts`) — active user navigating directly to `/login` is redirected to `/greeting`; verified across Chromium, Firefox, WebKit.
+
+### Backlog tasks emitted
+
+- `2026-06-28-04` — expanded scope to include `login.guard.ts` (bare `'active'`/`'pending'`/`'rejected'` literals should use `UserStatus.*` constants from `shared-contracts`, same as pre-existing issue in `status.guard.ts`).
+- `2026-06-28-18` — delete stale `example.spec.ts` Nx scaffold (expects `"Welcome"` h1; app shows login page — has been failing since routes were wired up).
+
+### Added
+
 - **`libs/shared/infrastructure`** — new NX lib (`scope:shared`, `type:infrastructure`, `platform:server`) housing `createPinoLogger` / `PinoLoggerConfig`; path alias `shared-infrastructure` registered in `tsconfig.base.json`. Logger construction is now a shared cross-cutting concern rather than an identity-domain export.
 - **`libs/shared/infrastructure/src/lib/pino-logger.spec.ts`** — smoke tests for `createPinoLogger` (6 tests, all pass).
 
