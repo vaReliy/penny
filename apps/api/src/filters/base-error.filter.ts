@@ -1,8 +1,11 @@
-import { Catch, Logger } from '@nestjs/common';
+import { Catch, Inject } from '@nestjs/common';
 import type { ExceptionFilter, ArgumentsHost } from '@nestjs/common';
 import type { Response } from 'express';
+import type pino from 'pino';
 
 import { BaseError } from 'shared-errors';
+
+import { PINO_LOGGER } from '../logger/logger.tokens.js';
 
 /**
  * Catches every `BaseError` thrown inside a request lifecycle, maps it to the
@@ -11,7 +14,7 @@ import { BaseError } from 'shared-errors';
  */
 @Catch(BaseError)
 export class BaseErrorFilter implements ExceptionFilter<BaseError> {
-  private readonly logger = new Logger(BaseErrorFilter.name);
+  constructor(@Inject(PINO_LOGGER) private readonly logger: pino.Logger) {}
 
   catch(exception: BaseError, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
@@ -19,7 +22,7 @@ export class BaseErrorFilter implements ExceptionFilter<BaseError> {
 
     const { code, message, statusCode } = exception.serialize();
 
-    this.logger.warn(`[${code}] ${message}`, { statusCode });
+    this.logger.warn({ statusCode }, `[${code}] ${message}`);
 
     response.status(statusCode).json({ code, message });
   }

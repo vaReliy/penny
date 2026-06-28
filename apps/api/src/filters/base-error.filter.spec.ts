@@ -1,16 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type pino from 'pino';
 
 /**
- * Mock @nestjs/common before importing the filter so that the `@Catch`
- * class decorator and `Logger` do not require NestJS's DI bootstrap or
+ * Mock @nestjs/common before importing the filter so that the `@Catch` and
+ * `@Inject` decorators do not require NestJS's DI bootstrap or
  * `reflect-metadata` in the test process.
  */
 vi.mock('@nestjs/common', () => ({
   Catch: () => () => undefined,
-  Logger: class {
-    warn = vi.fn();
-    error = vi.fn();
-  },
+  Inject: () => () => undefined,
 }));
 
 import type { ArgumentsHost } from '@nestjs/common';
@@ -43,9 +41,14 @@ function makeHost(): {
 
 describe('BaseErrorFilter', () => {
   let filter: BaseErrorFilter;
+  let mockLogger: {
+    warn: ReturnType<typeof vi.fn>;
+    error: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
-    filter = new BaseErrorFilter();
+    mockLogger = { warn: vi.fn(), error: vi.fn() };
+    filter = new BaseErrorFilter(mockLogger as unknown as pino.Logger);
   });
 
   it('maps ValidationError to HTTP 400', () => {
@@ -129,6 +132,15 @@ describe('BaseErrorFilter', () => {
     filter.catch(new NotFoundError('User not found.'), host);
     expect((json.mock.calls[0][0] as { message: string }).message).toBe(
       'User not found.',
+    );
+  });
+
+  it('calls logger.warn with { statusCode } and the interpolated [code] message string', () => {
+    const { host } = makeHost();
+    filter.catch(new ValidationError('Email is required.'), host);
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      { statusCode: 400 },
+      '[VALIDATION_ERROR] Email is required.',
     );
   });
 });

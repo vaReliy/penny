@@ -1,11 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type pino from 'pino';
 
 vi.mock('@nestjs/common', () => ({
   Catch: () => () => undefined,
-  Logger: class {
-    warn = vi.fn();
-    error = vi.fn();
-  },
+  Inject: () => () => undefined,
 }));
 
 import type { ArgumentsHost } from '@nestjs/common';
@@ -31,9 +29,14 @@ function makeHost(): {
 
 describe('UnknownErrorFilter', () => {
   let filter: UnknownErrorFilter;
+  let mockLogger: {
+    warn: ReturnType<typeof vi.fn>;
+    error: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
-    filter = new UnknownErrorFilter();
+    mockLogger = { warn: vi.fn(), error: vi.fn() };
+    filter = new UnknownErrorFilter(mockLogger as unknown as pino.Logger);
   });
 
   it('returns HTTP 500 for a plain Error instance', () => {
@@ -86,5 +89,14 @@ describe('UnknownErrorFilter', () => {
     // BaseErrorFilter is responsible for BaseError — this filter must bail out
     expect(status).not.toHaveBeenCalled();
     expect(json).not.toHaveBeenCalled();
+  });
+
+  it('calls logger.error with { message } and "Unhandled exception"', () => {
+    const { host } = makeHost();
+    filter.catch(new Error('Database timed out.'), host);
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      { message: 'Database timed out.' },
+      'Unhandled exception',
+    );
   });
 });

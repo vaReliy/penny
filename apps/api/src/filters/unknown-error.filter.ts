@@ -1,8 +1,11 @@
-import { Catch, Logger } from '@nestjs/common';
+import { Catch, Inject } from '@nestjs/common';
 import type { ExceptionFilter, ArgumentsHost } from '@nestjs/common';
 import type { Response } from 'express';
+import type pino from 'pino';
 
 import { BaseError } from 'shared-errors';
+
+import { PINO_LOGGER } from '../logger/logger.tokens.js';
 
 /** HTTP 500 status code returned for unexpected errors. */
 const INTERNAL_ERROR_STATUS = 500;
@@ -16,7 +19,7 @@ const INTERNAL_ERROR_STATUS = 500;
  */
 @Catch()
 export class UnknownErrorFilter implements ExceptionFilter<unknown> {
-  private readonly logger = new Logger(UnknownErrorFilter.name);
+  constructor(@Inject(PINO_LOGGER) private readonly logger: pino.Logger) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
     if (exception instanceof BaseError) {
@@ -29,7 +32,7 @@ export class UnknownErrorFilter implements ExceptionFilter<unknown> {
     const message =
       exception instanceof Error ? exception.message : 'Unexpected error';
 
-    this.logger.error('Unhandled exception', { message });
+    this.logger.error({ message }, 'Unhandled exception');
 
     response.status(INTERNAL_ERROR_STATUS).json({
       code: 'INTERNAL_ERROR',

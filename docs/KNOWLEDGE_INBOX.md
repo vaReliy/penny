@@ -7,6 +7,11 @@ Append-only queue for durable, project-relevant learnings whose final home isn't
 Why: When multiple `APP_FILTER` providers are registered, NestJS matches the thrown exception type against each filter's `@Catch()` decorator arguments and invokes the most specific match — not the last-declared one. Registration order only matters when two filters have equal specificity (e.g., two `@Catch()` catch-alls). A specific `@Catch(BaseError)` filter always wins over a `@Catch()` catch-all regardless of which appears first in the providers array. This is counterintuitive to developers who assume reverse-order stack semantics (like middleware or pipes).
 Belongs in (guess): rules/code-style-backend.md
 
+## 2026-06-29 — testing: assert pino (obj, msg) both args in exception filter specs; hoist mockLogger to describe scope
+
+Why: When testing NestJS exception filters that use pino, assert both arguments of the pino call — `logger.warn({ statusCode }, '[CODE] message')` — not just that the logger was called. pino's structured-first signature `(obj, msg)` is opposite to winston/console `(msg, meta)`, so a single-arg assertion (`toHaveBeenCalled()`) won't catch a metadata-less call. Also: `mockLogger` must be declared as `let` at the `describe` scope; a `const` inside `beforeEach` is inaccessible to `it` blocks.
+Belongs in (guess): rules/testing.md
+
 ## 2026-06-28 — angular: CanActivateFn with zero explicit parameters avoids unused-variable lint noise
 
 Why: `@typescript-eslint/no-unused-vars` is configured with `args: "after-used"` (Nx default). In a `CanActivateFn`, when neither `route` nor `state` is needed, declaring underscore-prefixed params (`_route`, `_state`) still triggers warnings. TypeScript structural typing allows a narrower signature — declaring `(): Observable<boolean | UrlTree> => { ... }` with no parameters satisfies `CanActivateFn` because the router call site passes the arguments at runtime regardless. Only add `state` (or `route`) to the signature when actually consumed; omit both when not needed.
@@ -150,6 +155,11 @@ Belongs in (guess): rules/testing.md (NestJS integration test patterns)
 
 Why: Angular's default `ViewEncapsulation.Emulated` inserts `<style>` blocks at runtime (e.g., Angular Material, component styles in SSR, and some lazy-loaded chunks). Removing `'unsafe-inline'` from `style-src` breaks these at runtime. Proper replacement is `'nonce-{generated-nonce}'` — requires Helmet's `nonce` option and the Angular build pipeline to inject the nonce into every generated `<style>` tag. This is non-trivial scope; track as a separate task rather than bundling into a CSP hardening task.
 Belongs in (guess): PROJECT_CONTEXT (security roadmap note)
+
+## 2026-06-29 — pino: pino logger API uses `(obj, msg)` order — opposite of NestJS Logger `(msg, context)`
+
+Why: `pino.Logger.warn/error` signatures put the structured-context object first and the human-readable message string second: `logger.warn({ statusCode }, '[CODE] message')`. NestJS built-in `Logger.warn` is the reverse: `logger.warn('message', context)`. Migrating from `new Logger()` to injected pino requires swapping call-site argument order at every `warn`/`error` call — TypeScript surfaces this as TS2769 overload mismatch, so it's caught at compile time.
+Belongs in (guess): rules/code-style-backend.md (logging section)
 
 ## 2026-06-28 — cli: slim CliConfig pattern for apps that share IdentityModule but don't need JWT/Telegram vars
 
