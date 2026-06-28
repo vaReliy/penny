@@ -14,7 +14,7 @@ export class InfrastructureError extends BaseError {
   public readonly code = ErrorCode.INFRASTRUCTURE_ERROR;
   public readonly statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
 
-  public constructor(message: string = DEFAULT_MESSAGE) {
-    super(message);
+  public constructor() {
+    super(DEFAULT_MESSAGE);
   }
 }
