@@ -2,6 +2,11 @@
 
 Append-only queue for durable, project-relevant learnings whose final home isn't clear yet. Distilled into PROJECT_CONTEXT.md / CLAUDE.md / a rule / a skill, then deleted from here — this file should trend toward empty.
 
+## 2026-06-29 — nestjs: APP_FILTER selection is specificity-based, not registration-order-based
+
+Why: When multiple `APP_FILTER` providers are registered, NestJS matches the thrown exception type against each filter's `@Catch()` decorator arguments and invokes the most specific match — not the last-declared one. Registration order only matters when two filters have equal specificity (e.g., two `@Catch()` catch-alls). A specific `@Catch(BaseError)` filter always wins over a `@Catch()` catch-all regardless of which appears first in the providers array. This is counterintuitive to developers who assume reverse-order stack semantics (like middleware or pipes).
+Belongs in (guess): rules/code-style-backend.md
+
 ## 2026-06-28 — angular: CanActivateFn with zero explicit parameters avoids unused-variable lint noise
 
 Why: `@typescript-eslint/no-unused-vars` is configured with `args: "after-used"` (Nx default). In a `CanActivateFn`, when neither `route` nor `state` is needed, declaring underscore-prefixed params (`_route`, `_state`) still triggers warnings. TypeScript structural typing allows a narrower signature — declaring `(): Observable<boolean | UrlTree> => { ... }` with no parameters satisfies `CanActivateFn` because the router call site passes the arguments at runtime regardless. Only add `state` (or `route`) to the signature when actually consumed; omit both when not needed.

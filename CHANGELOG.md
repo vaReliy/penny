@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`apps/api/src/app/app.module.ts`** — registered `BaseErrorFilter` and `UnknownErrorFilter` as global exception filters via `APP_FILTER` DI token (from `@nestjs/core`), matching the existing `APP_GUARD` pattern. Both filters are now fully DI-wired and can receive injected dependencies in the future.
+- **`apps/api/src/main.ts`** — removed `app.useGlobalFilters(new BaseErrorFilter(), new UnknownErrorFilter())` and the now-unused filter imports; filters are registered through the module providers array instead.
+
+### Backlog tasks emitted
+
+- `2026-06-29-03-filters-migrate-to-pino-logger` — both filters still use `new Logger(FilterName.name)` (NestJS built-in) instead of `@Inject(PINO_LOGGER)`; filter log lines flow through NestJS default formatter rather than the unified pino stream.
+
 ### Added
 
 - **`loginGuard: CanActivateFn`** in `libs/identity/data-access` — protects the `/login` route from already-authenticated users: `active` → `/greeting`; `pending`/`rejected` → `/access-status`; 401/unauthenticated → allowed through. Complements the existing `statusGuard` (which guards the opposite direction). Exported from the data-access barrel.

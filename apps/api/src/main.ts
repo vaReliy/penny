@@ -9,8 +9,6 @@ import type pino from 'pino';
 import { registerLivrRules } from 'shared-kernel';
 
 import { AppModule } from './app/app.module.js';
-import { BaseErrorFilter } from './filters/base-error.filter.js';
-import { UnknownErrorFilter } from './filters/unknown-error.filter.js';
 import { API_CONFIG } from './config/api-config.js';
 import { CSP_DIRECTIVES } from './middleware/csp-policy.js';
 import { PinoNestLogger } from './logger/pino-nest-logger.js';
@@ -45,7 +43,6 @@ async function bootstrap(): Promise<void> {
   // NoSQL operator injection reaching any route handler.
   app.use(mongoSanitize());
 
-  app.useGlobalFilters(new BaseErrorFilter(), new UnknownErrorFilter());
   app.enableShutdownHooks();
 
   const config = app.get<ApiConfig>(API_CONFIG);
