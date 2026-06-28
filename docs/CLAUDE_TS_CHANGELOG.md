@@ -227,6 +227,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-06-28 — Enhancement: sequential quality gate (tester → reviewer → [security-scanner ∥ qa])
+
+- **Component**: `rules/workflow.md` / `CLAUDE.md` Orchestrator Core quality gate paragraph
+- **Type**: Enhancement
+- **What happened**: The quality gate previously dispatched `tester`, `reviewer`, `security-scanner`, and `qa` in parallel via a `qg-{slug}` team. This was wasteful: if tests fail, reviewer and security-scanner run on code that will change anyway. Redesigned in a grill-me session on 2026-06-28 to a sequential pipeline: (1) `tester` runs alone first; (2) `reviewer` runs only after tester passes; (3) `security-scanner` and `qa` run in parallel as the final stage, each only when their original trigger condition is met. Any failure at any stage → fix → restart from `tester` (not from the failed stage). Max 2 full restart cycles total. The pipeline ASCII diagram in `rules/workflow.md` was updated to show sequential stages. `CLAUDE.md` quality gate summary was updated to be consistent. A closing-checklist condition was added: if `.claude/**` or `rules/**` changed this session, suggest running `/rules-audit` before closing.
+- **Why it matters upstream**: The parallel gate is universally wasteful when tests fail. Running reviewer on code that's about to change produces stale findings. The sequential design reduces token cost without compromising correctness — accepted tradeoff is slightly longer wall-clock time per gate cycle.
+- **Suggested upstream change**: (a) Replace the parallel `qg-{slug}` team dispatch in `rules/workflow.md` with the `tester → reviewer → [security-scanner ∥ qa]` sequential pipeline. (b) Update the pipeline ASCII diagram. (c) Update `CLAUDE.md` quality gate summary to name the execution order and the restart-from-tester rule. (d) Add the `/rules-audit` suggestion to the closing checklist condition for `.claude/**` / `rules/**` changes.
+- **Status**: pending-port
+
+---
+
 ## 2026-06-28 — Enhancement: Update agent pre-flight reads for platform-specific rules split
 
 - **Component**: `.claude/agents/angular-developer.md`, `.claude/agents/backend-developer.md`, `.claude/agents/tester.md`, `.claude/agents/reviewer.md`, `.claude/agents/security-scanner.md`

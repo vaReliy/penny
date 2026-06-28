@@ -101,13 +101,9 @@ If none apply (e.g. typo fix, config value) — skip the pipeline.
 ba → ddd-architect? → impl-{slug} team ══╣
                                          ╚═══ vue/react/angular-developer (if UI change)
                               ║
-              ╔═══════════════╩═══════════════╗
-              ║   Quality Gate (conditional)  ║
-              ║  tester | reviewer            ║
-              ║  + security-scanner if auth/  ║
-              ║    validation/secrets/HMAC    ║
-              ║  + qa if user-visible flow    ║
-              ╚═══════════════╤═══════════════╝
+                    [Quality Gate — sequential]
+                    tester ──► reviewer ──► security-scanner ┐
+                                       └──► qa              ┘ (parallel final stage)
                               ║
                         docs-writer
                               ║
@@ -119,7 +115,7 @@ ba → ddd-architect? → impl-{slug} team ══╣
 | 1. Requirements      | sequential                              | `ba`                                          | User stories, scope, API contract   |
 | 2. Architecture      | sequential _(skip if no arch decision)_ | `ddd-architect`                               | Domain model, placement             |
 | 3. Implementation    | **team** `impl-{slug}`                  | `backend-developer` + frontend agent(s) if UI | Code + ESLint + tsc                 |
-| 4. Quality Gate      | **team** `qg-{slug}` (conditional)      | `tester`, `reviewer` + conditional            | Parallel reports                    |
+| 4. Quality Gate      | sequential then parallel (mandatory)    | `tester` → `reviewer` → conditional parallel  | Stage reports; restart from tester  |
 | 5. Documentation     | sequential                              | `docs-writer`                                 | PR description + `gh pr create`     |
 | 6. Knowledge Capture | orchestrator (mandatory — never skip)   | —                                             | Updated docs + inbox/permanent home |
 
@@ -172,20 +168,32 @@ Spawn 3 teammates: `ba`, `ddd-architect`, `devil`.
 - `devil` accepts response → silent on that point
 - `devil` escalates ignored challenge → orchestrator decides before proceeding to implementation phase
 
-### Quality Gate Team (Mandatory)
+### Quality Gate (Mandatory — Sequential)
 
-Team name: `qg-{feature-slug}` (e.g. `qg-user-registration`)
+**Never skip.** "The build passes" is not a substitute for the quality gate. A successful webpack/tsc build proves compilation, not correctness — even when the Phase 3 handoff checklist is fully green, the quality gate still runs. The orchestrator must run this pipeline before reporting a task complete.
 
-**Never skip.** "The build passes" is not a substitute for the quality gate. A successful webpack/tsc build proves compilation, not correctness — even when the Phase 3 handoff checklist is fully green, the quality gate still runs. The orchestrator must dispatch this team before reporting a task complete.
+**Execution order:**
 
-Always spawn: `tester`, `reviewer`.
-Conditionally add:
+```
+tester ──► reviewer ──► security-scanner ┐
+                    └──► qa              ┘ (parallel final stage)
+```
+
+**Stage 1 — `tester` (always, alone):**
+Run `tester` sequentially. If it reports failures → fix → restart from stage 1.
+
+**Stage 2 — `reviewer` (only after tester passes):**
+Run `reviewer` sequentially. If it reports `## Fix Now` items → fix → restart from stage 1 (not from stage 2).
+
+**Stage 3 — `security-scanner` and/or `qa` (parallel, conditional):**
+Run in parallel, each only when its trigger condition is met:
 
 - `security-scanner` — change touches auth/validation/secrets/HMAC/endpoints accepting external input
 - `qa` — a user-visible flow changed
 
-Each works independently — no inter-agent messages needed.
-Wait for all to complete, then collect reports.
+If either reports `## Fix Now` items → fix → restart from stage 1.
+
+**Max 2 full restart cycles total** (across all stages). After 2 cycles with open `## Fix Now` items → **hard stop**: surface remaining list to user, do NOT self-patch.
 
 **Quality gate output contract:**
 
@@ -201,9 +209,11 @@ Reviewer and security-scanner emit two sections in every report:
 
 **Orchestrator actions (deterministic — no judgment calls):**
 
-- `## Fix Now` items present → shutdown team → route to responsible implementation agent → re-run quality gate. Max 2 retry cycles. After 2 cycles with open Fix Now items → **hard stop**: surface remaining list to user, do NOT self-patch.
+- `## Fix Now` items present → route to responsible implementation agent → restart quality gate from stage 1. Max 2 full cycles. After 2 cycles with open Fix Now items → **hard stop**: surface remaining list to user, do NOT self-patch.
 - `## Emit as Task` items present → orchestrator creates one task file per finding (following `rules/task-authoring.md`), then **closes the gate** for the current task. Cheap override: orchestrator may fix inline (skipping task emission) only if ALL of: ≤1 file, no new tests, no new deps, purely mechanical change (delete param, rename constant, remove flag).
 - All sections empty (`_none_`) → proceed to phase 5.
+
+**Closing checklist — if `.claude/**`or`rules/**` changed this session:** suggest running `/rules-audit` before closing. This is a suggestion to the human, not an auto-dispatch.
 
 ## Bug Fix Pipeline
 
