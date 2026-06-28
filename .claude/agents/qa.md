@@ -44,10 +44,11 @@ End-to-end testing, browser automation, and integration testing from the user's 
 
 Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated project-specific conventions and discovered issues that apply to all agents.
 
-Before writing or modifying any code, additionally read:
+Before writing or modifying any code, additionally read (QA runs E2E tests against the Angular frontend only):
 
-- `rules/architecture.md`
-- `rules/code-style.md`
+- `rules/code-style.md` (shared TypeScript)
+- `rules/code-style-angular.md` (Angular signals, templates, SCSS, forms, accessibility)
+- `rules/architecture-angular.md` (Angular injection tokens, lazy-load boundaries, dev-server proxy)
 
 ## Scope Boundary
 

@@ -193,3 +193,40 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 - **Why it matters upstream**: Template repos benefit from a standard task-authoring convention so AI-assisted planning sessions produce immediately executable, consistently formatted task files.
 - **Suggested upstream change**: Add a `rules/task-authoring.md` template to the claude-ts template payload; the project overrides routing/branch details.
 - **Status**: pending-port
+
+---
+
+## 2026-06-28 — Enhancement: split monolithic code-style.md and architecture.md into platform-specific files
+
+- **Component**: `rules/code-style.md`, `rules/code-style-angular.md` (new), `rules/code-style-backend.md` (new), `rules/architecture.md`, `rules/architecture-angular.md` (new), `rules/architecture-backend.md` (new)
+- **Type**: Enhancement
+- **What happened**: Split two large shared rules files into platform-specific variants to reduce token usage and prevent frontend agents from loading backend-specific patterns and vice versa.
+  - `rules/code-style.md` → kept shared TypeScript conventions only (strict mode, naming, imports, comments); split out Angular and backend patterns
+  - `rules/code-style-angular.md` (new) → Angular-specific: signals, `toSignal()`, `@let`, templates, SCSS, forms, accessibility
+  - `rules/code-style-backend.md` (new) → backend-specific: config, validation, logging (pino DI), auth/cookies, error handling
+  - `rules/architecture.md` → kept shared onion/DDD and NX boundaries; split out platform-specific patterns
+  - `rules/architecture-angular.md` (new) → Angular injection tokens, lazy-load boundaries, dev-server proxy
+  - `rules/architecture-backend.md` (new) → NestJS DI, MongoDB patterns, pipeline re-entry, Penny MongoDB overrides (mongosh, upsert race, unique indexes, $setOnInsert, repository pattern, error handling)
+- **Agent pre-flight reads updated**: `angular-developer` reads `rules/architecture-angular.md` + `rules/code-style-angular.md`; `backend-developer` reads `rules/architecture-backend.md` + `rules/code-style-backend.md`; `tester` reads platform-specific rules per test type; `reviewer` reads all 6 rules files; `security-scanner` reads backend rules (auth/validation focus); `devops` unchanged (code-style only, no architecture)
+- **AGENTS.md on-demand index updated**: added 4 new rules files with one-line descriptions
+- **KNOWLEDGE_INBOX.md cleaned**: removed 17 entries distilled into the new rules files (Angular signals, templates, DI tokens, backend logging, validation, auth, MongoDB patterns, error handling)
+- **Why it matters upstream**: Any claude-ts consumer with multiple platforms (backend + frontend, or multiple backend frameworks) will benefit from splitting large shared rules files. This pattern reduces token waste and keeps agent pre-flight reads targeted.
+- **Suggested upstream change**: (a) Create `rules/code-style-{platform}.md` and `rules/architecture-{platform}.md` files for each framework/platform in the consumer's stack. (b) Slim base `rules/code-style.md` and `rules/architecture.md` to shared content only (TypeScript conventions, onion/DDD principles, NX tag dimensions). (c) Update agent pre-flight reads to load platform-specific rules. (d) Update AGENTS.md on-demand index to list new files. (e) Port distilled entries from KNOWLEDGE_INBOX into the new rules, then delete from inbox.
+- **Status**: pending-port
+
+---
+
+## 2026-06-28 — Enhancement: Update agent pre-flight reads for platform-specific rules split
+
+- **Component**: `.claude/agents/angular-developer.md`, `.claude/agents/backend-developer.md`, `.claude/agents/tester.md`, `.claude/agents/reviewer.md`, `.claude/agents/security-scanner.md`
+- **Type**: Enhancement
+- **What happened**: Each technical agent's pre-flight section now reads platform-specific rules files in addition to shared ones.
+  - `angular-developer`: + `rules/architecture-angular.md`, `rules/code-style-angular.md`
+  - `backend-developer`: + `rules/architecture-backend.md`, `rules/code-style-backend.md`
+  - `tester`: + platform-specific rules based on test type (backend tests read backend rules, frontend tests read Angular rules)
+  - `reviewer`: reads all 6 rules files (shared + platform-specific for both)
+  - `security-scanner`: reads backend-focused rules (`architecture-backend.md`, `code-style-backend.md`) + shared
+  - `devops`: unchanged (code-style only, not architecture)
+- **Why it matters upstream**: The split allows agents to pre-flight only the rules relevant to their platform, improving token efficiency and keeping context focused. Reviewer reads all to evaluate both platforms; backend-focused security scanner reads backend rules since most app security touches backend (auth, validation, error handling).
+- **Suggested upstream change**: For each agent, update the Pre-flight section to list all applicable rules files per the pattern established above.
+- **Status**: pending-port

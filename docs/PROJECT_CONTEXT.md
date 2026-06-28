@@ -31,16 +31,13 @@ Architectural state of record for Penny platform rebuild. This document captures
 
 #### `ApproveUserService` / `RejectUserService`
 
-- **Admin gate** — Both check `context.caller.roles.includes('admin')` where `ADMIN_ROLE = 'admin'` (string constant, no central roles registry yet).
+- **Admin gate** — Both check `context.caller.roles.includes(Role.ADMIN)` where `Role` is the `as const` object in `shared-contracts` and `RoleType` is its value union.
 - **Flow** — Shared base `SetUserStatusService`: load user → call domain method → save → emit event (future).
 - **Errors** — `NotFoundError` for unknown userId; domain transition errors bubble from entity method.
 - **Transactional safety** — Currently per-save; no distributed transaction orchestration yet.
 
 ### Open Questions & TODOs
 
-- **UserStatus type drift** — `shared-contracts/src/lib/user-status.ts` still defines `'active' | 'pending' | 'banned'` (stale). Must be replaced or re-export from `identity-core`.
-- **Unique constraint on telegramId** — `MongoUserRepository.save` detects duplicate-key (code 11000) and throws `DomainError.conflict`, but concurrent first-logins require an actual unique index in the Mongo schema (`@prop({ unique: true })`). Verify this is set.
-- **Roles registry** — Currently `'admin'` is a bare string constant. Future improvements: establish `Roles` enum in `shared-kernel` or accept this convention with lint enforcement.
 - **JWT refresh tokens** — `ITokenIssuer` is a seam, but `refresh_token` claim logic not yet implemented.
 - **Event sourcing** — Approve/reject services prepared to emit domain events; no event store yet.
 

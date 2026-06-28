@@ -27,8 +27,10 @@ Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated projec
 
 Before writing or modifying any code, additionally read:
 
-- `rules/architecture.md`
-- `rules/code-style.md`
+- `rules/architecture.md` (shared onion patterns, NX boundaries)
+- `rules/architecture-backend.md` (NestJS DI, MongoDB, error handling)
+- `rules/code-style.md` (shared TypeScript)
+- `rules/code-style-backend.md` (backend-specific: logging, validation, auth, config)
 
 ## Scope
 

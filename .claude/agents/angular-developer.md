@@ -28,8 +28,10 @@ Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated projec
 
 Before writing or modifying any code, additionally read:
 
-- `rules/architecture.md`
-- `rules/code-style.md`
+- `rules/architecture.md` (shared onion patterns)
+- `rules/architecture-angular.md` (Angular-specific: injection tokens, lazy-load boundaries, dev server proxy)
+- `rules/code-style.md` (shared TypeScript)
+- `rules/code-style-angular.md` (Angular-specific: signals, templates, SCSS, forms)
 
 ## Scope Boundary
 

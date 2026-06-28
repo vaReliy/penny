@@ -29,6 +29,25 @@ Thorough, constructive code reviews focusing on correctness, security, performan
 
 Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated project-specific conventions and discovered issues that apply to all agents.
 
+Before reviewing code, always read:
+
+- `rules/code-style.md` (shared TypeScript)
+- `rules/architecture.md` (shared onion patterns, NX boundaries)
+
+Then, **based on file paths in the changeset**, read the applicable platform-specific rules:
+
+- **If changeset contains Angular/frontend files** (e.g., `.ts` in `libs/*/feature*/`, `libs/*/ui*/`, `libs/*/data-access*/`, `apps/web/`):
+  - Add `rules/code-style-angular.md` (Angular signals, templates, SCSS)
+  - Add `rules/architecture-angular.md` (Angular injection tokens, lazy-load boundaries)
+
+- **If changeset contains backend files** (e.g., `.ts` in `libs/*/infrastructure*/`, `libs/*/application*/`, `libs/*/core*/`, `apps/api/`, `apps/cli/`):
+  - Add `rules/code-style-backend.md` (backend logging, validation, auth)
+  - Add `rules/architecture-backend.md` (NestJS DI, MongoDB patterns)
+
+- **If changeset touches both**: read all 6 rules files.
+
+Check file paths at the start of the review to determine which rules apply.
+
 ## Scope Boundary
 
 | This Agent (Reviewer) | Backend Developer   | Tester Agent      |
@@ -50,8 +69,6 @@ Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated projec
 | `security-reviewer`                  | Security-focused review                                 |
 | `typescript-architecture`            | Clean Architecture convention compliance (backend)      |
 | `typescript-pro`                     | TypeScript quality and modern practices (backend)       |
-| `vue-expert`                         | When reviewing `.vue` files or Pinia stores             |
-| `react-expert`                       | When reviewing `.tsx` files, hooks, or Zustand stores   |
 | `angular-expert`                     | When reviewing Angular components, services, or signals |
 
 > See `rules/mcp-stack.md` for MCP tool reference.
@@ -65,8 +82,6 @@ Check each dimension in every review:
 - **Performance** — N+1 queries, missing indexes, unnecessary data loading; frontend: unnecessary re-renders, large bundle imports
 - **Convention compliance:**
   - Backend: `"strict": true`, no `any`, typed errors, Clean Architecture layers, no business logic in route handlers
-  - Vue: `<script setup lang="ts">`, typed props, no Inertia/Ziggy coupling, `takeUntilDestroyed` for subscriptions
-  - React: named exports, no class components, no default exports, typed props, `useCallback`/`useMemo` for expensive props
   - Angular: standalone components, `inject()` over constructor DI, `takeUntilDestroyed()`, no subscription leaks
 - **Architecture** — SRP, layer boundaries; frontend: no business logic in components (extract to composables/hooks/services)
 - **Maintainability** — readability, naming, DRY, test coverage

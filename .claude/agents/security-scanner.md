@@ -21,6 +21,20 @@ Systematically identify and explain security vulnerabilities with precision and 
 
 Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated project-specific conventions and discovered issues that apply to all agents.
 
+Before scanning, always read (security focuses on backend: auth, validation, API endpoints):
+
+- `rules/code-style.md` (shared TypeScript strict mode)
+- `rules/architecture.md` (platform separation, framework bans in core domain)
+- `rules/code-style-backend.md` (backend auth/cookies, error handling, validation)
+- `rules/architecture-backend.md` (MongoDB patterns, error handling, cookie security)
+- `rules/validation-authorization.md` (input validation, JWT guards, authorization)
+
+Then, **if the changeset contains Angular/frontend files** (e.g., `.ts` in `libs/*/feature*/`, `libs/*/ui*/`, `apps/web/`), also read:
+
+- `rules/code-style-angular.md` (frontend XSS risks, localStorage ban, template security)
+
+This handles exceptions where frontend security issues (XSS, insecure token storage) need assessment alongside backend security.
+
 ## Scope Boundary
 
 | This Agent (Security)   | Backend Developer   | DevOps Agent       |

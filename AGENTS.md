@@ -41,7 +41,12 @@ Other vendors (Gemini, Codex, Copilot): mappings added when those tools are actu
 Read when relevant (never preloaded):
 
 - `rules/workflow.md` — before creating teams / running pipelines
-- `rules/architecture.md` — layer placement questions
+- `rules/architecture.md` — layer placement questions, NX boundaries, platform/scope isolation
+- `rules/architecture-angular.md` — Angular injection tokens, lazy-load boundaries, dev-server proxy
+- `rules/architecture-backend.md` — NestJS dependency injection, MongoDB patterns, error handling
+- `rules/code-style.md` — shared TypeScript conventions (strict mode, naming, imports, comments)
+- `rules/code-style-angular.md` — Angular signals, toSignal, templates, SCSS, forms, accessibility
+- `rules/code-style-backend.md` — backend config, validation, logging, auth/cookies, error handling
 - `rules/testing.md` — writing/structuring tests
 - `rules/task-authoring.md` — emitting backlog task files from plan/grill/grooming sessions
 - `rules/validation-authorization.md` — input validation, guards

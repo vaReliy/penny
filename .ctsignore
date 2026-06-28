@@ -21,6 +21,11 @@
 
 /AGENTS.md
 /rules/architecture.md
+/rules/architecture-angular.md
+/rules/architecture-backend.md
+/rules/code-style.md
+/rules/code-style-angular.md
+/rules/code-style-backend.md
 /rules/validation-authorization.md
 
 # Project-only, outside the CTS payload — not touched by sync either way, noted for clarity.

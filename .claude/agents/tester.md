@@ -25,8 +25,18 @@ Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated projec
 
 Before writing or modifying any code, additionally read:
 
-- `rules/architecture.md`
-- `rules/code-style.md`
+- `rules/architecture.md` (shared onion patterns)
+- `rules/code-style.md` (shared TypeScript)
+
+For backend tests, also read:
+
+- `rules/architecture-backend.md`
+- `rules/code-style-backend.md`
+
+For frontend component tests, also read:
+
+- `rules/architecture-angular.md`
+- `rules/code-style-angular.md`
 
 ## Scope Boundary
 

@@ -1,5 +1,7 @@
 # TypeScript Code Style
 
+Shared conventions for TypeScript code across all platforms (backend Node.js, frontend Angular, etc.). For platform-specific guidance, see `rules/code-style-angular.md` and `rules/code-style-backend.md`.
+
 ## Strict TypeScript
 
 - All TypeScript files must have `"strict": true` in tsconfig (covers `strictNullChecks`, `noImplicitAny`, etc.)
@@ -37,6 +39,30 @@ Specific order for class elements:
 3. Internal modules (absolute paths via tsconfig paths, e.g. `@/services/`)
 4. Relative imports (`./`, `../`)
 
+## Imports: `type` keyword for types
+
+```typescript
+// ✓ Correct — type-only imports get stripped at build
+import type { User, UserRole } from './user';
+import { createUser } from './user';
+
+// Prefer named exports, avoid barrel re-exports from index.ts
+export { User, UserRole };
+export { createUser };
+```
+
+## Relative import extensions
+
+Backend-only: `.js` extensions in relative imports are enforced via ESLint (resolver is `bundler`, not NodeNext):
+
+```typescript
+// Backend code — ESLint requires .js
+import { logger } from './lib/logger.js';
+
+// Frontend code — extensions optional (Angular modules resolve without them)
+import { UserService } from './user.service';
+```
+
 ## Object Destructuring
 
 When forwarding two or more fields from the same source object into a function call or object literal with no transformation, destructure first to eliminate repeated `source.fieldName` references:
@@ -56,14 +82,6 @@ await repo.updateProfile(id, {
 ```
 
 Exception: when only one field is used, or when the field name on the target differs from the source, inline access is clearer.
-
-## Code Quality Tools
-
-| Tool                        | Purpose                  | Config                                |
-| --------------------------- | ------------------------ | ------------------------------------- |
-| ESLint + @typescript-eslint | Linting and code quality | `.eslintrc` with strict ruleset       |
-| Prettier                    | Code formatting          | `.prettierrc`                         |
-| tsc                         | Type checking            | `tsconfig.json` with `"strict": true` |
 
 ## Error Handling
 
@@ -92,6 +110,7 @@ class NotFoundError extends AppError {
     super(`${resource} not found`, 'NOT_FOUND', 404);
   }
 }
+```
 
 ## Comments
 
@@ -117,9 +136,12 @@ Comments are the exception, not the default. Well-named code is the primary docu
 
 Describe the work, not the task number. After completing deferred work, delete the `TODO`/`FIXME` comment — stale markers are noise.
 
-| ✓ Acceptable | ✗ Never |
-|---|---|
-| `// TODO: add rate limiting once Redis is wired up` | `// TODO: see task 14` |
-| `// see VerifyTelegramLoginService for the HMAC detail` | `// see VerifyTelegramLoginService, task 11` |
-| `// timingSafeEqual: prevents timing oracle on HMAC check` | `// added per D9 decision` |
+| ✓ Acceptable                                               | ✗ Never                                      |
+| ---------------------------------------------------------- | -------------------------------------------- |
+| `// TODO: add rate limiting once Redis is wired up`        | `// TODO: see task 14`                       |
+| `// see VerifyTelegramLoginService for the HMAC detail`    | `// see VerifyTelegramLoginService, task 11` |
+| `// timingSafeEqual: prevents timing oracle on HMAC check` | `// added per D9 decision`                   |
+
+```
+
 ```
