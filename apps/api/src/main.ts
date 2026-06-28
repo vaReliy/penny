@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 
 import { NestFactory } from '@nestjs/core';
+import mongoSanitize from 'express-mongo-sanitize';
 import pinoHttp from 'pino-http';
 import type pino from 'pino';
 
@@ -31,6 +32,10 @@ async function bootstrap(): Promise<void> {
   // Share the same root pino instance with pino-http so HTTP request logs and
   // framework logs land in a single stream with a consistent format.
   app.use(pinoHttp({ logger: pinoLogger }));
+
+  // Strip $-prefixed and dot-prefixed keys from req.body/params/query to prevent
+  // NoSQL operator injection reaching any route handler.
+  app.use(mongoSanitize());
 
   app.useGlobalFilters(new BaseErrorFilter(), new UnknownErrorFilter());
   app.enableShutdownHooks();
