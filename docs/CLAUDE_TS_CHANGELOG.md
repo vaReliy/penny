@@ -216,6 +216,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-06-28 — Enhancement: rules-auditor skill (new generic claude-ts skill)
+
+- **Component**: `.claude/skills/rules-auditor/SKILL.md` (new)
+- **Type**: Enhancement
+- **What happened**: Added a new `rules-auditor` skill that runs 5 structural consistency checks across `.claude/agents/`, `rules/`, `AGENTS.md`, `docs/KNOWLEDGE_INBOX.md`, and `.ctsignore`. Checks: (1) broken `rules/X.md` references in agent pre-flight sections; (2) wrong-platform keyword leaks (Angular terms in backend rules files, backend terms in Angular rules files); (3) stale `Belongs in: rules/X.md` labels in KNOWLEDGE_INBOX that reference non-existent files; (4) rules files present in `rules/` but absent from the AGENTS.md on-demand index; (5) `.ctsignore` entries referencing `rules/` paths without a leading `/` anchor. Mode auto-detects: if `.claude/**` or `rules/**` files changed this session, audit those files immediately; otherwise prompt for a time window (default: last 7 days of git history). Report is ranked HIGH → MED → LOW. Invokes `/to-issues` only after human confirmation. Trigger: run after any change to `.claude/**` or `rules/**`, or periodically to catch silent drift.
+- **Why it matters upstream**: Rules files and agent definitions drift silently: pre-flight paths break when files are renamed, platform-specific content leaks across rule boundaries, KNOWLEDGE_INBOX labels go stale, new rules files are added without updating the AGENTS.md index. Any claude-ts consumer accumulates this drift over time with no tooling to catch it. This skill closes the gap for any project using the claude-ts conventions.
+- **Suggested upstream change**: Add `.claude/skills/rules-auditor/SKILL.md` to the claude-ts template payload. Check 2 keyword lists and routing-table file names are project-agnostic; projects with additional platforms extend both lists. Register in `AGENTS.md` skills section under a "Maintenance" heading.
+- **Status**: pending-port
+
+---
+
 ## 2026-06-28 — Enhancement: Update agent pre-flight reads for platform-specific rules split
 
 - **Component**: `.claude/agents/angular-developer.md`, `.claude/agents/backend-developer.md`, `.claude/agents/tester.md`, `.claude/agents/reviewer.md`, `.claude/agents/security-scanner.md`
