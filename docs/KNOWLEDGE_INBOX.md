@@ -238,6 +238,11 @@ Belongs in (guess): rules/nx-generators.md | CLAUDE.md (orchestrator guidance fo
 Why: When `nx g @nx/js:lib` was skipped in favour of hand-crafting `project.json` + tsconfigs (e.g., for `shared-infrastructure`), the NX workspace graph still auto-detects the project. Unlike Angular libs (which must use `nx g @nx/angular:lib`), plain TypeScript libs that follow the existing `shared-kernel`/`shared-contracts` structure can be safely created manually without breaking `nx affected` or graph inference. However, Angular libs must always use the generator (see earlier inbox entry).
 Belongs in (guess): rules/nx-generators.md (manual lib creation note for JS/TS-only libs)
 
+## 2026-06-28 — api: pino-pretty must stay in devDependencies — it must be absent in production
+
+Why: `pino-pretty` is a human-readable log formatter used only in development mode. If it lands in `dependencies`, it ships in the production Docker image and is silently available. Its absence in production is the _correct_ failure mode — `createPinoLogger` calling `pino-pretty` in dev mode will crash immediately and visibly if the package is missing, which is preferable to the alternative: a silent cookie-`Secure` flag downgrade if `NODE_ENV` is unset. Found: `pino-pretty` was in `dependencies` (line 34 in root `package.json`); moved to `devDependencies`.
+Belongs in: rules/dependencies.md (dev-only tooling section)
+
 ## 2026-06-28 — cli: slim CliConfig pattern for apps that share IdentityModule but don't need JWT/Telegram vars
 
 Why: CLI apps that call `ApproveUserService`/`RejectUserService` only need `MONGO_URI` and `MONGO_DB_NAME`. Creating a separate `loadCliConfig()` that validates only those vars (while using the same `API_CONFIG` symbol token) lets the CLI reuse `CliIdentityModule` without requiring unrelated secrets. Each NestJS app has its own DI container so symbol identity is per-app, not global.

@@ -36,6 +36,14 @@ async function bootstrap(): Promise<void> {
   app.enableShutdownHooks();
 
   const config = app.get<ApiConfig>(API_CONFIG);
+
+  if (config.mode !== 'production') {
+    pinoLogger.warn(
+      'NODE_ENV is not "production" — cookie Secure flag is disabled and debug logging is active. ' +
+        'Set NODE_ENV=production in production deployments.',
+    );
+  }
+
   await app.listen(config.port);
 }
 

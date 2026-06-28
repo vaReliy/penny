@@ -67,9 +67,6 @@ importers:
       pino-http:
         specifier: 11.0.0
         version: 11.0.0
-      pino-pretty:
-        specifier: 11.3.0
-        version: 11.3.0
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -233,6 +230,9 @@ importers:
       nx:
         specifier: 23.0.1
         version: 23.0.1(@swc-node/register@1.11.1(@swc/core@1.15.8(@swc/helpers@0.5.18))(@swc/types@0.1.27)(typescript@5.9.3))(@swc/core@1.15.8(@swc/helpers@0.5.18))
+      pino-pretty:
+        specifier: 11.3.0
+        version: 11.3.0
       prettier:
         specifier: 3.8.4
         version: 3.8.4

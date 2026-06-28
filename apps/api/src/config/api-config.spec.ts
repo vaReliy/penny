@@ -98,4 +98,10 @@ describe('loadApiConfig()', () => {
     vi.stubEnv('NODE_ENV', 'production');
     expect(loadApiConfig().mode).toBe('production');
   });
+
+  it('returns mode "development" when NODE_ENV is absent', () => {
+    stubValidEnv();
+    vi.stubEnv('NODE_ENV', '');
+    expect(loadApiConfig().mode).toBe('development');
+  });
 });
