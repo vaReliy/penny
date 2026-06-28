@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`libs/shared/infrastructure`** — new NX lib (`scope:shared`, `type:infrastructure`, `platform:server`) housing `createPinoLogger` / `PinoLoggerConfig`; path alias `shared-infrastructure` registered in `tsconfig.base.json`. Logger construction is now a shared cross-cutting concern rather than an identity-domain export.
+- **`libs/shared/infrastructure/src/lib/pino-logger.spec.ts`** — smoke tests for `createPinoLogger` (6 tests, all pass).
+
+### Changed
+
+- **`libs/identity/infrastructure`** barrel no longer exports `createPinoLogger` / `PinoLoggerConfig`; all logger import sites (`apps/api`, `apps/cli`) updated to `shared-infrastructure`.
+
+### Backlog tasks emitted
+
+- `2026-06-28-08` — Add missing `scope:shared` tag to `libs/shared/util/project.json` (pre-existing omission found during review).
+
+### Added (cont.)
+
 - **`libs/shared/contracts` — `Role` constant and `RoleType` union** (`ADMIN: 'admin'`, `USER: 'user'`): single source of truth for JWT roles claim values; exported via the contracts barrel.
 - **Runtime role validation in `JwtTokenIssuer.isTokenClaims()`** — `VALID_ROLES: ReadonlySet<string>` mirrors the compile-time `RoleType` union at decode time; tokens with unknown role values (e.g. `['superadmin']`) now throw `AuthenticationError`, matching the existing `VALID_USER_STATUSES` pattern.
 

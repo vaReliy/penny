@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import type pino from 'pino';
 
-import { createPinoLogger } from 'identity-infrastructure';
+import { createPinoLogger } from 'shared-infrastructure';
 import { API_CONFIG } from '../config/cli-config.js';
 import type { CliConfig } from '../config/cli-config.js';
 import { PINO_LOGGER } from './logger.tokens.js';

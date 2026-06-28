@@ -1,6 +1,6 @@
 # Identity Infrastructure
 
-Plumbing layer for identity domain: Mongoose connection factory and Pino logging.
+Plumbing layer for identity domain: Mongoose connection factory.
 
 ## Modules
 
@@ -29,24 +29,6 @@ const config = {
 
 const connection = await createMongoConnection(config);
 const isAlive = await pingMongo(connection);
-```
-
-### Pino Logger (`pino-logger.ts`)
-
-Factory function to create a Pino logger with mode-aware formatting.
-Outputs human-readable text in dev, compact JSON in prod.
-
-**API**:
-
-- `createPinoLogger(config)` — creates a logger instance
-
-**Usage**:
-
-```typescript
-import { createPinoLogger } from 'identity-infrastructure';
-
-const logger = createPinoLogger({ mode: 'development' });
-logger.info('Application started');
 ```
 
 ## Local Development
