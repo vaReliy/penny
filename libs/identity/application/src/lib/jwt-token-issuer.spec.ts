@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { AuthenticationError } from 'shared-errors';
 import { UserStatus } from 'identity-core';
+import { Role } from 'shared-contracts';
 import { describe, expect, it } from 'vitest';
 
 import { JwtTokenIssuer } from './jwt-token-issuer.js';
@@ -15,7 +16,7 @@ const OTHER_TEST_SECRET = 'a-different-test-secret-also-32-chars-plus';
 const CLAIMS: TokenClaims = {
   sub: 'user-1',
   status: UserStatus.ACTIVE,
-  roles: ['member'],
+  roles: [Role.USER],
 };
 
 describe('JwtTokenIssuer', () => {
@@ -92,5 +93,42 @@ describe('JwtTokenIssuer', () => {
 
   it('throws when constructed with a secret shorter than the minimum length', () => {
     expect(() => new JwtTokenIssuer('too-short-secret')).toThrow();
+  });
+
+  it('rejects a validly-signed token whose roles claim contains an unknown role value', () => {
+    const issuer = new JwtTokenIssuer(TEST_SECRET);
+    // Signed with the correct secret/algorithm, but `roles` contains an
+    // unregistered value — isTokenClaims must reject this even though the
+    // signature is valid.
+    const tokenWithBogusRole = jwt.sign(
+      { status: CLAIMS.status, roles: ['superadmin'] },
+      TEST_SECRET,
+      { subject: CLAIMS.sub, algorithm: 'HS256' },
+    );
+
+    expect(() => issuer.verify(tokenWithBogusRole)).toThrow(
+      AuthenticationError,
+    );
+  });
+
+  it('encodes the Role.USER string literal into the roles claim', () => {
+    const issuer = new JwtTokenIssuer(TEST_SECRET);
+    const token = issuer.issue(CLAIMS);
+    const decoded = jwt.decode(token) as { roles?: unknown };
+
+    expect(decoded?.roles).toEqual(['user']);
+  });
+
+  it('encodes the Role.ADMIN string literal into the roles claim', () => {
+    const issuer = new JwtTokenIssuer(TEST_SECRET);
+    const adminClaims: TokenClaims = {
+      ...CLAIMS,
+      roles: [Role.ADMIN],
+    };
+
+    const token = issuer.issue(adminClaims);
+    const decoded = jwt.decode(token) as { roles?: unknown };
+
+    expect(decoded?.roles).toEqual(['admin']);
   });
 });

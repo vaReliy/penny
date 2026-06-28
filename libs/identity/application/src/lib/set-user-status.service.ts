@@ -1,11 +1,11 @@
 import { AuthenticationError, NotFoundError } from 'shared-errors';
 import { BaseService } from 'shared-kernel';
-import { UserStatus } from 'shared-contracts';
+import { Role, UserStatus } from 'shared-contracts';
 import type { IUserRepository, User } from 'identity-core';
 import type { ServiceContext } from 'shared-kernel';
 
 /** Role name a `CallerIdentity` must carry to approve/reject users. */
-export const ADMIN_ROLE = 'admin';
+export const ADMIN_ROLE = Role.ADMIN;
 
 /** Message used when a non-admin caller attempts an approve/reject action. */
 const NOT_ADMIN_MESSAGE = 'Only an admin may approve or reject a user.';

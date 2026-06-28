@@ -1,4 +1,4 @@
-import type { UserStatus } from 'shared-contracts';
+import type { RoleType, UserStatus } from 'shared-contracts';
 
 /**
  * Claims encoded into every session token. Kept minimal and stateless —
@@ -11,7 +11,7 @@ export interface TokenClaims {
   /** Subject — the {@link User.id} this token was issued for. */
   readonly sub: string;
   readonly status: UserStatus;
-  readonly roles: readonly string[];
+  readonly roles: readonly RoleType[];
 }
 
 /**

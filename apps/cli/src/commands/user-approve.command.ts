@@ -4,6 +4,7 @@ import type pino from 'pino';
 
 import { ApproveUserService } from 'identity-application';
 import type { IUserRepository } from 'identity-core';
+import { Role } from 'shared-contracts';
 import type { ServiceContext } from 'shared-kernel';
 
 import { API_CONFIG } from '../config/cli-config.js';
@@ -15,7 +16,7 @@ import { TOKENS } from '../identity/tokens.js';
 const CLI_ADMIN_CALLER = {
   userId: 'cli-admin',
   status: 'active',
-  roles: ['admin'],
+  roles: [Role.ADMIN],
 } as const;
 
 @Command({

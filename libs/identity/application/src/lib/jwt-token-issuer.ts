@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 
 import { AuthenticationError } from 'shared-errors';
-import { UserStatus } from 'shared-contracts';
+import { Role, UserStatus } from 'shared-contracts';
 
 import type { ITokenIssuer, TokenClaims } from './token-issuer.js';
 
@@ -29,6 +29,9 @@ const VALID_USER_STATUSES: ReadonlySet<string> = new Set(
   Object.values(UserStatus),
 );
 
+/** Set of valid `Role` values, used to validate a decoded token's `roles` claim. */
+const VALID_ROLES: ReadonlySet<string> = new Set(Object.values(Role));
+
 /** Narrows an unknown decoded JWT payload down to the platform's {@link TokenClaims} shape. */
 function isTokenClaims(payload: unknown): payload is TokenClaims {
   if (typeof payload !== 'object' || payload === null) {
@@ -42,7 +45,9 @@ function isTokenClaims(payload: unknown): payload is TokenClaims {
     typeof candidate['status'] === 'string' &&
     VALID_USER_STATUSES.has(candidate['status']) &&
     Array.isArray(candidate['roles']) &&
-    candidate['roles'].every((role) => typeof role === 'string')
+    candidate['roles'].every(
+      (role) => typeof role === 'string' && VALID_ROLES.has(role),
+    )
   );
 }
 

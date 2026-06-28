@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`libs/shared/contracts` — `Role` constant and `RoleType` union** (`ADMIN: 'admin'`, `USER: 'user'`): single source of truth for JWT roles claim values; exported via the contracts barrel.
+- **Runtime role validation in `JwtTokenIssuer.isTokenClaims()`** — `VALID_ROLES: ReadonlySet<string>` mirrors the compile-time `RoleType` union at decode time; tokens with unknown role values (e.g. `['superadmin']`) now throw `AuthenticationError`, matching the existing `VALID_USER_STATUSES` pattern.
+
+### Changed
+
+- **`TokenClaims.roles`** typed as `readonly RoleType[]` (was `string[]`); all callers (`set-user-status.service.ts`, CLI `user-approve` / `user-reject` commands) updated to use `Role.ADMIN` / `Role.USER` constants.
+
+### Backlog tasks emitted
+
+- `2026-06-28-03` — Replace `status: 'active'` literal in CLI admin caller fixtures with `UserStatus.ACTIVE`.
+- `2026-06-28-04` — Replace bare status string comparisons in `status.guard.ts` with `UserStatus.*` constants.
+- `2026-06-28-05` — Replace bare status literals in `access-status-page.ts` with `UserStatus.*` constants.
+- `2026-06-28-06` — Align `CallerIdentity.roles` type with `RoleType[]` (Nx boundary decision needed).
+- `2026-06-28-07` — Forward JWT roles claim into `SessionUser` and `ServiceContext.caller` for future RBAC HTTP guards.
+
+### Added (cont.)
+
 - **`libs/identity/feature-access-status`** — `AccessStatusPageComponent` (standalone, Angular 17+, SCSS) showing distinct pending/rejected messaging driven by `GET /auth/me`; subscription lifecycle managed with `takeUntilDestroyed(destroyRef)`.
 - **`libs/identity/feature-greeting`** — `GreetingPageComponent` (standalone) calling `GET /api/hello`; renders personalized greeting with loading/success/error states via discriminated-union signal; `catchError` in pipe keeps error handling declarative.
 - **`statusGuard: CanActivateFn`** in `libs/identity/data-access` — cookie-based status routing: 401 → `/login`; `pending`/`rejected` → `/access-status`; `active` → allow. Bidirectional: active user on `/access-status` bounced to `/greeting`.

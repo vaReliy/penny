@@ -110,10 +110,14 @@ Belongs in (guess): rules/validation-authorization.md or PROJECT_CONTEXT
 Why: When a fix is needed after the quality gate, the orchestrator must re-enter the pipeline at the right stage — not just patch inline and skip downstream steps. Rule: (1) trivial change (comment, doc-only) → orchestrator handles directly, no downstream needed; (2) source logic change → re-enter at `backend-developer` → `tester` → `reviewer` + `security-scanner` → user review; (3) test-only change → re-enter at `tester` → `reviewer` + `security-scanner` → user review. Writing tests directly and then running reviewer/security-scanner is half-right — the gate ran but `tester` was bypassed as the authoring agent, which undermines independent authorship and review separation.
 Belongs in (guess): rules/workflow.md (quality gate / fix-retry section)
 
-## 2026-06-25 — identity: no central roles registry — 'admin' is a plain string constant
+## 2026-06-25 — identity: no central roles registry — 'admin' is a plain string constant (RESOLVED 2026-06-28)
 
-Why: `ApproveUserService`/`RejectUserService` check `context.caller.roles.includes(ADMIN_ROLE)` where `ADMIN_ROLE = 'admin'`. No existing roles enum or registry was found. Future role additions should either establish one central `Roles` constant in `shared-kernel` or accept this convention. Currently works but risks drift.
-Belongs in (guess): PROJECT_CONTEXT | rule (authorization)
+Why: `ApproveUserService`/`RejectUserService` check `context.caller.roles.includes(ADMIN_ROLE)` where `ADMIN_ROLE = 'admin'`. Fixed: `Role` const object added to `shared-contracts`; `TokenClaims.roles` typed `readonly RoleType[]`; all callers updated.
+
+## 2026-06-28 — identity: narrowing a JWT array claim type requires a parallel runtime ReadonlySet guard
+
+Why: `isTokenClaims()` already validates `status` against `VALID_USER_STATUSES: ReadonlySet`. When `TokenClaims.roles` was narrowed from `string[]` to `readonly RoleType[]`, the same pattern was initially omitted — a validly-signed token with `roles: ['superadmin']` passed the guard. Fix: `VALID_ROLES: ReadonlySet<string> = new Set(Object.values(Role))` + `.every(v => VALID_ROLES.has(v))` in the predicate. Rule: every compile-time array-enum claim narrowing must have a matching runtime set-membership check in the type guard.
+Belongs in (guess): rules/validation-authorization.md (JWT claim validation section)
 
 ## 2026-06-27 — api: bufferLogs:true without app.useLogger() is dead config — two unconnected log streams
 
