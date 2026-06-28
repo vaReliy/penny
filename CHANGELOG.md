@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`apps/web`** — Angular 17+ standalone app (no NgModules, signals); shell with `AppComponent` + `RouterOutlet`, `app.config.ts` (`provideHttpClient()` + `provideRouter`), lazy `/login` route.
+- **`libs/identity/feature-login`** — `LoginPageComponent` (standalone, signals, `platform:web`, `type:feature`) embedding the Telegram Login Widget via dynamic `<script>` injection; handles auth callback query params and delegates to `IdentityService`.
+- **`libs/identity/data-access`** — `IdentityService` (`platform:web`, `type:data`) with `withCredentials: true` on all HTTP methods: `submitTelegramLogin`, `getMe`, `logout`; `TELEGRAM_BOT_USERNAME` `InjectionToken<string>` for build-time bot config sourced from `apps/web/src/environments/environment.ts`.
+- **SCSS** — All Angular style files in this session use `.scss`; `apps/web` configured for SCSS throughout.
+
+### Added
+
 - **Mandatory pre-flight reads for all agents** — every agent definition now opens with a `## Pre-flight` section. All agents read `docs/KNOWLEDGE_INBOX.md` before acting; technical agents (backend-developer, angular-developer, tester, qa, devops, dba, debugger, refactoring-expert, integration-architect, queue-specialist) additionally read `rules/architecture.md` + `rules/code-style.md` before writing code. `rules/workflow.md` updated with a dispatch note explaining that agents read these from disk, not from inline orchestrator context, so the knowledge reflects the repo's current state.
 
 ### Changed

@@ -1,0 +1,13 @@
+{
+  "name": "identity-feature-login",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/identity/feature-login/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:identity", "type:feature", "platform:web"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

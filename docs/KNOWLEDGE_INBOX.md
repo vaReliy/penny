@@ -1,5 +1,35 @@
 # Knowledge Inbox
 
+## 2026-06-28 — angular: InjectionToken must live in a non-lazy lib when provided in root app config
+
+Why: When a lazy-loaded feature lib defines an `InjectionToken` and the root `app.config.ts` provides a value for it, the `@nx/enforce-module-boundaries` ESLint rule flags the static import in `app.config.ts` as a boundary violation (eager → lazy). The correct placement: define the token in the `type:data` lib (non-lazy) so both the lazy feature component and the eager app config share the same token reference. Pattern: `TELEGRAM_BOT_USERNAME` token lives in `libs/identity/data-access`, not in `libs/identity/feature-login`.
+Belongs in: rules/architecture.md (Angular injection token placement section)
+
+## 2026-06-28 — nx: `nx vite:test` is the correct target name for Vitest in this repo (not `nx test`)
+
+Why: The Nx plugin registers the test target as `vite:test` (configured via `testTargetName: "vite:test"` in `nx.json`). Running `pnpm nx test <project>` silently resolves to nothing. Always use `pnpm nx vite:test <project> --skip-nx-cache` for unit test runs in this repo.
+Belongs in: rules/nx-generators.md (test target section) — supersedes the 2026-06-28 entry about `@nx/vitest:vitest` executor
+
+## 2026-06-28 — angular: all style files must use SCSS (not CSS)
+
+Why: Repo standard. `@nx/angular:app` and `@nx/angular:lib` generators default to CSS; the generated files must be renamed `.css` → `.scss` and all `styleUrl`/`styles` references updated. Also update `apps/*/project.json` `"styles"` array. Pass `--style=scss` to generators to reduce post-gen work.
+Belongs in: rules/nx-generators.md (post-generator corrections section)
+
+## 2026-06-28 — nx: `@nx/angular:app` generator requires `--name` flag for the project name, not a positional arg
+
+Why: `pnpm nx g @nx/angular:app web --directory=apps/web …` fails with "Schema does not support positional arguments". Correct invocation: `pnpm nx g @nx/angular:app --name=web --directory=apps/web …`. Same applies to `@nx/angular:lib`.
+Belongs in: rules/nx-generators.md
+
+## 2026-06-28 — nx: generated Angular vite.config.mts imports deprecated @nx/vite plugins — must replace with resolve.tsconfigPaths
+
+Why: `@nx/angular:app` and `@nx/angular:lib` generators inject `nxViteTsPaths()` and `nxCopyAssetsPlugin()` from `@nx/vite/plugins/…` which are banned by the repo's ESLint `no-restricted-imports` rule (removed in Nx v24). Replace with `resolve: { tsconfigPaths: true }` in the vite config and drop the `nxCopyAssetsPlugin` call. This is a mandatory post-generator fix.
+Belongs in: rules/nx-generators.md
+
+## 2026-06-28 — architecture: type:feature libs cannot import type:contracts directly — must route through type:data
+
+Why: The ESLint module-boundary rule for `type:feature` only allows `type:feature`, `type:ui`, `type:data`, `type:util`. Importing from `shared-contracts` (type:contracts) in a feature lib violates this rule. Correct pattern: re-export the needed type from the `type:data` lib (`export type { TelegramLoginPayload } from 'shared-contracts'`) and import from the data lib in the feature lib.
+Belongs in: rules/architecture.md (frontend onion boundary section)
+
 Append-only queue for durable, project-relevant learnings whose final home isn't clear yet. Distilled into PROJECT_CONTEXT.md / CLAUDE.md / a rule / a skill, then deleted from here — this file should trend toward empty.
 
 ## 2026-06-27 — workflow: quality gate fix-retry cycles cause "infinite loops" when developer lacks pre-flight context

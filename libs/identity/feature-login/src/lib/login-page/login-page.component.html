@@ -1,0 +1,13 @@
+<main class="login-page" aria-labelledby="login-heading">
+  <h1 id="login-heading">Sign in to Penny</h1>
+
+  @if (loginStatus() === 'pending') {
+    <p aria-live="polite" aria-busy="true">Signing in…</p>
+  }
+
+  @if (loginStatus() === 'error') {
+    <p role="alert" class="login-error">Sign-in failed. Please try again.</p>
+  }
+
+  <div id="telegram-widget-container" aria-label="Telegram login widget"></div>
+</main>
