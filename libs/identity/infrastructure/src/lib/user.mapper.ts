@@ -1,6 +1,7 @@
 import type { DocumentType } from '@typegoose/typegoose';
 
 import { User } from 'identity-core';
+import type { UserProfileUpdate } from 'identity-core';
 import type { UserStatus } from 'shared-contracts';
 
 import type { UserModel } from './user.model.js';
@@ -39,6 +40,14 @@ export interface UserPersistenceUpdate {
   readonly $unset: Readonly<Record<string, ''>>;
 }
 
+/** `$set`/`$unset` update document scoped to mutable profile fields only. */
+export interface UserProfilePersistenceUpdate {
+  readonly $set: Partial<
+    Pick<UserPersistence, 'firstName' | 'lastName' | 'username' | 'photoUrl'>
+  >;
+  readonly $unset: Readonly<Record<string, ''>>;
+}
+
 /**
  * Translates between the domain `User` entity and the Typegoose `UserModel`
  * persistence shape. Mongoose/Typegoose/BSON types are confined to this
@@ -71,6 +80,36 @@ export const UserMapper = {
       photoUrl: user.photoUrl,
       status: user.status,
     };
+  },
+
+  /**
+   * Converts a partial `UserProfileUpdate` into a `$set`/`$unset` update
+   * document scoped exclusively to mutable profile fields. `status` and
+   * `telegramId` are structurally absent from the returned document, so a
+   * `findByIdAndUpdate` call using this output can never overwrite them.
+   */
+  toProfilePersistenceUpdate(
+    profile: Partial<UserProfileUpdate>,
+  ): UserProfilePersistenceUpdate {
+    const set: {
+      -readonly [K in
+        | 'firstName'
+        | 'lastName'
+        | 'username'
+        | 'photoUrl']?: string;
+    } = {};
+    const unset: Record<string, ''> = {};
+
+    for (const field of OPTIONAL_PERSISTENCE_FIELDS) {
+      const value = profile[field];
+      if (value === undefined) {
+        unset[field] = '';
+      } else {
+        set[field] = value;
+      }
+    }
+
+    return { $set: set, $unset: unset };
   },
 
   /**

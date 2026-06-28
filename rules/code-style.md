@@ -37,6 +37,26 @@ Specific order for class elements:
 3. Internal modules (absolute paths via tsconfig paths, e.g. `@/services/`)
 4. Relative imports (`./`, `../`)
 
+## Object Destructuring
+
+When forwarding two or more fields from the same source object into a function call or object literal with no transformation, destructure first to eliminate repeated `source.fieldName` references:
+
+```typescript
+// Prefer
+const { firstName, lastName, username, photoUrl } = params;
+await repo.updateProfile(id, { firstName, lastName, username, photoUrl });
+
+// Avoid
+await repo.updateProfile(id, {
+  firstName: params.firstName,
+  lastName: params.lastName,
+  username: params.username,
+  photoUrl: params.photoUrl,
+});
+```
+
+Exception: when only one field is used, or when the field name on the target differs from the source, inline access is clearer.
+
 ## Code Quality Tools
 
 | Tool                        | Purpose                  | Config                                |

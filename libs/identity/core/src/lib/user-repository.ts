@@ -1,6 +1,6 @@
 import type { IRepository } from 'shared-kernel';
 
-import type { User } from './user.js';
+import type { User, UserProfileUpdate } from './user.js';
 
 /**
  * Data access contract for {@link User} aggregates.
@@ -26,4 +26,15 @@ import type { User } from './user.js';
 export interface IUserRepository extends IRepository<User, string> {
   /** Finds a user by the durable `telegramId` identity key, or `null` if none exists. */
   findByTelegramId(telegramId: string): Promise<User | null>;
+
+  /**
+   * Updates only mutable profile fields (`firstName`, `lastName`, `username`,
+   * `photoUrl`) for the user with the given `id`. Never touches `status` or
+   * `telegramId`, so concurrent admin approvals cannot be overwritten by a
+   * login profile refresh. Returns `null` when no user with that `id` exists.
+   */
+  updateProfile(
+    id: string,
+    profile: Partial<UserProfileUpdate>,
+  ): Promise<User | null>;
 }

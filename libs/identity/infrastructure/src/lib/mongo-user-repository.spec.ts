@@ -257,4 +257,37 @@ describe('MongoUserRepository (integration)', () => {
     expect(await repository.findById('000000000000000000000000')).toBeNull();
     expect(await repository.findByTelegramId('does-not-exist')).toBeNull();
   });
+
+  it('updateProfile does not overwrite status (concurrent login + approval safety)', async () => {
+    const telegramId = '321321321';
+    const created = await repository.save(buildUser({ telegramId }));
+
+    // Approve the user first so it has ACTIVE status.
+    const approved = created.approve();
+    const savedApproved = await repository.save(approved);
+    expect(savedApproved.status).toBe(UserStatus.ACTIVE);
+
+    // Simulate concurrent: login updates profile, admin saves approval again.
+    // (In production the login updateProfile and admin save may interleave;
+    // here we confirm the login path cannot revert status.)
+    const [profileResult, adminResult] = await Promise.all([
+      repository.updateProfile(created.id, {
+        firstName: 'NewName',
+        username: 'newusername',
+      }),
+      repository.save(savedApproved),
+    ]);
+
+    // Status must remain ACTIVE — the profile update must not have touched it.
+    expect(profileResult?.status).toBe(UserStatus.ACTIVE);
+    expect(adminResult.status).toBe(UserStatus.ACTIVE);
+
+    // Profile field was actually written.
+    const found = await repository.findById(created.id);
+    expect(found?.status).toBe(UserStatus.ACTIVE);
+    expect(found?.firstName).toBe('NewName');
+    expect(found?.username).toBe('newusername');
+
+    await repository.delete(created.id);
+  });
 });

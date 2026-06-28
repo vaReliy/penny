@@ -1,5 +1,10 @@
 # Knowledge Inbox
 
+## 2026-06-28 — identity: IUserRepository has intentionally separate write paths for status vs profile
+
+Why: `save()` (via `updateById`) writes all fields including `status` — it is only safe to call from `SetUserStatusService` (approve/reject). `updateProfile()` writes only profile fields (`firstName`, `lastName`, `username`, `photoUrl`) and structurally cannot touch `status` or `telegramId`. The split exists to prevent the login path from reverting an approved user's status back to `pending` in a concurrent-write race. Do not consolidate these back to a single `save()` for the returning-user path in `LoginWithTelegramService`.
+Belongs in: PROJECT_CONTEXT (identity layer architecture section)
+
 ## 2026-06-28 — angular: InjectionToken must live in a non-lazy lib when provided in root app config
 
 Why: When a lazy-loaded feature lib defines an `InjectionToken` and the root `app.config.ts` provides a value for it, the `@nx/enforce-module-boundaries` ESLint rule flags the static import in `app.config.ts` as a boundary violation (eager → lazy). The correct placement: define the token in the `type:data` lib (non-lazy) so both the lazy feature component and the eager app config share the same token reference. Pattern: `TELEGRAM_BOT_USERNAME` token lives in `libs/identity/data-access`, not in `libs/identity/feature-login`.

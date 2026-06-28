@@ -1,5 +1,5 @@
 import { User, UserStatus } from 'identity-core';
-import type { IUserRepository } from 'identity-core';
+import type { IUserRepository, UserProfileUpdate } from 'identity-core';
 import type { ServiceContext } from 'shared-kernel';
 import type { TelegramLoginPayload } from 'shared-contracts';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -46,6 +46,27 @@ class FakeUserRepository implements IUserRepository {
     });
     this.usersById.set(id, persisted);
     return persisted;
+  }
+
+  public async updateProfile(
+    id: string,
+    profile: Partial<UserProfileUpdate>,
+  ): Promise<User | null> {
+    const user = this.usersById.get(id);
+    if (!user) return null;
+    const updated = new User({
+      id: user.id,
+      telegramId: user.telegramId,
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+      username: profile.username,
+      photoUrl: profile.photoUrl,
+      status: user.status, // NEVER touched
+      createdAt: user.createdAt,
+      updatedAt: new Date(),
+    });
+    this.usersById.set(id, updated);
+    return updated;
   }
 
   public async delete(id: string): Promise<void> {
@@ -153,5 +174,25 @@ describe('LoginWithTelegramService', () => {
     await expect(
       service.run(withoutFirstName as TelegramLoginPayload, CONTEXT),
     ).rejects.toThrow();
+  });
+
+  it('does not overwrite status when refreshing profile (concurrent login + approval safety)', async () => {
+    const now = new Date('2026-01-01T00:00:00.000Z');
+    const active = new User({
+      id: 'active-1',
+      telegramId: '555666777',
+      firstName: 'OldName',
+      status: UserStatus.ACTIVE,
+      createdAt: now,
+      updatedAt: now,
+    });
+    repository.seed(active);
+
+    const payload = buildPayload({ id: 555666777, firstName: 'NewName' });
+    const outcome = await service.run(payload, CONTEXT);
+
+    expect(outcome.data.user.status).toBe(UserStatus.ACTIVE);
+    expect(outcome.data.user.firstName).toBe('NewName');
+    expect(outcome.data.status).toBe(UserStatus.ACTIVE);
   });
 });

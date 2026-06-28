@@ -3,6 +3,7 @@ import { User } from 'identity-core';
 import { UserStatus } from 'shared-contracts';
 import type { IUserRepository } from 'identity-core';
 import type { TelegramLoginPayload } from 'shared-contracts';
+import { InfrastructureError } from 'shared-errors';
 
 /**
  * LIVR schema for the verified Telegram payload this service accepts.
@@ -67,16 +68,24 @@ export class LoginWithTelegramService extends BaseService<
     const telegramId = String(params.id);
     const existing = await this.userRepository.findByTelegramId(telegramId);
 
-    const user = existing
-      ? await this.userRepository.save(
-          existing.updateProfile({
-            firstName: params.firstName,
-            lastName: params.lastName,
-            username: params.username,
-            photoUrl: params.photoUrl,
-          }),
-        )
-      : await this.userRepository.save(this.buildNewUser(telegramId, params));
+    let user: User;
+    if (existing) {
+      const { firstName, lastName, username, photoUrl } = params;
+      const updated = await this.userRepository.updateProfile(existing.id, {
+        firstName,
+        lastName,
+        username,
+        photoUrl,
+      });
+      if (!updated) {
+        throw new InfrastructureError();
+      }
+      user = updated;
+    } else {
+      user = await this.userRepository.save(
+        this.buildNewUser(telegramId, params),
+      );
+    }
 
     return { user, status: user.status };
   }

@@ -4,7 +4,7 @@ import type { ReturnModelType } from '@typegoose/typegoose';
 import type { Connection } from 'mongoose';
 import { isValidObjectId } from 'mongoose';
 
-import type { IUserRepository } from 'identity-core';
+import type { IUserRepository, UserProfileUpdate } from 'identity-core';
 import { User } from 'identity-core';
 import { InfrastructureError } from 'shared-errors';
 
@@ -81,6 +81,34 @@ export class MongoUserRepository implements IUserRepository {
       return doc ? UserMapper.toDomain(doc) : null;
     } catch (error) {
       throw this.toInfrastructureError(error, 'findByTelegramId');
+    }
+  }
+
+  /**
+   * Updates only mutable profile fields (`firstName`, `lastName`, `username`,
+   * `photoUrl`) for the document with the given `id`. `status` and
+   * `telegramId` are structurally absent from the update document (see
+   * `UserMapper.toProfilePersistenceUpdate`), so a concurrent admin approval
+   * cannot be overwritten by a login profile refresh.
+   *
+   * Returns `null` when `id` is not a valid ObjectId or no document matches.
+   */
+  public async updateProfile(
+    id: string,
+    profile: Partial<UserProfileUpdate>,
+  ): Promise<User | null> {
+    if (!isValidObjectId(id)) {
+      return null;
+    }
+    try {
+      const doc = await this.model
+        .findByIdAndUpdate(id, UserMapper.toProfilePersistenceUpdate(profile), {
+          new: true,
+        })
+        .exec();
+      return doc ? UserMapper.toDomain(doc) : null;
+    } catch (error) {
+      throw this.toInfrastructureError(error, 'updateProfile');
     }
   }
 

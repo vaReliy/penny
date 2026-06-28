@@ -17,6 +17,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-06-28 — Enhancement: object destructuring rule added to rules/code-style.md
+
+- **Component**: `rules/code-style.md`
+- **Type**: Enhancement
+- **What happened**: Added an "Object Destructuring" section. Rule: when forwarding ≥2 fields from the same source object into a function call or object literal with no transformation, destructure first to eliminate repeated `source.fieldName` references. Exception for single-field access or renamed fields. Emerged from a review of `LoginWithTelegramService` where `{ firstName: params.firstName, ... }` x4 was replaced with a pre-destructure + shorthand properties.
+- **Why it matters upstream**: The pattern (`source.field: source.field` repetition) appears in any service/use-case that maps request params to a repository call. Without the guideline, agents and reviewers produce inconsistent style and the fix-retry loop catches it late.
+- **Suggested upstream change**: Add the "Object Destructuring" section to `rules/code-style.md` immediately after the "Import Ordering" section, with the prefer/avoid example and the single-field/rename exception.
+- **Status**: pending-port
+
+---
+
 ## 2026-06-28 — Fix: devops agent pre-flight read of rules/architecture.md removed
 
 - **Component**: `.claude/agents/devops.md`
