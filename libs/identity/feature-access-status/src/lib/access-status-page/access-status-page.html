@@ -1,6 +1,6 @@
-@if (status === null) {
+@if (userStatus() === null) {
 <p>Loading...</p>
-} @else if (status === 'pending') {
+} @else if (userStatus() === 'pending') {
 <p>
   Your access is awaiting approval. An admin will review your request shortly.
 </p>

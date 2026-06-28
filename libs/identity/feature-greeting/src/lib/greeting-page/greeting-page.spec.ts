@@ -22,11 +22,9 @@ describe('GreetingPageComponent', () => {
     fixture.detectChanges();
   }
 
-  it('shows loading text when getHello() never emits', () => {
+  it('shows loading text initially (startWith loading state)', () => {
     mockIdentityService.getHello.mockReturnValue(NEVER);
-
     createComponent();
-
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent?.trim()).toBe('Loading...');
   });
@@ -35,11 +33,9 @@ describe('GreetingPageComponent', () => {
     mockIdentityService.getHello.mockReturnValue(
       of({ message: 'Hello, Test' }),
     );
-
     createComponent();
     await fixture.whenStable();
     fixture.detectChanges();
-
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent?.trim()).toBe('Hello, Test');
   });
@@ -48,11 +44,9 @@ describe('GreetingPageComponent', () => {
     mockIdentityService.getHello.mockReturnValue(
       throwError(() => new Error('oops')),
     );
-
     createComponent();
     await fixture.whenStable();
     fixture.detectChanges();
-
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent?.trim()).toContain('Failed to load greeting');
   });

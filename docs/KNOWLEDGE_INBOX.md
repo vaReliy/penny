@@ -15,6 +15,16 @@ Belongs in: rules/nx-generators.md (test target section) — supersedes the 2026
 Why: Repo standard. `@nx/angular:app` and `@nx/angular:lib` generators default to CSS; the generated files must be renamed `.css` → `.scss` and all `styleUrl`/`styles` references updated. Also update `apps/*/project.json` `"styles"` array. Pass `--style=scss` to generators to reduce post-gen work.
 Belongs in: rules/nx-generators.md (post-generator corrections section)
 
+## 2026-06-28 — angular: `toSignal({ requireSync: true })` requires `startWith` on cold observables
+
+Why: `requireSync: true` throws `NG0601` at component construction if the source observable does not emit synchronously. HTTP observables and `NEVER` are cold — they never emit synchronously. Always add `startWith(initialValue)` **before** `catchError` in the pipe to guarantee a synchronous first emission. Order matters: `map → startWith → catchError`. If `startWith` comes after `catchError`, an error thrown before any emission would still violate the sync requirement.
+Belongs in: rules/code-style.md (Angular signal patterns section)
+
+## 2026-06-28 — angular: use `@let` in templates to call a signal once and enable type narrowing
+
+Why: Calling a signal function multiple times in a template (e.g. `@if (s().kind === 'success') { {{ s().message }} }`) calls it twice per CD cycle and, crucially, TypeScript cannot narrow the discriminated union type across separate calls. Use `@let state = mySignal()` to bind once; `state` is then narrowable inside `@if`/`@else if` branches. Available since Angular 17.3.
+Belongs in: rules/code-style.md (Angular template patterns section)
+
 ## 2026-06-28 — nx: `@nx/angular:app` generator requires `--name` flag for the project name, not a positional arg
 
 Why: `pnpm nx g @nx/angular:app web --directory=apps/web …` fails with "Schema does not support positional arguments". Correct invocation: `pnpm nx g @nx/angular:app --name=web --directory=apps/web …`. Same applies to `@nx/angular:lib`.

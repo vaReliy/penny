@@ -1,6 +1,6 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, of } from 'rxjs';
+import { Component, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, map, of, startWith } from 'rxjs';
 import { IdentityService } from 'identity-data-access';
 
 @Component({
@@ -9,24 +9,19 @@ import { IdentityService } from 'identity-data-access';
   templateUrl: './access-status-page.html',
   styleUrl: './access-status-page.scss',
 })
-export class AccessStatusPageComponent implements OnInit {
+export class AccessStatusPageComponent {
   private readonly identityService = inject(IdentityService);
-  private readonly destroyRef = inject(DestroyRef);
 
-  protected status: 'pending' | 'rejected' | null = null;
-
-  public ngOnInit(): void {
-    this.identityService
-      .getMe()
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        catchError(() => of(null)),
-      )
-      .subscribe((user) => {
-        this.status =
-          user?.status === 'pending' || user?.status === 'rejected'
-            ? user.status
-            : null;
-      });
-  }
+  readonly userStatus = toSignal(
+    this.identityService.getMe().pipe(
+      map((user) =>
+        user?.status === 'pending' || user?.status === 'rejected'
+          ? user.status
+          : null,
+      ),
+      startWith(null),
+      catchError(() => of(null)),
+    ),
+    { requireSync: true },
+  );
 }
