@@ -1,7 +1,5 @@
 {
-  "terminal.integrated.env.linux": {
-    "PATH": "${env:HOME}/.local/share/mise/shims:${env:PATH}"
-  },
   "cSpell.words": ["LIVR"],
-  "vsicons.presets.angular": true
+  "vsicons.presets.angular": true,
+  "nxConsole.projectViewingStyle": "list"
 }
