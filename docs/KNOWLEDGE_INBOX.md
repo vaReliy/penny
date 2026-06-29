@@ -201,6 +201,26 @@ Belongs in: .claude/agents/reviewer.md + .claude/agents/security-scanner.md (Tas
 Why: Depth-first security hardening (per-request CSP nonces) on a skeleton whose serving topology is undecided produced a half-wired feature that was worse than both states: it removed `'unsafe-inline'` but Angular never received the nonce, so styles would break in a non-trivial app. Rule: if an implementation option depends on an upstream architectural decision (who serves the HTML, which DB, which transport), defer the implementation until that decision is concrete. The CSP nonce task is the canonical case — reverting it was cheaper than implementing Option A (NestJS-serves HTML) speculatively, which Task 18 might invalidate. Parked-task convention encodes this: record the option analysis in the task file, park it with `Depends on` Task 18, pick the option after topology is locked.
 Belongs in: rules/workflow.md (roadmap rule section, Task 2026-06-29-05) | PROJECT_CONTEXT
 
+## 2026-06-29 — nginx: add_header in child location blocks replaces parent server-block headers entirely
+
+Why: Nginx's `add_header` inheritance is replacement, not merging. Any `location` block with even one `add_header` directive silently discards ALL `add_header` directives from the parent `server {}` block. In practice, security headers set at the `server` level (X-Content-Type-Options, X-Frame-Options, Referrer-Policy) are absent from every response served by location blocks that set cache headers. The only fix with standard nginx-alpine is to repeat every security header inside each `location` block that uses `add_header`. The `headers_more` module (`more_set_headers`) would allow true merging but requires a non-standard nginx build.
+Belongs in (guess): rules/docker-commands.md (nginx patterns section)
+
+## 2026-06-29 — docker: pnpm production install in Dockerfile requires --ignore-scripts --no-optional
+
+Why: `pnpm install --prod --frozen-lockfile` in a Docker layer fails because husky's `prepare` postinstall hook requires a `.git` directory, which is excluded by `.dockerignore`. Adding `--ignore-scripts` skips all lifecycle scripts (including husky) and `--no-optional` drops platform-optional deps, keeping the prod layer lean. Without these flags the build step errors at "script not found: prepare".
+Belongs in (guess): rules/docker-commands.md | PROJECT_CONTEXT (Dockerfile conventions)
+
+## 2026-06-29 — angular: Angular 17+ build output lives at dist/apps/web/browser, not dist/apps/web
+
+Why: Angular 17 introduced a nested `browser/` subdirectory inside the app dist folder (for future SSR/SSG parity). Nginx Dockerfiles that `COPY` from `dist/apps/web` instead of `dist/apps/web/browser` serve an empty or broken site — the HTML/JS/CSS files are one level deeper than expected. Always verify the Angular output path via `npx nx build web --skip-nx-cache` before writing the Dockerfile `COPY` step.
+Belongs in (guess): rules/architecture-angular.md | Dockerfile conventions
+
+## 2026-06-29 — topology: serving topology locked — Nginx/web serves HTML at :80, NestJS/api serves at :3000
+
+Why: Task 18 (docker-compose.yml) fixed the prod serving topology: `web` (Nginx) serves static Angular SPA at port 80 and reverse-proxies `/api/` → `api:3000`; `api` (NestJS) never serves HTML. This resolves the CSP nonce delivery option: the nonce pipeline must use `nginx sub_filter` to inject the nonce into the static `index.html` — NestJS middleware cannot intercept the Nginx HTML response. The previously-parked Task 19.2 (CSP nonce) should now adopt the `sub_filter` path.
+Belongs in (guess): PROJECT_CONTEXT (serving topology section) | DECISIONS.md (topology ADR)
+
 ## 2026-06-28 — cli: slim CliConfig pattern for apps that share IdentityModule but don't need JWT/Telegram vars
 
 Why: CLI apps that call `ApproveUserService`/`RejectUserService` only need `MONGO_URI` and `MONGO_DB_NAME`. Creating a separate `loadCliConfig()` that validates only those vars (while using the same `API_CONFIG` symbol token) lets the CLI reuse `CliIdentityModule` without requiring unrelated secrets. Each NestJS app has its own DI container so symbol identity is per-app, not global.

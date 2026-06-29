@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (Task 18 — Docker multi-stage + compose + CI image build)
+
+- **`apps/api/Dockerfile`** — multi-stage (deps → build → runtime); non-root `USER node`; production deps only in runtime layer; `--ignore-scripts --no-optional` on prod install to skip husky hook.
+- **`apps/cli/Dockerfile`** — same multi-stage pattern as api; no health check (CLI is not a long-running service).
+- **`apps/web/Dockerfile`** — Node.js build stage (`npx nx build web`) → `nginx:1.27-alpine` runtime; non-root `USER nginx` on port 8080; copies `dist/apps/web/browser`.
+- **`apps/web/nginx.conf`** — SPA routing (`try_files → index.html`), `/api/` reverse proxy to `api:3000`, cache headers per asset type, security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `server_tokens off`) repeated in every location block (nginx add_header inheritance requires this).
+- **`docker-compose.yml`** — prod-like stack: `web` (nginx:8080→host:80) + `api` (NestJS:3000) + `mongo` (mongo:7); MongoDB authentication via `MONGO_INITDB_ROOT_USERNAME/PASSWORD`; sequential startup via health check `condition: service_healthy`; isolated bridge network `penny_net`.
+- **`.dockerignore`** — excludes `node_modules`, `.nx/cache`, `.angular/cache`, `dist`, `.git`, test files, `.env`/`.env.*` (secret leak prevention).
+- **`.env.example`** — documents all required env vars: `MONGO_DB_NAME`, `MONGO_USER`, `MONGO_PASSWORD`, `JWT_SECRET`, `TELEGRAM_BOT_TOKEN`.
+- **`.github/workflows/ci.yml`** extended — `build-images` job: builds all 3 images with Docker Buildx + GHA layer cache; runs after `ci` job passes (`needs: [ci]`); no registry push yet (extension point documented).
+
+### Backlog tasks emitted (Task 18)
+
+- `2026-06-29-02-dockerfile-build-stage-ignore-scripts.md` — add `--ignore-scripts` to build stage pnpm install in all 3 Dockerfiles.
+- `2026-06-29-03-compose-api-healthcheck-wget.md` — replace `wget` healthcheck (not in node:22-alpine) with Node.js inline HTTP check so API service reaches `healthy`.
+- `2026-06-29-04-pin-github-actions-sha.md` — pin all GHA action tags to immutable SHA digests.
+- `2026-06-29-05-nginx-hsts-header.md` — add HSTS header once TLS termination topology is decided (PARKED).
+- `2026-06-29-06-nginx-api-duplicate-security-headers.md` — suppress duplicate security headers on `/api/` proxy responses via `proxy_hide_header`.
+
 ### Changed
 
 - **`apps/api/src/app/app.module.ts`** — registered `BaseErrorFilter` and `UnknownErrorFilter` as global exception filters via `APP_FILTER` DI token (from `@nestjs/core`), matching the existing `APP_GUARD` pattern. Both filters are now fully DI-wired and can receive injected dependencies in the future.

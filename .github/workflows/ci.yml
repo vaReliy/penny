@@ -45,3 +45,49 @@ jobs:
 
       - name: Audit dependencies (non-blocking)
         run: pnpm audit || true
+
+  # Build Docker images for all applications
+  # Runs after main CI passes, uses layer caching for faster rebuilds
+  build-images:
+    needs: [ci]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # Note: packages: write must be restored alongside docker/login-action + push: true
+    # when registry push is intentionally added in the future
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build API image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/api/Dockerfile
+          tags: penny-api:latest
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build CLI image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/cli/Dockerfile
+          tags: penny-cli:latest
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Web image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/web/Dockerfile
+          tags: penny-web:latest
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
