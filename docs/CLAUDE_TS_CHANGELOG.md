@@ -17,6 +17,28 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-06-29 — Enhancement: project-scope pre-flight + seam-aware depth in reviewer.md
+
+- **Component**: `.claude/agents/reviewer.md`
+- **Type**: Enhancement
+- **What happened**: Added two new subsections to the Pre-flight section. (1) "Project-scope pre-flight": reviewer now reads `ARCHITECTURE.md`, `DECISIONS.md`, and `CONTEXT.md` before every review so it evaluates the diff against the actual system design (layers, locked decisions, domain language) rather than just the changed lines. (2) "Seam-aware depth (bidirectional wiring)": when a changeset touches a shared contract/seam (new enum, cross-layer field, topology or auth boundary change), reviewer must also read upstream dependencies and downstream consumers, guided by the dependency maps in ARCHITECTURE.md and DECISIONS.md, to detect half-wired seams invisible in a diff-only review.
+- **Why it matters upstream**: A diff-only reviewer cannot see topology gaps (e.g., "you added a nonce header, but who serves index.html?"). The project-map read gives the agent the same mental model a senior TL holds; bidirectional wiring adds the callsite scan that makes half-wiring detectable.
+- **Suggested upstream change**: After the platform-conditional rules reads block in `reviewer.md` Pre-flight, add a "Project-scope pre-flight" subsection listing the three architecture docs and a "Seam-aware depth" subsection with the upstream/downstream read rule. Note: architecture docs must exist before this rule lands — the rule produces silent config drift if the referenced files are absent.
+- **Status**: pending-port
+
+---
+
+## 2026-06-29 — Enhancement: project-scope pre-flight + trust-boundary read + seam-aware depth in security-scanner.md
+
+- **Component**: `.claude/agents/security-scanner.md`
+- **Type**: Enhancement
+- **What happened**: Added three new subsections to the Pre-flight section. (1) "Project-scope pre-flight": same three architecture docs as reviewer (`ARCHITECTURE.md`, `DECISIONS.md`, `CONTEXT.md`). (2) "Trust-boundary / threat-model pre-flight": also read the `DECISIONS.md` auth/session/HMAC section specifically, so security findings are evaluated against the documented trust model (what is external input, where validation happens, what each layer trusts) rather than just the diff. (3) "Seam-aware depth (bidirectional wiring)": same bidirectional rule as reviewer — seam-touching changes require reading upstream deps and downstream consumers.
+- **Why it matters upstream**: A security scanner that doesn't know the documented trust boundary may flag defensive validation that the design intentionally defers to an inner layer, or miss a boundary violation that only becomes visible when comparing the diff against the topology map. The trust-model read anchors security findings to intentional design decisions.
+- **Suggested upstream change**: After the platform-conditional rules reads block in `security-scanner.md` Pre-flight, add the three subsections in order: project-scope pre-flight → trust-boundary/threat-model read → seam-aware depth. Prerequisite: same as reviewer — architecture docs must exist.
+- **Status**: pending-port
+
+---
+
 ## 2026-06-29 — Enhancement: rename rules-auditor → cts-rule-auditor + extend checks
 
 - **Component**: `.claude/skills/rules-auditor/` → `.claude/skills/cts-rule-auditor/`

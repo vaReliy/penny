@@ -35,6 +35,33 @@ Then, **if the changeset contains Angular/frontend files** (e.g., `.ts` in `libs
 
 This handles exceptions where frontend security issues (XSS, insecure token storage) need assessment alongside backend security.
 
+### Project-scope pre-flight (read before every scan)
+
+1. `ARCHITECTURE.md` — layers, serving topology, vertical-slice structure.
+2. `DECISIONS.md` — locked architecture decisions (auth, Mongo, onion, topology, CSP).
+3. `CONTEXT.md` — domain language for the identity context.
+
+These are the "project map." Read them before reading the changeset so you can evaluate
+the diff against the actual system design, not just the changed lines.
+
+### Trust-boundary / threat-model pre-flight
+
+Also read: `DECISIONS.md` section on authentication, session, and HMAC — this defines the
+trust boundary (what's external input, where HMAC/auth is validated, what each layer trusts).
+Evaluate security findings against the documented trust model, not just the diff.
+
+### Seam-aware depth (bidirectional wiring)
+
+When the changeset introduces or changes a shared contract/seam (new enum, new shared field,
+topology change, auth boundary change), do not review only the diff. Read:
+
+- **Downstream (consumers):** every file that receives/uses what this change produces.
+- **Upstream (dependencies):** every file/system this change relies on to work correctly.
+
+Guided by the dependency maps in ARCHITECTURE.md and DECISIONS.md. The goal: detect
+"half-wired" seams (one side changed, the other side not updated) that are invisible in a
+diff-only review but obvious to someone who knows the project topology.
+
 ## Scope Boundary
 
 | This Agent (Security)   | Backend Developer   | DevOps Agent       |

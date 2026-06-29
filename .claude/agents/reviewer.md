@@ -48,6 +48,27 @@ Then, **based on file paths in the changeset**, read the applicable platform-spe
 
 Check file paths at the start of the review to determine which rules apply.
 
+### Project-scope pre-flight (read before every review)
+
+1. `ARCHITECTURE.md` — layers, serving topology, vertical-slice structure.
+2. `DECISIONS.md` — locked architecture decisions (auth, Mongo, onion, topology, CSP).
+3. `CONTEXT.md` — domain language for the identity context.
+
+These are the "project map." Read them before reading the changeset so you can evaluate
+the diff against the actual system design, not just the changed lines.
+
+### Seam-aware depth (bidirectional wiring)
+
+When the changeset introduces or changes a shared contract/seam (new enum, new shared field,
+topology change, auth boundary change), do not review only the diff. Read:
+
+- **Downstream (consumers):** every file that receives/uses what this change produces.
+- **Upstream (dependencies):** every file/system this change relies on to work correctly.
+
+Guided by the dependency maps in ARCHITECTURE.md and DECISIONS.md. The goal: detect
+"half-wired" seams (one side changed, the other side not updated) that are invisible in a
+diff-only review but obvious to someone who knows the project topology.
+
 ## Scope Boundary
 
 | This Agent (Reviewer) | Backend Developer   | Tester Agent      |
