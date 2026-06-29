@@ -230,3 +230,23 @@ Belongs in (guess): PROJECT_CONTEXT (cli app architecture notes)
 
 Why: In `nginx.conf`, `proxy_pass http://api;` resolves through the `upstream api { server api:3000; }` block — not directly to `api:3000`. The distinction matters when documenting or extending the config: developers looking for the backend port should look in the upstream block, not the `proxy_pass` directive. Diagrams that show `proxy_pass http://api:3000` are technically equivalent but will confuse readers opening the real config.
 Belongs in (guess): rules/architecture.md (nginx topology notes)
+
+## 2026-06-29 — Angular production build minifies content="" → content (breaks nginx sub_filter)
+
+Why: Angular's esbuild production bundler applies HTML5 boolean-attribute minification: `<meta name="csp-nonce" content="">` becomes `<meta name="csp-nonce" content>` in the dist output. nginx `sub_filter` does byte-level matching, so a pattern targeting `content=""` silently never fires — the CSP header carries a nonce but the meta tag stays empty, Angular bootstraps with `null` nonce, and all component styles are blocked by CSP with no error message. Fix: match the minified form `name="csp-nonce" content>` and restore the closing `>` in the replacement: `sub_filter 'name="csp-nonce" content>' 'name="csp-nonce" content="$request_id">';`. This applies to any nginx sub_filter targeting an empty HTML attribute value.
+Belongs in (guess): rules/architecture.md (nginx/CSP section) or PROJECT_CONTEXT
+
+## 2026-06-29 — CSP nonce injection pattern (Option B): nginx sub_filter + $request_id
+
+Why: When nginx serves `index.html` (not NestJS), the only way to deliver a per-request nonce to Angular is via nginx `sub_filter`: set `$nonce $request_id;`, replace the empty `content=""` attribute in `<meta name="csp-nonce">`, and emit `Content-Security-Policy` header with `'nonce-$nonce'` in `style-src`. Standard nginx (no OpenResty) supports this via the `ngx_http_sub_module` (included in the official Docker image). Critical gotcha: `sub_filter` requires `gzip off` (or `gzip_static on` with pre-compressed files) in the same location block — dynamic gzip compresses the body before the sub_filter can match, silently producing no substitution with no error.
+Belongs in (guess): rules/architecture.md (CSP/nginx section) or PROJECT_CONTEXT
+
+## 2026-06-29 — Nx web app test target is vite:test not test
+
+Why: The `@nx/vitest` plugin in `nx.json` registers the test target as `"testTargetName": "vite:test"`. Running `npx nx test web` exits with "Cannot find configuration for task web:test". The correct command is `npx nx vite:test web`. This affects every agent that tests frontend code.
+Belongs in (guess): rules/workflow.md (Command Execution Policy table — add `web` row with `vite:test`)
+
+## 2026-06-29 — Angular CSP_NONCE provider: useFactory not useValue
+
+Why: `CSP_NONCE` must be provided via `useFactory` (not `useValue`) in `bootstrapApplication`. `useValue` is evaluated eagerly at module definition time, before the DOM is guaranteed to be ready in any non-browser rendering path. `useFactory` is lazy — evaluated during DI resolution — so `document.querySelector('meta[name="csp-nonce"]')` is always called after DOM parsing completes.
+Belongs in (guess): rules/code-style-angular.md

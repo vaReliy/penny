@@ -11,7 +11,7 @@ export const CSP_DIRECTIVES: Record<string, readonly string[]> = {
   frameSrc: ['https://oauth.telegram.org'],
   connectSrc: ["'self'"],
   imgSrc: ["'self'", 'https://t.me', 'https://*.telegram.org', 'data:'],
-  styleSrc: ["'self'", "'unsafe-inline'"],
+  styleSrc: ["'self'"],
   objectSrc: ["'none'"],
   baseUri: ["'self'"],
   formAction: ["'self'"],

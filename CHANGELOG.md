@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (Task 04 — CSP nonce server-side injection via nginx sub_filter)
+
+- **`apps/web/nginx.conf`** — per-request CSP nonce injection using nginx `$request_id` (128-bit CSPRNG, 32 hex chars): `sub_filter 'name="csp-nonce" content>' 'name="csp-nonce" content="$request_id">'` replaces the minified placeholder in `index.html` at request time (Angular's esbuild production build minifies `content=""` → `content`, so the match targets the minified form); `add_header Content-Security-Policy` on the `location /` block emits a full policy with `style-src 'self' 'nonce-$request_id'` and `frame-ancestors 'self'`; `gzip off` co-located to prevent silent sub_filter bypass on compressed responses.
+- **`apps/web/src/index.html`** — added `<meta name="csp-nonce" content="">` in `<head>` as the nginx sub_filter injection target for Angular's `CSP_NONCE` token.
+- **`apps/web/src/app/app.config.ts`** — root `CSP_NONCE` provider using `useFactory: () => document.querySelector<HTMLMetaElement>('meta[name="csp-nonce"]')?.content || null` so Angular's `ViewEncapsulation.Emulated` adds the nonce attribute to all dynamically inserted `<style>` elements.
+- **`apps/web/src/app/app.config.spec.ts`** — unit tests for the `CSP_NONCE` provider: verifies `useFactory` (not `useValue`), null for absent element, `null` for empty-string content (un-replaced placeholder), correct nonce string for valid content.
+- **`docs/rebuild/tasks/todo/2026-06-29-07-upgrade-insecure-requests-csp.md`** — backlog task (parked until HTTPS topology confirmed) to add `upgrade-insecure-requests` to both the nginx and NestJS CSP directives.
+
+### Changed (Task 04 — CSP nonce server-side injection via nginx sub_filter)
+
+- **`apps/api/src/middleware/csp-policy.ts`** — removed `'unsafe-inline'` from `styleSrc`; NestJS Helmet now emits `style-src 'self'` on API responses, consistent with the nonce-based policy on the HTML document.
+- **`apps/api/src/middleware/csp-policy.spec.ts`** — updated regression test: asserts `style-src 'self'` is present and `'unsafe-inline'` is absent, guarding against accidental reintroduction.
+
 ### Added (Task 18 — Docker multi-stage + compose + CI image build)
 
 - **`apps/api/Dockerfile`** — multi-stage (deps → build → runtime); non-root `USER node`; production deps only in runtime layer; `--ignore-scripts --no-optional` on prod install to skip husky hook.

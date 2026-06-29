@@ -1,5 +1,6 @@
 import {
   ApplicationConfig,
+  CSP_NONCE,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
@@ -16,6 +17,12 @@ export const appConfig: ApplicationConfig = {
     {
       provide: TELEGRAM_BOT_USERNAME,
       useValue: environment.telegramBotUsername,
+    },
+    {
+      provide: CSP_NONCE,
+      useFactory: (): string | null =>
+        document.querySelector<HTMLMetaElement>('meta[name="csp-nonce"]')
+          ?.content || null,
     },
   ],
 };

@@ -89,7 +89,8 @@ describe('CSP policy directives (integration)', () => {
     expect(cspHeader).toContain("form-action 'self'");
   });
 
-  it("allows inline styles (style-src 'unsafe-inline')", () => {
-    expect(cspHeader).toContain("style-src 'self' 'unsafe-inline'");
+  it("restricts style-src to 'self' and does not contain 'unsafe-inline'", () => {
+    expect(cspHeader).toContain("style-src 'self'");
+    expect(cspHeader).not.toContain("'unsafe-inline'");
   });
 });
