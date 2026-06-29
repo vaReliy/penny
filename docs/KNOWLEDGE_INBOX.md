@@ -12,6 +12,11 @@ Belongs in (guess): rules/code-style-backend.md
 Why: When testing NestJS exception filters that use pino, assert both arguments of the pino call — `logger.warn({ statusCode }, '[CODE] message')` — not just that the logger was called. pino's structured-first signature `(obj, msg)` is opposite to winston/console `(msg, meta)`, so a single-arg assertion (`toHaveBeenCalled()`) won't catch a metadata-less call. Also: `mockLogger` must be declared as `let` at the `describe` scope; a `const` inside `beforeEach` is inaccessible to `it` blocks.
 Belongs in (guess): rules/testing.md
 
+## 2026-06-29 — skills: renaming a Claude Code skill requires four touch-points
+
+Why: The dispatch system routes `/skill-name` via the `name:` frontmatter field, not the directory name. A rename that only moves the directory leaves the old name active. Full rename checklist: (1) rename directory, (2) update `name:` in SKILL.md frontmatter, (3) update `triggers:` list (remove old name trigger if present), (4) grep for self-references in the skill body and update prose. Also update any AGENTS.md skill tables and CLAUDE_TS_CHANGELOG.md.
+Belongs in (guess): claude-ts-upstream
+
 ## 2026-06-28 — angular: CanActivateFn with zero explicit parameters avoids unused-variable lint noise
 
 Why: `@typescript-eslint/no-unused-vars` is configured with `args: "after-used"` (Nx default). In a `CanActivateFn`, when neither `route` nor `state` is needed, declaring underscore-prefixed params (`_route`, `_state`) still triggers warnings. TypeScript structural typing allows a narrower signature — declaring `(): Observable<boolean | UrlTree> => { ... }` with no parameters satisfies `CanActivateFn` because the router call site passes the arguments at runtime regardless. Only add `state` (or `route`) to the signature when actually consumed; omit both when not needed.

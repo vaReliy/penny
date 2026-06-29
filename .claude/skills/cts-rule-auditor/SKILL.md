@@ -1,26 +1,28 @@
 ---
-name: rules-auditor
+name: cts-rule-auditor
 description: >-
   Audits the consistency of .claude/agents/, rules/, AGENTS.md, and
-  docs/KNOWLEDGE_INBOX.md. Runs 5 structural checks: broken pre-flight paths,
+  docs/KNOWLEDGE_INBOX.md. Runs 10 structural checks: broken pre-flight paths,
   wrong-platform keyword leaks, stale KNOWLEDGE_INBOX labels, rules files
-  missing from the AGENTS.md index, and unanchored .ctsignore entries.
+  missing from the AGENTS.md index, unanchored .ctsignore entries, foresight
+  gate presence, severity floor coverage, project-scope pre-flight, roadmap
+  rule, and stale rules-auditor references.
   Emits a ranked HIGH/MED/LOW finding report. Use after any change to
   .claude/** or rules/**, or run periodically to catch silent drift.
 
   Українською: аудит правил, перевірка агентів, дрейф конфігурації, перевірити
   rules, перевірити агентів, KNOWLEDGE_INBOX застарілий.
 triggers:
+  - cts-rule-auditor
   - rules-audit
-  - rules-auditor
   - audit rules
   - audit agents
   - check rules drift
 ---
 
-# Rules Auditor
+# CTS Rule Auditor
 
-Runs 5 structural consistency checks across `.claude/agents/`, `rules/`,
+Runs 10 structural consistency checks across `.claude/agents/`, `rules/`,
 `AGENTS.md`, `docs/KNOWLEDGE_INBOX.md`, and `.ctsignore`. Emits a ranked
 report and offers to create tasks for confirmed findings.
 
@@ -56,9 +58,9 @@ Audit this window, or specify a different range? (e.g. "3 days", "since 2026-06-
 
 Wait for the user's response before proceeding.
 
-## Step 2 — Run 5 checks
+## Step 2 — Run 10 checks
 
-Run all checks. Collect findings across all 5 before reporting.
+Run all checks. Collect findings across all 10 before reporting.
 
 ---
 
@@ -170,6 +172,90 @@ reads `rules/X.md` rather than `/rules/X.md`.
 
 ```
 [HIGH] .ctsignore: "rules/X.md" is missing leading "/" anchor — will not match root-level rules/
+```
+
+---
+
+### Check 6 — Foresight gate present in rules/workflow.md
+
+Read `rules/workflow.md`. Check whether it contains a foresight gate section
+with a seam trigger definition (new enum, cross-layer field, topology change
+triggering a blast-radius map requirement).
+
+**Finding format**:
+
+```
+[HIGH] rules/workflow.md: foresight gate section missing or seam trigger definition absent
+```
+
+---
+
+### Check 7 — Severity floor in rules/workflow.md, reviewer.md, and security-scanner.md
+
+1. Read `rules/workflow.md` — must contain a 4-tier severity floor table
+   (Correctness/Security, Comprehension, Consistency-with-op-impact, Polish/preference).
+2. Read `.claude/agents/reviewer.md` — must contain a severity floor instruction
+   referencing the floor and the sub-floor ledger (`docs/KNOWLEDGE_INBOX.md`).
+3. Read `.claude/agents/security-scanner.md` — same requirement as reviewer.md.
+
+**Finding format**:
+
+```
+[HIGH] rules/workflow.md: 4-tier severity floor table missing
+[HIGH] .claude/agents/reviewer.md: severity floor instruction missing
+[HIGH] .claude/agents/security-scanner.md: severity floor instruction missing
+```
+
+---
+
+### Check 8 — Project-scope pre-flight in reviewer.md and security-scanner.md
+
+1. Read `.claude/agents/reviewer.md` — must list `ARCHITECTURE.md`,
+   `DECISIONS.md`, and `CONTEXT.md` as pre-flight reads.
+2. Read `.claude/agents/security-scanner.md` — same requirement.
+3. For each referenced doc, verify the file actually exists in the repo root
+   (`ls ARCHITECTURE.md`, etc.). A missing doc means the pre-flight instruction
+   would silently fail.
+
+**Finding format**:
+
+```
+[HIGH] .claude/agents/reviewer.md: project-scope pre-flight reads missing (ARCHITECTURE.md / DECISIONS.md / CONTEXT.md)
+[HIGH] .claude/agents/security-scanner.md: project-scope pre-flight reads missing
+[MED]  pre-flight references ARCHITECTURE.md but file does not exist — silent agent gap
+```
+
+---
+
+### Check 9 — Roadmap-prioritization rule present in rules/workflow.md
+
+Read `rules/workflow.md`. Check whether it contains both:
+
+- The parked-task convention (tasks blocked on upstream decisions use `## ⚠️ PARKED`).
+- The "prioritized against backlog" rule (emitted tasks ranked against the
+  existing backlog, premature tasks parked with blocking dep named).
+
+**Finding format**:
+
+```
+[MED]  rules/workflow.md: roadmap-prioritization rule missing (parked-task convention and/or backlog-priority rule)
+```
+
+---
+
+### Check 10 — No stale `rules-auditor` references
+
+Run:
+
+```
+grep -r "rules-auditor" .claude/ rules/ AGENTS.md
+```
+
+**Finding format**:
+
+```
+[HIGH] <file>: stale "rules-auditor" reference found — rename was not fully applied
+       Match: <matched line>
 ```
 
 ---

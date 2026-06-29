@@ -17,6 +17,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-06-29 — Enhancement: rename rules-auditor → cts-rule-auditor + extend checks
+
+- **Component**: `.claude/skills/rules-auditor/` → `.claude/skills/cts-rule-auditor/`
+- **Type**: Enhancement
+- **What happened**: Renamed skill to fit the `cts-*` family (`cts-import-skill`, `cts-setup`, `cts-update`). Extended from 5 to 10 structural checks: added foresight gate presence (Check 6), severity floor coverage across workflow.md + reviewer.md + security-scanner.md (Check 7), project-scope pre-flight doc existence (Check 8), roadmap-prioritization rule (Check 9), and stale `rules-auditor` reference detection (Check 10).
+- **Why it matters upstream**: Any claude-ts project that adopts the foresight gate / severity floor / roadmap rule from the 2026-06-29 workflow update would be undetected by the old 5-check auditor. The extended checks let the auditor self-verify that those workflow controls are consistently applied across all three relevant files.
+- **Suggested upstream change**: Rename `.claude/skills/rules-auditor/` to `.claude/skills/cts-rule-auditor/`; update `name:` frontmatter and step-count prose; append Checks 6–10 before Step 3.
+- **Status**: pending-port
+
+---
+
 ## 2026-06-29 — Enhancement: foresight gate + quality floor + roadmap rule in rules/workflow.md
 
 - **Component**: `rules/workflow.md`
