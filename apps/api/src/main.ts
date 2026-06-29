@@ -1,7 +1,6 @@
 import 'reflect-metadata';
 
 import { NestFactory } from '@nestjs/core';
-import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
 import pinoHttp from 'pino-http';
 import type pino from 'pino';
@@ -10,7 +9,7 @@ import { registerLivrRules } from 'shared-kernel';
 
 import { AppModule } from './app/app.module.js';
 import { API_CONFIG } from './config/api-config.js';
-import { CSP_DIRECTIVES } from './middleware/csp-policy.js';
+import { cspMiddleware } from './middleware/csp-policy.js';
 import { PinoNestLogger } from './logger/pino-nest-logger.js';
 import { PINO_LOGGER } from './logger/logger.tokens.js';
 import type { ApiConfig } from './config/api-config.js';
@@ -33,11 +32,10 @@ async function bootstrap(): Promise<void> {
   // framework logs land in a single stream with a consistent format.
   app.use(pinoHttp({ logger: pinoLogger }));
 
-  // Helmet sets secure HTTP response headers. CSP restricts sources to permit
-  // the Telegram Login Widget (script-src, frame-src, img-src) while blocking
-  // all other external origins. HTTP header delivery is XSS-resistant unlike
-  // <meta> tags.
-  app.use(helmet({ contentSecurityPolicy: { directives: CSP_DIRECTIVES } }));
+  // Per-request CSP nonce middleware: generates a cryptographic nonce, stores
+  // it in res.locals['nonce'], then applies Helmet with style-src restricted
+  // to that nonce (no unsafe-inline).
+  app.use(cspMiddleware);
 
   // Strip $-prefixed and dot-prefixed keys from req.body/params/query to prevent
   // NoSQL operator injection reaching any route handler.
