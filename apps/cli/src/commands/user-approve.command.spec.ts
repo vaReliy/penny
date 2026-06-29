@@ -102,6 +102,7 @@ describe('UserApproveCommand', () => {
       { userId: USER_ID },
       expect.objectContaining({
         caller: expect.objectContaining({
+          status: UserStatus.ACTIVE,
           roles: expect.arrayContaining([ADMIN_ROLE]),
         }),
       }),

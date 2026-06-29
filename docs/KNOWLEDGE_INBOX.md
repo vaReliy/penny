@@ -2,6 +2,11 @@
 
 Append-only queue for durable, project-relevant learnings whose final home isn't clear yet. Distilled into PROJECT_CONTEXT.md / CLAUDE.md / a rule / a skill, then deleted from here — this file should trend toward empty.
 
+## 2026-06-29 — imports: shared-contracts alias is `'shared-contracts'`, not `'@penny/shared-contracts'`
+
+Why: Task files and docs occasionally write `@penny/shared-contracts` but the actual tsconfig path alias and every import in the codebase use the bare `'shared-contracts'` form. Using the `@penny/` prefix will cause a module-not-found error at build time.
+Belongs in (guess): PROJECT_CONTEXT | CLAUDE.md (alias table)
+
 ## 2026-06-29 — nestjs: APP_FILTER selection is specificity-based, not registration-order-based
 
 Why: When multiple `APP_FILTER` providers are registered, NestJS matches the thrown exception type against each filter's `@Catch()` decorator arguments and invokes the most specific match — not the last-declared one. Registration order only matters when two filters have equal specificity (e.g., two `@Catch()` catch-alls). A specific `@Catch(BaseError)` filter always wins over a `@Catch()` catch-all regardless of which appears first in the providers array. This is counterintuitive to developers who assume reverse-order stack semantics (like middleware or pipes).

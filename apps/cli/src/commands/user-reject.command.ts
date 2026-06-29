@@ -4,7 +4,7 @@ import type pino from 'pino';
 
 import { RejectUserService } from 'identity-application';
 import type { IUserRepository } from 'identity-core';
-import { Role } from 'shared-contracts';
+import { Role, UserStatus } from 'shared-contracts';
 import type { ServiceContext } from 'shared-kernel';
 
 import { API_CONFIG } from '../config/cli-config.js';
@@ -15,7 +15,7 @@ import { TOKENS } from '../identity/tokens.js';
 /** Admin caller identity injected into every CLI service context. */
 const CLI_ADMIN_CALLER = {
   userId: 'cli-admin',
-  status: 'active',
+  status: UserStatus.ACTIVE,
   roles: [Role.ADMIN],
 } as const;
 
