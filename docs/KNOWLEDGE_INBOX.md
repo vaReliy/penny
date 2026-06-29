@@ -225,3 +225,8 @@ Belongs in (guess): PROJECT_CONTEXT (serving topology section) | DECISIONS.md (t
 
 Why: CLI apps that call `ApproveUserService`/`RejectUserService` only need `MONGO_URI` and `MONGO_DB_NAME`. Creating a separate `loadCliConfig()` that validates only those vars (while using the same `API_CONFIG` symbol token) lets the CLI reuse `CliIdentityModule` without requiring unrelated secrets. Each NestJS app has its own DI container so symbol identity is per-app, not global.
 Belongs in (guess): PROJECT_CONTEXT (cli app architecture notes)
+
+## 2026-06-29 — nginx: proxy_pass to named upstream vs. bare host:port
+
+Why: In `nginx.conf`, `proxy_pass http://api;` resolves through the `upstream api { server api:3000; }` block — not directly to `api:3000`. The distinction matters when documenting or extending the config: developers looking for the backend port should look in the upstream block, not the `proxy_pass` directive. Diagrams that show `proxy_pass http://api:3000` are technically equivalent but will confuse readers opening the real config.
+Belongs in (guess): rules/architecture.md (nginx topology notes)

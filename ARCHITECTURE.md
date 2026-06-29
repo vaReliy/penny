@@ -133,4 +133,46 @@ See `rules/validation-authorization.md` for the full bootstrap requirement and T
 
 ## Serving Topology
 
-<!-- Serving topology: to be documented once the Docker compose production setup is finalised -->
+Production requests flow through two containers exposed on the Docker bridge network (`penny_net`).
+Only the `web` container has a host port binding; `api` is internal.
+
+```
+Browser
+  │
+  │ :80
+  ▼
+┌─────────────────────────────────────────────────────┐
+│  web (nginx:1.27-alpine)  ·  penny-web              │
+│  Listens :8080 → mapped to host :80                 │
+│                                                     │
+│  location /          → serve /usr/share/nginx/html  │  index.html + hashed JS/CSS bundles
+│                         try_files → /index.html     │  (Angular SPA, client-side routing)
+│                                                     │
+│  location /api/      → proxy_pass http://api        │  reverse-proxied; no host exposure
+│                         (upstream api { api:3000 }) │
+└─────────────────────────────────────────────────────┘
+               │ upstream api → api:3000
+               ▼
+┌─────────────────────────────────────────────────────┐
+│  api (NestJS)  ·  penny-api                         │
+│  Listens :3000 (internal only — no host port)       │
+│  Connects to mongo:27017 on penny_net               │
+└─────────────────────────────────────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────────────────────┐
+│  mongo (mongo:7)  ·  penny-mongo                    │
+│  Listens :27017 (internal only)                     │
+└─────────────────────────────────────────────────────┘
+```
+
+**Key facts:**
+
+- `index.html` is served by **nginx**, not NestJS. NestJS never touches the HTML file.
+- `/api/` requests are proxied by nginx; the API container is not reachable from the host directly.
+- CSP nonce injection (when implemented) must happen at the nginx layer via `sub_filter` —
+  see ADR-006 in `DECISIONS.md`.
+- Static JS/CSS bundles use content-hashed filenames and are cached for 1 year (`immutable`).
+  `index.html` itself is served with `no-cache` so the latest bundle references are always fetched.
+- The `web` container health check hits nginx's `/health` stub location; the `api` container
+  health check hits `/api/health` via `wget`.

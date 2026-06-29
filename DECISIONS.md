@@ -168,9 +168,40 @@ with NestJS-ESM and Angular's bundler resolver.
 
 ## ADR-006 — CSP Nonce Delivery
 
-**Status:** Placeholder
+**Status:** Deferred — skeleton-phase tradeoff active; implementation task is
+`2026-06-29-04-csp-nonce-server-side-injection`.
 
-<!-- CSP nonce delivery ADR: to be completed once the production serving topology (who serves index.html) is finalised -->
+**Context:** Angular's runtime `<style>` injection requires either `style-src 'unsafe-inline'`
+or a per-request CSP nonce embedded in `index.html`. Nonce delivery requires the process that
+serves `index.html` to generate and inject the nonce value on every request — which process does
+that depends on the serving topology.
 
-_This ADR depends on the serving topology — specifically whether `index.html` is served by the
-NestJS API or a separate web server, and which process injects the per-request nonce._
+Task 18 (Docker multi-stage + compose) settled the serving topology: **nginx serves `index.html`**
+(`apps/web` container), not NestJS. The API container has no host port and never touches the HTML.
+
+**Decision — Option B (nginx serves HTML):** Per-request nonce injection is implemented at the
+nginx layer:
+
+- nginx generates (or receives) a nonce per request.
+- nginx uses `sub_filter` to replace a placeholder token in `index.html` with the nonce value.
+- nginx sets the `Content-Security-Policy` response header including the nonce.
+- The Angular build embeds the matching placeholder token so `sub_filter` can locate it.
+
+**Alternatives rejected:**
+
+- Option A (NestJS serves HTML via `ServeStaticModule`): would place static-file serving and
+  HMAC auth logic in the same process, complicating health checks and adding latency for all
+  static asset requests. Rejected when Task 18 chose nginx.
+- `'unsafe-inline'` permanently: permits injected stylesheets from XSS — not acceptable post-skeleton.
+
+**Skeleton-phase interim tradeoff:**
+
+`style-src 'self' 'unsafe-inline'` is retained intentionally during the skeleton phase. This is
+a documented, time-bounded tradeoff — not silent debt. It permits Angular's runtime style
+injection while the nginx nonce pipeline (`sub_filter` + `add_header`) is not yet in place.
+
+**Consequences:**
+
+- The nginx nonce pipeline requires the Angular build to embed a placeholder token in `index.html`.
+- `'unsafe-inline'` must be removed from `style-src` once Task `2026-06-29-04-csp-nonce-server-side-injection` is complete.
+- The nginx container image must have `ngx_http_sub_module` compiled in (present in the official `nginx:*-alpine` images).
