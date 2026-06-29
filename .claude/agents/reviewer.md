@@ -132,4 +132,15 @@ Rules:
 - A finding goes to `## Fix Now` if it was **introduced by the current changeset** (any severity).
 - A finding goes to `## Emit as Task` if it **pre-existed** the current changeset.
 - Both sections must always be present, even if empty (`_none_`).
-- Classification criterion: **origin only** — severity/priority is set in the emitted task file, not here.
+- Classification criterion for **Fix Now vs. Emit**: **origin only** — see Severity floor below for the secondary Emit vs. Drop filter.
+
+### Severity floor
+
+Before emitting a task for a pre-existing finding, apply the severity floor
+(defined in rules/workflow.md). Polish/preference findings below the floor are NOT emitted as
+tasks. Record them as one line in docs/KNOWLEDGE_INBOX.md under `## Deferred / sub-floor`.
+
+## Commit policy
+
+Never commit directly. Stage changes, then suggest a one-line commit message scoped to the
+current work iteration. The owner reviews git diff and commits.

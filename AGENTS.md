@@ -1,6 +1,6 @@
 ## Stack
 
-Node.js 22+ · TypeScript 5 (strict) · Angular 17+ · Prisma (primary) / TypeORM / Drizzle · PostgreSQL 17 · Redis · BullMQ · Vitest · Playwright · Docker
+Node.js 22+ · TypeScript 5 (strict) · NestJS (API + CLI) · Angular 17+ (standalone components, signals) · MongoDB + Mongoose/Typegoose · LIVR validation (`js-validator-livr`) · pnpm (exact pins) · Vitest · Playwright · BullMQ · Docker
 
 ## Git Safety
 

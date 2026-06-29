@@ -1,7 +1,5 @@
 # identity-feature-access-status
 
-This library was generated with [Nx](https://nx.dev).
+**Tags:** `scope:identity` · `type:feature` · `platform:web`
 
-## Running unit tests
-
-Run `nx test identity-feature-access-status` to execute the unit tests.
+Angular access-status page shown to `pending` and `rejected` users after login. May import `scope:identity` ui/data-access and `scope:shared` contracts/util. No server-only imports.

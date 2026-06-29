@@ -39,35 +39,13 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
-## 2026-06-29 — Enhancement: severity floor added to reviewer.md + security-scanner.md
+## 2026-06-29 — Enhancement: severity floor + commit policy added to reviewer.md + security-scanner.md
 
 - **Component**: `.claude/agents/reviewer.md`, `.claude/agents/security-scanner.md`
 - **Type**: Enhancement
-- **What happened**: Added severity floor instruction to both agents: Polish/preference findings are dropped (not emitted as tasks), recorded as one line in `docs/KNOWLEDGE_INBOX.md` under `## Deferred / sub-floor`. Commit policy reinforced: suggest a commit message per iteration, never commit directly.
-- **Why it matters upstream**: Without the floor, a project-scoped reviewer that sees more surface emits more tasks — the expanded context makes the loop worse, not better. The floor caps this.
-- **Suggested upstream change**: Add severity-floor paragraph after the `## Fix Now` / `## Emit as Task` output contract in both agent files.
-- **Status**: pending-port
-
----
-
-## 2026-06-29 — Enhancement: project-scope pre-flight + seam-aware depth in reviewer.md + security-scanner.md
-
-- **Component**: `.claude/agents/reviewer.md`, `.claude/agents/security-scanner.md`
-- **Type**: Enhancement
-- **What happened**: Added project-scope pre-flight (read `ARCHITECTURE.md`/`DECISIONS.md`/`CONTEXT.md` before every review) and seam-aware bidirectional depth rule (when change touches a shared seam, read full files + consumers + dependencies, not just the diff). Security-scanner also reads trust-boundary/threat-model section of `DECISIONS.md`. Note: these rules reference docs that must exist before they land — sequenced behind Task 19.2 in this project.
-- **Why it matters upstream**: "Project-scoped reviewer" = durable map externalized into docs + scoped depth, not stateless full-scan. Without this, the reviewer cannot detect half-wired seams (one side of a contract changed, the other not).
-- **Suggested upstream change**: Add "Project-scope pre-flight" and "Seam-aware depth" sections to both agent files. Gate on the project having `ARCHITECTURE.md`/`DECISIONS.md`/`CONTEXT.md` (template should note this dependency).
-- **Status**: pending-port
-
----
-
-## 2026-06-29 — Enhancement: rename skill `rules-auditor` → `cts-rule-auditor` + extend checks
-
-- **Component**: `.claude/skills/rules-auditor/` (→ `cts-rule-auditor`)
-- **Type**: Enhancement
-- **What happened**: Renamed to fit the `cts-*` skill family. Extended checks to cover the new workflow rules: foresight gate present (Check 6), severity floor in workflow + both agents (Check 7), project-scope pre-flight references valid existing docs (Check 8), roadmap rule present (Check 9), no stale `rules-auditor` references (Check 10).
-- **Why it matters upstream**: The auditor's value is catching half-applied changes. Without the new checks, it passes a B1 change that forgot to add the floor to security-scanner.md.
-- **Suggested upstream change**: Rename skill directory; add Checks 6–10 to SKILL.md.
+- **What happened**: Added severity floor instruction to both agents: Polish/preference findings are dropped (not emitted as tasks), recorded as one line in `docs/KNOWLEDGE_INBOX.md` under `## Deferred / sub-floor`. Commit policy added to both: suggest a commit message per iteration, never commit directly. Also scoped the existing "Classification criterion: origin only" line to "Fix Now vs. Emit" only, with a pointer down to the floor, to avoid ambiguity.
+- **Why it matters upstream**: Without the floor, a project-scoped reviewer that sees more surface emits more tasks — the expanded context makes the loop worse, not better. The floor caps this. The "origin only" scoping prevents an agent from reading "origin only" as overriding the floor.
+- **Suggested upstream change**: Add severity-floor paragraph and commit-policy section after the `## Fix Now` / `## Emit as Task` output contract in both agent files. Scope the "classification criterion" line.
 - **Status**: pending-port
 
 ---

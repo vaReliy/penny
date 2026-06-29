@@ -57,6 +57,21 @@ These sort before `…-N.md` because `-` (0x2D) < `.` (0x2E) in ASCII/C collatio
 
 One task = one clean session. Split when the task would touch **>3 files**, cross layers/transports, or mix concerns. Chain the parts via `Depends on`. (Mirrors the `CLAUDE.md` ">3 files → split" triage rule.)
 
+### Blast-radius map (seam-touching tasks)
+
+When the foresight gate fires (see rules/workflow.md), the task body must include a
+`## Blast radius` section listing all files/layers that consume the changed contract and all
+foreseeable follow-on tasks. This section is the explicit evidence that the task was scoped
+correctly up front.
+
+### Parked tasks
+
+A parked task (blocked on an upstream seam decision) must:
+
+1. Open with a `## ⚠️ PARKED — blocked by <dependency>` callout before the Context section.
+2. Include the blocking task's full filename in `Depends on`.
+3. Not be assigned to an implementation agent until the blocking dependency is in done/.
+
 ## Standing Completion Rule
 
 The executing agent suggests a one-line commit message and does NOT commit. The owner reviews `git diff`, commits, and moves the file from `todo/` to `done/`.

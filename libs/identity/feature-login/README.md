@@ -1,7 +1,5 @@
 # identity-feature-login
 
-This library was generated with [Nx](https://nx.dev).
+**Tags:** `scope:identity` · `type:feature` · `platform:web`
 
-## Running unit tests
-
-Run `nx test identity-feature-login` to execute the unit tests.
+Angular login page: embeds the Telegram Login Widget and routes to the access-status or greeting page after auth. May import `scope:identity` ui/data-access and `scope:shared` contracts/util. No server-only imports.

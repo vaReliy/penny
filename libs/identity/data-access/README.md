@@ -1,7 +1,5 @@
 # identity-data-access
 
-This library was generated with [Nx](https://nx.dev).
+**Tags:** `scope:identity` · `type:data` · `platform:web`
 
-## Running unit tests
-
-Run `nx test identity-data-access` to execute the unit tests.
+Angular API client services for the identity domain (auth, user status). May import `scope:identity` util and `scope:shared` contracts/util. No server-only imports; no `localStorage` for tokens.

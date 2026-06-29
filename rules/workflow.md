@@ -59,6 +59,25 @@ If you feel the urge to look at code — that's the signal to dispatch `ba` or `
 
 If none apply (e.g. typo fix, config value) — skip the pipeline.
 
+## Foresight gate (seam-touching tasks only)
+
+Trigger: the task introduces or changes a shared contract/seam — any of:
+
+- A new enum, registry, or const object consumed across multiple files/layers
+- A field or interface change consumed in >1 layer (entity, use-case, API, frontend)
+- A change to who-serves-what (topology, middleware order, serving boundary)
+
+When triggered:
+
+1. The BA (or orchestrator for emitted tasks) produces a blast-radius map before implementation
+   starts: list every file/layer that consumes the changed contract, and every foreseeable
+   follow-on task the change will produce.
+2. Re-author the task at full scope — include the blast-radius. Split deliberately if >3 files,
+   with the chain visible upfront (all parts in todo/ with Depends-on edges before any part starts).
+3. Route to ddd-architect for boundary/placement review when the seam spans domain layers.
+
+Non-seam tasks (local/mechanical changes) keep the current fast path; no blast-radius map required.
+
 ## Core Principles
 
 - **Simplicity First**: Make every change as simple as possible. Impact minimal code.
@@ -223,6 +242,35 @@ Reviewer and security-scanner emit two sections in every report:
 - All sections empty (`_none_`) → proceed to phase 5.
 
 **Closing checklist — if `.claude/**`or`rules/**` changed this session:** suggest running `/rules-audit` before closing. This is a suggestion to the human, not an auto-dispatch.
+
+## Severity floor (emit-vs-drop)
+
+Origin (introduced vs. pre-existing) decides Fix-Now vs. Emit. Severity decides Emit vs. Drop.
+Below the floor, a pre-existing finding does NOT become a task file.
+
+| Tier                                | Examples                                                                                                                  | Action                   |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| Correctness / Security              | bug, race, auth gap, PII leak, injection                                                                                  | always (Fix Now or Emit) |
+| Comprehension                       | misleading code, stale/lying comment, name that contradicts behavior, dead code implying live behavior                    | Emit                     |
+| Consistency-with-operational-impact | uses wrong logger, wrong cookie name, formatting that diverges from enforced ESLint rule                                  | Emit                     |
+| Polish / preference                 | "could be cleaner," restructure without behavior/comprehension change, style the linter doesn't enforce, "more idiomatic" | **Drop**                 |
+
+Floor test (one sentence): "Does the current code mislead a reader or behave wrong — or is it
+merely not the preferred style?"
+
+Sub-floor findings: do NOT create a task file. Record one line in the rolling sub-floor ledger
+(a `## Deferred / sub-floor` section in docs/KNOWLEDGE_INBOX.md) for theme detection. If the
+same theme appears ≥3 times, promote it to a deliberate task.
+
+## Roadmap prioritization for emitted tasks
+
+Emitted (non-Fix-Now) tasks land in todo/ and are prioritized against the original backlog —
+never auto-pulled depth-first ahead of it.
+
+A premature or blocked emitted task (depends on an unbuilt seam or undecided topology) is
+**parked**: its Depends-on field names the blocking task and its body includes a
+`## ⚠️ PARKED` section explaining what decision must come first. Do not implement a parked
+task speculatively.
 
 ## Bug Fix Pipeline
 
