@@ -17,6 +17,61 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-06-29 — Enhancement: foresight gate + quality floor + roadmap rule in rules/workflow.md
+
+- **Component**: `rules/workflow.md`
+- **Type**: Enhancement
+- **What happened**: Added three new workflow controls identified in a cyclic-development grill session. (1) Foresight gate: when a task introduces/changes a shared contract/seam (new enum, cross-layer field, topology change), a blast-radius map is required before implementation; task re-authored at full scope. (2) Severity floor on emission: 4-tier table (Correctness/Security → always; Comprehension → emit; Consistency-with-op-impact → emit; Polish/preference → DROP into sub-floor ledger); prevents "infinite refactoring" by giving the reviewer a fixed stopping point. (3) Roadmap-prioritization rule: emitted tasks prioritized against original backlog, premature/blocked tasks parked with blocking dep named.
+- **Why it matters upstream**: Any claude-ts project suffers from review-emit cycles when tasks are scoped too narrowly. The foresight gate + floor together make chains shorter (foresight) and terminating (floor). The roadmap rule prevents depth-first hardening on undecided seams.
+- **Suggested upstream change**: Add three subsections to `rules/workflow.md`: "Foresight gate", "Severity floor (emit-vs-drop)", and "Roadmap prioritization for emitted tasks". See task `2026-06-29-05-workflow-doc-independent-rules.md` for exact wording.
+- **Status**: pending-port
+
+---
+
+## 2026-06-29 — Enhancement: blast-radius map + parked-task convention in rules/task-authoring.md
+
+- **Component**: `rules/task-authoring.md`
+- **Type**: Enhancement
+- **What happened**: Added "Blast-radius map" subsection (required for seam-touching tasks when foresight gate fires) and "Parked tasks" subsection (tasks blocked on upstream decisions open with `## ⚠️ PARKED` callout, blocking dep in `Depends on`, not assigned until unblocked).
+- **Why it matters upstream**: Without these conventions, blast-radius analysis lives informally in the author's head and parked tasks look identical to ready tasks — both generate confusion when an agent picks up a blocked task.
+- **Suggested upstream change**: Add both subsections after the existing "Splitting Rule" section in `rules/task-authoring.md`.
+- **Status**: pending-port
+
+---
+
+## 2026-06-29 — Enhancement: severity floor added to reviewer.md + security-scanner.md
+
+- **Component**: `.claude/agents/reviewer.md`, `.claude/agents/security-scanner.md`
+- **Type**: Enhancement
+- **What happened**: Added severity floor instruction to both agents: Polish/preference findings are dropped (not emitted as tasks), recorded as one line in `docs/KNOWLEDGE_INBOX.md` under `## Deferred / sub-floor`. Commit policy reinforced: suggest a commit message per iteration, never commit directly.
+- **Why it matters upstream**: Without the floor, a project-scoped reviewer that sees more surface emits more tasks — the expanded context makes the loop worse, not better. The floor caps this.
+- **Suggested upstream change**: Add severity-floor paragraph after the `## Fix Now` / `## Emit as Task` output contract in both agent files.
+- **Status**: pending-port
+
+---
+
+## 2026-06-29 — Enhancement: project-scope pre-flight + seam-aware depth in reviewer.md + security-scanner.md
+
+- **Component**: `.claude/agents/reviewer.md`, `.claude/agents/security-scanner.md`
+- **Type**: Enhancement
+- **What happened**: Added project-scope pre-flight (read `ARCHITECTURE.md`/`DECISIONS.md`/`CONTEXT.md` before every review) and seam-aware bidirectional depth rule (when change touches a shared seam, read full files + consumers + dependencies, not just the diff). Security-scanner also reads trust-boundary/threat-model section of `DECISIONS.md`. Note: these rules reference docs that must exist before they land — sequenced behind Task 19.2 in this project.
+- **Why it matters upstream**: "Project-scoped reviewer" = durable map externalized into docs + scoped depth, not stateless full-scan. Without this, the reviewer cannot detect half-wired seams (one side of a contract changed, the other not).
+- **Suggested upstream change**: Add "Project-scope pre-flight" and "Seam-aware depth" sections to both agent files. Gate on the project having `ARCHITECTURE.md`/`DECISIONS.md`/`CONTEXT.md` (template should note this dependency).
+- **Status**: pending-port
+
+---
+
+## 2026-06-29 — Enhancement: rename skill `rules-auditor` → `cts-rule-auditor` + extend checks
+
+- **Component**: `.claude/skills/rules-auditor/` (→ `cts-rule-auditor`)
+- **Type**: Enhancement
+- **What happened**: Renamed to fit the `cts-*` skill family. Extended checks to cover the new workflow rules: foresight gate present (Check 6), severity floor in workflow + both agents (Check 7), project-scope pre-flight references valid existing docs (Check 8), roadmap rule present (Check 9), no stale `rules-auditor` references (Check 10).
+- **Why it matters upstream**: The auditor's value is catching half-applied changes. Without the new checks, it passes a B1 change that forgot to add the floor to security-scanner.md.
+- **Suggested upstream change**: Rename skill directory; add Checks 6–10 to SKILL.md.
+- **Status**: pending-port
+
+---
+
 ## 2026-06-28 — Enhancement: object destructuring rule added to rules/code-style.md
 
 - **Component**: `rules/code-style.md`

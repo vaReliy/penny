@@ -161,6 +161,41 @@ Belongs in (guess): PROJECT_CONTEXT (security roadmap note)
 Why: `pino.Logger.warn/error` signatures put the structured-context object first and the human-readable message string second: `logger.warn({ statusCode }, '[CODE] message')`. NestJS built-in `Logger.warn` is the reverse: `logger.warn('message', context)`. Migrating from `new Logger()` to injected pino requires swapping call-site argument order at every `warn`/`error` call — TypeScript surfaces this as TS2769 overload mismatch, so it's caught at compile time.
 Belongs in (guess): rules/code-style-backend.md (logging section)
 
+## 2026-06-29 — angular: CSP nonce DI token is `CSP_NONCE`, not `NgCspNonce`
+
+Why: `NgCspNonce` is Angular's internal directive class, not a public export. `@angular/core` exports `CSP_NONCE` as the injection token for providing the per-request nonce to the bootstrap injector. Using `NgCspNonce` in an import causes TS2724. Always import `CSP_NONCE` from `@angular/core`; `NgCspNonce` only appears in Angular's internal source and Angular docs sometimes conflate the two names.
+Belongs in (guess): rules/code-style-angular.md (CSP nonce / bootstrap providers section)
+
+## 2026-06-29 — security: do not expose CSP nonce in a custom response header
+
+Why: Emitting the per-request nonce as `X-CSP-Nonce: <value>` on API JSON responses violates OWASP CSP nonce confidentiality. Same-origin JavaScript can read this header from any `fetch()` response. If the nonce ever protects `script-src`, an attacker with any XSS entry point can extract it and self-inject a whitelisted script. Deliver the nonce exclusively via server-side HTML template injection (`<meta name="csp-nonce">`), never via a custom header.
+Belongs in (guess): rules/code-style-backend.md (CSP/Helmet section)
+
+## 2026-06-29 — security: per-request CSP style-nonce delivery is serving-topology-dependent
+
+Why: A static `index.html` has a fixed `<meta name="csp-nonce" content="">`. In an architecture where a separate file server (Nx dev server or nginx static) serves the HTML, NestJS middleware can generate nonces but they never reach the `<meta>` tag — Angular bootstraps with `CSP_NONCE = ""`. The full nonce pipeline requires exactly one service to: (1) generate the nonce, (2) set the `Content-Security-Policy` header on the HTML response, and (3) inject the nonce into `<meta name="csp-nonce" content="…">` — all in the same request. Options are topology-dependent: nginx static → `sub_filter`; NestJS serves HTML → `ServeStaticModule` intercept. Decide the option only once the compose topology is locked (Task 18). Until then, `'unsafe-inline'` in `style-src` is the intentional, documented skeleton-phase tradeoff.
+Belongs in (guess): PROJECT_CONTEXT (security roadmap) | DECISIONS.md (CSP nonce ADR, Task 19.2)
+
+## 2026-06-29 — workflow: cyclic-development root causes and mitigations (grill session)
+
+Why: A grill session diagnosed why task A's review systematically emits task B, B emits C, etc. beyond foreseeable scope. Three root causes, each with a distinct cure:
+
+1. **Foreseeable blast-radius leaks out late** — when a task introduces a shared seam (new enum, new field consumed across layers), the full blast-radius wasn't mapped up front. Fix: **targeted foresight gate** (trigger = "introduces/changes a shared contract/seam" → blast-radius map before implementation, task re-authored at full scope).
+2. **No quality floor on emission** — pre-existing polish got the same task-file ceremony as security holes. Fix: **4-tier severity floor** (Correctness/Security → always emit/fix; Comprehension → emit; Consistency-with-operational-impact → emit; Polish/preference → DROP, record one line in sub-floor ledger in KNOWLEDGE_INBOX.md for theme detection). Floor test: "misleads a reader or behaves wrong" vs. "merely not preferred style."
+3. **Emitted tasks pulled depth-first ahead of original backlog** — premature hardening (per-request CSP nonces) on an undecided seam (serving topology). Fix: **roadmap-prioritization rule** (emitted tasks prioritized against backlog; blocked/premature tasks parked with blocking dep named).
+   Also identified: `## Emit as Task` escape valve is working as designed — the issue is scope of the originating task, not the valve. "Infinite refactoring" instinct is real: the floor provides a fixed stopping point ("understandable and works"), avoiding the shifting "ideal ideal" target.
+   Belongs in: rules/workflow.md (foresight gate + severity floor + roadmap rule — Task 2026-06-29-05)
+
+## 2026-06-29 — workflow: "project-scoped reviewer" = durable map + scoped depth, not full repo scan
+
+Why: Agents are stateless — their "project memory" is only what they read pre-flight. A reviewer that reads only the diff classifies "introduced vs. pre-existing" correctly but cannot detect half-wired seams (e.g., nonce header added, but the HTML server that needs it is elsewhere). Fix: (1) project-map pre-flight (reviewer + security-scanner read ARCHITECTURE.md/DECISIONS.md/CONTEXT.md before every review); (2) seam-aware depth (when the change touches a shared contract, read full files + consumers + dependencies — bidirectional); (3) security-scanner also reads trust-boundary/threat-model from DECISIONS.md. Critically: this upgrade depends on the docs existing first — pointing agents at ARCHITECTURE.md before Task 19 writes it creates silent gaps. Sequence: Task 19 → Task 18 → Task 19.2 (topology docs) → Task 2026-06-29-06 (agent upgrade). "Project-scoped" = stateful map externalized into a durable doc, not stateless full-scan each review.
+Belongs in: .claude/agents/reviewer.md + .claude/agents/security-scanner.md (Task 2026-06-29-06, Depends on Task 19.2)
+
+## 2026-06-29 — roadmap: bones-before-muscles ordering — don't harden an undecided seam
+
+Why: Depth-first security hardening (per-request CSP nonces) on a skeleton whose serving topology is undecided produced a half-wired feature that was worse than both states: it removed `'unsafe-inline'` but Angular never received the nonce, so styles would break in a non-trivial app. Rule: if an implementation option depends on an upstream architectural decision (who serves the HTML, which DB, which transport), defer the implementation until that decision is concrete. The CSP nonce task is the canonical case — reverting it was cheaper than implementing Option A (NestJS-serves HTML) speculatively, which Task 18 might invalidate. Parked-task convention encodes this: record the option analysis in the task file, park it with `Depends on` Task 18, pick the option after topology is locked.
+Belongs in: rules/workflow.md (roadmap rule section, Task 2026-06-29-05) | PROJECT_CONTEXT
+
 ## 2026-06-28 — cli: slim CliConfig pattern for apps that share IdentityModule but don't need JWT/Telegram vars
 
 Why: CLI apps that call `ApproveUserService`/`RejectUserService` only need `MONGO_URI` and `MONGO_DB_NAME`. Creating a separate `loadCliConfig()` that validates only those vars (while using the same `API_CONFIG` symbol token) lets the CLI reuse `CliIdentityModule` without requiring unrelated secrets. Each NestJS app has its own DI container so symbol identity is per-app, not global.
