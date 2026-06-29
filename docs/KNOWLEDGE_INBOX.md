@@ -161,21 +161,6 @@ Belongs in (guess): PROJECT_CONTEXT (security roadmap note)
 Why: `pino.Logger.warn/error` signatures put the structured-context object first and the human-readable message string second: `logger.warn({ statusCode }, '[CODE] message')`. NestJS built-in `Logger.warn` is the reverse: `logger.warn('message', context)`. Migrating from `new Logger()` to injected pino requires swapping call-site argument order at every `warn`/`error` call — TypeScript surfaces this as TS2769 overload mismatch, so it's caught at compile time.
 Belongs in (guess): rules/code-style-backend.md (logging section)
 
-## 2026-06-29 — angular: CSP nonce DI token is `CSP_NONCE`, not `NgCspNonce`
-
-Why: `NgCspNonce` is Angular's internal directive class, not a public export. `@angular/core` exports `CSP_NONCE` as the injection token for providing the per-request nonce to the bootstrap injector. Using `NgCspNonce` in an import causes TS2724: `'"@angular/core"' has no exported member named 'NgCspNonce'. Did you mean 'CSP_NONCE'?`. Always import `CSP_NONCE` from `@angular/core`; `NgCspNonce` only appears in Angular's internal source and Angular docs sometimes conflate the two names.
-Belongs in (guess): rules/code-style-angular.md (CSP nonce / bootstrap providers section)
-
-## 2026-06-29 — security: do not expose CSP nonce in a custom response header
-
-Why: Emitting the per-request nonce as `X-CSP-Nonce: <value>` on API JSON responses violates OWASP CSP nonce confidentiality. Same-origin JavaScript can read this header from any `fetch()` API response. If the nonce ever protects `script-src`, an attacker with any XSS entry point can extract it and self-inject a whitelisted script. For static-SPA architectures, the nonce has no legitimate consumer on API responses — Angular reads from `<meta name="csp-nonce">`, not a fetch header. Deliver the nonce exclusively via server-side HTML template injection.
-Belongs in (guess): rules/code-style-backend.md (CSP/Helmet section)
-
-## 2026-06-29 — security: per-request CSP nonce for a static SPA requires SSR or proxy-level HTML injection
-
-Why: A static `index.html` has a fixed `<meta name="csp-nonce" content="">`. The API middleware can generate nonces, but in an architecture where a separate file server (Nx dev server or nginx static) serves the HTML, the nonce never reaches the `<meta>` tag — Angular bootstraps with `CSP_NONCE = ""` and injects `<style nonce="">` tags that never match `style-src 'nonce-xxx'`. The full nonce pipeline requires exactly one service to: (1) generate the nonce, (2) set the `Content-Security-Policy` header on the HTML response, and (3) inject the nonce into `<meta name="csp-nonce" content="…">` — all in the same request. Options: Angular SSR (NestJS renders the shell), NestJS `ServeStaticModule` + in-memory template render, or nginx `sub_filter`. Until one is in place, `'unsafe-inline'` in `style-src` remains the only option that works.
-Belongs in (guess): PROJECT_CONTEXT (security roadmap) | rules/code-style-backend.md (CSP section)
-
 ## 2026-06-28 — cli: slim CliConfig pattern for apps that share IdentityModule but don't need JWT/Telegram vars
 
 Why: CLI apps that call `ApproveUserService`/`RejectUserService` only need `MONGO_URI` and `MONGO_DB_NAME`. Creating a separate `loadCliConfig()` that validates only those vars (while using the same `API_CONFIG` symbol token) lets the CLI reuse `CliIdentityModule` without requiring unrelated secrets. Each NestJS app has its own DI container so symbol identity is per-app, not global.
