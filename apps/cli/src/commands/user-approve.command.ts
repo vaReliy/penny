@@ -39,19 +39,24 @@ export class UserApproveCommand extends CommandRunner {
   }
 
   async run([telegramId]: string[]): Promise<void> {
-    const user = await this.userRepository.findByTelegramId(telegramId);
+    try {
+      const user = await this.userRepository.findByTelegramId(telegramId);
 
-    if (!user) {
-      this.logger.error({ telegramId }, 'User not found');
+      if (!user) {
+        this.logger.error({ telegramId }, 'User not found');
+        process.exit(1);
+      }
+
+      const ctx: ServiceContext<CliConfig> = {
+        config: this.config,
+        caller: CLI_ADMIN_CALLER,
+      };
+
+      await this.approveUser.run({ userId: user.id }, ctx);
+      this.logger.info({ telegramId, userId: user.id }, 'User approved');
+    } catch (err) {
+      this.logger.error({ telegramId, err }, 'user:approve failed');
       process.exit(1);
     }
-
-    const ctx: ServiceContext<CliConfig> = {
-      config: this.config,
-      caller: CLI_ADMIN_CALLER,
-    };
-
-    await this.approveUser.run({ userId: user.id }, ctx);
-    this.logger.info({ telegramId, userId: user.id }, 'User approved');
   }
 }

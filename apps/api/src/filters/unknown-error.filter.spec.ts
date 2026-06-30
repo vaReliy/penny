@@ -1,13 +1,33 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type pino from 'pino';
 
+// HttpException must be a real class so `instanceof HttpException` inside the filter works.
+const MockHttpException = vi.hoisted(() => {
+  class HttpException extends Error {
+    constructor(
+      private readonly response: object | string,
+      private readonly status: number,
+    ) {
+      super();
+    }
+    getStatus(): number {
+      return this.status;
+    }
+    getResponse(): object | string {
+      return this.response;
+    }
+  }
+  return HttpException;
+});
+
 vi.mock('@nestjs/common', () => ({
   Catch: () => () => undefined,
   Inject: () => () => undefined,
+  HttpException: MockHttpException,
 }));
 
+import { HttpException } from '@nestjs/common'; // resolves to MockHttpException
 import type { ArgumentsHost } from '@nestjs/common';
-import { ValidationError } from 'shared-errors';
 
 import { UnknownErrorFilter } from './unknown-error.filter.js';
 
@@ -82,13 +102,22 @@ describe('UnknownErrorFilter', () => {
     expect(body.message).not.toContain('hunter2');
   });
 
-  it('skips handling when the exception is a BaseError instance', () => {
+  it('passes through HttpException status and body (e.g. 403 from ActiveUserGuard)', () => {
     const { host, status, json } = makeHost();
-    filter.catch(new ValidationError('Bad input.'), host);
+    const body = { statusCode: 403, message: 'Forbidden' };
+    filter.catch(new HttpException(body, 403), host);
 
-    // BaseErrorFilter is responsible for BaseError — this filter must bail out
-    expect(status).not.toHaveBeenCalled();
-    expect(json).not.toHaveBeenCalled();
+    expect(status).toHaveBeenCalledWith(403);
+    expect(json).toHaveBeenCalledWith(body);
+  });
+
+  it('does not call logger.error for HttpException (expected guard rejections are not unknown errors)', () => {
+    const { host } = makeHost();
+    filter.catch(
+      new HttpException({ statusCode: 404, message: 'Not Found' }, 404),
+      host,
+    );
+    expect(mockLogger.error).not.toHaveBeenCalled();
   });
 
   it('calls logger.error with { message } and "Unhandled exception"', () => {

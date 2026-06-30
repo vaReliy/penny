@@ -1,5 +1,16 @@
 # See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
+# secrets
+.env
+!.env.example
+
+# local compose overrides (developer-specific)
+docker-compose.override.yml
+
+# Angular environment files (copy from environment.example.ts)
+apps/web/src/environments/environment.ts
+apps/web/src/environments/environment.development.ts
+
 # compiled output
 dist
 tmp

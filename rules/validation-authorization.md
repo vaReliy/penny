@@ -76,7 +76,7 @@ Frontend consumes the `fields` object and maps errors to form inputs.
    - Compute `HMAC-SHA256(secret, data-check-string)` and compare to `hash` with `timingSafeEqual`.
    - Reject if `auth_date` is older than 24 h (replay protection).
 4. Find-or-create user by `telegramId` (durable identity key).
-5. If new user → status = `pending`; issue JWT cookie.
+5. Issue JWT cookie for all verified users — both new (`pending`) and existing users. `pending` users need the cookie to reach `GET /auth/me` and read their approval status; data routes are gated by `ActiveUserGuard` (see below).
 
 ```typescript
 import { createHmac, createHash, timingSafeEqual } from 'node:crypto';
@@ -124,22 +124,44 @@ res.cookie('session', token, {
 
 ### Per-request status re-check (hard enforcement)
 
-The JWT signature proves authenticity; the DB re-check enforces current status:
+The JWT signature proves authenticity; the DB re-check enforces current status. Guards are split into two roles:
+
+**SessionGuard** — authentication only, verifies JWT signature + loads user from DB, **no status check**. Apply to endpoints all authenticated users can reach:
 
 ```typescript
-// In the auth guard (NestJS middleware)
+// SessionGuard — authentication only
+// Apply to: GET /auth/me and any endpoint all authenticated users may reach
 const payload = jwt.verify(token, jwtSecret) as SessionPayload;
 const user = await userRepository.findById(payload.sub); // always hits DB
-if (!user || user.status !== UserStatus.ACTIVE) {
+if (!user) {
   throw new UnauthorizedException();
+}
+req.user = {
+  id: user.id,
+  telegramId: user.telegramId,
+  displayName: user.firstName ?? user.username ?? user.telegramId,
+  status: user.status, // loaded from DB, but not checked here
+};
+```
+
+**ActiveUserGuard** — authorization, checks `status === active`. Apply to all data endpoints:
+
+```typescript
+// ActiveUserGuard — authorization, enforces active status
+// Apply to: GET /hello, POST /budget, and every route serving real data
+if (req.user?.status !== UserStatus.ACTIVE) {
+  throw new ForbiddenException();
 }
 ```
 
-Re-loading on every request:
+Re-loading the user on every request:
 
 - Enables instant revocation (set `status = rejected` → next request fails).
-- Enforces the admin-approval gate for `pending` users.
-- No server-side token store required (stateless JWT + DB re-check).
+- `pending` users pass SessionGuard (can reach `/auth/me` to view approval status) but fail ActiveUserGuard (blocked from data routes).
+- `rejected` users are blocked from both once their JWT expires.
+- No server-side token store required (stateless JWT + per-request DB re-check).
+
+**UserStatus values**: `PENDING` (registered, awaiting admin approval), `ACTIVE` (approved, full platform access), `REJECTED` (denied, terminal state).
 
 **No tokens in localStorage** — enforced by ESLint `no-restricted-syntax` in all `platform:web` libs.
 
@@ -149,16 +171,39 @@ Re-loading on every request:
 
 **Enforcement:** guard placement is a code pattern — enforced by code review and security-scanner gate. (soft — not an ESLint rule)
 
-Authorization checks run in NestJS guards, before the controller. UseCases never perform auth checks.
+Authorization checks run in NestJS guards, before the controller. UseCases never perform auth checks. The two-guard pattern ensures that:
+
+1. **SessionGuard must run first** — it loads the user from the DB and populates `req.user`.
+2. **ActiveUserGuard runs after** — it checks `req.user.status`, throwing `ForbiddenException` (403) if not `ACTIVE`.
+
+**Clarification**: SessionGuard throws `UnauthorizedException` (401 — authentication failure); ActiveUserGuard throws `ForbiddenException` (403 — authenticated but not authorized).
+
+Example implementation:
 
 ```typescript
 @Injectable()
 export class ActiveUserGuard implements CanActivate {
-  canActivate(context: ExecutionContext): boolean {
-    const req = context.switchToHttp().getRequest<RequestWithUser>();
-    return req.user?.status === UserStatus.ACTIVE;
+  public canActivate(context: ExecutionContext): boolean {
+    const req = context.switchToHttp().getRequest<Request & { user?: SessionUser }>();
+    if (!req.user || req.user.status !== UserStatus.ACTIVE) {
+      throw new ForbiddenException();
+    }
+    return true;
   }
 }
 ```
 
-The guard relies on the `user` object populated by the JWT middleware (the per-request DB re-check above).
+Usage in a controller:
+
+```typescript
+@Controller('hello')
+export class HelloController {
+  @Get()
+  @UseGuards(SessionGuard, ActiveUserGuard) // SessionGuard first, then ActiveUserGuard
+  public greet(@CurrentUser() user: SessionUser): { message: string } {
+    return { message: `Hello, ${user.displayName}!` };
+  }
+}
+```
+
+The guard sequence ensures that `pending` users can call `GET /auth/me` (protected by SessionGuard alone) to check their approval status, but cannot access data endpoints (protected by both guards).

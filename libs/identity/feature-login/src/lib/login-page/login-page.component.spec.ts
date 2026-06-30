@@ -70,8 +70,8 @@ describe('LoginPageComponent', () => {
     expect(submitTelegramLoginMock).toHaveBeenCalledOnce();
     expect(submitTelegramLoginMock).toHaveBeenCalledWith({
       id: 123456,
-      firstName: 'Alice',
-      authDate: 1700000000,
+      first_name: 'Alice',
+      auth_date: 1700000000,
       hash: 'abc123deadbeef',
     });
   });

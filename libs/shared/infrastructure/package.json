@@ -8,5 +8,8 @@
   "dependencies": {
     "pino": "9.14.0",
     "tslib": "2.8.1"
+  },
+  "devDependencies": {
+    "pino-pretty": "11.3.0"
   }
 }

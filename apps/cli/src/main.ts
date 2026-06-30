@@ -9,7 +9,7 @@ import { AppModule } from './app/app.module.js';
 registerLivrRules();
 
 async function bootstrap(): Promise<void> {
-  await CommandFactory.run(AppModule, { logger: false });
+  await CommandFactory.run(AppModule, { logger: ['error'] });
 }
 
 bootstrap().catch((err: unknown) => {

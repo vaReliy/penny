@@ -358,6 +358,28 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-06-30 — Fix: validation-authorization.md — ActiveUserGuard must throw ForbiddenException (403), not UnauthorizedException (401)
+
+- **Component**: `rules/validation-authorization.md`, `apps/api/src/auth/active-user.guard.ts`
+- **Type**: Fix
+- **What happened**: `ActiveUserGuard` was initially implemented to throw `UnauthorizedException` (401) for PENDING/REJECTED users. DDD-architect review identified this as semantically wrong: RFC 7235 specifies 401 = "lacks valid authentication credentials" (instructs re-authentication), 403 = "server understood but refuses to authorize" (re-auth won't help). PENDING/REJECTED users hold a valid JWT (Telegram HMAC verified = authenticated). Re-authenticating via Telegram produces the same status — 401 sends them on a futile re-auth loop. Fixed to `ForbiddenException` (403, no-arg). `validation-authorization.md` updated to document the 401/403 split explicitly: SessionGuard → 401 (authn failure), ActiveUserGuard → 403 (authz failure).
+- **Why it matters upstream**: Any claude-ts consumer that implements a multi-step auth flow (identity verification + separate platform authorization/approval) will hit the same pattern. Using 401 from an authorization guard is a systematic semantic error that breaks HTTP client auto-handling (browsers may clear credentials on 401, causing users to be logged out when they should just see a "pending approval" page).
+- **Suggested upstream change**: In `rules/validation-authorization.md` Authorization (guards) section, specify the HTTP status code contract explicitly: authentication guards throw 401; authorization guards throw 403. Add the clarifying note: "SessionGuard throws `UnauthorizedException` (401); ActiveUserGuard throws `ForbiddenException` (403) — re-authentication cannot resolve an authorization denial."
+- **Status**: pending-port
+
+---
+
+## 2026-06-30 — Enhancement: validation-authorization.md — two-guard pattern for mixed-status auth
+
+- **Component**: `rules/validation-authorization.md`
+- **Type**: Enhancement
+- **What happened**: The "Session — Per-request status re-check" section previously prescribed a single guard combining authentication and authorization (`if (!user || user.status !== UserStatus.ACTIVE) throw UnauthorizedException()`). This collapsed both concerns and made it impossible to serve PENDING users on status-check endpoints without opening all guarded routes to them. Updated the rule to the two-guard pattern: `SessionGuard` (JWT verification + DB user load, no status check — applied to endpoints all authenticated users may reach, e.g. `GET /auth/me`) and `ActiveUserGuard` (checks `status === ACTIVE` — applied to all data endpoints). Also updated the verification flow to state that JWT cookies are issued for all authenticated users regardless of status, and updated the `ActiveUserGuard` scaffold to throw `UnauthorizedException` (not return false). All three `UserStatus` values (`PENDING`, `ACTIVE`, `REJECTED`) documented in context.
+- **Why it matters upstream**: Any app that needs a post-login status page (approval flow, email-verification gate, onboarding) faces this same pattern: the user needs a session to check their status, but a session alone must not grant access to data routes. The monolithic guard pattern forces a choice between "no session for unapproved users" (breaks status page) and "session grants full access" (security hole). The two-guard split is the universal solution.
+- **Suggested upstream change**: In `rules/validation-authorization.md`, replace the monolithic `if (!user || user.status !== UserStatus.ACTIVE)` code example in the "Per-request status re-check" section with two annotated examples — one for `SessionGuard` (auth-only) and one for `ActiveUserGuard` (status check). Add a note in the verification flow that JWT issuance policy is app-specific (ACTIVE-only vs all-users) and must be declared explicitly.
+- **Status**: pending-port
+
+---
+
 ## 2026-06-28 — Enhancement: workflow.md — explicit split-dispatch guidance for mixed infra+code tasks (reinforcement)
 
 - **Component**: `rules/workflow.md` routing guidance

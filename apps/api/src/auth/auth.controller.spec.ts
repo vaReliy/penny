@@ -7,11 +7,18 @@ vi.mock('shared-contracts', () => ({
 vi.mock('@nestjs/common', () => ({
   Controller: () => () => undefined,
   Post: () => () => undefined,
+  Get: () => () => undefined,
+  UseGuards: () => () => undefined,
   Body: () => () => undefined,
   Res: () => () => undefined,
   HttpCode: () => () => undefined,
   Inject: () => () => undefined,
   SetMetadata: vi.fn().mockReturnValue(() => undefined),
+}));
+
+vi.mock('./session.guard.js', () => ({ SessionGuard: class {} }));
+vi.mock('./current-user.decorator.js', () => ({
+  CurrentUser: () => () => undefined,
 }));
 
 import { AuthController } from './auth.controller.js';
@@ -147,7 +154,7 @@ describe('AuthController', () => {
   });
 
   describe('POST /auth/telegram — pending user', () => {
-    it('does not set cookie and returns { status: "pending" }', async () => {
+    it('sets cookie and returns { status: "pending" } — JWT issued so user can call GET /auth/me', async () => {
       const user = makeUser(UserStatus.PENDING);
       (loginWithTelegram.run as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: { user, status: UserStatus.PENDING },
@@ -158,12 +165,12 @@ describe('AuthController', () => {
       const result = await controller.telegramLogin({} as never, res);
 
       expect(result).toEqual({ status: 'pending' });
-      expect(cookie).not.toHaveBeenCalled();
+      expect(cookie).toHaveBeenCalledTimes(2);
     });
   });
 
   describe('POST /auth/telegram — rejected user', () => {
-    it('does not set cookie and returns { status: "rejected" }', async () => {
+    it('sets cookie and returns { status: "rejected" } — JWT issued so user can check their status', async () => {
       const user = makeUser(UserStatus.REJECTED);
       (loginWithTelegram.run as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: { user, status: UserStatus.REJECTED },
@@ -174,7 +181,7 @@ describe('AuthController', () => {
       const result = await controller.telegramLogin({} as never, res);
 
       expect(result).toEqual({ status: 'rejected' });
-      expect(cookie).not.toHaveBeenCalled();
+      expect(cookie).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -187,6 +194,30 @@ describe('AuthController', () => {
       expect(clearCookie).toHaveBeenCalledWith(AUTH_COOKIE_NAME, { path: '/' });
       expect(clearCookie).toHaveBeenCalledWith(XSRF_COOKIE_NAME, { path: '/' });
       expect(clearCookie).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('GET /auth/me', () => {
+    it('returns the session user as-is for an ACTIVE user', () => {
+      controller = makeController();
+      const user = {
+        id: 'u1',
+        telegramId: '123',
+        displayName: 'Alice',
+        status: UserStatus.ACTIVE,
+      };
+      expect(controller.getMe(user as never)).toEqual(user);
+    });
+
+    it('returns the session user as-is for a PENDING user — no status gate on this endpoint', () => {
+      controller = makeController();
+      const user = {
+        id: 'u2',
+        telegramId: '456',
+        displayName: 'Bob',
+        status: UserStatus.PENDING,
+      };
+      expect(controller.getMe(user as never)).toEqual(user);
     });
   });
 });

@@ -19,7 +19,7 @@ export class GreetingPageComponent {
 
   readonly greeting = toSignal(
     this.identityService.getHello().pipe(
-      map((r): GreetingState => ({ kind: 'success', message: r.message })),
+      map((r): GreetingState => ({ kind: 'success', message: r.greeting })),
       startWith<GreetingState>({ kind: 'loading' }),
       catchError(() => of<GreetingState>({ kind: 'error' })),
     ),

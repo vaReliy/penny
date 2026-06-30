@@ -11,7 +11,7 @@ import { PINO_LOGGER } from './logger.tokens.js';
     {
       provide: PINO_LOGGER,
       useFactory: (config: CliConfig): pino.Logger =>
-        createPinoLogger({ mode: config.mode }),
+        createPinoLogger({ mode: config.mode, sync: true }),
       inject: [API_CONFIG],
     },
   ],

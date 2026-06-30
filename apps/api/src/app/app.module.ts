@@ -22,8 +22,8 @@ import { UnknownErrorFilter } from '../filters/unknown-error.filter.js';
   controllers: [HealthController],
   providers: [
     { provide: APP_GUARD, useClass: CsrfGuard },
-    { provide: APP_FILTER, useClass: BaseErrorFilter },
     { provide: APP_FILTER, useClass: UnknownErrorFilter },
+    { provide: APP_FILTER, useClass: BaseErrorFilter },
   ],
 })
 export class AppModule {}

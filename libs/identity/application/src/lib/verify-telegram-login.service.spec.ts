@@ -6,9 +6,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   VerifyTelegramLoginService,
-  type RawTelegramLoginPayload,
   type VerifyTelegramLoginConfig,
 } from './verify-telegram-login.service.js';
+import type { RawTelegramLoginPayload } from 'shared-contracts';
 import type { ServiceContext } from 'shared-kernel';
 
 /**

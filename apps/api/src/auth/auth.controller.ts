@@ -1,15 +1,23 @@
 import { randomBytes } from 'node:crypto';
 
-import { Controller, Post, Body, Inject, Res, HttpCode } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Inject,
+  Res,
+  HttpCode,
+  UseGuards,
+} from '@nestjs/common';
 import type { Response } from 'express';
 
 import type {
   VerifyTelegramLoginService,
   LoginWithTelegramService,
   ITokenIssuer,
-  RawTelegramLoginPayload,
 } from 'identity-application';
-import { UserStatus } from 'shared-contracts';
+import type { SessionUser, RawTelegramLoginPayload } from 'shared-contracts';
 
 import { TOKENS } from '../identity/tokens.js';
 import { API_CONFIG } from '../config/api-config.js';
@@ -20,6 +28,8 @@ import {
   XSRF_COOKIE_NAME,
 } from './cookie.constants.js';
 import { SkipCsrf } from './skip-csrf.decorator.js';
+import { SessionGuard } from './session.guard.js';
+import { CurrentUser } from './current-user.decorator.js';
 
 interface TelegramLoginResponse {
   readonly status: string;
@@ -37,6 +47,12 @@ export class AuthController {
     @Inject(API_CONFIG)
     private readonly config: ApiConfig,
   ) {}
+
+  @Get('me')
+  @UseGuards(SessionGuard)
+  public getMe(@CurrentUser() user: SessionUser): SessionUser {
+    return user;
+  }
 
   // TODO: apply rate limiting (e.g. @nestjs/throttler ~5 req/min/IP) to prevent
   // resource exhaustion and amplified DB load on repeated Telegram login attempts.
@@ -59,28 +75,26 @@ export class AuthController {
       caller: null,
     });
 
-    if (status === UserStatus.ACTIVE) {
-      const token = this.tokenIssuer.issue({
-        sub: user.id,
-        status: user.status,
-        roles: [],
-      });
-      res.cookie(AUTH_COOKIE_NAME, token, {
-        httpOnly: true,
-        secure: this.config.mode === 'production',
-        sameSite: 'lax',
-        maxAge: AUTH_COOKIE_MAX_AGE_MS,
-        path: '/',
-      });
-      const csrfToken = randomBytes(32).toString('hex');
-      res.cookie(XSRF_COOKIE_NAME, csrfToken, {
-        httpOnly: false,
-        secure: this.config.mode === 'production',
-        sameSite: 'lax',
-        maxAge: AUTH_COOKIE_MAX_AGE_MS,
-        path: '/',
-      });
-    }
+    const token = this.tokenIssuer.issue({
+      sub: user.id,
+      status: user.status,
+      roles: [],
+    });
+    res.cookie(AUTH_COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: this.config.mode === 'production',
+      sameSite: 'lax',
+      maxAge: AUTH_COOKIE_MAX_AGE_MS,
+      path: '/',
+    });
+    const csrfToken = randomBytes(32).toString('hex');
+    res.cookie(XSRF_COOKIE_NAME, csrfToken, {
+      httpOnly: false,
+      secure: this.config.mode === 'production',
+      sameSite: 'lax',
+      maxAge: AUTH_COOKIE_MAX_AGE_MS,
+      path: '/',
+    });
 
     return { status };
   }

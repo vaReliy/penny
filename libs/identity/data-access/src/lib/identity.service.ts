@@ -1,20 +1,21 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import type { Observable } from 'rxjs';
-import type { TelegramLoginPayload, SessionUser } from 'shared-contracts';
+import type { SessionUser } from 'shared-contracts';
+import type { RawTelegramLoginPayload } from 'shared-contracts';
 
 export interface TelegramAuthResponse {
   readonly status: string;
 }
 
-const AUTH_BASE = '/auth';
+const AUTH_BASE = '/api/auth';
 
 @Injectable({ providedIn: 'root' })
 export class IdentityService {
   private readonly http = inject(HttpClient);
 
   public submitTelegramLogin(
-    params: TelegramLoginPayload,
+    params: RawTelegramLoginPayload,
   ): Observable<TelegramAuthResponse> {
     return this.http.post<TelegramAuthResponse>(
       `${AUTH_BASE}/telegram`,
@@ -35,8 +36,14 @@ export class IdentityService {
     });
   }
 
-  public getHello(): Observable<{ readonly message: string }> {
-    return this.http.get<{ readonly message: string }>('/api/hello', {
+  public getHello(): Observable<{
+    readonly greeting: string;
+    readonly telegramId: string;
+  }> {
+    return this.http.get<{
+      readonly greeting: string;
+      readonly telegramId: string;
+    }>('/api/hello', {
       withCredentials: true,
     });
   }

@@ -3,19 +3,11 @@ import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { AuthenticationError } from 'shared-errors';
 import { BaseService } from 'shared-kernel';
 import { TELEGRAM_LOGIN_PAYLOAD_SCHEMA } from 'shared-validation';
-import type { TelegramLoginPayload } from 'shared-contracts';
+import type {
+  TelegramLoginPayload,
+  RawTelegramLoginPayload,
+} from 'shared-contracts';
 import type { ServiceContext } from 'shared-kernel';
-
-/** Raw payload shape received from the Telegram Login Widget on the wire. */
-export interface RawTelegramLoginPayload {
-  readonly id: number;
-  readonly auth_date: number;
-  readonly hash: string;
-  readonly first_name?: string;
-  readonly last_name?: string;
-  readonly username?: string;
-  readonly photo_url?: string;
-}
 
 /** Config slice this service needs from `ServiceContext.config`. */
 export interface VerifyTelegramLoginConfig {

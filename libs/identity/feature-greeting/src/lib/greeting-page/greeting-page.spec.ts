@@ -31,7 +31,7 @@ describe('GreetingPageComponent', () => {
 
   it('shows message when getHello() emits a response', async () => {
     mockIdentityService.getHello.mockReturnValue(
-      of({ message: 'Hello, Test' }),
+      of({ greeting: 'Hello, Test', telegramId: '123456' }),
     );
     createComponent();
     await fixture.whenStable();

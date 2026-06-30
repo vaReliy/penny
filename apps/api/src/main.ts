@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
 import pinoHttp from 'pino-http';
 import type pino from 'pino';
+import type { Request, Response, NextFunction } from 'express';
 
 import { registerLivrRules } from 'shared-kernel';
 
@@ -39,9 +40,17 @@ async function bootstrap(): Promise<void> {
   // <meta> tags.
   app.use(helmet({ contentSecurityPolicy: { directives: CSP_DIRECTIVES } }));
 
-  // Strip $-prefixed and dot-prefixed keys from req.body/params/query to prevent
-  // NoSQL operator injection reaching any route handler.
-  app.use(mongoSanitize());
+  // Strip $-prefixed and dot-prefixed keys from req.body to prevent NoSQL operator
+  // injection. Applied only to body because Express 5 made req.query a getter-only
+  // property — the express-mongo-sanitize middleware tries to reassign it and throws.
+  // Query-param injection is low-risk: LIVR validation rejects unexpected shapes before
+  // any domain logic runs, and mongoose query builders don't accept raw operator objects.
+  app.use((req: Request, _res: Response, next: NextFunction) => {
+    if (req.body !== null && req.body !== undefined) {
+      req.body = mongoSanitize.sanitize(req.body);
+    }
+    next();
+  });
 
   app.enableShutdownHooks();
 

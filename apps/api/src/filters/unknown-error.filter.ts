@@ -1,9 +1,7 @@
-import { Catch, Inject } from '@nestjs/common';
+import { Catch, HttpException, Inject } from '@nestjs/common';
 import type { ExceptionFilter, ArgumentsHost } from '@nestjs/common';
 import type { Response } from 'express';
 import type pino from 'pino';
-
-import { BaseError } from 'shared-errors';
 
 import { PINO_LOGGER } from '../logger/logger.tokens.js';
 
@@ -11,23 +9,28 @@ import { PINO_LOGGER } from '../logger/logger.tokens.js';
 const INTERNAL_ERROR_STATUS = 500;
 
 /**
- * Catch-all filter for any error that is NOT a `BaseError`.
- * Returns a generic 500 response without leaking internal details.
- * The `instanceof BaseError` guard below is a defensive check: NestJS routes
- * `BaseError` instances to the more-specific `BaseErrorFilter` first, but the
- * guard prevents a double-response if both filters ever fire on the same error.
+ * Catch-all filter for HttpException instances (404/403 from NestJS guards)
+ * and unknown JS errors. Never receives BaseError instances — BaseErrorFilter
+ * carries @Catch(BaseError) and always wins on specificity.
+ * The headersSent check is a defensive guard against double-writes if upstream
+ * middleware has already committed the response.
  */
 @Catch()
 export class UnknownErrorFilter implements ExceptionFilter<unknown> {
   constructor(@Inject(PINO_LOGGER) private readonly logger: pino.Logger) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
-    if (exception instanceof BaseError) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+
+    if (response.headersSent) {
       return;
     }
 
-    const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
+    if (exception instanceof HttpException) {
+      response.status(exception.getStatus()).json(exception.getResponse());
+      return;
+    }
 
     const message =
       exception instanceof Error ? exception.message : 'Unexpected error';

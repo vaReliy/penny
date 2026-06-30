@@ -4,20 +4,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { IdentityService, TELEGRAM_BOT_USERNAME } from 'identity-data-access';
-import type { TelegramLoginPayload } from 'identity-data-access';
+import type { RawTelegramLoginPayload } from 'identity-data-access';
 
 const TELEGRAM_WIDGET_VERSION = '22';
-
-const TELEGRAM_PARAM_MAP: Readonly<Record<string, keyof TelegramLoginPayload>> =
-  {
-    id: 'id',
-    first_name: 'firstName',
-    last_name: 'lastName',
-    username: 'username',
-    photo_url: 'photoUrl',
-    auth_date: 'authDate',
-    hash: 'hash',
-  };
 
 @Component({
   selector: 'lib-login-page',
@@ -52,9 +41,7 @@ export class LoginPageComponent implements OnInit {
       )
       .subscribe({
         next: (result) => {
-          if (result === null) {
-            return;
-          }
+          if (result === null) return;
           this.loginStatus.set('success');
           void this.router.navigate(['/']);
         },
@@ -91,33 +78,22 @@ export class LoginPageComponent implements OnInit {
 
   private extractTelegramPayload(
     params: Record<string, string>,
-  ): TelegramLoginPayload | null {
-    if (!('hash' in params)) {
+  ): RawTelegramLoginPayload | null {
+    const id = Number(params['id']);
+    const authDate = Number(params['auth_date']);
+
+    if (!params['hash'] || !Number.isFinite(id) || !Number.isFinite(authDate)) {
       return null;
     }
 
-    const partial: Partial<Record<keyof TelegramLoginPayload, unknown>> = {};
-
-    for (const [rawKey, value] of Object.entries(params)) {
-      const mappedKey = TELEGRAM_PARAM_MAP[rawKey];
-      if (mappedKey !== undefined) {
-        if (mappedKey === 'id' || mappedKey === 'authDate') {
-          partial[mappedKey] = Number(value);
-        } else {
-          partial[mappedKey] = value;
-        }
-      }
-    }
-
-    if (
-      typeof partial['id'] !== 'number' ||
-      typeof partial['firstName'] !== 'string' ||
-      typeof partial['authDate'] !== 'number' ||
-      typeof partial['hash'] !== 'string'
-    ) {
-      return null;
-    }
-
-    return partial as TelegramLoginPayload;
+    return {
+      id,
+      auth_date: authDate,
+      hash: params['hash'],
+      ...(params['first_name'] && { first_name: params['first_name'] }),
+      ...(params['last_name'] && { last_name: params['last_name'] }),
+      ...(params['username'] && { username: params['username'] }),
+      ...(params['photo_url'] && { photo_url: params['photo_url'] }),
+    };
   }
 }

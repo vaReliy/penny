@@ -4,13 +4,18 @@ import type { Request, Response } from 'express';
 
 import type { ITokenIssuer, TokenClaims } from 'identity-application';
 import type { IUserRepository } from 'identity-core';
-import { UserStatus } from 'shared-contracts';
 import { AuthenticationError } from 'shared-errors';
 import type { SessionUser } from 'shared-contracts';
 
 import { TOKENS } from '../identity/tokens.js';
 import { AUTH_COOKIE_NAME, XSRF_COOKIE_NAME } from './cookie.constants.js';
 
+/**
+ * Enforces authentication only: verifies the JWT and loads the user from DB.
+ * Does NOT check user.status — callers needing ACTIVE-only access must also
+ * apply ActiveUserGuard. Apply this guard to endpoints all authenticated
+ * users can reach regardless of approval state (e.g. GET /auth/me).
+ */
 @Injectable()
 export class SessionGuard implements CanActivate {
   public constructor(
@@ -41,7 +46,7 @@ export class SessionGuard implements CanActivate {
 
     const user = await this.userRepository.findById(claims.sub);
 
-    if (!user || user.status !== UserStatus.ACTIVE) {
+    if (!user) {
       res.clearCookie(AUTH_COOKIE_NAME, { path: '/' });
       res.clearCookie(XSRF_COOKIE_NAME, { path: '/' });
       throw new AuthenticationError('Access denied.');

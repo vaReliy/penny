@@ -128,28 +128,40 @@ describe('SessionGuard.canActivate', () => {
     expect(clearCookie).toHaveBeenCalledWith(XSRF_COOKIE_NAME, { path: '/' });
   });
 
-  it('clears cookie and throws AuthenticationError when user is rejected', async () => {
+  it('returns true and sets req.user for a PENDING user — SessionGuard does not check status', async () => {
+    const user = makeUser({
+      id: 'u-pending',
+      telegramId: '888',
+      firstName: 'Pending',
+      status: UserStatus.PENDING,
+    });
     (userRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(
-      makeUser({ status: UserStatus.REJECTED }),
+      user,
     );
-    const { ctx, clearCookie } = makeContext(`${AUTH_COOKIE_NAME}=valid-jwt`);
-    await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(
-      AuthenticationError,
-    );
-    expect(clearCookie).toHaveBeenCalledWith(AUTH_COOKIE_NAME, { path: '/' });
-    expect(clearCookie).toHaveBeenCalledWith(XSRF_COOKIE_NAME, { path: '/' });
+    const { ctx, getReqUser } = makeContext(`${AUTH_COOKIE_NAME}=valid-jwt`);
+
+    const result = await guard.canActivate(ctx);
+
+    expect(result).toBe(true);
+    expect(getReqUser()).toMatchObject({ status: UserStatus.PENDING });
   });
 
-  it('clears cookie and throws AuthenticationError when user is pending', async () => {
+  it("returns true and sets req.user for a REJECTED user — status check is ActiveUserGuard's job", async () => {
+    const user = makeUser({
+      id: 'u-rejected',
+      telegramId: '999',
+      firstName: 'Rejected',
+      status: UserStatus.REJECTED,
+    });
     (userRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(
-      makeUser({ status: UserStatus.PENDING }),
+      user,
     );
-    const { ctx, clearCookie } = makeContext(`${AUTH_COOKIE_NAME}=valid-jwt`);
-    await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(
-      AuthenticationError,
-    );
-    expect(clearCookie).toHaveBeenCalledWith(AUTH_COOKIE_NAME, { path: '/' });
-    expect(clearCookie).toHaveBeenCalledWith(XSRF_COOKIE_NAME, { path: '/' });
+    const { ctx, getReqUser } = makeContext(`${AUTH_COOKIE_NAME}=valid-jwt`);
+
+    const result = await guard.canActivate(ctx);
+
+    expect(result).toBe(true);
+    expect(getReqUser()).toMatchObject({ status: UserStatus.REJECTED });
   });
 
   it('returns true and sets req.user for a valid active user', async () => {

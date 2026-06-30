@@ -2,6 +2,11 @@
 
 Append-only queue for durable, project-relevant learnings whose final home isn't clear yet. Distilled into PROJECT_CONTEXT.md / CLAUDE.md / a rule / a skill, then deleted from here — this file should trend toward empty.
 
+## 2026-06-30 — typescript: `import type` does NOT re-export through `export *`
+
+Why: When an interface is moved from being declared inline in module A to being `import type`-d from module B, `export * from './module-a.js'` no longer carries that symbol — `export *` only propagates declared/exported members, not type-imported ones. Downstream consumers that imported the symbol from module A get a compile-time "has no exported member" error. Checklist for type-lift refactors: after replacing an inline declaration with `import type`, grep every file that imported the symbol from the original module and update them to the authoritative source.
+Belongs in (guess): rules/code-style.md (import hygiene section)
+
 ## 2026-06-29 — imports: shared-contracts alias is `'shared-contracts'`, not `'@penny/shared-contracts'`
 
 Why: Task files and docs occasionally write `@penny/shared-contracts` but the actual tsconfig path alias and every import in the codebase use the bare `'shared-contracts'` form. Using the `@penny/` prefix will cause a module-not-found error at build time.
@@ -251,7 +256,53 @@ Belongs in (guess): rules/architecture.md (CSP/nginx section) or PROJECT_CONTEXT
 Why: The `@nx/vitest` plugin in `nx.json` registers the test target as `"testTargetName": "vite:test"`. Running `npx nx test web` exits with "Cannot find configuration for task web:test". The correct command is `npx nx vite:test web`. This affects every agent that tests frontend code.
 Belongs in (guess): rules/workflow.md (Command Execution Policy table — add `web` row with `vite:test`)
 
-## 2026-06-29 — Angular CSP_NONCE provider: useFactory not useValue
+## 2026-06-29 — docker: tslib must be in dependencies (not devDependencies) when importHelpers: true
+
+Why: `tsconfig.base.json` sets `importHelpers: true`, which makes the compiled bundle emit `require('tslib')` calls at runtime. The multi-stage Dockerfile installs prod-only deps (`pnpm install --prod`) in the deps stage and copies those into the runtime image — so any package in `devDependencies` is absent. Moving `tslib` to `dependencies` is the fix; do NOT change the Dockerfile to copy `node_modules` from the build stage (that drags in all dev tools, bloating the image).
+Belongs in (guess): rules/docker-commands.md (prod image section)
+
+## 2026-06-29 — mcp: docker-based MCP servers need --name to avoid random container names
+
+Why: When Claude Code runs an MCP server via `docker run` without `--name`, Docker generates a random adjective+scientist name (e.g., `strange_goldstine`). Add `"--name", "github-mcp-server"` to the args array in `.mcp.json`. Note: `--name` prevents two simultaneous instances of the same MCP server, which is fine since Claude Code starts one per session.
+Belongs in (guess): PROJECT_CONTEXT (dev environment conventions)
+
+## 2026-06-30 — nestjs: SessionGuard vs ActiveUserGuard — authentication vs. authorization split
+
+Why: Removing `user.status !== UserStatus.ACTIVE` from `SessionGuard` allows PENDING/REJECTED users to pass JWT validation on every guarded route. The correct pattern is two guards: `SessionGuard` (JWT verification + DB user load, no status check — apply to auth-only endpoints like `/auth/me`) and `ActiveUserGuard` (checks `status === UserStatus.ACTIVE`, clears both cookies if not — apply to all data endpoints). Every future route that should be ACTIVE-only must explicitly apply `ActiveUserGuard`; `SessionGuard` alone is not sufficient.
+Belongs in (guess): rules/validation-authorization.md (guard patterns section)
+
+## 2026-06-30 — security: `'unsafe-hashes'` in `style-src` extends hash matching to `style=""` attributes
+
+Why: Without `'unsafe-hashes'`, SHA hashes in `style-src` only match inline `<style>` block content. Adding `'unsafe-hashes'` extends them to `style=""` element attributes — including a hash of the empty string (`sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=`), which is trivially reachable by any injected element. Pattern: never add `'unsafe-hashes'` to `style-src` without auditing whether the nonce pipeline can cover the same cases instead.
+Belongs in (guess): rules/code-style-backend.md (CSP section)
+
+## 2026-06-30 — angular: gitignored environment files require README setup instructions and a build-time guard
+
+Why: Angular `project.json` `fileReplacements` creates a hard dependency on `environment.ts` and `environment.development.ts`. When both are gitignored (correct for secrets), a fresh `git clone` + `nx serve` fails immediately because the file-replacement source/target are missing. The fix is two-part: (1) document the copy step from `environment.example.ts` in `README.md`; (2) optionally add a `postinstall` check that prints a human-readable error when the files are absent.
+Belongs in (guess): README.md (already a Fix Now item) | rules/dependencies.md (onboarding checklist note)
+
+## 2026-06-30 — security: Telegram `data-auth-url` redirect mode exposes HMAC hash in nginx access logs
+
+Why: The redirect-mode widget appends all Telegram params (`id`, `auth_date`, `hash`, etc.) as URL query parameters. Nginx logs the full URL by default, so the HMAC `hash` appears in access logs. An attacker with log read access can replay the payload within the 24-hour `auth_date` window. Mitigation options: (a) switch to callback mode (`data-onauth` with CSP `'unsafe-eval'` exemption, or postMessage), (b) configure nginx `log_format` to strip the `hash` param, (c) accept the risk given the 24-hour window and the fact that the widget already exposes the URL in browser history.
+Belongs in (guess): PROJECT_CONTEXT (security roadmap) | task: tasks/2026-06-30-telegram-hash-in-nginx-logs.md
+
+## 2026-06-30 — docker: compose api healthcheck needs Node.js HTTP + full path with global prefix
+
+Why: In `docker-compose.yml`, the api service healthcheck must use Node.js inline HTTP (not `wget` — not available in `node:22-alpine`) AND must hit the correct path. When `app.setGlobalPrefix('api')` is set in `main.ts`, the health endpoint is `/api/health`, not `/health`. Using the wrong path causes the healthcheck to always return non-200, `api` never reaches `healthy`, and any service with `depends_on: api: condition: service_healthy` cannot start.
+Correct form: `node -e "require('http').get('http://localhost:3000/api/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"`
+Belongs in (guess): rules/docker-commands.md (compose healthcheck section)
+
+## 2026-06-30 — nestjs: authentication guard → 401, authorization guard → 403
+
+Why: RFC 7235 — 401 means "lacks valid authentication credentials" and instructs clients to re-authenticate. 403 means "server understood but refuses to authorize; re-auth won't help." In a multi-step auth flow (Telegram HMAC → identity confirmed, then admin approval → platform membership), PENDING/REJECTED users ARE authenticated (valid JWT) but NOT authorized. `SessionGuard` (fails if no valid JWT) → 401 correct. `ActiveUserGuard` (fails if not ACTIVE) → 403 correct. Using 401 from an authorization guard causes HTTP clients and browsers to trigger re-authentication flows that can never resolve the underlying state, creating a futile redirect loop for PENDING users. Pattern: name the HTTP status explicitly in guard JSDoc. No-arg form for both (`new ForbiddenException()`, `new UnauthorizedException()`) — avoid message arguments that leak state.
+Belongs in (guess): rules/validation-authorization.md (already updated) | rules/code-style-backend.md (guard patterns)
+
+## 2026-06-30 — nestjs: UnauthorizedException message argument leaks authorization state
+
+Why: `throw new UnauthorizedException('Account is not active.')` serializes to `{"statusCode":401,"message":"Account is not active.","error":"Unauthorized"}`. A caller with any valid JWT can probe data endpoints and learn whether their account "exists but not active" vs "unauthenticated". The no-arg form `throw new UnauthorizedException()` returns the generic NestJS shape `{"statusCode":401,"message":"Unauthorized"}` which reveals nothing. Rule: all authorization guard throws must use the no-arg form; status information should only come from dedicated status endpoints (`/auth/me`).
+Belongs in (guess): rules/validation-authorization.md (guard patterns section — already has the code example; make it explicit)
+
+## 2026-06-30 — Angular CSP_NONCE provider: useFactory not useValue
 
 Why: `CSP_NONCE` must be provided via `useFactory` (not `useValue`) in `bootstrapApplication`. `useValue` is evaluated eagerly at module definition time, before the DOM is guaranteed to be ready in any non-browser rendering path. `useFactory` is lazy — evaluated during DI resolution — so `document.querySelector('meta[name="csp-nonce"]')` is always called after DOM parsing completes.
 Belongs in (guess): rules/code-style-angular.md
