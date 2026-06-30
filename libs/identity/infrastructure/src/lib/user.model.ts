@@ -23,6 +23,7 @@ const USER_STATUS_VALUES = Object.values(UserStatus);
  * `UserModel` itself never appears outside `identity-infrastructure`.
  */
 @index({ telegramId: 1 }, { unique: true })
+@index({ username: 1 }, { sparse: true, unique: true })
 @modelOptions({
   schemaOptions: {
     collection: 'users',

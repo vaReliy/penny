@@ -27,6 +27,9 @@ export interface IUserRepository extends IRepository<User, string> {
   /** Finds a user by the durable `telegramId` identity key, or `null` if none exists. */
   findByTelegramId(telegramId: string): Promise<User | null>;
 
+  /** Finds a user by their Telegram username, or `null` if none exists. */
+  findByUsername(username: string): Promise<User | null>;
+
   /**
    * Updates only mutable profile fields (`firstName`, `lastName`, `username`,
    * `photoUrl`) for the user with the given `id`. Never touches `status` or

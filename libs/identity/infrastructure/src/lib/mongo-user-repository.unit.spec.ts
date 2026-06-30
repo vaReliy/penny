@@ -71,6 +71,154 @@ describe('MongoUserRepository (unit — mocked model)', () => {
     vi.resetAllMocks();
   });
 
+  describe('findByUsername', () => {
+    const makeUsernameDoc = (username: string) => ({
+      _id: { toString: () => '507f1f77bcf86cd799439011' },
+      telegramId: '123456789',
+      firstName: 'Ada',
+      username,
+      status: UserStatus.PENDING,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    it('returns a mapped User when a document with the given username exists', async () => {
+      // Arrange
+      const username = 'ada_lovelace';
+      const doc = makeUsernameDoc(username);
+
+      const mockModel = {
+        findOne: vi.fn().mockReturnValue({
+          exec: vi.fn().mockResolvedValue(doc),
+        }),
+      };
+
+      vi.mocked(getUserModel).mockReturnValue(
+        mockModel as unknown as ReturnModelType<typeof UserModel>,
+      );
+
+      const repository = new MongoUserRepository(FAKE_CONNECTION, silentLogger);
+
+      // Act
+      const result = await repository.findByUsername(username);
+
+      // Assert
+      expect(result).toBeInstanceOf(User);
+      expect(result?.telegramId).toBe('123456789');
+      expect(mockModel.findOne).toHaveBeenCalledWith({ username });
+    });
+
+    it('returns null when no document with the given username exists', async () => {
+      // Arrange
+      const mockModel = {
+        findOne: vi.fn().mockReturnValue({
+          exec: vi.fn().mockResolvedValue(null),
+        }),
+      };
+
+      vi.mocked(getUserModel).mockReturnValue(
+        mockModel as unknown as ReturnModelType<typeof UserModel>,
+      );
+
+      const repository = new MongoUserRepository(FAKE_CONNECTION, silentLogger);
+
+      // Act
+      const result = await repository.findByUsername('ghost_user');
+
+      // Assert
+      expect(result).toBeNull();
+    });
+
+    it('throws InfrastructureError when the driver throws', async () => {
+      // Arrange
+      const mockModel = {
+        findOne: vi.fn().mockReturnValue({
+          exec: vi.fn().mockRejectedValue(new Error('topology closed')),
+        }),
+      };
+
+      vi.mocked(getUserModel).mockReturnValue(
+        mockModel as unknown as ReturnModelType<typeof UserModel>,
+      );
+
+      const repository = new MongoUserRepository(FAKE_CONNECTION, silentLogger);
+
+      // Act + Assert
+      await expect(
+        repository.findByUsername('any_user'),
+      ).rejects.toBeInstanceOf(InfrastructureError);
+    });
+  });
+
+  describe('delete', () => {
+    it('returns undefined without calling the model when the id is not a valid ObjectId', async () => {
+      // Arrange
+      const findByIdAndDeleteSpy = vi.fn();
+      const mockModel = {
+        findByIdAndDelete: findByIdAndDeleteSpy,
+      };
+
+      vi.mocked(getUserModel).mockReturnValue(
+        mockModel as unknown as ReturnModelType<typeof UserModel>,
+      );
+
+      const repository = new MongoUserRepository(FAKE_CONNECTION, silentLogger);
+
+      // Act
+      const result = await repository.delete('not-a-valid-id');
+
+      // Assert
+      expect(findByIdAndDeleteSpy).not.toHaveBeenCalled();
+      expect(result).toBeUndefined();
+    });
+
+    it('resolves to undefined when the driver call succeeds', async () => {
+      // Arrange
+      const validId = '507f1f77bcf86cd799439011';
+      const findByIdAndDeleteSpy = vi.fn().mockReturnValue({
+        exec: vi.fn().mockResolvedValue(null),
+      });
+      const mockModel = {
+        findByIdAndDelete: findByIdAndDeleteSpy,
+      };
+
+      vi.mocked(getUserModel).mockReturnValue(
+        mockModel as unknown as ReturnModelType<typeof UserModel>,
+      );
+
+      const repository = new MongoUserRepository(FAKE_CONNECTION, silentLogger);
+
+      // Act
+      const result = await repository.delete(validId);
+
+      // Assert
+      expect(findByIdAndDeleteSpy).toHaveBeenCalledOnce();
+      expect(findByIdAndDeleteSpy).toHaveBeenCalledWith(validId);
+      expect(result).toBeUndefined();
+    });
+
+    it('wraps a driver error as InfrastructureError when the driver throws', async () => {
+      // Arrange
+      const validId = '507f1f77bcf86cd799439011';
+      const mockModel = {
+        findByIdAndDelete: vi.fn().mockReturnValue({
+          exec: vi.fn().mockRejectedValue(new Error('network error')),
+        }),
+      };
+
+      vi.mocked(getUserModel).mockReturnValue(
+        mockModel as unknown as ReturnModelType<typeof UserModel>,
+      );
+
+      const repository = new MongoUserRepository(FAKE_CONNECTION, silentLogger);
+
+      // Act + Assert
+      await expect(repository.delete(validId)).rejects.toBeInstanceOf(
+        InfrastructureError,
+      );
+    });
+  });
+
   describe('upsertByTelegramId — E11000 concurrent-insert retry path', () => {
     it("resolves to the winner's User when findOneAndUpdate throws E11000 and findOne finds the winner", async () => {
       // Arrange
@@ -137,13 +285,11 @@ describe('MongoUserRepository (unit — mocked model)', () => {
 
       const mockModel = {
         findOneAndUpdate: vi.fn().mockReturnValue({
-          exec: vi
-            .fn()
-            .mockRejectedValue({
-              code: 11000,
-              name: 'MongoServerError',
-              message: 'dup key',
-            }),
+          exec: vi.fn().mockRejectedValue({
+            code: 11000,
+            name: 'MongoServerError',
+            message: 'dup key',
+          }),
         }),
         findOne: vi.fn().mockReturnValue({
           exec: vi.fn().mockRejectedValue(new Error('topology closed')),

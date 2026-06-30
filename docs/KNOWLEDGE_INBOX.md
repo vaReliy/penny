@@ -2,6 +2,11 @@
 
 Append-only queue for durable, project-relevant learnings whose final home isn't clear yet. Distilled into PROJECT_CONTEXT.md / CLAUDE.md / a rule / a skill, then deleted from here — this file should trend toward empty.
 
+## 2026-06-30 — cli: inline `process.env` secret reads must own full validation (presence + entropy floor)
+
+Why: CLI commands that read secrets inline (instead of through the NestJS Config service) bypass the Config service's validation. A falsy-only check (`if (!secret)`) passes single-char values that produce structurally valid but cryptographically weak tokens. Pattern: after the presence check, assert minimum length (32 chars for HMAC-SHA256 secrets) before constructing any cryptographic primitive. The production-mode guard limits blast radius but does not substitute for entropy validation because the same `JWT_SECRET` is shared with the API server.
+Belongs in (guess): rules/code-style-backend.md (CLI/secret-read section)
+
 ## 2026-06-30 — typescript: `import type` does NOT re-export through `export *`
 
 Why: When an interface is moved from being declared inline in module A to being `import type`-d from module B, `export * from './module-a.js'` no longer carries that symbol — `export *` only propagates declared/exported members, not type-imported ones. Downstream consumers that imported the symbol from module A get a compile-time "has no exported member" error. Checklist for type-lift refactors: after replacing an inline declaration with `import type`, grep every file that imported the symbol from the original module and update them to the authoritative source.
@@ -301,6 +306,16 @@ Belongs in (guess): rules/validation-authorization.md (already updated) | rules/
 
 Why: `throw new UnauthorizedException('Account is not active.')` serializes to `{"statusCode":401,"message":"Account is not active.","error":"Unauthorized"}`. A caller with any valid JWT can probe data endpoints and learn whether their account "exists but not active" vs "unauthenticated". The no-arg form `throw new UnauthorizedException()` returns the generic NestJS shape `{"statusCode":401,"message":"Unauthorized"}` which reveals nothing. Rule: all authorization guard throws must use the no-arg form; status information should only come from dedicated status endpoints (`/auth/me`).
 Belongs in (guess): rules/validation-authorization.md (guard patterns section — already has the code example; make it explicit)
+
+## 2026-06-30 — identity: User.props is private — use public getters to construct mutated copies
+
+Why: When building a status-overridden User in dev commands (bypassing `transitionTo()`), `new User({ ...user.props, status: targetStatus })` fails at compile time — `props` is `private readonly`. The correct pattern is `new User({ id: user.id, telegramId: user.telegramId, username: user.username, firstName: user.firstName, ... , status: targetStatus, updatedAt: new Date() })` using all public getters. If this spread-with-override pattern recurs, consider adding a `toProps(): UserProps` accessor or `User.withStatus(status): User` factory to the entity.
+Belongs in (guess): PROJECT_CONTEXT (identity domain patterns)
+
+## 2026-06-30 — nx: `nx build cli` false-green on broken spec fakes
+
+Why: The CLI build target uses webpack and does NOT type-check `.spec.ts` files. When `findByUsername` was added to `IUserRepository`, existing `FakeUserRepository` mocks became TS2420 errors — but `nx build cli` exited 0 with no warning. Type errors in test files are only caught by `nx test cli` (vitest, which runs tsc over specs). Rule: always run `nx test <project>` (not just `nx build`) in the quality gate — build green alone is not a type-safety guarantee for test code.
+Belongs in (guess): rules/workflow.md (Command Execution Policy / handoff checklist)
 
 ## 2026-06-30 — Angular CSP_NONCE provider: useFactory not useValue
 

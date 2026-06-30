@@ -84,6 +84,15 @@ export class MongoUserRepository implements IUserRepository {
     }
   }
 
+  public async findByUsername(username: string): Promise<User | null> {
+    try {
+      const doc = await this.model.findOne({ username }).exec();
+      return doc ? UserMapper.toDomain(doc) : null;
+    } catch (error) {
+      throw this.toInfrastructureError(error, 'findByUsername');
+    }
+  }
+
   /**
    * Updates only mutable profile fields (`firstName`, `lastName`, `username`,
    * `photoUrl`) for the document with the given `id`. `status` and

@@ -55,6 +55,17 @@ class FakeUserRepository implements IUserRepository {
     return entity;
   }
 
+  public async findByUsername(_username: string): Promise<User | null> {
+    return null;
+  }
+
+  public async updateProfile(
+    _id: string,
+    _profile: object,
+  ): Promise<User | null> {
+    return null;
+  }
+
   public async delete(id: string): Promise<void> {
     this.store.delete(id);
   }

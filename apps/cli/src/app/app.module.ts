@@ -6,6 +6,8 @@ import { LoggerModule } from '../logger/logger.module.js';
 import { CliIdentityModule } from '../identity/cli-identity.module.js';
 import { UserApproveCommand } from '../commands/user-approve.command.js';
 import { UserRejectCommand } from '../commands/user-reject.command.js';
+import { DevCreateUserCommand } from '../commands/dev-create-user.command.js';
+import { DevTokenCommand } from '../commands/dev-token.command.js';
 
 @Module({
   imports: [
@@ -14,6 +16,11 @@ import { UserRejectCommand } from '../commands/user-reject.command.js';
     CliIdentityModule,
     CommandRunnerModule.forModule(),
   ],
-  providers: [UserApproveCommand, UserRejectCommand],
+  providers: [
+    UserApproveCommand,
+    UserRejectCommand,
+    DevCreateUserCommand,
+    DevTokenCommand,
+  ],
 })
 export class AppModule {}
