@@ -6,7 +6,7 @@ Every plan, grill, or grooming session must emit one or more task files into the
 
 ## Routing
 
-- **Skeleton-phase-dependent tasks** → `docs/rebuild/tasks/todo/`
+- **Phase-dependent tasks** (part of a named rebuild/migration phase) → `docs/<phase>/tasks/todo/` (project-specific; adapt the phase directory name to your project)
 - **General / future-phase tasks** → `docs/tasks/todo/` (created lazily on first use)
 
 Both locations are **git-excluded** (private working artifacts). The committed, durable record is: commit history + `KNOWLEDGE_INBOX.md` + `CHANGELOG.md`. The rule file itself is committed; the task files it governs are private.
@@ -34,7 +34,7 @@ These sort before `…-N.md` because `-` (0x2D) < `.` (0x2E) in ASCII/C collatio
 | ---           | ---                                                            |
 | Clean session | **Yes**                                                        |
 | Executor model | **Sonnet (standard)**                                         |
-| Repo          | `penny`, branch `skeleton`                                     |
+| Repo          | `<repo-name>`, branch `<branch-name>`                          |
 | Depends on    | 2026-06-14-13-approve-user-service, 2026-06-14-14-reject-user |
 | On completion | Suggest a commit message. **Do NOT commit.**                   |
 ```
