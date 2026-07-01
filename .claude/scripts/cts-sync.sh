@@ -80,10 +80,30 @@ is_ignored() {
   return 1
 }
 
+LOCALLY_MODIFIED=()
+
+# During update, a file is only fast-forwarded if the working copy still
+# matches what was synced last time (content at OLD_SHA). If it diverged
+# (local customization not yet in .ctsignore), skip it and report it instead
+# of clobbering — the file may be headed for cts-contribute, not overwrite.
+is_locally_modified() {
+  local rel="$1"
+  [ "$CMD" = update ] || return 1
+  [ -n "${OLD_SHA:-}" ] || return 1
+  [ -e "./$rel" ] || return 1
+  git -C "$SRC_DIR" cat-file -e "$OLD_SHA:$rel" 2>/dev/null || return 1
+  ! git -C "$SRC_DIR" show "$OLD_SHA:$rel" 2>/dev/null | cmp -s - "./$rel"
+}
+
 copy_one() {
   local rel="$1"
   if [ "$CMD" = update ] && is_ignored "$rel"; then
     if [ "$DRY_RUN" = 1 ]; then echo "skip (ignored): $rel"; fi
+    return
+  fi
+  if is_locally_modified "$rel"; then
+    LOCALLY_MODIFIED+=("$rel")
+    if [ "$DRY_RUN" = 1 ]; then echo "skip (locally modified): $rel"; fi
     return
   fi
   if [ "$DRY_RUN" = 1 ]; then
@@ -129,6 +149,10 @@ EOF
 else
   OLD_SHA=$(cat "$VERSION_FILE" 2>/dev/null || echo "")
   for entry in "${PAYLOAD[@]}"; do sync_path "$entry"; done
+  for rel in "${LOCALLY_MODIFIED[@]}"; do
+    echo "locally modified, not overwritten — diff manually: $rel"
+    echo "  git -C $SRC_DIR diff $OLD_SHA..$NEW_SHA -- $rel"
+  done
   for entry in "${PAYLOAD[@]}"; do
     entry="${entry%/}"
     [ -d "$SRC_DIR/$entry" ] && [ -d "./$entry" ] || continue
