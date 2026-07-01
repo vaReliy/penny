@@ -321,3 +321,8 @@ Belongs in (guess): rules/workflow.md (Command Execution Policy / handoff checkl
 
 Why: `CSP_NONCE` must be provided via `useFactory` (not `useValue`) in `bootstrapApplication`. `useValue` is evaluated eagerly at module definition time, before the DOM is guaranteed to be ready in any non-browser rendering path. `useFactory` is lazy — evaluated during DI resolution — so `document.querySelector('meta[name="csp-nonce"]')` is always called after DOM parsing completes.
 Belongs in (guess): rules/code-style-angular.md
+
+## 2026-07-01 — cts-contribute: `.claude/settings.json` can reference hook scripts that were never added to `cts-payload.txt`
+
+Why: `.claude/settings.json` (a payload file) referenced `.claude/hooks/knowledge-capture-nudge.sh` via a Stop hook command, but `.claude/hooks/` was never listed in `cts-payload.txt` — so a fresh `/cts-setup` or `/cts-update` in any consumer would sync a `settings.json` pointing at a script that doesn't exist locally. The gap only surfaced during a `/cts-contribute` session while diffing payload files against CTS; `cts-sync.sh` has no validation step that cross-checks `settings.json` hook commands against the payload manifest. General rule: whenever a payload file is extended to reference a new script/asset path, immediately add that path to `cts-payload.txt` in the same change — don't rely on noticing the gap later.
+Belongs in (guess): claude-ts-upstream (rules/workflow.md or a cts-rule-auditor check: "every hook `command` path in .claude/settings.json must resolve to a path listed in cts-payload.txt")
