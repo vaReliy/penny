@@ -325,13 +325,14 @@ No `tester` or `qa` for infra-only changes.
 
 ### What to update
 
-| Artifact                             | When to update                                    | What goes in                                                          |
-| ------------------------------------ | ------------------------------------------------- | --------------------------------------------------------------------- |
-| `CHANGELOG.md`                       | **Always**                                        | Concise summary of what changed and why; one entry per task           |
-| `PROJECT_CONTEXT.md` (or equivalent) | Architecture/domain changed                       | New modules, domain rule changes, infra changes, historical incidents |
-| `docs/KNOWLEDGE_INBOX.md`            | Durable, project-relevant learning (default path) | A 3-line entry (see Knowledge Inbox below)                            |
-| `docs/CLAUDE_TS_CHANGELOG.md`        | Template-inherited file changed                   | Divergence/fix log entry (see entry format in that file)              |
-| Auto-memory (`feedback` type)        | Personal workflow preference — this user only     | Agent behavior to repeat or avoid for this user's sessions            |
+| Artifact                             | When to update                                    | What goes in                                                                                                                               |
+| ------------------------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `CHANGELOG.md`                       | **Always**                                        | Concise summary of what changed and why; one entry per task                                                                                |
+| `PROJECT_CONTEXT.md` (or equivalent) | Architecture/domain changed                       | New modules, domain rule changes, infra changes, historical incidents                                                                      |
+| `docs/KNOWLEDGE_INBOX.md`            | Durable, project-relevant learning (default path) | A 3-line entry (see Knowledge Inbox below)                                                                                                 |
+| `docs/CLAUDE_TS_CHANGELOG.md`        | Template-inherited file changed                   | Divergence/fix log entry (see entry format in that file)                                                                                   |
+| `docs/METRICS.md`                    | **Always**                                        | One append-only table row per completed task (see format in that file); never `@`-referenced, same constraint as `docs/KNOWLEDGE_INBOX.md` |
+| Auto-memory (`feedback` type)        | Personal workflow preference — this user only     | Agent behavior to repeat or avoid for this user's sessions                                                                                 |
 
 ### Decision rules
 
@@ -395,6 +396,7 @@ Append new entries using the same 3-line format (header line + `Why:` + `Belongs
 
 - `docs/KNOWLEDGE_INBOX.md` — **default target** for project-durable knowledge in transit (agent-agnostic, travels with the repo; any AI tool may append)
 - `docs/CLAUDE_TS_CHANGELOG.md` — permanent ledger of claude-ts template divergences/fixes, ready to port upstream — entries persist until actually ported, unlike the inbox
+- `docs/METRICS.md` — append-only raw-data ledger, one table row per completed task, feeding a future measurement-design session; never `@`-referenced
 - `PROJECT_CONTEXT.md` (or equivalent) — distilled, stable domain truth
 - `CHANGELOG.md` — what changed and why, per task
 - Auto-memory (`feedback` type only) — **narrow exception**: personal Claude workflow preferences for this user's sessions only. Never use for project-level learnings (bugs, gotchas, library recipes, wrong patterns) — those go in the inbox or their permanent home regardless of vendor.
