@@ -326,3 +326,18 @@ Belongs in (guess): claude-ts-upstream (cts-sync.sh script) — also `.claude/sk
 
 Why: Running `/cts-update` after this project previously ran `/cts-contribute` produced ~55 "locally modified, not overwritten" notices in one run. This is not drift — the upstream commit was titled "ported from Penny," meaning this project's own past customizations were merged into claude-ts and are now being synced back down. The engine compares against the old baseline commit, not upstream intent, so any file this project contributed content for shows as diverged even though local and upstream agree. When triaging `/cts-update` output, check the upstream commit message for "from <this-project>" before assuming a large diverged-file list needs manual merging — it may just need a quick confirm-and-skip.
 Belongs in (guess): .claude/skills/cts-update/SKILL.md (step 3/5 triage guidance)
+
+## 2026-07-07 — workflow: review-driven backlogs miss omission-type DoD gaps — audit plan-vs-reality before closing a milestone
+
+Why: All 11 post-skeleton todo tasks were emitted by quality-gate agents reacting to diffs, yet none covered the four unmet Definition-of-Done items (coverage thresholds, e2e in CI, explicit @Injectable fuse, compose health) — a scanner cannot flag a _missing_ config because there is no diff to react to. The 2026-07-07 skeleton review found these only by checking DECISION-RECORD §4/§5 line-by-line against the codebase. Rule: before declaring a milestone/result done, run one dedicated plan-vs-reality audit session (DoD checklist × codebase evidence); review exhaust alone systematically under-covers omissions.
+Belongs in (guess): rules/workflow.md (milestone close / DoD audit step) | rules/task-authoring.md
+
+## 2026-07-07 — security: truncated unsalted SHA-256 of a small-integer ID is enumerable, not anonymization
+
+Why: A proposed PII mitigation hashed `telegramId` with SHA-256 and kept the first 12 hex chars as a "non-PII correlation token". Telegram IDs are ~10-digit integers — the entire input space is brute-forceable in seconds-to-minutes on commodity hardware, so the token is trivially reversible and remains PII under GDPR. If genuine de-identification is required, use `HMAC-SHA256(id, secret_pepper)` with a config-injected pepper, or omit the identifier and rely on a request-correlation id. Plain truncated hashes of low-entropy inputs must never be labeled anonymization in reviews or task files.
+Belongs in (guess): rules/code-style-backend.md (logging/PII section) | security-scanner agent checklist
+
+## 2026-07-07 — identity/testing: real Telegram widget auth cannot run on localhost — mocked-API e2e is the accepted CI pattern
+
+Why: The Telegram Login Widget only renders/authenticates for a domain registered with the bot (`/setdomain`); bare localhost is rejected, so no CI runner can execute the live flow. The owner verified the real end-to-end auth manually via VS Code port forwarding with the temporary forwarded domain registered on the bot (2026-07-07). Consequently `apps/web-e2e/auth-flow.spec.ts` mocking `/auth/me` + `/api/hello` is a deliberate, accepted design — reviewers must not flag the mocks as a coverage gap; the live-auth check is a documented manual pre-release step (and the `dev-token` CLI exists for token-level backend testing without the widget).
+Belongs in (guess): rules/testing.md (e2e strategy note) | PROJECT_CONTEXT (identity/auth testing constraints)
