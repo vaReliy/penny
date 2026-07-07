@@ -12,11 +12,6 @@ Belongs in (guess): rules/code-style-backend.md (CLI/secret-read section)
 Why: When an interface is moved from being declared inline in module A to being `import type`-d from module B, `export * from './module-a.js'` no longer carries that symbol — `export *` only propagates declared/exported members, not type-imported ones. Downstream consumers that imported the symbol from module A get a compile-time "has no exported member" error. Checklist for type-lift refactors: after replacing an inline declaration with `import type`, grep every file that imported the symbol from the original module and update them to the authoritative source.
 Belongs in (guess): rules/code-style.md (import hygiene section)
 
-## 2026-06-29 — imports: shared-contracts alias is `'shared-contracts'`, not `'@penny/shared-contracts'`
-
-Why: Task files and docs occasionally write `@penny/shared-contracts` but the actual tsconfig path alias and every import in the codebase use the bare `'shared-contracts'` form. Using the `@penny/` prefix will cause a module-not-found error at build time.
-Belongs in (guess): PROJECT_CONTEXT | CLAUDE.md (alias table)
-
 ## 2026-06-29 — nestjs: APP_FILTER selection is specificity-based, not registration-order-based
 
 Why: When multiple `APP_FILTER` providers are registered, NestJS matches the thrown exception type against each filter's `@Catch()` decorator arguments and invokes the most specific match — not the last-declared one. Registration order only matters when two filters have equal specificity (e.g., two `@Catch()` catch-alls). A specific `@Catch(BaseError)` filter always wins over a `@Catch()` catch-all regardless of which appears first in the providers array. This is counterintuitive to developers who assume reverse-order stack semantics (like middleware or pipes).
@@ -75,11 +70,6 @@ Belongs in (guess): rules/validation-authorization.md or PROJECT_CONTEXT
 
 Why: When a fix is needed after the quality gate, the orchestrator must re-enter the pipeline at the right stage — not just patch inline and skip downstream steps. Rule: (1) trivial change (comment, doc-only) → orchestrator handles directly, no downstream needed; (2) source logic change → re-enter at `backend-developer` → `tester` → `reviewer` + `security-scanner` → user review; (3) test-only change → re-enter at `tester` → `reviewer` + `security-scanner` → user review. Writing tests directly and then running reviewer/security-scanner is half-right — the gate ran but `tester` was bypassed as the authoring agent, which undermines independent authorship and review separation.
 Belongs in (guess): rules/workflow.md (quality gate / fix-retry section)
-
-## 2026-06-28 — identity: narrowing a JWT array claim type requires a parallel runtime ReadonlySet guard
-
-Why: `isTokenClaims()` already validates `status` against `VALID_USER_STATUSES: ReadonlySet`. When `TokenClaims.roles` was narrowed from `string[]` to `readonly RoleType[]`, the same pattern was initially omitted — a validly-signed token with `roles: ['superadmin']` passed the guard. Fix: `VALID_ROLES: ReadonlySet<string> = new Set(Object.values(Role))` + `.every(v => VALID_ROLES.has(v))` in the predicate. Rule: every compile-time array-enum claim narrowing must have a matching runtime set-membership check in the type guard.
-Belongs in (guess): rules/validation-authorization.md (JWT claim validation section)
 
 ## 2026-06-26 — workflow: knowledge capture requires a Stop hook, not just spec wording
 

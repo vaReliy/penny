@@ -165,6 +165,8 @@ Re-loading the user on every request:
 
 **No tokens in localStorage** — enforced by ESLint `no-restricted-syntax` in all `platform:web` libs.
 
+**Narrowing a JWT array claim's compile-time type requires a matching runtime set-membership check** — a signed token is attacker-shaped data even though it's signature-verified: a stale or forged claim (e.g. `roles: ['superadmin']` predating a role removal) will satisfy a TypeScript array type at compile time without failing any runtime check unless the type guard explicitly validates every element. Pattern (mirrors the existing `VALID_USER_STATUSES` check on `status`): build a `ReadonlySet` of the valid enum values and assert `.every(v => VALID_ROLES.has(v))` inside the claims type guard (e.g. `isTokenClaims()`), not just a `typeof === 'object'`/array-shape check.
+
 ---
 
 ## Authorization (guards)

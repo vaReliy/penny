@@ -48,6 +48,8 @@ penny/
 Each future vertical (`budget`, `car`, …) replicates the `identity/` shape:
 `libs/<domain>/{core,application,infrastructure,feature-*,data-access}`.
 
+**Import alias:** `libs/shared/contracts` is imported as the bare `shared-contracts` — not `@penny/shared-contracts`. The `@penny/` prefix is not a real tsconfig path alias and will fail at build time with a module-not-found error.
+
 ---
 
 ## Onion Architecture (Backend)
