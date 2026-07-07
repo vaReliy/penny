@@ -17,6 +17,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-06-26 — Fix: knowledge-capture obligations need a Stop hook, not just spec wording
+
+- **Component**: `rules/workflow.md` + `.claude/hooks/knowledge-capture-nudge.sh`
+- **Type**: Fix
+- **What happened**: Agents were consistently writing durable learnings to private auto-memory instead of `docs/KNOWLEDGE_INBOX.md` due to three root causes: (1) `rules/workflow.md` routed "config gotchas" to auto-memory with an escape hatch that rationalized almost any learning as session-specific; (2) the distillation phase was framed as "after every pipeline," so direct/trivial edits never triggered it; (3) none of the agent definitions mentioned the inbox at all. The fix was a Stop hook (`.claude/hooks/knowledge-capture-nudge.sh`) that blocks once per session per unmet obligation, removing the escape hatch from `rules/workflow.md`, adding an explicit litmus test, and adding a "## Learnings" handoff bullet to every implementation agent's report format.
+- **Why it matters upstream**: Instructions alone are probabilistic — any claude-ts consumer relying on spec wording alone for a knowledge-capture obligation will see the same drift, since the harness system prompt pulls agents toward private memory by default. A Stop hook is the only deterministic enforcement point.
+- **Suggested upstream change**: Port the Stop-hook script pattern, the litmus test wording, and the "## Learnings" report-format bullet convention into the claude-ts template's base `workflow.md` and agent templates.
+- **Status**: pending-port
+
+---
+
 ## 2026-07-07 — Fix: cts-sync.sh self-overwrite produces spurious syntax-error exit code
 
 - **Component**: `.claude/scripts/cts-sync.sh`

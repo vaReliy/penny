@@ -32,20 +32,6 @@ Belongs in (guess): claude-ts-upstream
 Why: `@typescript-eslint/no-unused-vars` is configured with `args: "after-used"` (Nx default). In a `CanActivateFn`, when neither `route` nor `state` is needed, declaring underscore-prefixed params (`_route`, `_state`) still triggers warnings. TypeScript structural typing allows a narrower signature — declaring `(): Observable<boolean | UrlTree> => { ... }` with no parameters satisfies `CanActivateFn` because the router call site passes the arguments at runtime regardless. Only add `state` (or `route`) to the signature when actually consumed; omit both when not needed.
 Belongs in (guess): rules/code-style-angular.md
 
-## 2026-06-27 — workflow: quality gate fix-retry cycles cause "infinite loops" when developer lacks pre-flight context
-
-Why: Review cycles compound when (1) technical agents don't read KNOWLEDGE_INBOX / rules before coding, and (2) reviewer treats all findings as "fix now" regardless of origin. Root cause confirmed via task `2026-06-14-15-04-user-status-drift` spawning 5 subtasks — valid pre-existing discoveries, not regressions. Each inline fix adds new review surface, so the loop is structurally guaranteed.
-Decisions made (grill session 2026-06-27):
-
-- All agents must read `docs/KNOWLEDGE_INBOX.md` before acting (knowledge of discovered issues).
-- Technical agents (backend-developer, angular-developer, qa, devops, tester) also read `rules/architecture.md` + `rules/code-style.md` as mandatory pre-flight.
-- Reviewer and security-scanner output two explicit sections: `## Fix Now` / `## Emit as Task`.
-- Classification criterion: origin only — introduced by this changeset → Fix Now; pre-existing → Emit as Task.
-- Severity/priority handled at task ordering level (task-authoring.md), not at gate classification.
-- "Cheap in current session" override allowed only if: ≤1 file, no new tests, no new deps, purely mechanical change — orchestrator decides, not the reviewer.
-- 2-cycle limit applies only to `## Fix Now` items. After 2 cycles with open Fix Now items → hard stop + escalate to user.
-  Belongs in: rules/workflow.md (quality gate section) + agent definitions for reviewer, security-scanner, all technical agents.
-
 ## 2026-06-28 — agents: rules/architecture.md scope is app-layer Clean Architecture only — not applicable to devops
 
 Why: When adding pre-flight reads to all technical agents, devops was given `rules/architecture.md` alongside `rules/code-style.md`. The reviewer correctly flagged this: `rules/architecture.md` covers UseCases, Services, Repositories, DTOs — Clean Architecture application concerns. Devops writes Dockerfiles, CI YAML, env config, shell scripts — none of which reference those layers. The read is inert but wastes tokens (haiku model). Rule: `rules/architecture.md` pre-flight applies only to agents that write application code; agents whose output is purely infrastructure config should skip it.
@@ -55,11 +41,6 @@ Belongs in (guess): rules/workflow.md (pre-flight obligation note) | agent defin
 
 Why: a comment that says "no longer does X" / "now does Y" / "used to be Z" describes the diff that produced the current code, not the current invariant — it reads fine right after the change but rots the moment the next change lands, since nobody remembers to revisit prose. Comments should state the present-tense rule/contract ("does not do X; callers must do Y"), never the change history (that belongs in the commit message/PR description).
 Belongs in (guess): rule (rules/code-style.md, as a review checklist item) or reviewer agent instructions
-
-## 2026-06-25 — identity: telegramId unique index required on MongoUserRepository
-
-Why: `LoginWithTelegramService.execute` does `findByTelegramId` then conditionally creates — concurrent first-logins race to insert. `MongoUserRepository.save` handles duplicate-key (code 11000) by throwing `DomainError.conflict`, not a silent overwrite. But this is only safe if a unique index on `telegramId` actually exists in the Mongo schema. Verify `@prop({ unique: true })` or equivalent is on the `telegramId` field.
-Belongs in (guess): PROJECT_CONTEXT | dba review
 
 ## 2026-06-26 — identity: LIVR optional `['string']` rule passes null through; `!== undefined` filter does not catch it
 
@@ -71,50 +52,20 @@ Belongs in (guess): rules/validation-authorization.md or PROJECT_CONTEXT
 Why: When a fix is needed after the quality gate, the orchestrator must re-enter the pipeline at the right stage — not just patch inline and skip downstream steps. Rule: (1) trivial change (comment, doc-only) → orchestrator handles directly, no downstream needed; (2) source logic change → re-enter at `backend-developer` → `tester` → `reviewer` + `security-scanner` → user review; (3) test-only change → re-enter at `tester` → `reviewer` + `security-scanner` → user review. Writing tests directly and then running reviewer/security-scanner is half-right — the gate ran but `tester` was bypassed as the authoring agent, which undermines independent authorship and review separation.
 Belongs in (guess): rules/workflow.md (quality gate / fix-retry section)
 
-## 2026-06-26 — workflow: knowledge capture requires a Stop hook, not just spec wording
-
-Why: Three root causes made agents consistently write learnings to private auto-memory instead of docs/KNOWLEDGE_INBOX.md: (1) rules/workflow.md routed "config gotchas" to auto-memory and had an escape hatch "Claude-session-specific gotchas still go to auto-memory" that rationalized almost any learning; (2) Phase 6 was framed as "after every pipeline" so direct/trivial edits never triggered it; (3) none of the 16 agent definitions mentioned the inbox. Instructions are probabilistic — the harness system prompt pulls strongly toward private memory. Only a Stop hook (which the harness enforces) creates a deterministic checkpoint. Fix applied: `.claude/hooks/knowledge-capture-nudge.sh` blocks once per session per unmet obligation (inbox / CLAUDE_TS_CHANGELOG); rules/workflow.md escape hatch removed; litmus test added; CLAUDE.md write-limit carve-out added; all 12 implementation agents now include a `## Learnings` handoff bullet in their Report Format.
-Belongs in: rules/workflow.md (already applied) + CLAUDE_TS_CHANGELOG (pending-port entry below)
-
 ## 2026-06-27 — nx: every lib that directly imports a shared lib needs its own package.json entry
 
 Why: When `shared-contracts` became the authoritative `UserStatus` source, the implementer added `"shared-contracts": "0.0.1"` to `identity-core/package.json` but missed `identity-infrastructure/package.json`, which also has direct imports (`user.model.ts`, `user.mapper.ts`). `@nx/dependency-checks` catches this as a hard lint error. Rule: after adding a new intra-monorepo import path alias to any lib, check that lib's `package.json#dependencies` — not just the most obvious consumer.
 Belongs in (guess): rules/dependencies.md | AGENTS.md checklist
-
-## 2026-06-27 — nx: `type:core → type:contracts` boundary rule must be explicitly allowed when contracts is the shared kernel
-
-Why: The default NX `onlyDependOnLibsWithTags` for `type:core` did not include `type:contracts`. Promoting `shared-contracts` to the authoritative domain-primitive source required adding `'type:contracts'` to the `type:core` allowlist in `eslint.config.mjs`. Same applies to `type:infrastructure` (was already allowed). Whenever making a `type:contracts` lib a dependency of a higher-purity layer, update the boundary rule or the lint gate will block the build.
-Belongs in (guess): rules/architecture.md (NX boundary section) | PROJECT_CONTEXT
 
 ## 2026-06-27 — typescript: bare `export { X }` re-exports both value and type when X is a declaration merge
 
 Why: In `identity-core/src/lib/user-status.ts`, `export { UserStatus } from 'shared-contracts'` covers both the const object (value namespace) and the `UserStatus` type alias (type namespace) in a single statement — no `export type { UserStatus }` needed alongside it. This works because the source file has a declaration merge (const + same-name type alias). Callers can use both `UserStatus.ACTIVE` (value) and `status: UserStatus` (type) from one import binding.
 Belongs in (guess): rules/code-style.md (re-exports section)
 
-## 2026-06-27 — api: NestJS LogLevel allowlist → pino threshold translation uses minimum-level reduction
-
-Why: NestJS's `setLogLevels(levels: LogLevel[])` takes an explicit allowlist (e.g. `['warn', 'error']`), but pino's `logger.level` is a threshold (all levels at or above it are emitted). The correct translation is to map each NestJS level to a pino level, then pick the minimum pino level from the array — that threshold allows the widest set of events that satisfies the NestJS allowlist. Implemented via a `PINO_LEVEL_VALUE: Record<pino.Level, number>` numeric lookup and `Array.reduce` to find the minimum. An empty array should be a no-op (guard with early return).
-Belongs in (guess): rules/architecture.md (logging section) | skill (pino integration recipe)
-
-## 2026-06-28 — nx: `@nx/vitest:vitest` executor does not exist in @nx/vitest@23.0.1
-
-Why: The correct executor name is `@nx/vite:test` (not `@nx/vitest:vitest`). For explicit `test` targets in app `project.json`, use `nx:run-commands` with `vitest run --config vitest.config.mts` scoped to the app's `cwd`. Inferred targets (via Nx plugin) work correctly but explicit targets must use the right executor or they silently fail to register.
-Belongs in (guess): rules/nx-generators.md (test target section)
-
 ## 2026-06-28 — pnpm monorepo: nest-commander (and workspace-root-only deps) require `-w` flag
 
 Why: In a pnpm monorepo with `node-linker=hoisted`, `pnpm add <pkg> --save-exact` without `-w` is rejected because there is no `package.json` in the app subfolder — all deps live at the workspace root. Always use `pnpm add <pkg> --save-exact -w` when adding shared or app deps in this repo.
 Belongs in (guess): rules/dependencies.md
-
-## 2026-06-28 — nx: @nx/angular:component stub spec imports class without "Component" suffix — always fix before running
-
-Why: The generated stub spec (`greeting-page.spec.ts`) imports `GreetingPage` instead of `GreetingPageComponent`. The actual exported class always has the `Component` suffix. The stub silently fails at import (TypeScript error) rather than producing a useful test failure — it looks like a test gap rather than a bad import. Always verify the import name against the barrel `index.ts` before writing test logic.
-Belongs in (guess): rules/nx-generators.md (post-generator corrections section)
-
-## 2026-06-28 — nx: @nx/angular:component uses --path, not --project in Nx v23
-
-Why: `nx g @nx/angular:component --project=<name>` was silently ignored or errored in Nx v23. The correct flag is `--path=libs/<lib>/src/lib/<component-folder>/<component-name>` (path to the component file without extension). This changed from v21/v22 where `--project` was the primary flag.
-Belongs in (guess): rules/nx-generators.md
 
 ## 2026-06-28 — nx: @nx/angular:lib generator silently ignores positional arg when --directory is absent
 
@@ -186,21 +137,6 @@ Belongs in (guess): rules/code-style-backend.md (CSP/Helmet section)
 Why: A static `index.html` has a fixed `<meta name="csp-nonce" content="">`. In an architecture where a separate file server (Nx dev server or nginx static) serves the HTML, NestJS middleware can generate nonces but they never reach the `<meta>` tag — Angular bootstraps with `CSP_NONCE = ""`. The full nonce pipeline requires exactly one service to: (1) generate the nonce, (2) set the `Content-Security-Policy` header on the HTML response, and (3) inject the nonce into `<meta name="csp-nonce" content="…">` — all in the same request. Options are topology-dependent: nginx static → `sub_filter`; NestJS serves HTML → `ServeStaticModule` intercept. Decide the option only once the compose topology is locked (Task 18). Until then, `'unsafe-inline'` in `style-src` is the intentional, documented skeleton-phase tradeoff.
 Belongs in (guess): PROJECT_CONTEXT (security roadmap) | DECISIONS.md (CSP nonce ADR, Task 19.2)
 
-## 2026-06-29 — workflow: cyclic-development root causes and mitigations (grill session)
-
-Why: A grill session diagnosed why task A's review systematically emits task B, B emits C, etc. beyond foreseeable scope. Three root causes, each with a distinct cure:
-
-1. **Foreseeable blast-radius leaks out late** — when a task introduces a shared seam (new enum, new field consumed across layers), the full blast-radius wasn't mapped up front. Fix: **targeted foresight gate** (trigger = "introduces/changes a shared contract/seam" → blast-radius map before implementation, task re-authored at full scope).
-2. **No quality floor on emission** — pre-existing polish got the same task-file ceremony as security holes. Fix: **4-tier severity floor** (Correctness/Security → always emit/fix; Comprehension → emit; Consistency-with-operational-impact → emit; Polish/preference → DROP, record one line in sub-floor ledger in KNOWLEDGE_INBOX.md for theme detection). Floor test: "misleads a reader or behaves wrong" vs. "merely not preferred style."
-3. **Emitted tasks pulled depth-first ahead of original backlog** — premature hardening (per-request CSP nonces) on an undecided seam (serving topology). Fix: **roadmap-prioritization rule** (emitted tasks prioritized against backlog; blocked/premature tasks parked with blocking dep named).
-   Also identified: `## Emit as Task` escape valve is working as designed — the issue is scope of the originating task, not the valve. "Infinite refactoring" instinct is real: the floor provides a fixed stopping point ("understandable and works"), avoiding the shifting "ideal ideal" target.
-   Belongs in: rules/workflow.md (foresight gate + severity floor + roadmap rule — Task 2026-06-29-05)
-
-## 2026-06-29 — workflow: "project-scoped reviewer" = durable map + scoped depth, not full repo scan
-
-Why: Agents are stateless — their "project memory" is only what they read pre-flight. A reviewer that reads only the diff classifies "introduced vs. pre-existing" correctly but cannot detect half-wired seams (e.g., nonce header added, but the HTML server that needs it is elsewhere). Fix: (1) project-map pre-flight (reviewer + security-scanner read ARCHITECTURE.md/DECISIONS.md/CONTEXT.md before every review); (2) seam-aware depth (when the change touches a shared contract, read full files + consumers + dependencies — bidirectional); (3) security-scanner also reads trust-boundary/threat-model from DECISIONS.md. Critically: this upgrade depends on the docs existing first — pointing agents at ARCHITECTURE.md before Task 19 writes it creates silent gaps. Sequence: Task 19 → Task 18 → Task 19.2 (topology docs) → Task 2026-06-29-06 (agent upgrade). "Project-scoped" = stateful map externalized into a durable doc, not stateless full-scan each review.
-Belongs in: .claude/agents/reviewer.md + .claude/agents/security-scanner.md (Task 2026-06-29-06, Depends on Task 19.2)
-
 ## 2026-06-29 — roadmap: bones-before-muscles ordering — don't harden an undecided seam
 
 Why: Depth-first security hardening (per-request CSP nonces) on a skeleton whose serving topology is undecided produced a half-wired feature that was worse than both states: it removed `'unsafe-inline'` but Angular never received the nonce, so styles would break in a non-trivial app. Rule: if an implementation option depends on an upstream architectural decision (who serves the HTML, which DB, which transport), defer the implementation until that decision is concrete. The CSP nonce task is the canonical case — reverting it was cheaper than implementing Option A (NestJS-serves HTML) speculatively, which Task 18 might invalidate. Parked-task convention encodes this: record the option analysis in the task file, park it with `Depends on` Task 18, pick the option after topology is locked.
@@ -261,11 +197,6 @@ Belongs in (guess): rules/docker-commands.md (prod image section)
 Why: When Claude Code runs an MCP server via `docker run` without `--name`, Docker generates a random adjective+scientist name (e.g., `strange_goldstine`). Add `"--name", "github-mcp-server"` to the args array in `.mcp.json`. Note: `--name` prevents two simultaneous instances of the same MCP server, which is fine since Claude Code starts one per session.
 Belongs in (guess): PROJECT_CONTEXT (dev environment conventions)
 
-## 2026-06-30 — nestjs: SessionGuard vs ActiveUserGuard — authentication vs. authorization split
-
-Why: Removing `user.status !== UserStatus.ACTIVE` from `SessionGuard` allows PENDING/REJECTED users to pass JWT validation on every guarded route. The correct pattern is two guards: `SessionGuard` (JWT verification + DB user load, no status check — apply to auth-only endpoints like `/auth/me`) and `ActiveUserGuard` (checks `status === UserStatus.ACTIVE`, clears both cookies if not — apply to all data endpoints). Every future route that should be ACTIVE-only must explicitly apply `ActiveUserGuard`; `SessionGuard` alone is not sufficient.
-Belongs in (guess): rules/validation-authorization.md (guard patterns section)
-
 ## 2026-06-30 — security: `'unsafe-hashes'` in `style-src` extends hash matching to `style=""` attributes
 
 Why: Without `'unsafe-hashes'`, SHA hashes in `style-src` only match inline `<style>` block content. Adding `'unsafe-hashes'` extends them to `style=""` element attributes — including a hash of the empty string (`sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=`), which is trivially reachable by any injected element. Pattern: never add `'unsafe-hashes'` to `style-src` without auditing whether the nonce pipeline can cover the same cases instead.
@@ -286,16 +217,6 @@ Belongs in (guess): PROJECT_CONTEXT (security roadmap) | task: tasks/2026-06-30-
 Why: In `docker-compose.yml`, the api service healthcheck must use Node.js inline HTTP (not `wget` — not available in `node:22-alpine`) AND must hit the correct path. When `app.setGlobalPrefix('api')` is set in `main.ts`, the health endpoint is `/api/health`, not `/health`. Using the wrong path causes the healthcheck to always return non-200, `api` never reaches `healthy`, and any service with `depends_on: api: condition: service_healthy` cannot start.
 Correct form: `node -e "require('http').get('http://localhost:3000/api/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"`
 Belongs in (guess): rules/docker-commands.md (compose healthcheck section)
-
-## 2026-06-30 — nestjs: authentication guard → 401, authorization guard → 403
-
-Why: RFC 7235 — 401 means "lacks valid authentication credentials" and instructs clients to re-authenticate. 403 means "server understood but refuses to authorize; re-auth won't help." In a multi-step auth flow (Telegram HMAC → identity confirmed, then admin approval → platform membership), PENDING/REJECTED users ARE authenticated (valid JWT) but NOT authorized. `SessionGuard` (fails if no valid JWT) → 401 correct. `ActiveUserGuard` (fails if not ACTIVE) → 403 correct. Using 401 from an authorization guard causes HTTP clients and browsers to trigger re-authentication flows that can never resolve the underlying state, creating a futile redirect loop for PENDING users. Pattern: name the HTTP status explicitly in guard JSDoc. No-arg form for both (`new ForbiddenException()`, `new UnauthorizedException()`) — avoid message arguments that leak state.
-Belongs in (guess): rules/validation-authorization.md (already updated) | rules/code-style-backend.md (guard patterns)
-
-## 2026-06-30 — nestjs: UnauthorizedException message argument leaks authorization state
-
-Why: `throw new UnauthorizedException('Account is not active.')` serializes to `{"statusCode":401,"message":"Account is not active.","error":"Unauthorized"}`. A caller with any valid JWT can probe data endpoints and learn whether their account "exists but not active" vs "unauthenticated". The no-arg form `throw new UnauthorizedException()` returns the generic NestJS shape `{"statusCode":401,"message":"Unauthorized"}` which reveals nothing. Rule: all authorization guard throws must use the no-arg form; status information should only come from dedicated status endpoints (`/auth/me`).
-Belongs in (guess): rules/validation-authorization.md (guard patterns section — already has the code example; make it explicit)
 
 ## 2026-06-30 — identity: User.props is private — use public getters to construct mutated copies
 
