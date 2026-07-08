@@ -15,15 +15,18 @@ import type { Connection } from 'mongoose';
 
 /**
  * Integration test: exercises `MongoUserRepository` against a real MongoDB
- * instance (docker-compose `mongodb` service), proving the onion's
+ * instance (docker-compose `mongo` service), proving the onion's
  * persistence boundary holds end-to-end.
  *
- * Run with: `docker compose -f docker-compose.dev.yml up -d mongodb` first,
- * then run this test (see `mongo-connection.spec.ts` for the same pattern).
+ * Run with: `docker compose up -d mongo` first (auth is enabled — see
+ * `.env` for `MONGO_USER`/`MONGO_PASSWORD`), then run this test.
+ * The connection URI is read from `MONGO_TEST_URI` (see `.env` /
+ * `README.md`), falling back to an unauthenticated localhost URI for
+ * environments where auth is disabled.
  */
 describe('MongoUserRepository (integration)', () => {
   const config: MongoConnectionConfig = {
-    uri: 'mongodb://localhost:27017',
+    uri: process.env['MONGO_TEST_URI'] ?? 'mongodb://localhost:27017',
     dbName: 'penny-test',
   };
 

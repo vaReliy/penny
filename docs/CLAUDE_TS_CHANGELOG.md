@@ -17,6 +17,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-08 — Fix: knowledge-capture Stop hook didn't enforce docs/METRICS.md
+
+- **Component**: `.claude/hooks/knowledge-capture-nudge.sh`
+- **Type**: Fix
+- **What happened**: `rules/workflow.md` marks `docs/METRICS.md` as "Always" required — one append-only row per completed task — with the same enforcement tier as `docs/KNOWLEDGE_INBOX.md`. But the Stop hook only ever checked `INBOX_UPDATED` and `CHANGELOG_UPDATED`; there was no `METRICS_UPDATED` check. Result: two consecutive completed tasks (`2026-07-07-01-web-container-unhealthy`, `2026-07-07-02-integration-test-mongo-auth`) shipped without a METRICS row, and nothing caught it — the orchestrator had to be told by the user before noticing. Fixed by adding a `METRICS_UPDATED` classification and a matching `SOURCE_CHANGED && !METRICS_UPDATED` reminder block, mirroring the existing inbox pattern exactly (same cadence-guard marker convention, same block-JSON output).
+- **Why it matters upstream**: Any claude-ts consumer that adopts a METRICS-style ledger (or any other "Always" per-task ledger declared only in `rules/workflow.md` prose) will hit the same silent-drift failure mode already documented in the 2026-06-26 entry below — spec wording alone doesn't get followed reliably; only a Stop-hook check does. The template's hook should treat every "Always" ledger declared in workflow.md as a first-class check, not just the inbox.
+- **Suggested upstream change**: Port the `METRICS_UPDATED` check pattern into the base `knowledge-capture-nudge.sh` template, and add a lint/audit rule (e.g. in `cts-rule-auditor`) that cross-checks every ledger marked "Always" in `rules/workflow.md`'s knowledge-obligations table against the Stop hook's classification list, flagging any that lack a corresponding `*_UPDATED` check.
+- **Status**: pending-port
+
+---
+
 ## 2026-06-26 — Fix: knowledge-capture obligations need a Stop hook, not just spec wording
 
 - **Component**: `rules/workflow.md` + `.claude/hooks/knowledge-capture-nudge.sh`

@@ -36,19 +36,24 @@ const isAlive = await pingMongo(connection);
 Start MongoDB for local testing:
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d mongodb
+docker compose up -d mongo
 ```
 
-Connection URI: `mongodb://localhost:27017`
+The `mongo` service in `docker-compose.yml` has auth enabled
+(`MONGO_INITDB_ROOT_USERNAME`/`MONGO_INITDB_ROOT_PASSWORD`, sourced from
+`MONGO_USER`/`MONGO_PASSWORD` in `.env`). Integration/smoke tests read the
+connection URI from the `MONGO_TEST_URI` env var (set in `.env`; see the
+repo root `README.md`), falling back to the unauthenticated
+`mongodb://localhost:27017` only for environments where auth is disabled.
 
 ### Smoke Test
 
 Run the Mongo connection smoke test (requires docker-compose mongo to be running):
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d mongodb
+docker compose up -d mongo
 npx nx run identity-infrastructure:vite:test -- --run
-docker compose -f docker-compose.dev.yml down
+docker compose stop mongo
 ```
 
-The test connects to the docker-compose mongo on the host (`localhost:27017`), pings it, and verifies lifecycle management.
+The test connects to the docker-compose mongo on the host via `MONGO_TEST_URI`, pings it, and verifies lifecycle management.

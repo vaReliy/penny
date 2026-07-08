@@ -11,16 +11,18 @@ import {
  * Smoke test: connect to MongoDB via the factory, ping it, and disconnect.
  * This test proves the connection factory works against a local docker-compose mongo.
  *
- * Run with: `docker compose -f docker-compose.dev.yml up -d mongodb` in a terminal,
- * then run this test.
+ * Run with: `docker compose up -d mongo` in a terminal (auth is enabled — see
+ * `.env` for `MONGO_USER`/`MONGO_PASSWORD`), then run this test.
  */
 describe('Mongo Connection (smoke test)', () => {
   /**
    * Local docker-compose target: the compose file maps port 27017 on the host.
-   * This URI is fixed for the smoke test — no environment variable lookup needed.
+   * The URI is read from `MONGO_TEST_URI` (see `.env` / `README.md`),
+   * falling back to an unauthenticated localhost URI for environments
+   * where auth is disabled.
    */
   const config: MongoConnectionConfig = {
-    uri: 'mongodb://localhost:27017',
+    uri: process.env['MONGO_TEST_URI'] ?? 'mongodb://localhost:27017',
     dbName: 'penny-test',
   };
 

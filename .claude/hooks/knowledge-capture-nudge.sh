@@ -50,6 +50,7 @@ SOURCE_CHANGED=false
 TEMPLATE_CHANGED=false
 INBOX_UPDATED=false
 CHANGELOG_UPDATED=false
+METRICS_UPDATED=false
 
 while IFS= read -r p; do
   [ -z "$p" ] && continue
@@ -83,6 +84,9 @@ while IFS= read -r p; do
   if printf '%s' "$p" | grep -q 'docs/CLAUDE_TS_CHANGELOG\.md'; then
     CHANGELOG_UPDATED=true
   fi
+  if printf '%s' "$p" | grep -q 'docs/METRICS\.md'; then
+    METRICS_UPDATED=true
+  fi
 done <<< "$CHANGED_PATHS"
 
 # ── 5. Cadence guard — nudge once per session per unmet category ──────────────
@@ -106,6 +110,13 @@ if [ "$TEMPLATE_CHANGED" = "true" ] && [ "$CHANGELOG_UPDATED" = "false" ]; then
   if ! already_nudged "changelog"; then
     mark_nudged "changelog"
     REMINDERS+=("CLAUDE_TS_CHANGELOG REQUIRED: This session modified a claude-ts template-inherited file (CLAUDE.md, AGENTS.md, rules/**, .claude/agents/**, .claude/skills/**) but docs/CLAUDE_TS_CHANGELOG.md was not updated. Log the divergence or fix in docs/CLAUDE_TS_CHANGELOG.md now using the format in that file (Component / Type / What happened / Why it matters upstream / Suggested upstream change / Status: pending-port).")
+  fi
+fi
+
+if [ "$SOURCE_CHANGED" = "true" ] && [ "$METRICS_UPDATED" = "false" ]; then
+  if ! already_nudged "metrics"; then
+    mark_nudged "metrics"
+    REMINDERS+=("METRICS REQUIRED: This session changed source or config files. If this represents a completed task (full pipeline run with potential quality-gate cycles), append a row to docs/METRICS.md now with columns: Date / Repo / Task / Tier / Cycles / Fix Now / Emitted / Hardstop / Model. If this is mid-task work or not a full pipeline completion, state that explicitly instead of adding a METRICS row.")
   fi
 fi
 

@@ -71,6 +71,27 @@ The web app (`apps/web`) requires local environment files before running `nx ser
 
 Once set up, both files are git-ignored — they won't be committed, so each developer can keep their own local values.
 
+### Integration tests (MongoDB)
+
+Some tests (e.g. `libs/identity/infrastructure`) connect to a real MongoDB instance
+instead of mocking it. `docker-compose.yml`'s `mongo` service has auth enabled
+(`MONGO_INITDB_ROOT_USERNAME`/`MONGO_INITDB_ROOT_PASSWORD`, sourced from
+`MONGO_USER`/`MONGO_PASSWORD` in `.env`), so these tests read their connection string
+from the `MONGO_TEST_URI` env var rather than hard-coding an unauthenticated URI.
+
+1. Copy `.env.example` to `.env` and set `MONGO_USER`/`MONGO_PASSWORD` (and the rest of
+   the required vars).
+2. Add `MONGO_TEST_URI` to `.env`, reusing the same credentials, e.g.:
+   ```
+   MONGO_TEST_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@localhost:27017/penny-test?authSource=admin
+   ```
+3. Start Mongo: `docker compose up -d mongo`.
+4. Run the integration tests, e.g. `npx nx test identity --skip-nx-cache`.
+
+If `MONGO_TEST_URI` is unset, the tests fall back to the unauthenticated
+`mongodb://localhost:27017`, which only works against a local Mongo instance with auth
+disabled.
+
 ## Rebuild planning
 
 Design decisions and task breakdown live in `docs/rebuild/` (private, git-excluded).
