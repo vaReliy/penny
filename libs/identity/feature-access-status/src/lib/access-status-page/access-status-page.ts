@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, map, of, startWith } from 'rxjs';
-import { IdentityService } from 'identity-data-access';
+import { IdentityService, UserStatus } from 'identity-data-access';
 
 @Component({
   selector: 'lib-access-status-page',
@@ -15,7 +15,8 @@ export class AccessStatusPageComponent {
   readonly userStatus = toSignal(
     this.identityService.getMe().pipe(
       map((user) =>
-        user?.status === 'pending' || user?.status === 'rejected'
+        user?.status === UserStatus.PENDING ||
+        user?.status === UserStatus.REJECTED
           ? user.status
           : null,
       ),

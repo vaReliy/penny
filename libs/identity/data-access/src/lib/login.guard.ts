@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { catchError, map } from 'rxjs/operators';
 import { of } from 'rxjs';
 import type { Observable } from 'rxjs';
+import { UserStatus } from 'shared-contracts';
 import { IdentityService } from './identity.service';
 
 export const loginGuard: CanActivateFn = (): Observable<boolean | UrlTree> => {
@@ -12,7 +13,7 @@ export const loginGuard: CanActivateFn = (): Observable<boolean | UrlTree> => {
 
   return identityService.getMe().pipe(
     map((user): UrlTree => {
-      if (user.status === 'active') {
+      if (user.status === UserStatus.ACTIVE) {
         return router.createUrlTree(['/greeting']);
       }
       return router.createUrlTree(['/access-status']);

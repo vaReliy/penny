@@ -21,32 +21,27 @@ registerLivrRules();
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
-  // Retrieve the single shared pino logger from DI.
   // bufferLogs: true above held bootstrap logs until this point.
   const pinoLogger = app.get<pino.Logger>(PINO_LOGGER);
 
-  // Redirect all NestJS framework logs (lifecycle, filters) to the pino instance.
   app.useLogger(new PinoNestLogger(pinoLogger));
 
   app.setGlobalPrefix('api');
 
-  // Share the same root pino instance with pino-http so HTTP request logs and
-  // framework logs land in a single stream with a consistent format.
   app.use(pinoHttp({ logger: pinoLogger }));
 
-  // Helmet sets secure HTTP response headers. CSP restricts sources to permit
-  // the Telegram Login Widget (script-src, frame-src, img-src) while blocking
-  // all other external origins. HTTP header delivery is XSS-resistant unlike
-  // <meta> tags.
+  // CSP restricts sources to permit the Telegram Login Widget (script-src, frame-src,
+  // img-src) while blocking all other external origins. HTTP header delivery is
+  // XSS-resistant unlike <meta> tags.
   app.use(helmet({ contentSecurityPolicy: { directives: CSP_DIRECTIVES } }));
 
-  // Strip $-prefixed and dot-prefixed keys from req.body to prevent NoSQL operator
-  // injection. Applied only to body because Express 5 made req.query a getter-only
-  // property — the express-mongo-sanitize middleware tries to reassign it and throws.
+  // Applied only to body because Express 5 made req.query a getter-only property —
+  // the express-mongo-sanitize middleware tries to reassign it and throws.
   // Query-param injection is low-risk: LIVR validation rejects unexpected shapes before
   // any domain logic runs, and mongoose query builders don't accept raw operator objects.
   app.use((req: Request, _res: Response, next: NextFunction) => {
     if (req.body !== null && req.body !== undefined) {
+      // Strip $-prefixed and dot-prefixed keys from req.body to prevent NoSQL operator injection.
       req.body = mongoSanitize.sanitize(req.body);
     }
     next();

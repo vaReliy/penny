@@ -49,24 +49,25 @@ Before writing or modifying any code, additionally read:
 
 ## Project Stack
 
-| Layer      | Technology                           |
-| ---------- | ------------------------------------ |
-| Runtime    | Node.js 22+                          |
-| Language   | TypeScript 5 strict mode             |
-| Framework  | Express / Fastify / NestJS           |
-| ORM        | Prisma (primary) / TypeORM / Drizzle |
-| Validation | js-validator-livr (primary) / Zod    |
-| Auth       | Passport.js / JWT / session          |
-| Queue      | BullMQ                               |
-| Logging    | pino                                 |
-| Testing    | Vitest                               |
+| Layer      | Technology                                              |
+| ---------- | ------------------------------------------------------- |
+| Runtime    | Node.js 22+                                             |
+| Language   | TypeScript 5 strict mode                                |
+| Framework  | NestJS                                                  |
+| ORM/Data   | Mongoose + Typegoose (confined to infrastructure layer) |
+| Validation | js-validator-livr (primary)                             |
+| Auth       | JWT in httpOnly+Secure+SameSite=Lax cookie              |
+| Queue      | BullMQ                                                  |
+| Logging    | pino                                                    |
+| Testing    | Vitest                                                  |
+| Database   | MongoDB 7                                               |
 
 > See `rules/mcp-stack.md` for MCP tool reference.
 
 ## Workflow
 
 1. Review existing structure in `src/` — UseCases, Services, Repositories.
-2. Schema first: Prisma migration → model types.
+2. Schema first: Mongoose/Typegoose schema → model types.
 3. Backend: DTO → Repository interface → UseCase → Route handler.
 4. Validate input at boundary with js-validator-livr.
 5. Run `tsc --noEmit` and `eslint .` on changed files.
@@ -84,7 +85,7 @@ Before writing or modifying any code, additionally read:
 ## Done Criteria
 
 - Input validation via js-validator-livr (or Zod) at route boundary
-- No N+1 queries (use `include`/`select` in Prisma)
+- No N+1 queries (use `populate`/projections in Mongoose)
 - `tsc --noEmit` passes — no TypeScript errors
 - ESLint clean on changed files
 - `npm ci` used (never `npm install`)

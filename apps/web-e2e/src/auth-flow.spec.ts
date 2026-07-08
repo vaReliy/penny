@@ -98,7 +98,7 @@ test.describe('auth flow — status routing guard', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          message: 'Hello, Valerii — you are user #123456',
+          greeting: 'Hello, Valerii — you are user #123456',
         }),
       }),
     );
@@ -127,7 +127,7 @@ test.describe('auth flow — status routing guard', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          message: 'Hello, Valerii — you are user #123456',
+          greeting: 'Hello, Valerii — you are user #123456',
         }),
       }),
     );
@@ -156,7 +156,7 @@ test.describe('auth flow — status routing guard', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          message: 'Hello, Valerii — you are user #123456',
+          greeting: 'Hello, Valerii — you are user #123456',
         }),
       }),
     );

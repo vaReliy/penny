@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 import { catchError, map } from 'rxjs/operators';
 import { of } from 'rxjs';
 import type { Observable } from 'rxjs';
+import { UserStatus } from 'shared-contracts';
 import { IdentityService } from './identity.service';
 
 export const statusGuard: CanActivateFn = (
@@ -23,13 +24,13 @@ export const statusGuard: CanActivateFn = (
       const isAccessStatusRoute = state.url.startsWith('/access-status');
 
       if (isAccessStatusRoute) {
-        if (user.status === 'active') {
+        if (user.status === UserStatus.ACTIVE) {
           return router.createUrlTree(['/greeting']);
         }
         return true;
       }
 
-      if (user.status === 'active') {
+      if (user.status === UserStatus.ACTIVE) {
         return true;
       }
       return router.createUrlTree(['/access-status']);

@@ -17,6 +17,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-08 — Fix: backend-developer.md carried the generic claude-ts default stack instead of this project's actual stack
+
+- **Component**: `.claude/agents/backend-developer.md`
+- **Type**: Fix
+- **What happened**: The "Project Stack" table (and two prose references in Workflow/Done Criteria) still listed the claude-ts template defaults — `Express / Fastify / NestJS`, `Prisma (primary) / TypeORM / Drizzle`, `Passport.js / JWT / session` — none of which match this repo's actual backend stack (NestJS only, Mongoose + Typegoose confined to the infrastructure layer, JWT delivered via an httpOnly+Secure+SameSite=Lax cookie, MongoDB 7). This misleads the agent about what ORM/auth patterns to reach for. Fixed by replacing the table with the project's real stack and swapping the two Prisma-specific prose lines (`Schema first: Prisma migration → model types`, `No N+1 queries (use include/select in Prisma)`) for Mongoose/Typegoose equivalents.
+- **Why it matters upstream**: Every claude-ts consumer that customizes its actual stack (a different ORM, different auth mechanism) but only edits the table header risks leaving stale Prisma/PostgreSQL references in prose bullets elsewhere in the same file — the generator/template doesn't cross-check table content against prose mentions of the same technology.
+- **Suggested upstream change**: When customizing `backend-developer.md` (or any agent template) for a project's real stack, grep the whole file for the default stack's proper nouns (`Prisma`, `PostgreSQL`, `Passport.js`, etc.) — not just the Project Stack table — before considering the customization complete. Consider a `cts-rule-auditor` check that flags stack-default keywords surviving outside a table row.
+- **Status**: project-local-only
+
+---
+
 ## 2026-07-08 — Fix: knowledge-capture Stop hook didn't enforce docs/METRICS.md
 
 - **Component**: `.claude/hooks/knowledge-capture-nudge.sh`

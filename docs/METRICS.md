@@ -30,3 +30,5 @@ Each completed task is one row in the table below.
 | 2026-07-07 | penny | distill-jwt-array-claim-guard-into-validation-rule | T2   | 0      | 0/0/0/0           | 0       | no       | standard |
 | 2026-07-07 | penny | skeleton-review-dod-audit-and-backlog-regroom      | T2   | 0      | 0/0/0/0           | 4       | no       | deep     |
 | 2026-07-08 | penny | integration-test-mongo-auth                        | T2   | 0      | 0/0/0/0           | 0       | no       | standard |
+| 2026-07-08 | penny | cleanup-batch                                      | T2   | 1      | 0/1/0/0           | 0       | no       | cheap    |
+| 2026-07-08 | penny | coverage-thresholds                                | T2   | 1      | 0/1/0/0           | 0       | no       | cheap    |
