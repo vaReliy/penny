@@ -17,6 +17,15 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-08 — Fix: `rules/architecture.md`'s onion-layer bullet list didn't document `type:kernel → type:contracts` as an allowed shared-leaf dependency
+
+- **Component**: `rules/architecture.md` (Onion Rules / Backend section)
+- **Type**: Fix
+- **What happened**: A task relaxed the project's `eslint.config.mjs` `depConstraints` so `type:kernel` may depend on `type:contracts` (to import a shared `RoleType` union onto `CallerIdentity.roles` instead of duplicating it). This extended an existing-but-undocumented pattern: `type:core`, `type:application`, and `type:infrastructure` were already allowed to depend on `type:contracts` (each is a documented "shared leaf" consumer per the file's own "Type-Contracts Boundary" section), but the plain bullet-list description of `type:kernel` at line 87 still said only "may depend on util and errors," so the doc and the enforced lint rule had drifted apart. Fixed by updating that bullet to mention the `type:contracts` allowance and point at the existing "Type-Contracts Boundary" section, which already generically documents the pattern (allowlisting a leaf lib into `eslint.config.mjs` when it becomes authoritative for a shared primitive) — no new section needed, just a stale line correction. Closed inline (cheap-override, single file, docs-only) rather than as a separate backlog task, per `rules/workflow.md`'s cheap-override clause.
+- **Why it matters upstream**: any claude-ts consumer using the kernel/contracts/errors/util "shared leaf" onion pattern will hit the same drift the moment they extend one leaf's allowlist to include another — the template's own bullet-list layer descriptions need to stay in sync with whichever `depConstraints` example ships in the template's `eslint.config.mjs`, or explicitly say "see your own `eslint.config.mjs` for the authoritative allowlist" instead of restating specific tags that can go stale.
+- **Suggested upstream change**: in the template's `rules/architecture.md`, either (a) drop the specific "may depend on X and Y" wording from each onion-layer bullet and replace it with a pointer to the authoritative `eslint.config.mjs` `depConstraints` block, or (b) if keeping the inline description, add a one-line reminder next to the "Type-Contracts Boundary" section: "whenever a leaf-to-leaf allowlist changes in `eslint.config.mjs`, update the corresponding bullet above in the same commit."
+- **Status**: pending-port
+
 ## 2026-07-08 — Fix: backend-developer.md carried the generic claude-ts default stack instead of this project's actual stack
 
 - **Component**: `.claude/agents/backend-developer.md`

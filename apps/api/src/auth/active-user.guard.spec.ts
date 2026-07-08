@@ -46,6 +46,7 @@ describe('ActiveUserGuard.canActivate', () => {
       telegramId: '1',
       displayName: 'Alice',
       status: UserStatus.ACTIVE,
+      roles: [],
     };
     expect(guard.canActivate(makeContext(user))).toBe(true);
   });
@@ -56,6 +57,7 @@ describe('ActiveUserGuard.canActivate', () => {
       telegramId: '2',
       displayName: 'Bob',
       status: UserStatus.PENDING,
+      roles: [],
     };
     expect(() => guard.canActivate(makeContext(user))).toThrow(
       ForbiddenException,
@@ -68,6 +70,7 @@ describe('ActiveUserGuard.canActivate', () => {
       telegramId: '3',
       displayName: 'Carol',
       status: UserStatus.REJECTED,
+      roles: [],
     };
     expect(() => guard.canActivate(makeContext(user))).toThrow(
       ForbiddenException,

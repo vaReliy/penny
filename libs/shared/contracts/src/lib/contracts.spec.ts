@@ -16,6 +16,7 @@ describe('shared contracts (types-only smoke check)', () => {
       telegramId: '123456789',
       displayName: 'Jane',
       status,
+      roles: [Role.USER],
     };
 
     expect(user.status).toBe('active');

@@ -7,6 +7,7 @@
   "types": "./src/index.d.ts",
   "dependencies": {
     "livr": "2.10.2",
+    "shared-contracts": "0.0.1",
     "shared-errors": "0.0.1",
     "tslib": "2.8.1"
   }

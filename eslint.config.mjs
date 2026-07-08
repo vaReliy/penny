@@ -118,6 +118,7 @@ export default [
               sourceTag: 'type:kernel',
               onlyDependOnLibsWithTags: [
                 'type:kernel',
+                'type:contracts',
                 'type:errors',
                 'type:util',
               ],

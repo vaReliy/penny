@@ -1,3 +1,5 @@
+import type { RoleType } from 'shared-contracts';
+
 /**
  * Identity of the authenticated caller invoking a service. Carries only
  * what authorization decisions need — never credentials or tokens.
@@ -5,7 +7,7 @@
 export interface CallerIdentity {
   readonly userId: string;
   readonly status: string;
-  readonly roles: readonly string[];
+  readonly roles: readonly RoleType[];
 }
 
 /**

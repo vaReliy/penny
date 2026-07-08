@@ -84,7 +84,7 @@ infrastructure → application → core → kernel/contracts/errors/util
 - `type:infrastructure` — transports, ORM, external clients; may depend on all
 - `type:application` — use-cases, handlers; may depend on core and below
 - `type:core` — pure domain logic, entities, value objects; may depend on kernel and below
-- `type:kernel` — domain abstractions (`IRepository`, error base classes); may depend on util and errors
+- `type:kernel` — domain abstractions (`IRepository`, error base classes); may depend on util, errors, and contracts (e.g. `CallerIdentity.roles: RoleType[]` importing the `RoleType` union — see Type-Contracts Boundary below)
 - `type:contracts` — shared types, enums; may depend only on util
 - `type:errors` — error hierarchy; may depend only on util; used by all layers
 - `type:util` — helpers, guards; may depend only on util (leaf)

@@ -116,6 +116,25 @@ describe('SessionGuard.canActivate', () => {
     expect(clearCookie).toHaveBeenCalledWith(XSRF_COOKIE_NAME, { path: '/' });
   });
 
+  it('throws a no-arg AuthenticationError (opaque default message, no token-state detail) when tokenIssuer.verify throws', async () => {
+    (tokenIssuer.verify as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      throw new Error('jwt expired');
+    });
+    const { ctx } = makeContext(`${AUTH_COOKIE_NAME}=bad-jwt`);
+
+    let caught: unknown;
+    try {
+      await guard.canActivate(ctx);
+    } catch (err) {
+      caught = err;
+    }
+
+    expect(caught).toBeInstanceOf(AuthenticationError);
+    expect((caught as AuthenticationError).message).not.toMatch(
+      /expired|invalid|token/i,
+    );
+  });
+
   it('clears cookie and throws AuthenticationError when user not found', async () => {
     (userRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(
       null,
@@ -184,7 +203,45 @@ describe('SessionGuard.canActivate', () => {
       telegramId: '999',
       displayName: 'Alice',
       status: UserStatus.ACTIVE,
+      roles: [],
     });
+  });
+
+  it('populates req.user.roles from claims.roles (multiple roles)', async () => {
+    (tokenIssuer.verify as ReturnType<typeof vi.fn>).mockReturnValue({
+      sub: 'user-1',
+      status: 'active',
+      roles: ['admin', 'user'],
+    });
+    const user = makeUser({ id: 'u2', telegramId: '222' });
+    (userRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(
+      user,
+    );
+    const { ctx, getReqUser } = makeContext(`${AUTH_COOKIE_NAME}=valid-jwt`);
+
+    await guard.canActivate(ctx);
+
+    expect((getReqUser() as { roles: readonly string[] }).roles).toEqual([
+      'admin',
+      'user',
+    ]);
+  });
+
+  it('populates req.user.roles as an empty array when claims.roles is empty', async () => {
+    (tokenIssuer.verify as ReturnType<typeof vi.fn>).mockReturnValue({
+      sub: 'user-1',
+      status: 'active',
+      roles: [],
+    });
+    const user = makeUser({ id: 'u3', telegramId: '333' });
+    (userRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(
+      user,
+    );
+    const { ctx, getReqUser } = makeContext(`${AUTH_COOKIE_NAME}=valid-jwt`);
+
+    await guard.canActivate(ctx);
+
+    expect((getReqUser() as { roles: readonly string[] }).roles).toEqual([]);
   });
 
   it('falls back displayName to username when firstName is undefined', async () => {

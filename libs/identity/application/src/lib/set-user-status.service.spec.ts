@@ -1,7 +1,8 @@
 import { AuthenticationError, DomainError, NotFoundError } from 'shared-errors';
 import { User, UserStatus } from 'identity-core';
-import type { IUserRepository } from 'identity-core';
+import type { IUserRepository, UserProfileUpdate } from 'identity-core';
 import type { CallerIdentity, ServiceContext } from 'shared-kernel';
+import { Role } from 'shared-contracts';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
@@ -28,6 +29,22 @@ class FakeUserRepository implements IUserRepository {
         return user;
       }
     }
+    return null;
+  }
+
+  public async findByUsername(username: string): Promise<User | null> {
+    for (const user of this.usersById.values()) {
+      if (user.username === username) {
+        return user;
+      }
+    }
+    return null;
+  }
+
+  public async updateProfile(
+    _id: string,
+    _profile: Partial<UserProfileUpdate>,
+  ): Promise<User | null> {
     return null;
   }
 
@@ -66,7 +83,7 @@ const ADMIN_CALLER: CallerIdentity = {
 const NON_ADMIN_CALLER: CallerIdentity = {
   userId: 'member-1',
   status: UserStatus.ACTIVE,
-  roles: ['member'],
+  roles: [Role.USER],
 };
 
 describe('ApproveUserService', () => {

@@ -53,6 +53,7 @@ describe('HelloController', () => {
       telegramId: '123',
       displayName: 'Alice',
       status: 'active',
+      roles: [],
     };
 
     const result = controller.hello(user);
@@ -66,6 +67,7 @@ describe('HelloController', () => {
       telegramId: '456',
       displayName: 'Bob',
       status: 'active',
+      roles: [],
     };
 
     const result = controller.hello(user);
@@ -87,6 +89,7 @@ describe('GET /hello — ActiveUserGuard enforces ACTIVE status', () => {
       telegramId: '789',
       displayName: 'Carol',
       status: 'active',
+      roles: [],
     };
     expect(guard.canActivate(makeGuardContext(user))).toBe(true);
 
@@ -103,6 +106,7 @@ describe('GET /hello — ActiveUserGuard enforces ACTIVE status', () => {
       telegramId: '101',
       displayName: 'Dave',
       status: 'pending',
+      roles: [],
     };
     expect(() => guard.canActivate(makeGuardContext(user))).toThrow(
       ForbiddenException,

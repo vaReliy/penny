@@ -44,6 +44,7 @@ describe('CurrentUser decorator factory', () => {
       telegramId: '123',
       displayName: 'Alice',
       status: 'active',
+      roles: [],
     } as unknown as SessionUser;
 
     expect(capturedFactory!(undefined, makeCtx(user))).toBe(user);

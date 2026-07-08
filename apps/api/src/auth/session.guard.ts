@@ -41,7 +41,7 @@ export class SessionGuard implements CanActivate {
     } catch {
       res.clearCookie(AUTH_COOKIE_NAME, { path: '/' });
       res.clearCookie(XSRF_COOKIE_NAME, { path: '/' });
-      throw new AuthenticationError('Session token is invalid or has expired.');
+      throw new AuthenticationError();
     }
 
     const user = await this.userRepository.findById(claims.sub);
@@ -57,6 +57,7 @@ export class SessionGuard implements CanActivate {
       telegramId: user.telegramId,
       displayName: user.firstName ?? user.username ?? user.telegramId,
       status: user.status,
+      roles: claims.roles,
     };
 
     return true;

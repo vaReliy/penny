@@ -1,3 +1,4 @@
+import type { RoleType } from './role.js';
 import type { UserStatus } from './user-status.js';
 
 /**
@@ -9,4 +10,5 @@ export interface SessionUser {
   readonly telegramId: string;
   readonly displayName: string;
   readonly status: UserStatus;
+  readonly roles: readonly RoleType[];
 }

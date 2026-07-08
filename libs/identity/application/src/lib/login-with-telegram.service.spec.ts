@@ -31,6 +31,15 @@ class FakeUserRepository implements IUserRepository {
     return null;
   }
 
+  public async findByUsername(username: string): Promise<User | null> {
+    for (const user of this.usersById.values()) {
+      if (user.username === username) {
+        return user;
+      }
+    }
+    return null;
+  }
+
   public async save(entity: User): Promise<User> {
     const id = entity.id === '' ? `generated-${this.nextId++}` : entity.id;
     const persisted = new User({

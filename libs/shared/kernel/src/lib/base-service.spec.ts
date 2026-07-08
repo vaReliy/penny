@@ -1,5 +1,6 @@
 import LIVR from 'livr';
 import { AuthenticationError } from 'shared-errors';
+import { Role } from 'shared-contracts';
 import { describe, expect, it, vi } from 'vitest';
 
 import { BaseService } from './base-service.js';
@@ -45,7 +46,7 @@ const ANONYMOUS_CONTEXT: ServiceContext = {
 
 const AUTHENTICATED_CONTEXT: ServiceContext = {
   config: {},
-  caller: { userId: 'user-1', status: 'active', roles: ['member'] },
+  caller: { userId: 'user-1', status: 'active', roles: [Role.USER] },
 };
 
 /** `execute()` throws a plain Error, not a platform `BaseError`. */
