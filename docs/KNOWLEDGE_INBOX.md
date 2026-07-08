@@ -2,6 +2,11 @@
 
 Append-only queue for durable, project-relevant learnings whose final home isn't clear yet. Distilled into PROJECT_CONTEXT.md / CLAUDE.md / a rule / a skill, then deleted from here — this file should trend toward empty.
 
+## 2026-07-08 — docker: `wget`/`localhost` in Alpine healthchecks can fail on IPv4-only nginx due to IPv6-first resolution
+
+Why: `penny-web`'s Dockerfile/compose healthcheck used `wget --spider http://localhost:8080/health`. Inside the Alpine container, `wget` resolved `localhost` to `[::1]` (IPv6) first, but nginx only bound to `0.0.0.0:8080` (IPv4), so the probe got connection-refused and the container stayed `unhealthy` even though the app itself worked fine and `/health` returned 200 via `curl` or `127.0.0.1`. Fix: switch container healthchecks from `wget` to `curl -sf`, which resolves `localhost` correctly across IPv4/IPv6 in this image; also worth bumping `start_period` a bit (5s → 10s) for margin. General rule: never assume `wget --spider http://localhost:PORT/...` is a safe healthcheck primitive on Alpine-based images — verify against `127.0.0.1` or switch to `curl`. Confirmed `nginx:1.27-alpine` ships `curl` at `/usr/bin/curl` by default (alongside busybox `wget`), so switching needs no extra `apk add` layer. Root mechanism: BusyBox `wget --spider` doesn't fall back across multiple resolved addresses (no happy-eyeballs), while `curl` does — any other service healthchecking `localhost` on an IPv4-only bind is exposed to the same gotcha (e.g. worth double-checking `api`'s healthcheck too).
+Belongs in (guess): rules/docker-commands.md (healthcheck section)
+
 ## 2026-06-30 — cli: inline `process.env` secret reads must own full validation (presence + entropy floor)
 
 Why: CLI commands that read secrets inline (instead of through the NestJS Config service) bypass the Config service's validation. A falsy-only check (`if (!secret)`) passes single-char values that produce structurally valid but cryptographically weak tokens. Pattern: after the presence check, assert minimum length (32 chars for HMAC-SHA256 secrets) before constructing any cryptographic primitive. The production-mode guard limits blast radius but does not substitute for entropy validation because the same `JWT_SECRET` is shared with the API server.
