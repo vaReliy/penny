@@ -327,3 +327,28 @@ Belongs in (guess): rules/testing.md (NestJS integration test patterns — main.
 
 Why: `docs/rebuild/tasks/{todo,done,parked}/**` never appears in `git status`/`git diff` output — not because there are no changes, but because the path is excluded via `.git/info/exclude:9` (`docs/rebuild/`), a machine-local file, not a tracked `.gitignore`. This makes the exclusion invisible to anyone reading only the checked-in repo. `git mv`/`git add` fail with "not under version control" on these paths. Confirmed via `git check-ignore -v <path>`, which reports the excluding rule and line. Rule: task files under `docs/rebuild/tasks/**` (moving between `todo/`/`done/`/`parked/`, creating new ones) must use plain `mv`/filesystem writes, never `git mv`/`git add`. If a git operation on any path unexpectedly fails, or a directory shows suspiciously empty `git status` output despite known edits, run `git check-ignore -v <path>` before concluding there's nothing to do.
 Belongs in (guess): docs/rebuild/tasks/README.md (note the exclude) | rules/workflow.md (task-file lifecycle note)
+
+## 2026-07-09 — workflow: quality-gate fix-retry cycles should resume the same agent instance, not spawn a fresh one
+
+Why: `rules/workflow.md`'s Quality Gate section documents the stage order and restart-from-tester rule but not _how_ a restart should be dispatched. A fresh agent on each restart re-derives all context cold (re-reads the task, re-explores the diff) even though the prior instance already built that understanding in cycle 1. Confirmed as the preferred approach on the `rate-limit-telegram-login` task (2026-07-09): on a `## Fix Now` restart, resume the same `tester`/`reviewer`/`security-scanner` _and_ the implementing agent (e.g. `backend-developer`) via `SendMessage` to their existing agent IDs, so the re-run only evaluates the delta. Applies to same-role re-runs within one task's cycles, not to swapping which role runs next.
+Belongs in (guess): rules/workflow.md (Quality Gate section, restart-cycle dispatch mechanics)
+
+## 2026-07-09 — workflow: quality-gate stages must wait for the prior stage's Agent call to fully return, not just look complete inline
+
+Why: Dispatching `reviewer` while `tester`'s Agent call was still running background follow-up work (e.g. `nx run-many`) violated the tester → reviewer → security-scanner sequential contract even though the visible inline result looked finished. Rule: after dispatching each quality-gate agent as a foreground `Agent` call, wait for the tool result to actually appear before making the next `Agent` call — do not infer completion from partial/streamed output.
+Belongs in (guess): rules/workflow.md (Quality Gate section — sequential dispatch note)
+
+## 2026-07-08 — workflow: never `git stash`/`git stash pop` mid-session to check pre-existing-vs-new state
+
+Why: Even a reversible stash/pop mid-session mutates the working tree the user (or another agent) is actively tracking via `git diff` across turns, disrupting the visible diff for no benefit. To check whether an issue predates the current session's changes, use non-mutating alternatives instead: `git show HEAD:<path>` / `git diff HEAD -- <path>` for a single file, `git worktree add` for a genuinely separate checkout, or reason from `git log`/`git blame`.
+Belongs in (guess): rules/workflow.md or rules/git-operations.md (session-safety note for any AI agent working in this repo)
+
+## 2026-07-01 — workflow: only commit `/cts-update` output when the CTS source was actually pushed to the real GitHub remote
+
+Why: `/cts-update --source ../claude-ts` (or any local/uncommitted CTS checkout) run to verify a contribution round-trips cleanly is a dry run, not a release — its diff must stay uncommitted/discarded in this consumer repo. Committing it would make this repo's history claim a template sync that never happened upstream. Rule: before committing any `/cts-update` output, confirm the CTS source pointed at the GitHub remote (or a local checkout whose HEAD is already pushed there) — not an unpushed local-only state. If in doubt, ask.
+Belongs in (guess): rules/workflow.md (cts-update / template-sync section) or a note near the `/cts-update` skill itself
+
+## 2026-06-29 — workflow: `reviewer`/`security-scanner` should read a scoped depth (durable map + seam-touched files), not full-repo-scan, once topology docs exist
+
+Why: Agreed during the 2026-06-29 cyclic-development grill as a root-cause fix (alongside the foresight gate and 4-tier quality floor already in `rules/workflow.md`). Pre-flight should read the durable map (`ARCHITECTURE.md`/`DECISIONS.md`/`PROJECT_CONTEXT.md`); when the changeset touches a seam (shared contract/registry/cross-layer field), read the full touched files plus their bidirectional consumers/dependencies, not the whole repo. `security-scanner` additionally reads the trust-boundary section of the decision docs. This depends on topology docs existing first — was gated behind a docs task at the time and may already be actionable now that `docs/PROJECT_CONTEXT.md` exists.
+Belongs in (guess): rules/workflow.md (Quality Gate section, reviewer/security-scanner pre-flight scope)
