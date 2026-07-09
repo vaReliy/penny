@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (Task — wire ServiceContext.caller from session for admin approve/reject)
+
+- **`apps/api/src/identity/user-admin.controller.ts`** — `UserAdminController` exposes `POST admin/users/:userId/approve` and `POST admin/users/:userId/reject` endpoints. Wires the authenticated session user into `CallerIdentity` (userId, status, roles) for the first time in an HTTP handler, constructing `ServiceContext { config: {}, caller }` and passing it to `ApproveUserService`/`RejectUserService`. Guarded by `SessionGuard` (authentication) + `ActiveUserGuard` (account status = ACTIVE, defense-in-depth against deactivated accounts with valid tokens). Authorization (role = ADMIN) is delegated to the services' `authorize()` method, not duplicated at the controller layer.
+- **`apps/api/src/identity/user-admin.controller.spec.ts`** — 11 unit tests covering deny-on-missing-auth, deny-on-empty-roles, deny-on-non-admin-role, deny-on-non-active-status (both approve and reject), allow-on-admin+active, and 404-on-unknown-user. Uses real `SessionGuard` + real `ActiveUserGuard` in the chain to exercise the actual auth flow, not a mock.
+
+### Changed (Task — wire ServiceContext.caller from session for admin approve/reject)
+
+- **`apps/api/src/auth/auth.module.ts`** — registered `UserAdminController` in the controllers array alongside `AuthController`.
+
 ### Added (Task 04 — CSP nonce server-side injection via nginx sub_filter)
 
 - **`apps/web/nginx.conf`** — per-request CSP nonce injection using nginx `$request_id` (128-bit CSPRNG, 32 hex chars): `sub_filter 'name="csp-nonce" content>' 'name="csp-nonce" content="$request_id">'` replaces the minified placeholder in `index.html` at request time (Angular's esbuild production build minifies `content=""` → `content`, so the match targets the minified form); `add_header Content-Security-Policy` on the `location /` block emits a full policy with `style-src 'self' 'nonce-$request_id'` and `frame-ancestors 'self'`; `gzip off` co-located to prevent silent sub_filter bypass on compressed responses.

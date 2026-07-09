@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
 
 import { IdentityModule } from '../identity/identity.module.js';
+import { UserAdminController } from '../identity/user-admin.controller.js';
 import { AuthController } from './auth.controller.js';
 import { SessionGuard } from './session.guard.js';
 import { ActiveUserGuard } from './active-user.guard.js';
@@ -21,7 +22,7 @@ import {
       },
     ]),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, UserAdminController],
   providers: [SessionGuard, ActiveUserGuard, CsrfGuard],
   exports: [SessionGuard, ActiveUserGuard, CsrfGuard, IdentityModule],
 })
