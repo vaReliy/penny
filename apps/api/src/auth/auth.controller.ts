@@ -10,6 +10,7 @@ import {
   HttpCode,
   UseGuards,
 } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import type { Response } from 'express';
 
 import type {
@@ -54,11 +55,10 @@ export class AuthController {
     return user;
   }
 
-  // TODO: apply rate limiting (e.g. @nestjs/throttler ~5 req/min/IP) to prevent
-  // resource exhaustion and amplified DB load on repeated Telegram login attempts.
   @Post('telegram')
   @HttpCode(200)
   @SkipCsrf()
+  @UseGuards(ThrottlerGuard)
   public async telegramLogin(
     @Body() body: RawTelegramLoginPayload,
     @Res({ passthrough: true }) res: Response,

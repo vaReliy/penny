@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
 import pinoHttp from 'pino-http';
@@ -18,8 +19,18 @@ import type { ApiConfig } from './config/api-config.js';
 
 registerLivrRules();
 
+/**
+ * Number of reverse-proxy hops Express trusts when deriving `req.ip` from
+ * `X-Forwarded-For`. Set to exactly one hop: the nginx reverse proxy
+ * (apps/web/nginx.conf) is the sole ingress per docker-compose.yml (api is
+ * expose-only, never directly internet-facing).
+ */
+const TRUST_PROXY_HOP_COUNT = 1;
+
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+  });
 
   // bufferLogs: true above held bootstrap logs until this point.
   const pinoLogger = app.get<pino.Logger>(PINO_LOGGER);
@@ -27,6 +38,11 @@ async function bootstrap(): Promise<void> {
   app.useLogger(new PinoNestLogger(pinoLogger));
 
   app.setGlobalPrefix('api');
+
+  // nginx sets X-Forwarded-For/X-Real-IP correctly, so Express can derive req.ip from it.
+  // Without this, req.ip resolves to nginx's internal IP for every request, collapsing
+  // ThrottlerGuard's per-client tracker into one shared global bucket.
+  app.set('trust proxy', TRUST_PROXY_HOP_COUNT);
 
   app.use(pinoHttp({ logger: pinoLogger }));
 
