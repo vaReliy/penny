@@ -97,6 +97,22 @@ describe('SessionGuard.canActivate', () => {
     );
   });
 
+  it('throws a no-arg AuthenticationError (opaque default message, no token-state detail) when no cookie header', async () => {
+    const { ctx } = makeContext(undefined);
+
+    let caught: unknown;
+    try {
+      await guard.canActivate(ctx);
+    } catch (err) {
+      caught = err;
+    }
+
+    expect(caught).toBeInstanceOf(AuthenticationError);
+    expect((caught as AuthenticationError).message).not.toMatch(
+      /missing|cookie/i,
+    );
+  });
+
   it('throws AuthenticationError when cookie header has no token cookie', async () => {
     const { ctx } = makeContext('other=value');
     await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(
@@ -145,6 +161,25 @@ describe('SessionGuard.canActivate', () => {
     );
     expect(clearCookie).toHaveBeenCalledWith(AUTH_COOKIE_NAME, { path: '/' });
     expect(clearCookie).toHaveBeenCalledWith(XSRF_COOKIE_NAME, { path: '/' });
+  });
+
+  it('throws a no-arg AuthenticationError (opaque default message, no token-state detail) when user not found', async () => {
+    (userRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(
+      null,
+    );
+    const { ctx } = makeContext(`${AUTH_COOKIE_NAME}=valid-jwt`);
+
+    let caught: unknown;
+    try {
+      await guard.canActivate(ctx);
+    } catch (err) {
+      caught = err;
+    }
+
+    expect(caught).toBeInstanceOf(AuthenticationError);
+    expect((caught as AuthenticationError).message).not.toMatch(
+      /denied|access|not found/i,
+    );
   });
 
   it('returns true and sets req.user for a PENDING user — SessionGuard does not check status', async () => {

@@ -32,7 +32,7 @@ export class SessionGuard implements CanActivate {
     const token = this.extractCookieToken(req);
 
     if (!token) {
-      throw new AuthenticationError('Authentication required.');
+      throw new AuthenticationError();
     }
 
     let claims: TokenClaims;
@@ -49,7 +49,7 @@ export class SessionGuard implements CanActivate {
     if (!user) {
       res.clearCookie(AUTH_COOKIE_NAME, { path: '/' });
       res.clearCookie(XSRF_COOKIE_NAME, { path: '/' });
-      throw new AuthenticationError('Access denied.');
+      throw new AuthenticationError();
     }
 
     req.user = {
