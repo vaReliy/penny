@@ -32,6 +32,14 @@ export class SessionGuard implements CanActivate {
     const token = this.extractCookieToken(req);
 
     if (!token) {
+      // No dummy verify/DB work is added here to match the other branches'
+      // latency: AUTH_COOKIE_NAME/XSRF_COOKIE_NAME are set with sameSite:
+      // 'lax' (see auth.controller.ts), so cross-site fetch/XHR never
+      // attaches them, closing the practical cross-site timing-oracle
+      // vector. The residual (top-level navigation + isolated timing) is
+      // an accepted, low-severity signal.
+      res.clearCookie(AUTH_COOKIE_NAME, { path: '/' });
+      res.clearCookie(XSRF_COOKIE_NAME, { path: '/' });
       throw new AuthenticationError();
     }
 

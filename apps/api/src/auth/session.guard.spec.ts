@@ -97,6 +97,15 @@ describe('SessionGuard.canActivate', () => {
     );
   });
 
+  it('clears cookie and throws AuthenticationError when no cookie header', async () => {
+    const { ctx, clearCookie } = makeContext(undefined);
+    await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(
+      AuthenticationError,
+    );
+    expect(clearCookie).toHaveBeenCalledWith(AUTH_COOKIE_NAME, { path: '/' });
+    expect(clearCookie).toHaveBeenCalledWith(XSRF_COOKIE_NAME, { path: '/' });
+  });
+
   it('throws a no-arg AuthenticationError (opaque default message, no token-state detail) when no cookie header', async () => {
     const { ctx } = makeContext(undefined);
 
