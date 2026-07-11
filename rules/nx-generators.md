@@ -55,6 +55,10 @@ Repo standard: all style files must use SCSS (not CSS). The `@nx/angular:app` an
 
 ### Angular Generator Flag Requirements
 
+- `@nx/angular:app` and `@nx/angular:lib` **must** be scaffolded via `nx g`, never created manually. The generator registers the project in the NX workspace graph, ensures the full tsconfig inheritance chain, and configures targets/executors correctly. Manual creation (writing project.json by hand) breaks `nx affected` and may misconfigure lint/test runners. Always use: `pnpm nx g @nx/angular:lib <path> --tags=… --style=scss --standalone --no-interactive`, then audit per this file's sections.
+
+- `@nx/angular:lib` generator **silently ignores positional arguments** when `--directory` is absent. Running `nx g @nx/angular:lib identity/feature-access-status` (positional) without `--directory` strips the prefix and places the lib in the wrong location. Always pair `--name=<project-name>` with `--directory=libs/<path>` explicitly. The generator output confirms the resolved root — verify it matches the intended path.
+
 - `@nx/angular:app` and `@nx/angular:lib` require `--name` flag for the project name (not a positional arg). Correct: `pnpm nx g @nx/angular:app --name=web --directory=apps/web …`. Positional arguments fail with "Schema does not support positional arguments".
 - `@nx/angular:component` uses `--path=libs/<lib>/src/lib/<component-folder>/<component-name>` (path to the component file without extension), not `--project`. This changed in Nx v23.
 
@@ -85,6 +89,14 @@ Generators scaffold sibling projects (e.g. `apps/<name>-e2e`). Audit them too:
 - Remove or narrow any blanket `/* eslint-disable */` the generator added — fix the
   underlying lint issue (e.g. `no-var → const/let`) instead of suppressing the whole file.
 - Delete a companion project you don't intend to use rather than leaving it lint-disabled.
+
+## Manual Library Creation
+
+### Manually created JS/TS libs (non-Angular) are auto-detected
+
+When `nx g @nx/js:lib` is skipped in favour of hand-crafting `project.json` + tsconfigs, the NX workspace graph still auto-detects the project (e.g., `shared-kernel`, `shared-contracts`, `shared-infrastructure`). Unlike Angular libs (which require the generator), plain TypeScript libs that follow the existing monorepo structure can be safely created manually without breaking `nx affected` or graph inference.
+
+However, Angular libs must always use the `@nx/angular:lib` generator — never create them manually.
 
 ## 7. A green build does not close the task
 

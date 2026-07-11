@@ -145,6 +145,24 @@ async findOrCreate(filter: Record<string, any>, initialData: Record<string, any>
 
 The retry `findOne()` is guaranteed to succeed because the winner's document is now persisted. Always wrap the retry in error handling too.
 
+### Schema defaults on legacy documents — no migration needed (if not using `.lean()`)
+
+Adding a new field with a `default:` value to an existing Typegoose schema applies that default to any document hydrated via a normal query (`find`, `findOne`, etc.) whose BSON is missing that path — **but only when the query does NOT use `.lean()`**.
+
+Example: adding `roles: string[] = []` to the User schema without a migration script still works safely because:
+
+```typescript
+// ✓ Schema default applied to legacy docs (no `.lean()`)
+const user = await userCollection.findOne({ id: '123' });
+// user.roles === [] even if the BSON doc predates the field
+
+// ❌ Schema default NOT applied when using `.lean()`
+const userLean = await userCollection.findOne({ id: '123' }).lean();
+// userLean.roles === undefined — raw BSON, no schema defaults
+```
+
+**General rule**: adding a new field with a `default:` to an existing Typegoose/Mongoose collection is migration-free only if every read path for that model avoids `.lean()`; if any repository method uses `.lean()`, that path needs either a migration or an explicit `?? []`-style fallback in the mapper.
+
 ### Unique index on required fields
 
 Use a **non-sparse** unique index for application-required fields:
@@ -218,3 +236,25 @@ throw new InfrastructureError(); // Uses default generic message
 ```
 
 `BaseErrorFilter` serializes the error message into the HTTP response. Inject the logger into every repository and call `logger.error()` before throwing.
+
+## NestJS Guards and Dependency Injection
+
+### Global guards that use `Reflector`: must use `APP_GUARD`, not `app.useGlobalGuards()`
+
+Calling `app.useGlobalGuards(new CsrfGuard())` instantiates the guard **outside** the NestJS DI container. If the guard needs to inject `Reflector` (to read `@SetMetadata` / `@SkipCsrf()` decorator metadata via `getAllAndOverride()`), the injection fails because DI is bypassed.
+
+**Correct pattern**: register via `APP_GUARD` provider in a module's `providers` array — this resolves the guard through DI so `Reflector` is injected normally:
+
+```typescript
+@Module({
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: CsrfGuard, // ✓ Instantiated by DI, Reflector available
+    },
+  ],
+})
+export class SecurityModule {}
+```
+
+This applies to any global guard that reads decorator metadata. Stateless middleware-style guards (no Reflector dependency) can use either pattern.

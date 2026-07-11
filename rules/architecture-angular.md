@@ -97,3 +97,11 @@ Create `apps/web/proxy.conf.json`:
 ```
 
 This proxies all `/api/**` requests in local dev to `http://localhost:3000`. Without this, API calls from the Angular app return 404 in dev.
+
+## Build Output Structure
+
+### Angular 17+ nested `browser/` subdirectory
+
+Angular 17 introduced a nested `browser/` subdirectory inside the app dist folder (for future SSR/SSG parity). The build output for `nx build web` is at `dist/apps/web/browser/`, not `dist/apps/web/`.
+
+Nginx Dockerfiles that `COPY` from `dist/apps/web` instead of `dist/apps/web/browser` serve an empty or broken site — the HTML/JS/CSS files are one level deeper than expected. Always verify the Angular output path via `npx nx build web --skip-nx-cache` before writing the Dockerfile `COPY` step.

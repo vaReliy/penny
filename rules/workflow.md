@@ -107,6 +107,10 @@ Non-seam tasks (local/mechanical changes) keep the current fast path; no blast-r
 
 **Project names** (from `nx show projects`): `api`, `api-e2e`, `smoke-e2e`, `identity`, `shared` and any libs added later. When in doubt run `nx show projects` to list them.
 
+**Type-checking in tests:** Neither `nx build` nor `nx test` (vitest) type-checks spec files. `nx build` excludes them via `tsconfig.lib.json`; `vite:test` executor (used by this repo) transpiles via esbuild without type-checking. To catch `.spec.ts` type errors, run a dedicated `typecheck` target (`nx run <project>:typecheck`, or `npx tsc -b <project>/tsconfig.spec.json --noEmit`) or configure `vite:test` with `typecheck: true` (slower but comprehensive). The quality gate handoff checklist must NOT claim spec-file type-safety from `build`+`vite:test` alone — type-check specs separately if correctness requires it.
+
+**Web project e2e:** The web project test target is `vite:test`, not `test`. Use `nx vite:test web` (not `nx test web`). This applies to all vitest-plugin-inferred projects.
+
 ## Execution Model
 
 - **Sequential steps** → Agent tool with `subagent_type` (output feeds next step)
@@ -140,7 +144,9 @@ ba → ddd-architect? → impl-{slug} team ══╣
 
 ### Pre-flight obligation for technical agents
 
-When dispatching a technical agent (`backend-developer`, `angular-developer`, `tester`, `qa`, `devops`, `dba`, `debugger`, `refactoring-expert`, `integration-architect`, `queue-specialist`), the agent definition already includes mandatory pre-flight reads (`docs/KNOWLEDGE_INBOX.md` + `rules/architecture.md` + `rules/code-style.md`). Do not pass these as inline context — the agent reads them from disk so they reflect the current state of the repo.
+When dispatching a technical agent (`backend-developer`, `angular-developer`, `tester`, `qa`, `devops`, `dba`, `debugger`, `refactoring-expert`, `integration-architect`, `queue-specialist`), the agent definition already includes mandatory pre-flight reads (`docs/KNOWLEDGE_INBOX.md` + `rules/code-style.md` + context-dependent rules). Do not pass these as inline context — the agent reads them from disk so they reflect the current state of the repo.
+
+**Scoping note**: `rules/architecture.md` (Clean Architecture layer patterns) applies only to agents writing **application code** (UseCase/Service/Repository/DTO layers). Agents whose output is purely infrastructure config (`devops` writing Dockerfiles/CI/env config, `dba` writing schema migrations) skip `rules/architecture.md` — the read is inert but wastes tokens (haiku model).
 
 ### Routing Mixed Infrastructure + Application Code
 
@@ -168,6 +174,12 @@ Team name: `impl-{feature-slug}` (e.g. `impl-user-registration`)
 - [ ] Generated tsconfig explicitly declares the strict block (the repo base omits it): `strict`, `noImplicitOverride`, `noPropertyAccessFromIndexSignature`, `noImplicitReturns`, `noFallthroughCasesInSwitch`, `forceConsistentCasingInFileNames`. For an app, also verify `module`/`moduleResolution` per `rules/nx-generators.md` — apps differ from libs, do NOT blindly copy a lib's `"bundler"` resolution.
 
 Passing this checklist authorizes advancing to the quality gate (Phase 4) — it does **not** authorize declaring the task done. The gate still runs.
+
+### CI scoping: `nx affected -t <target> --exclude <project>` semantics
+
+When scoping CI targets with `nx affected`, remember that `--exclude` applies to project names, not target names. Before using `--exclude` to scope an invocation, enumerate every project that exposes that target name (via `nx show projects` and `grep project.json`). An exclude-list covering only the one project you thought of is silently wrong the moment another project gains the same target.
+
+Example: `nx affected -t e2e --exclude smoke-e2e` doesn't stop at smoke-e2e — if `apps/api` also defines an `e2e` target (Jest, needs live Mongo), it will also run. Fix: scope explicitly with `-p web-e2e -t e2e` instead.
 
 **Frontend agent selection:**
 | Project framework | Agent |
@@ -206,6 +218,24 @@ Spawn 3 teammates: `ba`, `ddd-architect`, `devil`.
 tester ──► reviewer ──► security-scanner ┐
                     └──► qa              ┘ (parallel final stage)
 ```
+
+### Quality gate stage sequencing
+
+The quality gate is strictly sequential per stage — do NOT dispatch stage N+1 while stage N is still running.
+
+**Pattern to avoid**: dispatching `reviewer` while `tester`'s background async work (e.g., `nx run-many`) is still in progress. Even though the inline result looks complete, a background task finishing after `reviewer` starts violates the sequential contract.
+
+**Correct pattern**: after dispatching each quality-gate agent as a foreground `Agent` call, wait for the tool result to fully appear before making the next `Agent` call — do not infer completion from partial/streamed output.
+
+### Quality gate fix-retry cycles: resume same agent instance
+
+When a fix is needed after the quality gate (`## Fix Now` items in tester/reviewer/security-scanner/qa reports), re-entry point and agent resumption matter:
+
+1. **Trivial change** (comment, doc-only) → orchestrator handles inline, no downstream needed
+2. **Source logic change** → resume `backend-developer` via `SendMessage` to its existing agent ID → run `tester` → `reviewer` + `security-scanner` in parallel
+3. **Test-only change** → resume `tester` via `SendMessage` to its existing agent ID → run `reviewer` + `security-scanner`
+
+Resuming the same agent instance (via `SendMessage` to the original `agentId`) preserves context — the agent doesn't re-derive understanding cold. After 2 full cycles with open `## Fix Now` items, hard-stop and surface the remaining list to the user (do not self-patch further).
 
 **Stage 1 — `tester` (always, alone):**
 Run `tester` sequentially. If it reports failures → fix → restart from stage 1.
@@ -272,6 +302,14 @@ A premature or blocked emitted task (depends on an unbuilt seam or undecided top
 `## ⚠️ PARKED` section explaining what decision must come first. Do not implement a parked
 task speculatively.
 
+## Roadmap Ordering: Bones Before Muscles
+
+Depth-first security/feature hardening on a skeleton whose foundational architecture is undecided produces half-wired implementations that are worse than both states. Example: removing `'unsafe-inline'` from CSP but Angular never receives the nonce (because serving topology is undecided) breaks styles in production with no clear error.
+
+**Rule**: if an implementation option depends on an upstream architectural decision (who serves HTML, which DB, network topology, transport layer), defer the implementation until that decision is concrete. Record the option analysis in the parked task file, include a `Depends on` reference to the blocking decision task, and pick the option after the decision is locked.
+
+When the blocking seam or topology is _later_ decided, re-open the parked task with the context now known, and unblock the implementation.
+
 ## Bug Fix Pipeline
 
 ```
@@ -318,6 +356,20 @@ devops ══╗
 | 2. Quality Gate   | **team** `qg-ci-{slug}` | `reviewer`, `security-scanner` | Review + security |
 
 No `tester` or `qa` for infra-only changes.
+
+## Milestone Closure & DoD Verification
+
+### Task file in `done/` is not proof of completion
+
+A task file moved to `tasks/done/` leaves no git trace (`docs/rebuild/` is in `.git/info/exclude`), so a stale or ghost task file can go unnoticed. Before closing a milestone or trusting a `done/` task:
+
+1. Check that `METRICS.md` has a row for the task (METRICS Stop-hook enforces this post-close)
+2. Verify acceptance criteria against `git log` and `git diff`:
+   - Search for commits that reference the task ID or implementation keywords
+   - Grep for config/code changes that should exist (e.g., `grep "sha-256-pinned" .github/` for a Docker fix, `grep "role" src/` for an auth feature)
+   - Cross-check against `git show <commit>` for the actual diff
+
+Written claims of completion (task moves, comments, inbox entries) must be verified against the artifact. Also audit plan-vs-reality against the Definition-of-Done checklist before a milestone close — review cycles catch diffs but miss _omissions_ (config not added, feature flag not wired, test not enabled).
 
 ## Phase 6: Knowledge Capture (Mandatory After Every Session That Touches Code)
 
@@ -400,6 +452,34 @@ Append new entries using the same 3-line format (header line + `Why:` + `Belongs
 - `PROJECT_CONTEXT.md` (or equivalent) — distilled, stable domain truth
 - `CHANGELOG.md` — what changed and why, per task
 - Auto-memory (`feedback` type only) — **narrow exception**: personal Claude workflow preferences for this user's sessions only. Never use for project-level learnings (bugs, gotchas, library recipes, wrong patterns) — those go in the inbox or their permanent home regardless of vendor.
+
+## Git and Task File Management
+
+### Task files and git-exclude: never use `git mv`/`git add`
+
+Task files under `docs/rebuild/tasks/**` are excluded via `.git/info/exclude:9` (machine-local, not tracked `.gitignore`). This means:
+
+- Task files **never** appear in `git status`/`git diff` output
+- `git mv`/`git add` fail with "not under version control" on these paths
+- Moving between `todo/`/`done/`/`parked/`, creating new task files, or updating existing ones must use plain `mv` and filesystem writes, never git commands
+
+If a git operation unexpectedly fails or a directory shows suspiciously empty `git status` output, run `git check-ignore -v <path>` to check for exclusion rules.
+
+### CTS update: commit only when source is pushed upstream
+
+Running `/cts-update --source ../claude-ts` (or any local/uncommitted CTS checkout) to verify a contribution round-trips cleanly is a dry run, not a release — its diff must stay uncommitted/discarded in this consumer repo. Committing it would make this repo's history claim a template sync that never happened upstream.
+
+**Pattern**: before committing any `/cts-update` output, confirm the CTS source pointed at the GitHub remote (or a local checkout whose HEAD is already pushed there) — not an unpushed local-only state. If in doubt, ask the user.
+
+## Quality Gate Pre-Flight Scope
+
+When `reviewer` and `security-scanner` pre-flight, they read:
+
+1. **Durable map**: `PROJECT_CONTEXT.md` / `DECISIONS.md` / `docs/ARCHITECTURE.md` (once topology docs exist)
+2. **Seam-touched files**: if the changeset touches a seam (shared contract/registry/cross-layer field), read the full touched files plus their bidirectional consumers/dependencies
+3. **Security boundary** (security-scanner only): relevant sections from decision/context docs
+
+A full-repo-scan (reading all source code) should only happen after topology docs exist and a scoped-reading map is in place. Until then, the gap is accepted — `reviewer`/`security-scanner` focus on the touched files + their dependencies, not the whole codebase.
 
 ## Team Conventions
 

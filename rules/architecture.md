@@ -138,3 +138,65 @@ When a `type:contracts` lib becomes the authoritative source for domain primitiv
 - **`@nx/enforce-module-boundaries`** — lint gate, runs in CI
 - **`no-restricted-syntax`** — ESLint rule for localStorage ban
 - Both fail merge automatically if violated
+
+## Nginx & Static Serving
+
+### Feature-to-contracts re-export pattern
+
+`type:feature` libraries cannot import directly from `type:contracts` (shared-contracts). The ESLint boundary rule only allows `type:feature` → `type:feature`, `type:ui`, `type:data`, `type:util`. Fix: re-export needed types from the domain's `type:data` lib:
+
+```typescript
+// In eager data lib: libs/identity/data-access/src/index.ts
+export type { TelegramLoginPayload, UserStatus } from 'shared-contracts';
+
+// In lazy feature lib: libs/identity/feature-login/src/lib/login.component.ts
+import { TelegramLoginPayload } from 'identity-data-access'; // ✓ Allowed
+```
+
+This pattern applies to any type, DTO, or enum shared between layers.
+
+### nginx upstream and proxy_pass
+
+In `nginx.conf`, prefer a named `upstream` block over bare host:port in `proxy_pass`:
+
+```nginx
+upstream api {
+  server api:3000;
+}
+
+server {
+  location /api/ {
+    proxy_pass http://api;  # ✓ Uses upstream block
+  }
+}
+```
+
+NOT:
+
+```nginx
+proxy_pass http://api:3000;  # Confuses readers
+```
+
+The distinction matters for documentation — developers opening the config should find the backend port in the upstream block, not inline.
+
+### CSP nonce injection: nginx `sub_filter` with `gzip off`
+
+When nginx serves the static Angular SPA (separate from NestJS), per-request nonce delivery uses nginx `sub_filter`:
+
+1. Set `$nonce` to a per-request value (e.g., `$request_id`)
+2. Replace the empty `content=""` attribute in `<meta name="csp-nonce">` with the nonce value
+3. Emit `Content-Security-Policy` header with `'nonce-$nonce'` in `style-src`
+
+**Critical gotcha**: `sub_filter` requires `gzip off` (or `gzip_static on` with pre-compressed files) in the same location block — dynamic gzip compresses the body before the sub_filter can match, silently producing no substitution with no error.
+
+```nginx
+server {
+  location / {
+    gzip off;  # Must disable or use pre-compressed files
+    add_header Content-Security-Policy "style-src 'nonce-$request_id'" always;
+    sub_filter 'name="csp-nonce" content>' 'name="csp-nonce" content="$request_id">';
+  }
+}
+```
+
+Also note: Angular production build minifies `content=""` → `content`, so match the minified form in the sub_filter pattern (see `rules/docker-commands.md` for details).

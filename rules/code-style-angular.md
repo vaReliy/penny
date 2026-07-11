@@ -5,6 +5,27 @@
 - All new Angular components must be standalone — no NgModules for new code
 - Use `<script setup>` in component files (TypeScript strict, no `any`)
 
+## Route Guards
+
+### CanActivateFn with zero parameters avoids lint noise
+
+The `@typescript-eslint/no-unused-vars` rule (configured with `args: "after-used"` — Nx default) warns on unused function parameters. In a `CanActivateFn`, when neither `route` nor `state` is needed, declaring underscore-prefixed params (`_route`, `_state`) still triggers warnings. TypeScript structural typing allows a narrower signature:
+
+```typescript
+// ✓ Avoids unused-variable warnings
+export const myGuard: CanActivateFn = (): Observable<boolean | UrlTree> => {
+  return of(true);
+};
+
+// Only add parameters if actually consumed:
+export const myGuard: CanActivateFn = (route): Observable<boolean | UrlTree> => {
+  const id = route.paramMap.get('id');
+  return of(!!id);
+};
+```
+
+The router call site passes arguments at runtime regardless of the function signature.
+
 ## Dependency Injection
 
 Prefer `inject()` function over constructor injection:
@@ -143,6 +164,27 @@ ngOnInit() {
 ```
 
 Or use Nx's `inject(DestroyRef).onDestroy()` pattern for functional cleanup.
+
+## Content Security Policy
+
+### CSP nonce injection in Angular
+
+The CSP nonce DI token exported by `@angular/core` is `CSP_NONCE` (not `NgCspNonce`, which is an internal directive class). When per-request nonces are delivered (e.g., via nginx `sub_filter` or NestJS middleware), provide the nonce to the Angular bootstrap using `useFactory` (not `useValue`):
+
+```typescript
+import { bootstrapApplication, CSP_NONCE } from '@angular/core';
+
+bootstrapApplication(AppComponent, {
+  providers: [
+    {
+      provide: CSP_NONCE,
+      useFactory: () => document.querySelector('meta[name="csp-nonce"]')?.getAttribute('content'),
+    },
+  ],
+});
+```
+
+Use `useFactory` (lazy-evaluated during DI resolution) rather than `useValue` (eagerly evaluated at config time) to ensure the DOM is ready when the nonce is retrieved.
 
 ## Accessibility
 

@@ -209,3 +209,43 @@ export class HelloController {
 ```
 
 The guard sequence ensures that `pending` users can call `GET /auth/me` (protected by SessionGuard alone) to check their approval status, but cannot access data endpoints (protected by both guards).
+
+### Timing side-channels: XS-Leak vs. direct attack
+
+A timing difference in an auth guard (e.g., missing-cookie short-circuits before JWT verify/DB lookup) is sometimes justified with "the attacker already knows whether they sent a cookie." This argument only holds for a _direct_ attacker calling the API with their own headers, **not** for the XS-Leak scenario:
+
+In a classic XS-Leak "session oracle" attack, a cross-site attacker page forces the _victim's browser_ to send the request, and the attacker does not know/control whether the cookie was attached (the browser decides based on SameSite rules). The correct mitigating argument is that cookies are set with `sameSite: 'lax'`, which **prevents the cookie from being attached to cross-site fetch/XHR requests in the first place** — closing the practical timing-oracle vector and leaving only a much harder residual (top-level navigation + browser-isolated timing measurement).
+
+Any future accepted-risk writeup for a cookie-gated timing/behavior difference must reason from the actual cookie/CORS/SameSite control, not from what "the attacker already knows."
+
+### Admin authorization: `SetUserStatusService.authorize()` pattern
+
+The `SetUserStatusService.authorize()` method in `libs/identity/application/src/lib/` is the canonical authorization check for admin-gated services. It fails closed:
+
+```typescript
+public authorize(context: ServiceContext): void {
+  if (!context.caller?.roles.includes(ADMIN_ROLE)) {
+    throw new ForbiddenException();
+  }
+}
+```
+
+The check has no `??` or default-true fallback — it rejects on `null` / empty `roles`. This is the _only_ `context.caller?.roles` check in the codebase as of now. Any future admin-gated service should reuse this exact pattern rather than re-deriving a new role-check. The `caller` is built by `SessionGuard` from JWT-verified `req.user`, ensuring the roles claim is signature-verified.
+
+## Validation Rules
+
+### LIVR optional fields: `null` is passed through
+
+LIVR treats `null` input on an optional field as "not provided" (skips rule execution) but **does not strip the key** from the validated output. The result includes `{ fieldName: null }`. Filtering with `value !== undefined` misses `null` values, which can cause downstream issues:
+
+```typescript
+// ❌ Misses null
+const filtered = Object.entries(data).filter(([, v]) => v !== undefined);
+// Output: { username: null }  ← null slips through
+
+// ✓ Correct
+const filtered = Object.entries(data).filter(([, v]) => v !== undefined && v !== null);
+// Output: {} ← null excluded
+```
+
+In Telegram auth payloads, `null` in optional fields causes HMAC mismatches if they're included in the data-check-string. Telegram's widget never sends `null` for absent fields (the key is simply omitted), so this is a _practical_ risk for custom validators or non-Telegram payloads. If stricter handling is needed, add a `not_empty` LIVR rule to optional field slots.
