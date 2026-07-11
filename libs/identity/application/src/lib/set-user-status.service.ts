@@ -5,7 +5,7 @@ import type { IUserRepository, User } from 'identity-core';
 import type { ServiceContext } from 'shared-kernel';
 
 /** Role name a `CallerIdentity` must carry to approve/reject users. */
-export const ADMIN_ROLE = Role.ADMIN;
+export const SUPERADMIN_ROLE = Role.SUPERADMIN;
 
 /** Message used when a non-admin caller attempts an approve/reject action. */
 const NOT_ADMIN_MESSAGE = 'Only an admin may approve or reject a user.';
@@ -64,7 +64,7 @@ abstract class SetUserStatusService extends BaseService<
   }
 
   protected override authorize(context: ServiceContext): void {
-    if (!context.caller?.roles.includes(ADMIN_ROLE)) {
+    if (!context.caller?.roles.includes(SUPERADMIN_ROLE)) {
       throw new AuthenticationError(NOT_ADMIN_MESSAGE);
     }
   }

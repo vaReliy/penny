@@ -6,6 +6,7 @@ import pino from 'pino';
 
 import { User, UserStatus } from 'identity-core';
 import type { IUserRepository } from 'identity-core';
+import { Role } from 'shared-contracts';
 
 // Hoist the issueMock so it is accessible both inside the vi.mock factory
 // (which is hoisted to the top of the file by Vitest's transform) and inside
@@ -275,6 +276,43 @@ describe('DevTokenCommand', () => {
         sub: pendingUser.id,
         status: UserStatus.PENDING,
         roles: [],
+      });
+    });
+  });
+
+  describe('happy path — user with a persisted superadmin role', () => {
+    it('issues a JWT whose roles claim carries the persisted Role.SUPERADMIN', async () => {
+      // Arrange
+      vi.stubEnv('JWT_SECRET', TEST_JWT_SECRET);
+      const superadminUser = new User({
+        id: 'user-superadmin-1',
+        telegramId: '1000000000002',
+        firstName: 'Grace',
+        username: 'grace_hopper',
+        status: UserStatus.PENDING,
+        roles: [Role.SUPERADMIN],
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      });
+      const saveSpy = vi.fn().mockImplementation(async (u: User) => u);
+      const repository = buildFakeRepository({
+        findByUsername: vi.fn().mockResolvedValue(superadminUser),
+        save: saveSpy,
+      });
+      const command = await buildCommand(repository, DEV_CONFIG);
+
+      // Act
+      await command.run([], { telegramUsername: 'grace_hopper' });
+
+      // Assert — persisted roles carried onto the saved user
+      const savedUser = saveSpy.mock.calls[0][0] as User;
+      expect(savedUser.roles).toEqual([Role.SUPERADMIN]);
+
+      // Assert — JWT claims carry the persisted superadmin role, not []
+      expect(issueMock).toHaveBeenCalledWith({
+        sub: superadminUser.id,
+        status: UserStatus.ACTIVE,
+        roles: [Role.SUPERADMIN],
       });
     });
   });

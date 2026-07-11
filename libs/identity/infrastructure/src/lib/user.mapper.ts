@@ -2,7 +2,7 @@ import type { DocumentType } from '@typegoose/typegoose';
 
 import { User } from 'identity-core';
 import type { UserProfileUpdate } from 'identity-core';
-import type { UserStatus } from 'shared-contracts';
+import type { RoleType, UserStatus } from 'shared-contracts';
 
 import type { UserModel } from './user.model.js';
 
@@ -19,6 +19,7 @@ export interface UserPersistence {
   readonly username?: string;
   readonly photoUrl?: string;
   readonly status: UserStatus;
+  readonly roles: readonly RoleType[];
 }
 
 /** Optional `UserPersistence` field names that may need an explicit `$unset`. */
@@ -65,6 +66,9 @@ export const UserMapper = {
       username: doc.username,
       photoUrl: doc.photoUrl,
       status: doc.status,
+      // Cast at the ORM boundary: `UserModel.roles` is persisted as plain
+      // `string[]` (Mongoose/BSON has no enum-constrained array type).
+      roles: doc.roles as readonly RoleType[],
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
     });
@@ -79,6 +83,7 @@ export const UserMapper = {
       username: user.username,
       photoUrl: user.photoUrl,
       status: user.status,
+      roles: user.roles,
     };
   },
 
@@ -124,6 +129,7 @@ export const UserMapper = {
       {
         telegramId: persistence.telegramId,
         status: persistence.status,
+        roles: persistence.roles,
       };
     const unset: Record<string, ''> = {};
 

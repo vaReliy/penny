@@ -49,6 +49,10 @@ export class UserModel {
   @prop({ required: true, enum: USER_STATUS_VALUES, type: () => String })
   public status!: UserStatus;
 
+  /** Platform roles granted to this user (e.g. `Role.SUPERADMIN`). Defaults to `[]`. */
+  @prop({ required: true, type: () => [String], default: [] })
+  public roles!: string[];
+
   /** Populated by Mongoose via `schemaOptions.timestamps`. */
   public createdAt!: Date;
 

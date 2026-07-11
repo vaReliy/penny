@@ -6,33 +6,32 @@ import pino from 'pino';
 
 import { User, UserStatus } from 'identity-core';
 import type { IUserRepository } from 'identity-core';
-import { ApproveUserService, SUPERADMIN_ROLE } from 'identity-application';
-import { registerLivrRules } from 'shared-kernel';
+import { Role } from 'shared-contracts';
 
 import { API_CONFIG } from '../config/cli-config.js';
 import type { CliConfig } from '../config/cli-config.js';
 import { PINO_LOGGER } from '../logger/logger.tokens.js';
 import { TOKENS } from '../identity/tokens.js';
-import { UserApproveCommand } from './user-approve.command.js';
+import { AdminPromoteCommand } from './admin-promote.command.js';
 
-registerLivrRules();
-
-const TELEGRAM_ID = '987654321';
+const TELEGRAM_USERNAME = 'ada_lovelace';
 const USER_ID = 'user-abc-123';
 
-function buildPendingUser(): User {
+function buildActiveUser(roles: string[] = []): User {
   const now = new Date('2026-01-01T00:00:00.000Z');
   return new User({
     id: USER_ID,
-    telegramId: TELEGRAM_ID,
+    telegramId: '987654321',
+    username: TELEGRAM_USERNAME,
     firstName: 'Ada',
-    status: UserStatus.PENDING,
+    status: UserStatus.ACTIVE,
+    roles,
     createdAt: now,
     updatedAt: now,
   });
 }
 
-/** Minimal in-memory repository fake — same pattern as set-user-status.service.spec.ts. */
+/** Minimal in-memory repository fake — same pattern as user-approve.command.spec.ts. */
 class FakeUserRepository implements IUserRepository {
   private readonly store = new Map<string, User>();
 
@@ -51,13 +50,16 @@ class FakeUserRepository implements IUserRepository {
     return null;
   }
 
+  public async findByUsername(username: string): Promise<User | null> {
+    for (const user of this.store.values()) {
+      if (user.username === username) return user;
+    }
+    return null;
+  }
+
   public async save(entity: User): Promise<User> {
     this.store.set(entity.id, entity);
     return entity;
-  }
-
-  public async findByUsername(_username: string): Promise<User | null> {
-    return null;
   }
 
   public async updateProfile(
@@ -78,59 +80,67 @@ const CLI_CONFIG_STUB: CliConfig = {
   mode: 'development',
 };
 
-describe('UserApproveCommand', () => {
-  let command: UserApproveCommand;
+describe('AdminPromoteCommand', () => {
+  let command: AdminPromoteCommand;
   let repository: FakeUserRepository;
-  let approveService: ApproveUserService;
 
   beforeEach(async () => {
     repository = new FakeUserRepository();
-    approveService = new ApproveUserService({ userRepository: repository });
 
     const silentLogger = pino({ level: 'silent' });
 
     const moduleRef = await Test.createTestingModule({
       providers: [
-        UserApproveCommand,
+        AdminPromoteCommand,
         { provide: TOKENS.UserRepository, useValue: repository },
-        { provide: TOKENS.ApproveUser, useValue: approveService },
         { provide: API_CONFIG, useValue: CLI_CONFIG_STUB },
         { provide: PINO_LOGGER, useValue: silentLogger },
       ],
     }).compile();
 
-    command = moduleRef.get(UserApproveCommand);
+    command = moduleRef.get(AdminPromoteCommand);
   });
 
-  it('approves a pending user by telegramId via ApproveUserService', async () => {
-    const runSpy = vi.spyOn(approveService, 'run');
-    repository.seed(buildPendingUser());
+  it('grants Role.SUPERADMIN to a user with no roles', async () => {
+    repository.seed(buildActiveUser([]));
+    const saveSpy = vi.spyOn(repository, 'save');
 
-    await command.run([TELEGRAM_ID]);
+    await command.run([], { telegramUsername: TELEGRAM_USERNAME });
 
-    expect(runSpy).toHaveBeenCalledOnce();
-    expect(runSpy).toHaveBeenCalledWith(
-      { userId: USER_ID },
-      expect.objectContaining({
-        caller: expect.objectContaining({
-          status: UserStatus.ACTIVE,
-          roles: expect.arrayContaining([SUPERADMIN_ROLE]),
-        }),
-      }),
-    );
+    expect(saveSpy).toHaveBeenCalledOnce();
+    const updated = await repository.findById(USER_ID);
+    expect(updated?.roles).toEqual([Role.SUPERADMIN]);
+  });
+
+  it('is idempotent: promoting an already-superadmin user is a safe no-op', async () => {
+    repository.seed(buildActiveUser([Role.SUPERADMIN]));
+    const saveSpy = vi.spyOn(repository, 'save');
+
+    await command.run([], { telegramUsername: TELEGRAM_USERNAME });
+
+    expect(saveSpy).not.toHaveBeenCalled();
+    const updated = await repository.findById(USER_ID);
+    expect(updated?.roles).toEqual([Role.SUPERADMIN]);
+  });
+
+  it('does not duplicate the role across repeated promotions', async () => {
+    repository.seed(buildActiveUser([]));
+
+    await command.run([], { telegramUsername: TELEGRAM_USERNAME });
+    await command.run([], { telegramUsername: TELEGRAM_USERNAME });
 
     const updated = await repository.findById(USER_ID);
-    expect(updated?.status).toBe(UserStatus.ACTIVE);
+    expect(updated?.roles).toEqual([Role.SUPERADMIN]);
   });
 
-  it('calls process.exit(1) when the telegramId is not found', async () => {
+  it('calls process.exit(1) when the telegram username is not found', async () => {
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('process.exit called');
     });
 
-    await expect(command.run(['unknown-id'])).rejects.toThrow(
-      'process.exit called',
-    );
+    await expect(
+      command.run([], { telegramUsername: 'unknown-user' }),
+    ).rejects.toThrow('process.exit called');
     expect(exitSpy).toHaveBeenCalledWith(1);
 
     exitSpy.mockRestore();

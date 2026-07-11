@@ -35,8 +35,8 @@ describe('shared contracts (types-only smoke check)', () => {
 });
 
 describe('Role', () => {
-  it('Role.ADMIN serialises to the string "admin"', () => {
-    expect(Role.ADMIN).toBe('admin');
+  it('Role.SUPERADMIN serialises to the string "superadmin"', () => {
+    expect(Role.SUPERADMIN).toBe('superadmin');
   });
 
   it('Role.USER serialises to the string "user"', () => {
@@ -46,14 +46,14 @@ describe('Role', () => {
   it('RoleType accepts only the two known string literals (compile-time guard)', () => {
     // Assigning each literal to a RoleType variable confirms the type allows
     // exactly these values; the TypeScript compiler rejects any other string.
-    const admin: RoleType = Role.ADMIN;
+    const superadmin: RoleType = Role.SUPERADMIN;
     const user: RoleType = Role.USER;
 
-    expect(admin).toBe('admin');
+    expect(superadmin).toBe('superadmin');
     expect(user).toBe('user');
   });
 
   it('Role object has exactly two keys — no undocumented roles', () => {
-    expect(Object.keys(Role)).toStrictEqual(['ADMIN', 'USER']);
+    expect(Object.keys(Role)).toStrictEqual(['SUPERADMIN', 'USER']);
   });
 });

@@ -43,13 +43,14 @@ function makeRes(): {
   return { res, cookie, clearCookie };
 }
 
-function makeUser(status: string) {
+function makeUser(status: string, roles: string[] = []) {
   return {
     id: 'user-1',
     telegramId: '123',
     firstName: 'Alice',
     username: 'alice',
     status,
+    roles,
   };
 }
 
@@ -130,6 +131,23 @@ describe('AuthController', () => {
         sub: user.id,
         status: 'active',
         roles: [],
+      });
+    });
+
+    it('issues a JWT whose roles claim carries the persisted Role.SUPERADMIN', async () => {
+      const user = makeUser(UserStatus.ACTIVE, ['superadmin']);
+      (loginWithTelegram.run as ReturnType<typeof vi.fn>).mockResolvedValue({
+        data: { user, status: UserStatus.ACTIVE },
+      });
+
+      controller = makeController();
+      const { res } = makeRes();
+      await controller.telegramLogin({} as never, res);
+
+      expect(tokenIssuer.issue).toHaveBeenCalledWith({
+        sub: user.id,
+        status: 'active',
+        roles: ['superadmin'],
       });
     });
 

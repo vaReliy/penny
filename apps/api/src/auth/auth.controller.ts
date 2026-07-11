@@ -78,7 +78,7 @@ export class AuthController {
     const token = this.tokenIssuer.issue({
       sub: user.id,
       status: user.status,
-      roles: [],
+      roles: user.roles,
     });
     res.cookie(AUTH_COOKIE_NAME, token, {
       httpOnly: true,

@@ -40,3 +40,4 @@ Each completed task is one row in the table below.
 | 2026-07-10 | penny | session-guard-full-opaque-401                      | T2   | 1      | 1/0/0/0           | 2       | no       | standard       |
 | 2026-07-09 | penny | wire-request-caller-identity-from-session-user     | T2   | 1      | 0/2/0/0           | 1       | no       | standard       |
 | 2026-07-10 | penny | session-guard-timing-and-cookie-signal             | T2   | 1      | 0/0/1/0           | 1       | no       | standard       |
+| 2026-07-11 | penny | admin-role-assignment-and-jwt-issuance             | T2   | 1      | 0/1/0/0           | 0       | no       | standard       |

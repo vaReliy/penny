@@ -101,7 +101,7 @@ describe('JwtTokenIssuer', () => {
     // unregistered value — isTokenClaims must reject this even though the
     // signature is valid.
     const tokenWithBogusRole = jwt.sign(
-      { status: CLAIMS.status, roles: ['superadmin'] },
+      { status: CLAIMS.status, roles: ['owner'] },
       TEST_SECRET,
       { subject: CLAIMS.sub, algorithm: 'HS256' },
     );
@@ -119,16 +119,16 @@ describe('JwtTokenIssuer', () => {
     expect(decoded?.roles).toEqual(['user']);
   });
 
-  it('encodes the Role.ADMIN string literal into the roles claim', () => {
+  it('encodes the Role.SUPERADMIN string literal into the roles claim', () => {
     const issuer = new JwtTokenIssuer(TEST_SECRET);
-    const adminClaims: TokenClaims = {
+    const superadminClaims: TokenClaims = {
       ...CLAIMS,
-      roles: [Role.ADMIN],
+      roles: [Role.SUPERADMIN],
     };
 
-    const token = issuer.issue(adminClaims);
+    const token = issuer.issue(superadminClaims);
     const decoded = jwt.decode(token) as { roles?: unknown };
 
-    expect(decoded?.roles).toEqual(['admin']);
+    expect(decoded?.roles).toEqual(['superadmin']);
   });
 });

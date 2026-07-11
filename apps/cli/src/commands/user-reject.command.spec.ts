@@ -6,7 +6,7 @@ import pino from 'pino';
 
 import { User, UserStatus } from 'identity-core';
 import type { IUserRepository } from 'identity-core';
-import { RejectUserService, ADMIN_ROLE } from 'identity-application';
+import { RejectUserService, SUPERADMIN_ROLE } from 'identity-application';
 import { registerLivrRules } from 'shared-kernel';
 
 import { API_CONFIG } from '../config/cli-config.js';
@@ -113,7 +113,7 @@ describe('UserRejectCommand', () => {
       expect.objectContaining({
         caller: expect.objectContaining({
           status: UserStatus.ACTIVE,
-          roles: expect.arrayContaining([ADMIN_ROLE]),
+          roles: expect.arrayContaining([SUPERADMIN_ROLE]),
         }),
       }),
     );

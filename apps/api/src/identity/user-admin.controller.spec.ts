@@ -221,11 +221,11 @@ describe('UserAdminController (real SessionGuard in the chain)', () => {
     ).rejects.toBeInstanceOf(AuthenticationError);
   });
 
-  it('allows and transitions the target user when the authenticated caller has ADMIN_ROLE (approve)', async () => {
+  it('allows and transitions the target user when the authenticated caller has SUPERADMIN_ROLE (approve)', async () => {
     (tokenIssuer.verify as ReturnType<typeof vi.fn>).mockReturnValue({
       sub: 'admin-1',
       status: UserStatus.ACTIVE,
-      roles: [Role.ADMIN],
+      roles: [Role.SUPERADMIN],
     });
     const { ctx, getReqUser } = makeContext(`${AUTH_COOKIE_NAME}=valid-jwt`);
     await guard.canActivate(ctx);
@@ -252,11 +252,11 @@ describe('UserAdminController (real SessionGuard in the chain)', () => {
     });
   });
 
-  it('allows and transitions the target user when the authenticated caller has ADMIN_ROLE (reject)', async () => {
+  it('allows and transitions the target user when the authenticated caller has SUPERADMIN_ROLE (reject)', async () => {
     (tokenIssuer.verify as ReturnType<typeof vi.fn>).mockReturnValue({
       sub: 'admin-1',
       status: UserStatus.ACTIVE,
-      roles: [Role.ADMIN],
+      roles: [Role.SUPERADMIN],
     });
     const { ctx, getReqUser } = makeContext(`${AUTH_COOKIE_NAME}=valid-jwt`);
     await guard.canActivate(ctx);
@@ -287,7 +287,7 @@ describe('UserAdminController (real SessionGuard in the chain)', () => {
     (tokenIssuer.verify as ReturnType<typeof vi.fn>).mockReturnValue({
       sub: 'admin-1',
       status: UserStatus.ACTIVE,
-      roles: [Role.ADMIN],
+      roles: [Role.SUPERADMIN],
     });
     const { ctx, getReqUser } = makeContext(`${AUTH_COOKIE_NAME}=valid-jwt`);
     await guard.canActivate(ctx);
@@ -336,7 +336,7 @@ describe('UserAdminController — ActiveUserGuard denies non-active ADMIN caller
         telegramId: '999',
         displayName: 'Admin',
         status,
-        roles: [Role.ADMIN],
+        roles: [Role.SUPERADMIN],
       };
 
       expect(() => guard.canActivate(makeGuardContext(adminUser))).toThrow(
@@ -351,7 +351,7 @@ describe('UserAdminController — ActiveUserGuard denies non-active ADMIN caller
       telegramId: '999',
       displayName: 'Admin',
       status: UserStatus.ACTIVE,
-      roles: [Role.ADMIN],
+      roles: [Role.SUPERADMIN],
     };
 
     expect(guard.canActivate(makeGuardContext(adminUser))).toBe(true);

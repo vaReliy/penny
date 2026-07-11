@@ -95,6 +95,7 @@ export class DevTokenCommand extends CommandRunner {
       username: user.username,
       photoUrl: user.photoUrl,
       status: targetStatus,
+      roles: user.roles,
       createdAt: user.createdAt,
       updatedAt: new Date(),
     });
@@ -104,7 +105,7 @@ export class DevTokenCommand extends CommandRunner {
     const token = jwtTokenIssuer.issue({
       sub: updated.id,
       status: targetStatus,
-      roles: [],
+      roles: updated.roles,
     });
     const xsrf = randomBytes(32).toString('hex');
 

@@ -28,7 +28,7 @@ function toCallerIdentity(user: SessionUser): CallerIdentity {
 /**
  * Admin-only HTTP surface for the `pending -> active`/`pending -> rejected`
  * user status transitions. The HTTP twin of the `user:approve`/`user:reject`
- * CLI commands — authorization (the `ADMIN_ROLE` check) is enforced by
+ * CLI commands — authorization (the `SUPERADMIN_ROLE` check) is enforced by
  * `SetUserStatusService.authorize`, not here; this controller's only job is
  * to require an authenticated session and translate `req.user` into the
  * `CallerIdentity` the service authorizes against.

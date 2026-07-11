@@ -16,7 +16,7 @@ import { TOKENS } from '../identity/tokens.js';
 const CLI_ADMIN_CALLER = {
   userId: 'cli-admin',
   status: UserStatus.ACTIVE,
-  roles: [Role.ADMIN],
+  roles: [Role.SUPERADMIN],
 } as const;
 
 @Command({

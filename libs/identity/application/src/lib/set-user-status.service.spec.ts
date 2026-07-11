@@ -6,7 +6,7 @@ import { Role } from 'shared-contracts';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
-  ADMIN_ROLE,
+  SUPERADMIN_ROLE,
   ApproveUserService,
   RejectUserService,
 } from './set-user-status.service.js';
@@ -77,7 +77,7 @@ function buildContext(caller: CallerIdentity | null): ServiceContext {
 const ADMIN_CALLER: CallerIdentity = {
   userId: 'admin-1',
   status: UserStatus.ACTIVE,
-  roles: [ADMIN_ROLE],
+  roles: [SUPERADMIN_ROLE],
 };
 
 const NON_ADMIN_CALLER: CallerIdentity = {

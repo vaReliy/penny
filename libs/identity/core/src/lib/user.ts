@@ -1,4 +1,5 @@
 import { DomainError } from 'shared-errors';
+import type { RoleType } from 'shared-contracts';
 
 import { UserStatus } from './user-status.js';
 
@@ -23,6 +24,8 @@ export interface UserProps {
   readonly username?: string;
   readonly photoUrl?: string;
   readonly status: UserStatus;
+  /** Platform roles granted to this user (e.g. `Role.SUPERADMIN`). Defaults to `[]`. */
+  readonly roles?: readonly RoleType[];
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
@@ -46,7 +49,7 @@ export class User {
   private readonly props: UserProps;
 
   public constructor(props: UserProps) {
-    this.props = props;
+    this.props = { ...props, roles: props.roles ?? [] };
   }
 
   public get id(): string {
@@ -75,6 +78,11 @@ export class User {
 
   public get status(): UserStatus {
     return this.props.status;
+  }
+
+  public get roles(): readonly RoleType[] {
+    // Non-null: the constructor always normalises `roles` to `[]` when absent.
+    return this.props.roles as readonly RoleType[];
   }
 
   public get createdAt(): Date {
