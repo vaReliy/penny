@@ -94,4 +94,4 @@ disabled.
 
 ## Rebuild planning
 
-Design decisions and task breakdown live in `docs/rebuild/` (private, git-excluded).
+Design decisions and task breakdown live in `tasks/rebuild/` (private, git-ignored). Other feature areas get their own sibling folder under `tasks/` (e.g. `tasks/workspace/`) — see `rules/task-authoring.md`.

@@ -4,6 +4,9 @@
 .env
 !.env.example
 
+# private working task files (planning/grooming artifacts — see rules/task-authoring.md)
+/tasks
+
 # local compose overrides (developer-specific)
 docker-compose.override.yml
 

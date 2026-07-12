@@ -361,7 +361,7 @@ No `tester` or `qa` for infra-only changes.
 
 ### Task file in `done/` is not proof of completion
 
-A task file moved to `tasks/done/` leaves no git trace (`docs/rebuild/` is in `.git/info/exclude`), so a stale or ghost task file can go unnoticed. Before closing a milestone or trusting a `done/` task:
+A task file moved to `tasks/<phase>/done/` leaves no git trace (`/tasks` is git-ignored), so a stale or ghost task file can go unnoticed. Before closing a milestone or trusting a `done/` task:
 
 1. Check that `METRICS.md` has a row for the task (METRICS Stop-hook enforces this post-close)
 2. Verify acceptance criteria against `git log` and `git diff`:
@@ -457,7 +457,7 @@ Append new entries using the same 3-line format (header line + `Why:` + `Belongs
 
 ### Task files and git-exclude: never use `git mv`/`git add`
 
-Task files under `docs/rebuild/tasks/**` are excluded via `.git/info/exclude:9` (machine-local, not tracked `.gitignore`). This means:
+Task files under `tasks/**` are excluded via the committed `.gitignore` (`/tasks`). This means:
 
 - Task files **never** appear in `git status`/`git diff` output
 - `git mv`/`git add` fail with "not under version control" on these paths

@@ -17,6 +17,28 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-13 — Enhancement: `rules/task-authoring.md` routing moved from `docs/<phase>/tasks/` to a top-level `./tasks/<phase>/` convention
+
+- **Component**: `rules/task-authoring.md` (Routing section), `.gitignore`
+- **Type**: Enhancement
+- **What happened**: Task/planning files were previously routed to `docs/<phase>/tasks/todo|parked|done/`, excluded from git via **local-only** `.git/info/exclude` entries (one per phase directory, e.g. `docs/rebuild/`). This meant exclusion didn't travel with a fresh clone — a new checkout would have git-track these private planning docs until someone manually re-added the local exclude line. Consolidated all phase folders (`rebuild`, `workspace`, future ones) under a single top-level `./tasks/` directory, added one `/tasks` line to the **committed** `.gitignore`, and dropped the now-redundant inner `tasks/` nesting each phase folder used to have under `docs/<phase>/tasks/` (now just `tasks/<phase>/todo|parked|done/` directly). Removed the stale `docs/rebuild/` line from `.git/info/exclude` since the directory no longer exists there.
+- **Why it matters upstream**: Any claude-ts consumer using the `docs/<phase>/tasks/` local-exclude pattern has the same clone-portability gap — a real committed `.gitignore` entry is strictly better than a local-only exclude for a path whose exclusion is a permanent project decision, not a personal preference. The nested `docs/<phase>/tasks/` structure was also carrying redundant path segments (`tasks/tasks`-shaped once moved) that a fresh project wouldn't need to inherit.
+- **Suggested upstream change**: In the template's base `rules/task-authoring.md`, default the Routing section to a top-level `./tasks/<phase>/todo|parked|done/` convention with a committed `.gitignore` entry (`/tasks`), rather than `docs/<phase>/tasks/` + local exclude. Consumers who prefer keeping planning docs nested under `docs/` can still override, but the default should be clone-portable.
+- **Status**: pending-port
+
+---
+
+## 2026-07-12 — Enhancement: planning-team reviewer/challenger agents need full prior context pasted in the spawn prompt, not fetched later via SendMessage
+
+- **Component**: `rules/workflow.md` (Planning Team section)
+- **Type**: Enhancement
+- **What happened**: Running the `ba` → `ddd-architect` → `devil` planning chain for a feature, `devil` was spawned with only a summary of `ba`'s and `ddd-architect`'s output in its own prompt (to save orchestrator tokens). `devil` then tried to `SendMessage` `ba`/`ddd-architect` directly asking for their full doc text — but both had already gone idle after their own spawn turn ended, so the direct request produced only idle-notification pings with no content back. The orchestrator had to manually re-paste each agent's full prior output into a message to `devil` before the chain could proceed, costing an extra round-trip. Separately confirmed: the `Agent` tool's `team_name` parameter is now documented as "Deprecated; ignored. The session has a single implicit team" — so `rules/workflow.md`'s `TeamCreate`/`TeamDelete` Tool API examples for the Planning/Implementation Team sections no longer reflect how team coordination actually works (it's name-based `SendMessage` between individually-spawned agents, not an explicit team object).
+- **Why it matters upstream**: Any claude-ts consumer running a multi-stage planning chain (reviewer/challenger agent critiquing prior agents' full output) will hit the identical stall — a spawned agent cannot assume a previously-spawned teammate will re-serve its own past output on request once it's gone idle. The `TeamCreate`/`team_name` documentation drift is a separate but related gap: the rule's coordination examples no longer match the tool's actual (deprecated-teams, name-based-SendMessage) behavior.
+- **Suggested upstream change**: (1) In the Planning Team / Implementation Team sections, add an explicit instruction: when spawning a reviewer/challenger agent into an ongoing chain, paste every prior agent's **full** output into the new agent's spawn prompt up front — do not summarize and rely on the new agent fetching the rest via `SendMessage` to a teammate that may already be idle/done. (2) Update the `TeamCreate`/`TeamDelete` Tool API Reference section to reflect that team scoping is currently a no-op in the `Agent` tool (`team_name` deprecated/ignored) and that coordination is purely name-based `SendMessage` between agents spawned via plain `Agent` calls — or remove the `TeamCreate`/`TeamDelete` examples entirely if the underlying tool no longer supports them.
+- **Status**: pending-port
+
+---
+
 ## 2026-07-12 — Fix: distill-inbox's Category B/C rubric can never auto-distill an inbox whose entries habitually hedge with "(guess)"
 
 - **Component**: `.claude/skills/distill-inbox/SKILL.md`

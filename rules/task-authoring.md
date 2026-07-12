@@ -6,12 +6,13 @@ Every plan, grill, or grooming session must emit one or more task files into the
 
 ## Routing
 
-- **Phase-dependent tasks** (part of a named rebuild/migration phase) → `docs/<phase>/tasks/todo/` (project-specific; adapt the phase directory name to your project)
-- **General / future-phase tasks** → `docs/tasks/todo/` (created lazily on first use)
+- **Default location**: `./tasks/` at the repo root, one subdirectory per named phase/feature-area (e.g. `tasks/rebuild/`, `tasks/workspace/`) — each containing `todo/`, `parked/`, `done/` directly (no redundant nested `tasks/` level).
+- **Phase-dependent tasks** (part of a named rebuild/migration phase, or a standalone feature area big enough to warrant its own folder) → `tasks/<phase>/todo/` (project-specific; adapt the phase directory name to your project)
+- **General / cross-cutting tasks** with no clear phase → `tasks/todo/` directly (created lazily on first use)
 
-Both locations are **git-excluded** (private working artifacts). The committed, durable record is: commit history + `KNOWLEDGE_INBOX.md` + `CHANGELOG.md`. The rule file itself is committed; the task files it governs are private.
+`/tasks` is **git-ignored** (see `.gitignore`) — private working artifacts, not committed. The committed, durable record is: commit history + `KNOWLEDGE_INBOX.md` + `CHANGELOG.md`. The rule file itself is committed; the task files it governs are private.
 
-Because these directories are git-excluded, always move task files with plain `mv`, never `git mv` — git does not track these paths, so `git mv` fails on them.
+Because this directory is git-ignored, always move task files with plain `mv`, never `git mv` — git does not track these paths, so `git mv` fails on them.
 
 ## Naming Convention
 
