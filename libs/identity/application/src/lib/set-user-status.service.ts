@@ -79,8 +79,19 @@ abstract class SetUserStatusService extends BaseService<
       throw buildUnknownUserError(params.userId);
     }
 
+    // transitionTo validates the transition (throws DomainError if illegal);
+    // only the resulting status is then persisted, via a scoped update.
     const transitioned = user.transitionTo(this.targetStatus);
-    return this.userRepository.save(transitioned);
+    const persisted = await this.userRepository.updateStatus(
+      params.userId,
+      transitioned.status,
+    );
+
+    if (!persisted) {
+      throw buildUnknownUserError(params.userId);
+    }
+
+    return persisted;
   }
 }
 

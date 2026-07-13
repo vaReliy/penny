@@ -5,7 +5,6 @@ import { Command, CommandRunner, Option } from 'nest-commander';
 import type pino from 'pino';
 
 import type { IUserRepository } from 'identity-core';
-import { User } from 'identity-core';
 import { JwtTokenIssuer } from 'identity-application';
 import { UserStatus } from 'shared-contracts';
 import type { UserStatusType } from 'shared-contracts';
@@ -87,19 +86,14 @@ export class DevTokenCommand extends CommandRunner {
       process.exit(1);
     }
 
-    const updated = new User({
-      id: user.id,
-      telegramId: user.telegramId,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      username: user.username,
-      photoUrl: user.photoUrl,
-      status: targetStatus,
-      roles: user.roles,
-      createdAt: user.createdAt,
-      updatedAt: new Date(),
-    });
-    await this.userRepository.save(updated);
+    const updated = await this.userRepository.updateStatus(
+      user.id,
+      targetStatus,
+    );
+    if (!updated) {
+      this.logger.error({ userId: user.id }, 'User not found during update');
+      process.exit(1);
+    }
 
     const jwtTokenIssuer = new JwtTokenIssuer(jwtSecret, DEV_TOKEN_TTL_SECONDS);
     const token = jwtTokenIssuer.issue({

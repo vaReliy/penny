@@ -24,6 +24,8 @@ function buildFakeRepository(
     findByUsername: vi.fn().mockResolvedValue(null),
     save: vi.fn().mockImplementation(async (u: User) => u),
     updateProfile: vi.fn().mockResolvedValue(null),
+    updateStatus: vi.fn().mockResolvedValue(null),
+    updateRoles: vi.fn().mockResolvedValue(null),
     delete: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };

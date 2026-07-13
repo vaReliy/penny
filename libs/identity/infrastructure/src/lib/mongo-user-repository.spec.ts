@@ -15,19 +15,38 @@ import type { Connection } from 'mongoose';
 
 /**
  * Integration test: exercises `MongoUserRepository` against a real MongoDB
- * instance (docker-compose `mongo` service), proving the onion's
- * persistence boundary holds end-to-end.
+ * instance, proving the onion's persistence boundary holds end-to-end.
  *
- * Run with: `docker compose up -d mongo` first (auth is enabled — see
- * `.env` for `MONGO_USER`/`MONGO_PASSWORD`), then run this test.
- * The connection URI is read from `MONGO_TEST_URI` (see `.env` /
- * `README.md`), falling back to an unauthenticated localhost URI for
- * environments where auth is disabled.
+ * Runs locally: `docker compose up -d mongo` first (auth per `.env`
+ * MONGO_USER/MONGO_PASSWORD), then set MONGO_TEST_URI and run this test.
+ * Runs in CI: GitHub Actions job provides mongo:7 service container with MONGO_TEST_URI set.
+ *
+ * Connection URI is read from MONGO_TEST_URI env var (see `.env` / `README.md`),
+ * falling back to an unauthenticated localhost URI for environments without auth.
  */
 describe('MongoUserRepository (integration)', () => {
+  // Use a unique database name per test run to avoid conflicts when tests run in parallel.
+  // Use a UUID-like random suffix to ensure uniqueness across concurrent test executions.
+  const generateRandomSuffix = () => {
+    const arr = new Uint8Array(12);
+    if (
+      typeof globalThis.crypto !== 'undefined' &&
+      globalThis.crypto.getRandomValues
+    ) {
+      globalThis.crypto.getRandomValues(arr);
+    } else {
+      for (let i = 0; i < arr.length; i++) {
+        arr[i] = Math.floor(Math.random() * 256);
+      }
+    }
+    return Array.from(arr, (byte) => byte.toString(16).padStart(2, '0')).join(
+      '',
+    );
+  };
+  const dbNameSuffix = generateRandomSuffix();
   const config: MongoConnectionConfig = {
     uri: process.env['MONGO_TEST_URI'] ?? 'mongodb://localhost:27017',
-    dbName: 'penny-test',
+    dbName: `penny-test-${dbNameSuffix}`,
   };
 
   let connection: Connection;
@@ -87,39 +106,40 @@ describe('MongoUserRepository (integration)', () => {
     expect(foundByTelegramId?.id).toBe(created.id);
 
     const approved = (foundByTelegramId as User).approve();
-    const updated = await repository.save(approved);
+    const updated = await repository.updateStatus(created.id, approved.status);
     expect(updated).toBeInstanceOf(User);
-    expect(updated.id).toBe(created.id);
-    expect(updated.status).toBe(UserStatus.ACTIVE);
-    expect(updated.updatedAt.getTime()).toBeGreaterThanOrEqual(
+    expect(updated?.id).toBe(created.id);
+    expect(updated?.status).toBe(UserStatus.ACTIVE);
+    expect(updated?.updatedAt.getTime()).toBeGreaterThanOrEqual(
       created.updatedAt.getTime(),
     );
     // Profile fields and createdAt must be untouched by the status transition.
-    expect(updated.firstName).toBe('Ada');
-    expect(updated.lastName).toBe('Lovelace');
-    expect(updated.username).toBe('ada');
-    expect(updated.photoUrl).toBe('https://example.com/ada.png');
-    expect(updated.createdAt.getTime()).toBe(created.createdAt.getTime());
+    expect(updated?.firstName).toBe('Ada');
+    expect(updated?.lastName).toBe('Lovelace');
+    expect(updated?.username).toBe('ada');
+    expect(updated?.photoUrl).toBe('https://example.com/ada.png');
+    expect(updated?.createdAt.getTime()).toBe(created.createdAt.getTime());
 
     const foundById = await repository.findById(created.id);
     expect(foundById).not.toBeNull();
     expect(foundById?.status).toBe(UserStatus.ACTIVE);
 
-    const profileUpdated = (foundById as User).updateProfile({
+    const savedProfileUpdate = await repository.updateProfile(created.id, {
       firstName: 'Augusta',
       lastName: 'King',
       username: 'augusta',
       photoUrl: 'https://example.com/augusta.png',
     });
-    const savedProfileUpdate = await repository.save(profileUpdated);
-    expect(savedProfileUpdate.id).toBe(created.id);
-    expect(savedProfileUpdate.firstName).toBe('Augusta');
-    expect(savedProfileUpdate.lastName).toBe('King');
-    expect(savedProfileUpdate.username).toBe('augusta');
-    expect(savedProfileUpdate.photoUrl).toBe('https://example.com/augusta.png');
+    expect(savedProfileUpdate?.id).toBe(created.id);
+    expect(savedProfileUpdate?.firstName).toBe('Augusta');
+    expect(savedProfileUpdate?.lastName).toBe('King');
+    expect(savedProfileUpdate?.username).toBe('augusta');
+    expect(savedProfileUpdate?.photoUrl).toBe(
+      'https://example.com/augusta.png',
+    );
     // Status and telegramId must be untouched by a profile-only update.
-    expect(savedProfileUpdate.status).toBe(UserStatus.ACTIVE);
-    expect(savedProfileUpdate.telegramId).toBe('111222333');
+    expect(savedProfileUpdate?.status).toBe(UserStatus.ACTIVE);
+    expect(savedProfileUpdate?.telegramId).toBe('111222333');
 
     const foundAfterProfileUpdate = await repository.findById(created.id);
     expect(foundAfterProfileUpdate?.firstName).toBe('Augusta');
@@ -129,15 +149,17 @@ describe('MongoUserRepository (integration)', () => {
     // the DB, not just leave it `undefined` in the in-memory return value
     // (regression test: Mongoose silently drops `undefined` keys on a plain
     // `$set`, so the old value would otherwise persist forever).
-    const usernameCleared = (foundAfterProfileUpdate as User).updateProfile({
+    const savedUsernameCleared = await repository.updateProfile(created.id, {
+      firstName: 'Augusta',
+      lastName: 'King',
       username: undefined,
+      photoUrl: 'https://example.com/augusta.png',
     });
-    const savedUsernameCleared = await repository.save(usernameCleared);
-    expect(savedUsernameCleared.username).toBeUndefined();
+    expect(savedUsernameCleared?.username).toBeUndefined();
     // Other fields must be untouched by the partial clear.
-    expect(savedUsernameCleared.firstName).toBe('Augusta');
-    expect(savedUsernameCleared.lastName).toBe('King');
-    expect(savedUsernameCleared.photoUrl).toBe(
+    expect(savedUsernameCleared?.firstName).toBe('Augusta');
+    expect(savedUsernameCleared?.lastName).toBe('King');
+    expect(savedUsernameCleared?.photoUrl).toBe(
       'https://example.com/augusta.png',
     );
 
@@ -156,9 +178,9 @@ describe('MongoUserRepository (integration)', () => {
     const created = await repository.save(buildUser({ telegramId }));
 
     const rejected = created.reject();
-    const saved = await repository.save(rejected);
+    const saved = await repository.updateStatus(created.id, rejected.status);
 
-    expect(saved.status).toBe(UserStatus.REJECTED);
+    expect(saved?.status).toBe(UserStatus.REJECTED);
 
     const found = await repository.findById(created.id);
     expect(found?.status).toBe(UserStatus.REJECTED);
@@ -261,31 +283,29 @@ describe('MongoUserRepository (integration)', () => {
     expect(await repository.findByTelegramId('does-not-exist')).toBeNull();
   });
 
-  it('updateProfile does not overwrite status (concurrent login + approval safety)', async () => {
+  it('updateProfile and updateStatus do not clobber each other under concurrency', async () => {
+    // Proves the fix for a lost-update race: a concurrent login-triggered
+    // profile refresh (updateProfile) and admin approval (updateStatus) must
+    // each only touch their own scoped field, never the other's, regardless
+    // of which write lands last. Assertions are made against the final
+    // `findById` read (not the individual promise results) since which
+    // write commits last is not deterministic.
     const telegramId = '321321321';
     const created = await repository.save(buildUser({ telegramId }));
 
-    // Approve the user first so it has ACTIVE status.
-    const approved = created.approve();
-    const savedApproved = await repository.save(approved);
-    expect(savedApproved.status).toBe(UserStatus.ACTIVE);
-
-    // Simulate concurrent: login updates profile, admin saves approval again.
-    // (In production the login updateProfile and admin save may interleave;
-    // here we confirm the login path cannot revert status.)
-    const [profileResult, adminResult] = await Promise.all([
+    const [profileResult, statusResult] = await Promise.all([
       repository.updateProfile(created.id, {
         firstName: 'NewName',
         username: 'newusername',
       }),
-      repository.save(savedApproved),
+      repository.updateStatus(created.id, UserStatus.ACTIVE),
     ]);
 
-    // Status must remain ACTIVE — the profile update must not have touched it.
-    expect(profileResult?.status).toBe(UserStatus.ACTIVE);
-    expect(adminResult.status).toBe(UserStatus.ACTIVE);
+    expect(profileResult).not.toBeNull();
+    expect(statusResult).not.toBeNull();
 
-    // Profile field was actually written.
+    // Both the profile change and the status change must have landed —
+    // neither concurrent write reverted the other's scoped field.
     const found = await repository.findById(created.id);
     expect(found?.status).toBe(UserStatus.ACTIVE);
     expect(found?.firstName).toBe('NewName');

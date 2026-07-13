@@ -7,6 +7,7 @@ import pino from 'pino';
 import { User, UserStatus } from 'identity-core';
 import type { IUserRepository } from 'identity-core';
 import { Role } from 'shared-contracts';
+import type { RoleType } from 'shared-contracts';
 
 import { API_CONFIG } from '../config/cli-config.js';
 import type { CliConfig } from '../config/cli-config.js';
@@ -69,6 +70,50 @@ class FakeUserRepository implements IUserRepository {
     return null;
   }
 
+  public async updateStatus(
+    id: string,
+    status: UserStatus,
+  ): Promise<User | null> {
+    const user = this.store.get(id);
+    if (!user) return null;
+    const updated = new User({
+      id: user.id,
+      telegramId: user.telegramId,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username,
+      photoUrl: user.photoUrl,
+      status,
+      roles: user.roles,
+      createdAt: user.createdAt,
+      updatedAt: new Date(),
+    });
+    this.store.set(id, updated);
+    return updated;
+  }
+
+  public async updateRoles(
+    id: string,
+    roles: readonly RoleType[],
+  ): Promise<User | null> {
+    const user = this.store.get(id);
+    if (!user) return null;
+    const updated = new User({
+      id: user.id,
+      telegramId: user.telegramId,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username,
+      photoUrl: user.photoUrl,
+      status: user.status,
+      roles,
+      createdAt: user.createdAt,
+      updatedAt: new Date(),
+    });
+    this.store.set(id, updated);
+    return updated;
+  }
+
   public async delete(id: string): Promise<void> {
     this.store.delete(id);
   }
@@ -103,22 +148,22 @@ describe('AdminPromoteCommand', () => {
 
   it('grants Role.SUPERADMIN to a user with no roles', async () => {
     repository.seed(buildActiveUser([]));
-    const saveSpy = vi.spyOn(repository, 'save');
+    const updateRolesSpy = vi.spyOn(repository, 'updateRoles');
 
     await command.run([], { telegramUsername: TELEGRAM_USERNAME });
 
-    expect(saveSpy).toHaveBeenCalledOnce();
+    expect(updateRolesSpy).toHaveBeenCalledOnce();
     const updated = await repository.findById(USER_ID);
     expect(updated?.roles).toEqual([Role.SUPERADMIN]);
   });
 
   it('is idempotent: promoting an already-superadmin user is a safe no-op', async () => {
     repository.seed(buildActiveUser([Role.SUPERADMIN]));
-    const saveSpy = vi.spyOn(repository, 'save');
+    const updateRolesSpy = vi.spyOn(repository, 'updateRoles');
 
     await command.run([], { telegramUsername: TELEGRAM_USERNAME });
 
-    expect(saveSpy).not.toHaveBeenCalled();
+    expect(updateRolesSpy).not.toHaveBeenCalled();
     const updated = await repository.findById(USER_ID);
     expect(updated?.roles).toEqual([Role.SUPERADMIN]);
   });

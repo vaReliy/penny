@@ -2,9 +2,9 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, skeleton]
   push:
-    branches: [main]
+    branches: [main, skeleton]
 
 permissions:
   contents: read
@@ -15,6 +15,21 @@ env:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7
+        options: >-
+          --health-cmd "mongosh --eval \"db.adminCommand('ping')\""
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          --health-start-period 15s
+        ports:
+          - 27017:27017
+        env:
+          MONGO_INITDB_DATABASE: penny-test
+          MONGO_INITDB_ROOT_USERNAME: test-user
+          MONGO_INITDB_ROOT_PASSWORD: test-password
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,7 +56,28 @@ jobs:
         run: node tools/check-exact-pins.mjs
 
       - name: Lint, test, build affected projects
-        run: pnpm nx affected -t lint,test,build
+        run: pnpm nx affected -t lint,vite:test,typecheck,build
+        env:
+          # MongoDB service container (mongo:7) is available in this job via services.mongo.
+          # Uses root user (from services.mongo env vars MONGO_INITDB_ROOT_USERNAME/PASSWORD).
+          # Tests connect to penny-test database on localhost:27017.
+          MONGO_TEST_URI: 'mongodb://test-user:test-password@localhost:27017/penny-test?authSource=admin'
+        # Note on targets:
+        # - Nx plugins @nx/vitest (testTargetName: vite:test) and @nx/vite/plugin
+        #   (typecheckTargetName: typecheck) register these inferred targets.
+        # - vite:test: 16 projects (all libs + web + api + cli)
+        # - test target removed: api/cli have explicit test targets (run-commands → vitest)
+        #   AND vitest.config.mts files that trigger vite:test inference. Keeping both
+        #   would run vitest twice on those projects. vite:test is sufficient.
+        # - typecheck: 5 projects (feature-* libs + web) — others without tsconfig.lib.json
+        #   don't infer it; leaves known gap: typecheck doesn't include .spec.ts scope
+        #   (see KNOWLEDGE_INBOX 2026-07-08)
+        #
+        # MongoDB-dependent tests: libs/identity/infrastructure/{mongo-*.spec.ts}
+        # - RUN in CI via GitHub Actions MongoDB service container (mongo:7).
+        # - MONGO_TEST_URI env var is set above to enable connection to service container.
+        # - Tests REQUIRE Mongo and will fail hard (ECONNREFUSED, undefined.dropDatabase(), etc.)
+        #   without it. No graceful skip: they connect immediately in beforeAll/describe, not lazily.
 
       - name: Audit dependencies (non-blocking)
         run: pnpm audit || true

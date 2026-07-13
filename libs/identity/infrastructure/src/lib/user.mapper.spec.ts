@@ -69,18 +69,15 @@ describe('UserMapper — roles round-trip', () => {
     expect(persistence.roles).toEqual([]);
   });
 
-  it('toPersistenceUpdate carries roles into the $set document', () => {
-    const user = new User({
-      id: '507f1f77bcf86cd799439011',
-      telegramId: '123456789',
-      status: UserStatus.ACTIVE,
-      roles: [Role.SUPERADMIN],
-      createdAt: new Date('2026-01-01T00:00:00.000Z'),
-      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
-    });
+  it('toRolesPersistenceUpdate carries roles into a roles-only $set document', () => {
+    const update = UserMapper.toRolesPersistenceUpdate([Role.SUPERADMIN]);
 
-    const update = UserMapper.toPersistenceUpdate(user);
+    expect(update.$set).toEqual({ roles: [Role.SUPERADMIN] });
+  });
 
-    expect(update.$set['roles']).toEqual([Role.SUPERADMIN]);
+  it('toStatusPersistenceUpdate carries status into a status-only $set document', () => {
+    const update = UserMapper.toStatusPersistenceUpdate(UserStatus.ACTIVE);
+
+    expect(update.$set).toEqual({ status: UserStatus.ACTIVE });
   });
 });

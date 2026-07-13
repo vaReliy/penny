@@ -6,6 +6,7 @@ import pino from 'pino';
 
 import { User, UserStatus } from 'identity-core';
 import type { IUserRepository } from 'identity-core';
+import type { RoleType } from 'shared-contracts';
 import { RejectUserService, SUPERADMIN_ROLE } from 'identity-application';
 import { registerLivrRules } from 'shared-kernel';
 
@@ -64,6 +65,50 @@ class FakeUserRepository implements IUserRepository {
     _profile: object,
   ): Promise<User | null> {
     return null;
+  }
+
+  public async updateStatus(
+    id: string,
+    status: UserStatus,
+  ): Promise<User | null> {
+    const user = this.store.get(id);
+    if (!user) return null;
+    const updated = new User({
+      id: user.id,
+      telegramId: user.telegramId,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username,
+      photoUrl: user.photoUrl,
+      status,
+      roles: user.roles,
+      createdAt: user.createdAt,
+      updatedAt: new Date(),
+    });
+    this.store.set(id, updated);
+    return updated;
+  }
+
+  public async updateRoles(
+    id: string,
+    roles: readonly RoleType[],
+  ): Promise<User | null> {
+    const user = this.store.get(id);
+    if (!user) return null;
+    const updated = new User({
+      id: user.id,
+      telegramId: user.telegramId,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username,
+      photoUrl: user.photoUrl,
+      status: user.status,
+      roles,
+      createdAt: user.createdAt,
+      updatedAt: new Date(),
+    });
+    this.store.set(id, updated);
+    return updated;
   }
 
   public async delete(id: string): Promise<void> {

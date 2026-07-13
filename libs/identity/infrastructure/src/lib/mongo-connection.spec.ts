@@ -9,10 +9,11 @@ import {
 
 /**
  * Smoke test: connect to MongoDB via the factory, ping it, and disconnect.
- * This test proves the connection factory works against a local docker-compose mongo.
+ * This test proves the connection factory works against a MongoDB instance.
  *
- * Run with: `docker compose up -d mongo` in a terminal (auth is enabled — see
- * `.env` for `MONGO_USER`/`MONGO_PASSWORD`), then run this test.
+ * Runs locally: `docker compose up -d mongo` (auth per `.env` MONGO_USER/MONGO_PASSWORD),
+ * then set MONGO_TEST_URI and run this test.
+ * Runs in CI: GitHub Actions job provides mongo:7 service container with MONGO_TEST_URI set.
  */
 describe('Mongo Connection (smoke test)', () => {
   /**

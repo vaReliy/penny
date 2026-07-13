@@ -3,7 +3,6 @@ import { Command, CommandRunner, Option } from 'nest-commander';
 import type pino from 'pino';
 
 import type { IUserRepository } from 'identity-core';
-import { User } from 'identity-core';
 import { Role } from 'shared-contracts';
 
 import { API_CONFIG } from '../config/cli-config.js';
@@ -60,19 +59,10 @@ export class AdminPromoteCommand extends CommandRunner {
       return;
     }
 
-    const promoted = new User({
-      id: user.id,
-      telegramId: user.telegramId,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      username: user.username,
-      photoUrl: user.photoUrl,
-      status: user.status,
-      roles: [...user.roles, Role.SUPERADMIN],
-      createdAt: user.createdAt,
-      updatedAt: new Date(),
-    });
-    await this.userRepository.save(promoted);
+    await this.userRepository.updateRoles(user.id, [
+      ...user.roles,
+      Role.SUPERADMIN,
+    ]);
 
     this.logger.info(
       { username: telegramUsername, userId: user.id },

@@ -128,7 +128,7 @@ describe('UserAdminController (real SessionGuard in the chain)', () => {
 
     userRepository = {
       findById: vi.fn(),
-      save: vi.fn(),
+      updateStatus: vi.fn(),
     } as unknown as IUserRepository;
 
     approveUser = new ApproveUserService({ userRepository });
@@ -240,8 +240,18 @@ describe('UserAdminController (real SessionGuard in the chain)', () => {
     (userRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(
       pendingUser,
     );
-    (userRepository.save as ReturnType<typeof vi.fn>).mockImplementation(
-      (u: User) => u,
+    (
+      userRepository.updateStatus as ReturnType<typeof vi.fn>
+    ).mockImplementation(
+      (id: string, status: UserStatus) =>
+        new User({
+          id,
+          telegramId: pendingUser.telegramId,
+          firstName: pendingUser.firstName,
+          status,
+          createdAt: pendingUser.createdAt,
+          updatedAt: new Date(),
+        }),
     );
 
     const result = await controller.approve('target-user', sessionUser);
@@ -271,8 +281,18 @@ describe('UserAdminController (real SessionGuard in the chain)', () => {
     (userRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(
       pendingUser,
     );
-    (userRepository.save as ReturnType<typeof vi.fn>).mockImplementation(
-      (u: User) => u,
+    (
+      userRepository.updateStatus as ReturnType<typeof vi.fn>
+    ).mockImplementation(
+      (id: string, status: UserStatus) =>
+        new User({
+          id,
+          telegramId: pendingUser.telegramId,
+          firstName: pendingUser.firstName,
+          status,
+          createdAt: pendingUser.createdAt,
+          updatedAt: new Date(),
+        }),
     );
 
     const result = await controller.reject('target-user', sessionUser);

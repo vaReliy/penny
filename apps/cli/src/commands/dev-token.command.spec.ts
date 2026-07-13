@@ -62,9 +62,27 @@ function buildFakeRepository(
     findByUsername: vi.fn().mockResolvedValue(null),
     save: vi.fn().mockImplementation(async (u: User) => u),
     updateProfile: vi.fn().mockResolvedValue(null),
+    updateStatus: vi.fn().mockResolvedValue(null),
+    updateRoles: vi.fn().mockResolvedValue(null),
     delete: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
+}
+
+/** Builds a `User` mirroring `source` but with `status` overridden — models what `updateStatus` returns. */
+function withStatus(source: User, status: UserStatus): User {
+  return new User({
+    id: source.id,
+    telegramId: source.telegramId,
+    firstName: source.firstName,
+    lastName: source.lastName,
+    username: source.username,
+    photoUrl: source.photoUrl,
+    status,
+    roles: source.roles,
+    createdAt: source.createdAt,
+    updatedAt: new Date(),
+  });
 }
 
 const DEV_CONFIG: CliConfig = {
@@ -180,7 +198,7 @@ describe('DevTokenCommand', () => {
       ).rejects.toThrow('process.exit called');
 
       expect(exitSpy).toHaveBeenCalledWith(1);
-      expect(repository.save).not.toHaveBeenCalled();
+      expect(repository.updateStatus).not.toHaveBeenCalled();
     });
   });
 
@@ -202,7 +220,7 @@ describe('DevTokenCommand', () => {
       expect(exitSpy).toHaveBeenCalledWith(1);
       // Status validation runs before the DB lookup
       expect(repository.findByUsername).not.toHaveBeenCalled();
-      expect(repository.save).not.toHaveBeenCalled();
+      expect(repository.updateStatus).not.toHaveBeenCalled();
     });
   });
 
@@ -211,20 +229,26 @@ describe('DevTokenCommand', () => {
       // Arrange
       vi.stubEnv('JWT_SECRET', TEST_JWT_SECRET);
       const pendingUser = buildPendingUser();
-      const saveSpy = vi.fn().mockImplementation(async (u: User) => u);
+      const updateStatusSpy = vi
+        .fn()
+        .mockImplementation(async (_id: string, status: UserStatus) =>
+          withStatus(pendingUser, status),
+        );
       const repository = buildFakeRepository({
         findByUsername: vi.fn().mockResolvedValue(pendingUser),
-        save: saveSpy,
+        updateStatus: updateStatusSpy,
       });
       const command = await buildCommand(repository, DEV_CONFIG);
 
       // Act
       await command.run([], { telegramUsername: 'ada_lovelace' });
 
-      // Assert — user saved with ACTIVE status
-      expect(saveSpy).toHaveBeenCalledOnce();
-      const savedUser = saveSpy.mock.calls[0][0] as User;
-      expect(savedUser.status).toBe(UserStatus.ACTIVE);
+      // Assert — user updated to ACTIVE status
+      expect(updateStatusSpy).toHaveBeenCalledOnce();
+      expect(updateStatusSpy).toHaveBeenCalledWith(
+        pendingUser.id,
+        UserStatus.ACTIVE,
+      );
 
       // Assert — JwtTokenIssuer.issue called with correct claims
       expect(issueMock).toHaveBeenCalledWith({
@@ -254,10 +278,14 @@ describe('DevTokenCommand', () => {
       // Arrange
       vi.stubEnv('JWT_SECRET', TEST_JWT_SECRET);
       const pendingUser = buildPendingUser();
-      const saveSpy = vi.fn().mockImplementation(async (u: User) => u);
+      const updateStatusSpy = vi
+        .fn()
+        .mockImplementation(async (_id: string, status: UserStatus) =>
+          withStatus(pendingUser, status),
+        );
       const repository = buildFakeRepository({
         findByUsername: vi.fn().mockResolvedValue(pendingUser),
-        save: saveSpy,
+        updateStatus: updateStatusSpy,
       });
       const command = await buildCommand(repository, DEV_CONFIG);
 
@@ -267,9 +295,11 @@ describe('DevTokenCommand', () => {
         status: UserStatus.PENDING,
       });
 
-      // Assert — user saved with PENDING status
-      const savedUser = saveSpy.mock.calls[0][0] as User;
-      expect(savedUser.status).toBe(UserStatus.PENDING);
+      // Assert — user updated with PENDING status
+      expect(updateStatusSpy).toHaveBeenCalledWith(
+        pendingUser.id,
+        UserStatus.PENDING,
+      );
 
       // Assert — JWT claims carry PENDING status
       expect(issueMock).toHaveBeenCalledWith({
@@ -294,19 +324,23 @@ describe('DevTokenCommand', () => {
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z'),
       });
-      const saveSpy = vi.fn().mockImplementation(async (u: User) => u);
+      const updateStatusSpy = vi
+        .fn()
+        .mockImplementation(async (_id: string, status: UserStatus) =>
+          withStatus(superadminUser, status),
+        );
       const repository = buildFakeRepository({
         findByUsername: vi.fn().mockResolvedValue(superadminUser),
-        save: saveSpy,
+        updateStatus: updateStatusSpy,
       });
       const command = await buildCommand(repository, DEV_CONFIG);
 
       // Act
       await command.run([], { telegramUsername: 'grace_hopper' });
 
-      // Assert — persisted roles carried onto the saved user
-      const savedUser = saveSpy.mock.calls[0][0] as User;
-      expect(savedUser.roles).toEqual([Role.SUPERADMIN]);
+      // Assert — persisted roles carried onto the updated user
+      const updatedUser = await updateStatusSpy.mock.results[0].value;
+      expect((updatedUser as User).roles).toEqual([Role.SUPERADMIN]);
 
       // Assert — JWT claims carry the persisted superadmin role, not []
       expect(issueMock).toHaveBeenCalledWith({

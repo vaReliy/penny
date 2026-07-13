@@ -6,6 +6,7 @@ import { isValidObjectId } from 'mongoose';
 
 import type { IUserRepository, UserProfileUpdate } from 'identity-core';
 import { User } from 'identity-core';
+import type { RoleType, UserStatus } from 'shared-contracts';
 import { InfrastructureError } from 'shared-errors';
 
 import { UserMapper } from './user.mapper.js';
@@ -122,45 +123,74 @@ export class MongoUserRepository implements IUserRepository {
   }
 
   /**
-   * Persists `entity`: delegates to `updateById` when `entity.id` is a valid
-   * ObjectId (already persisted), otherwise delegates to `upsertByTelegramId`
-   * for the create path. Returns the persisted domain entity.
+   * Updates only the `status` field for the document with the given `id`.
+   * `roles`, profile fields, and `telegramId` are structurally absent from
+   * the update document (see `UserMapper.toStatusPersistenceUpdate`), so a
+   * concurrent role change or profile refresh cannot be overwritten by a
+   * status transition.
    *
-   * @throws {InfrastructureError} If the update path's id has no matching
-   * document, on any driver/connection failure, or on an unexpected E11000
-   * duplicate-key collision after a concurrent-insert retry (DUPLICATE_TELEGRAM_ID).
+   * Returns `null` when `id` is not a valid ObjectId or no document matches.
    */
-  public async save(entity: User): Promise<User> {
-    return isValidObjectId(entity.id)
-      ? this.updateById(entity)
-      : this.upsertByTelegramId(entity);
-  }
-
-  /**
-   * Updates the existing document matching `entity.id`. Uses an explicit
-   * `$set`/`$unset` (see `UserMapper.toPersistenceUpdate`) so that clearing
-   * an optional profile field actually removes it from the document instead
-   * of being silently dropped.
-   */
-  private async updateById(entity: User): Promise<User> {
+  public async updateStatus(
+    id: string,
+    status: UserStatus,
+  ): Promise<User | null> {
+    if (!isValidObjectId(id)) {
+      return null;
+    }
     try {
       const doc = await this.model
-        .findByIdAndUpdate(entity.id, UserMapper.toPersistenceUpdate(entity), {
+        .findByIdAndUpdate(id, UserMapper.toStatusPersistenceUpdate(status), {
           new: true,
         })
         .exec();
-      if (!doc) {
-        this.logger.error(
-          { userId: entity.id },
-          'MongoUserRepository.save: document not found for update',
-        );
-        throw new InfrastructureError();
-      }
-      return UserMapper.toDomain(doc);
+      return doc ? UserMapper.toDomain(doc) : null;
     } catch (error) {
-      if (error instanceof InfrastructureError) throw error;
-      throw this.toInfrastructureError(error, 'save');
+      throw this.toInfrastructureError(error, 'updateStatus');
     }
+  }
+
+  /**
+   * Updates only the `roles` field for the document with the given `id`.
+   * `status`, profile fields, and `telegramId` are structurally absent from
+   * the update document (see `UserMapper.toRolesPersistenceUpdate`), so a
+   * concurrent status transition or profile refresh cannot be overwritten by
+   * a role change.
+   *
+   * Returns `null` when `id` is not a valid ObjectId or no document matches.
+   */
+  public async updateRoles(
+    id: string,
+    roles: readonly RoleType[],
+  ): Promise<User | null> {
+    if (!isValidObjectId(id)) {
+      return null;
+    }
+    try {
+      const doc = await this.model
+        .findByIdAndUpdate(id, UserMapper.toRolesPersistenceUpdate(roles), {
+          new: true,
+        })
+        .exec();
+      return doc ? UserMapper.toDomain(doc) : null;
+    } catch (error) {
+      throw this.toInfrastructureError(error, 'updateRoles');
+    }
+  }
+
+  /**
+   * Persists a not-yet-persisted `entity` via an atomic upsert keyed on
+   * `telegramId`. Only the create path — updates to an already-persisted
+   * entity must go through `updateProfile`/`updateStatus`/`updateRoles`
+   * instead, so a write can never clobber a field it didn't intend to
+   * change. Returns the persisted domain entity.
+   *
+   * @throws {InfrastructureError} On any driver/connection failure, or on an
+   * unexpected E11000 duplicate-key collision after a concurrent-insert
+   * retry (DUPLICATE_TELEGRAM_ID).
+   */
+  public async save(entity: User): Promise<User> {
+    return this.upsertByTelegramId(entity);
   }
 
   /**

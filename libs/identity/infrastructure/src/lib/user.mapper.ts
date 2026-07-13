@@ -30,23 +30,22 @@ const OPTIONAL_PERSISTENCE_FIELDS = [
   'photoUrl',
 ] as const;
 
-/**
- * `$set`/`$unset` update document for `findByIdAndUpdate`. Mongoose silently
- * drops keys whose value is `undefined` from a plain update object, so
- * clearing an optional field requires an explicit `$unset` rather than
- * `$set: { field: undefined }`.
- */
-export interface UserPersistenceUpdate {
-  readonly $set: Partial<UserPersistence>;
-  readonly $unset: Readonly<Record<string, ''>>;
-}
-
 /** `$set`/`$unset` update document scoped to mutable profile fields only. */
 export interface UserProfilePersistenceUpdate {
   readonly $set: Partial<
     Pick<UserPersistence, 'firstName' | 'lastName' | 'username' | 'photoUrl'>
   >;
   readonly $unset: Readonly<Record<string, ''>>;
+}
+
+/** `$set`-only update document scoped to the `status` field. */
+export interface UserStatusPersistenceUpdate {
+  readonly $set: Pick<UserPersistence, 'status'>;
+}
+
+/** `$set`-only update document scoped to the `roles` field. */
+export interface UserRolesPersistenceUpdate {
+  readonly $set: Pick<UserPersistence, 'roles'>;
 }
 
 /**
@@ -118,30 +117,24 @@ export const UserMapper = {
   },
 
   /**
-   * Converts a domain `User` entity into a `$set`/`$unset` update document
-   * for `findByIdAndUpdate`, so that clearing an optional field (e.g.
-   * `username: undefined`) actually removes it from the persisted document
-   * instead of being silently dropped by Mongoose.
+   * Converts a `status` value into a `$set` update document scoped
+   * exclusively to that field. `roles`, profile fields, and `telegramId` are
+   * structurally absent from the returned document, so a `findByIdAndUpdate`
+   * call using this output can never overwrite them.
    */
-  toPersistenceUpdate(user: User): UserPersistenceUpdate {
-    const persistence = UserMapper.toPersistence(user);
-    const set: { -readonly [K in keyof UserPersistence]?: UserPersistence[K] } =
-      {
-        telegramId: persistence.telegramId,
-        status: persistence.status,
-        roles: persistence.roles,
-      };
-    const unset: Record<string, ''> = {};
+  toStatusPersistenceUpdate(status: UserStatus): UserStatusPersistenceUpdate {
+    return { $set: { status } };
+  },
 
-    for (const field of OPTIONAL_PERSISTENCE_FIELDS) {
-      const value = persistence[field];
-      if (value === undefined) {
-        unset[field] = '';
-      } else {
-        set[field] = value;
-      }
-    }
-
-    return { $set: set, $unset: unset };
+  /**
+   * Converts a `roles` array into a `$set` update document scoped
+   * exclusively to that field. `status`, profile fields, and `telegramId`
+   * are structurally absent from the returned document, so a
+   * `findByIdAndUpdate` call using this output can never overwrite them.
+   */
+  toRolesPersistenceUpdate(
+    roles: readonly RoleType[],
+  ): UserRolesPersistenceUpdate {
+    return { $set: { roles } };
   },
 };

@@ -14,8 +14,9 @@ export default defineConfig(() => ({
     coverage: {
       reportsDirectory: '../../../coverage/libs/identity/application',
       provider: 'v8' as const,
-      // Enforce thresholds on every run (not only when --coverage is passed on the
-      // CLI) so CI's plain `nx affected -t test` invocation is still gated.
+      // Enforce thresholds on every run (not only when --coverage is passed on the CLI)
+      // so any invocation of the vite:test target (including CI's explicit
+      // `nx affected -t vite:test`) is gated by coverage requirements.
       enabled: true,
       // Ratchet, not aspiration: measured baseline 2026-07-08 was statements 97.53%,
       // branches 90.62%, functions 100%, lines 97.53% (`npx nx vite:test

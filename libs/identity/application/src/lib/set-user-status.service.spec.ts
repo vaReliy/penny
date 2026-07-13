@@ -3,6 +3,7 @@ import { User, UserStatus } from 'identity-core';
 import type { IUserRepository, UserProfileUpdate } from 'identity-core';
 import type { CallerIdentity, ServiceContext } from 'shared-kernel';
 import { Role } from 'shared-contracts';
+import type { RoleType } from 'shared-contracts';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
@@ -46,6 +47,54 @@ class FakeUserRepository implements IUserRepository {
     _profile: Partial<UserProfileUpdate>,
   ): Promise<User | null> {
     return null;
+  }
+
+  public async updateStatus(
+    id: string,
+    status: UserStatus,
+  ): Promise<User | null> {
+    const existing = this.usersById.get(id);
+    if (!existing) {
+      return null;
+    }
+    const updated = new User({
+      id: existing.id,
+      telegramId: existing.telegramId,
+      firstName: existing.firstName,
+      lastName: existing.lastName,
+      username: existing.username,
+      photoUrl: existing.photoUrl,
+      status,
+      roles: existing.roles,
+      createdAt: existing.createdAt,
+      updatedAt: new Date(),
+    });
+    this.usersById.set(id, updated);
+    return updated;
+  }
+
+  public async updateRoles(
+    id: string,
+    roles: readonly RoleType[],
+  ): Promise<User | null> {
+    const existing = this.usersById.get(id);
+    if (!existing) {
+      return null;
+    }
+    const updated = new User({
+      id: existing.id,
+      telegramId: existing.telegramId,
+      firstName: existing.firstName,
+      lastName: existing.lastName,
+      username: existing.username,
+      photoUrl: existing.photoUrl,
+      status: existing.status,
+      roles,
+      createdAt: existing.createdAt,
+      updatedAt: new Date(),
+    });
+    this.usersById.set(id, updated);
+    return updated;
   }
 
   public async save(entity: User): Promise<User> {
