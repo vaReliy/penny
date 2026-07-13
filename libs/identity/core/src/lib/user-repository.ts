@@ -49,15 +49,40 @@ export interface IUserRepository extends IRepository<User, string> {
    * Updates only the `status` field for the user with the given `id`. Never
    * touches profile fields, `roles`, or `telegramId`, so a concurrent
    * profile refresh or role change cannot be overwritten by a status
-   * transition. Returns `null` when no user with that `id` exists.
+   * transition.
+   *
+   * When `expectedCurrentStatus` is supplied, the update is a compare-and-swap:
+   * it only applies if the persisted `status` still equals
+   * `expectedCurrentStatus` at write time. This closes the stale
+   * read-modify-write race where two concurrent callers both validate a
+   * transition against the same in-memory snapshot and the second write
+   * silently overwrites the first. Returns `null` when no user with that
+   * `id` exists, or when `expectedCurrentStatus` no longer matches the
+   * persisted value (CAS failure — the caller must treat this as a
+   * conflict, not retry silently).
    */
-  updateStatus(id: string, status: UserStatus): Promise<User | null>;
+  updateStatus(
+    id: string,
+    status: UserStatus,
+    expectedCurrentStatus?: UserStatus,
+  ): Promise<User | null>;
 
   /**
    * Updates only the `roles` field for the user with the given `id`. Never
    * touches profile fields, `status`, or `telegramId`, so a concurrent
    * profile refresh or status transition cannot be overwritten by a role
-   * change. Returns `null` when no user with that `id` exists.
+   * change.
+   *
+   * When `expectedRoles` is supplied, the update is a compare-and-swap: it
+   * only applies if the persisted `roles` array still exactly matches
+   * `expectedRoles` at write time, closing the same stale
+   * read-modify-write race as `updateStatus`'s `expectedCurrentStatus`.
+   * Returns `null` when no user with that `id` exists, or when
+   * `expectedRoles` no longer matches the persisted value (CAS failure).
    */
-  updateRoles(id: string, roles: readonly RoleType[]): Promise<User | null>;
+  updateRoles(
+    id: string,
+    roles: readonly RoleType[],
+    expectedRoles?: readonly RoleType[],
+  ): Promise<User | null>;
 }

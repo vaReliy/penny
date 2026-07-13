@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (Task — fix TOCTOU races in status transitions and role promotions via CAS)
+
+- **`libs/identity/core/src/lib/user-repository.ts`** — `IUserRepository.updateStatus`/`updateRoles` gain optional `expectedCurrentStatus`/`expectedRoles` params for optimistic-concurrency control.
+- **`libs/identity/infrastructure/src/lib/mongo-user-repository.ts`** — `updateStatus`/`updateRoles` add a compare-and-swap filter (`{_id, status: expectedCurrentStatus}` / `{_id, roles: {$eq: expectedRoles}}`) to `findOneAndUpdate` when the expected value is provided; returns `null` on mismatch (CAS failure) instead of silently overwriting. Omitted-param callers (e.g. `apps/cli/src/commands/dev-token.command.ts`) keep prior no-CAS behavior unchanged.
+- **`libs/identity/application/src/lib/set-user-status.service.ts`** — captures the current status before transitioning, passes it as the CAS expectation; a `null` (CAS-failure) result now throws `DomainError.conflict()` (409) instead of the prior generic path.
+- **`apps/cli/src/commands/admin-promote.command.ts`** — captures the current roles before promoting, passes them as the CAS expectation; a `null` result logs a clear "changed concurrently" error and exits 1 — no automatic retry.
+- Fixes: two admins concurrently approving/rejecting the same user, or two concurrent role-promotion attempts, no longer silently overwrite one another with no audit trail — the loser now gets an explicit 409/error instead.
+
+### Backlog tasks emitted (Task — TOCTOU CAS fix)
+
+- `2026-07-14-01-nx-typecheck-target-for-vitest-projects.md` — none of the touched `@nx/vitest`-based projects (`identity-application`, `identity-infrastructure`, `cli`, likely others workspace-wide) expose a working nx `typecheck` target, so spec files are never type-checked by any nx target today; pre-existing gap, not introduced by this task.
+
 ### Added (Task — wire ServiceContext.caller from session for admin approve/reject)
 
 - **`apps/api/src/identity/user-admin.controller.ts`** — `UserAdminController` exposes `POST admin/users/:userId/approve` and `POST admin/users/:userId/reject` endpoints. Wires the authenticated session user into `CallerIdentity` (userId, status, roles) for the first time in an HTTP handler, constructing `ServiceContext { config: {}, caller }` and passing it to `ApproveUserService`/`RejectUserService`. Guarded by `SessionGuard` (authentication) + `ActiveUserGuard` (account status = ACTIVE, defense-in-depth against deactivated accounts with valid tokens). Authorization (role = ADMIN) is delegated to the services' `authorize()` method, not duplicated at the controller layer.

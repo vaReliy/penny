@@ -1,4 +1,4 @@
-import { AuthenticationError, NotFoundError } from 'shared-errors';
+import { AuthenticationError, DomainError, NotFoundError } from 'shared-errors';
 import { BaseService } from 'shared-kernel';
 import { Role, UserStatus } from 'shared-contracts';
 import type { IUserRepository, User } from 'identity-core';
@@ -28,6 +28,19 @@ export interface SetUserStatusDeps {
 /** Builds the `NotFoundError` thrown when an admin action targets an unknown user. */
 function buildUnknownUserError(userId: string): NotFoundError {
   return new NotFoundError(`No user found with id "${userId}".`);
+}
+
+/**
+ * Builds the `DomainError` (HTTP 409) surfaced when the compare-and-swap
+ * status update fails because another caller already changed the user's
+ * status between this request's read and write. The caller must re-fetch
+ * and retry explicitly — this is never retried silently, so the losing
+ * admin action is never mistaken for a silent success.
+ */
+function buildStatusConflictError(userId: string): DomainError {
+  return DomainError.conflict(
+    `User "${userId}" was concurrently modified; refresh and retry.`,
+  );
 }
 
 /**
@@ -80,15 +93,23 @@ abstract class SetUserStatusService extends BaseService<
     }
 
     // transitionTo validates the transition (throws DomainError if illegal);
-    // only the resulting status is then persisted, via a scoped update.
+    // only the resulting status is then persisted, via a scoped update. The
+    // pre-transition status is captured and passed through as the CAS
+    // expectation, so a concurrent transition that lands first causes this
+    // write to fail loudly instead of silently overwriting it.
+    const currentStatus = user.status;
     const transitioned = user.transitionTo(this.targetStatus);
     const persisted = await this.userRepository.updateStatus(
       params.userId,
       transitioned.status,
+      currentStatus,
     );
 
     if (!persisted) {
-      throw buildUnknownUserError(params.userId);
+      // The user existed moments ago (via findById above), so a null result
+      // here means the CAS filter didn't match: a concurrent transition
+      // changed the status first. Distinct from the true 404 case above.
+      throw buildStatusConflictError(params.userId);
     }
 
     return persisted;

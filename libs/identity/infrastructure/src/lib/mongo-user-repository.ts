@@ -129,20 +129,39 @@ export class MongoUserRepository implements IUserRepository {
    * concurrent role change or profile refresh cannot be overwritten by a
    * status transition.
    *
-   * Returns `null` when `id` is not a valid ObjectId or no document matches.
+   * When `expectedCurrentStatus` is supplied, the query filter additionally
+   * requires `status: expectedCurrentStatus` — a compare-and-swap that
+   * closes the stale read-modify-write race between two concurrent status
+   * transitions validated against the same in-memory snapshot. If the
+   * persisted status no longer matches, no document matches the filter and
+   * this returns `null` (CAS failure), distinct from a genuinely missing
+   * document only in that the caller already confirmed existence via a
+   * prior read.
+   *
+   * Returns `null` when `id` is not a valid ObjectId, no document matches,
+   * or (with `expectedCurrentStatus` set) the CAS filter doesn't match.
    */
   public async updateStatus(
     id: string,
     status: UserStatus,
+    expectedCurrentStatus?: UserStatus,
   ): Promise<User | null> {
     if (!isValidObjectId(id)) {
       return null;
     }
     try {
+      const filter =
+        expectedCurrentStatus === undefined
+          ? { _id: id }
+          : { _id: id, status: expectedCurrentStatus };
       const doc = await this.model
-        .findByIdAndUpdate(id, UserMapper.toStatusPersistenceUpdate(status), {
-          new: true,
-        })
+        .findOneAndUpdate(
+          filter,
+          UserMapper.toStatusPersistenceUpdate(status),
+          {
+            new: true,
+          },
+        )
         .exec();
       return doc ? UserMapper.toDomain(doc) : null;
     } catch (error) {
@@ -157,18 +176,31 @@ export class MongoUserRepository implements IUserRepository {
    * concurrent status transition or profile refresh cannot be overwritten by
    * a role change.
    *
-   * Returns `null` when `id` is not a valid ObjectId or no document matches.
+   * When `expectedRoles` is supplied, the query filter additionally requires
+   * `roles` to exactly equal `expectedRoles` (order and contents) — a
+   * compare-and-swap that closes the stale read-modify-write race between
+   * two concurrent role changes computed from the same in-memory snapshot.
+   * If the persisted roles no longer match, no document matches the filter
+   * and this returns `null` (CAS failure).
+   *
+   * Returns `null` when `id` is not a valid ObjectId, no document matches,
+   * or (with `expectedRoles` set) the CAS filter doesn't match.
    */
   public async updateRoles(
     id: string,
     roles: readonly RoleType[],
+    expectedRoles?: readonly RoleType[],
   ): Promise<User | null> {
     if (!isValidObjectId(id)) {
       return null;
     }
     try {
+      const filter =
+        expectedRoles === undefined
+          ? { _id: id }
+          : { _id: id, roles: { $eq: expectedRoles } };
       const doc = await this.model
-        .findByIdAndUpdate(id, UserMapper.toRolesPersistenceUpdate(roles), {
+        .findOneAndUpdate(filter, UserMapper.toRolesPersistenceUpdate(roles), {
           new: true,
         })
         .exec();

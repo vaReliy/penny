@@ -1,4 +1,6 @@
 import { User, UserStatus } from 'identity-core';
+import { Role } from 'shared-contracts';
+import type { RoleType } from 'shared-contracts';
 import pino from 'pino';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -310,6 +312,61 @@ describe('MongoUserRepository (integration)', () => {
     expect(found?.status).toBe(UserStatus.ACTIVE);
     expect(found?.firstName).toBe('NewName');
     expect(found?.username).toBe('newusername');
+
+    await repository.delete(created.id);
+  });
+
+  it('CAS updateStatus: two concurrent calls expecting the same prior status — only one succeeds', async () => {
+    // Both calls pass `expectedCurrentStatus: PENDING` (the status read
+    // before either wrote), racing to flip it to two different targets.
+    // Mongo's findOneAndUpdate is atomic per-document, so whichever call's
+    // filter matches first wins and flips the status away from PENDING;
+    // the loser's filter then no longer matches and it gets `null` back —
+    // never a silent overwrite of the winner's write.
+    const telegramId = '246246246';
+    const created = await repository.save(buildUser({ telegramId }));
+
+    const [toActive, toRejected] = await Promise.all([
+      repository.updateStatus(
+        created.id,
+        UserStatus.ACTIVE,
+        UserStatus.PENDING,
+      ),
+      repository.updateStatus(
+        created.id,
+        UserStatus.REJECTED,
+        UserStatus.PENDING,
+      ),
+    ]);
+
+    const results = [toActive, toRejected];
+    expect(results.filter((result) => result !== null)).toHaveLength(1);
+    expect(results.filter((result) => result === null)).toHaveLength(1);
+
+    const winner = (toActive ?? toRejected) as User;
+    const found = await repository.findById(created.id);
+    expect(found?.status).toBe(winner.status);
+
+    await repository.delete(created.id);
+  });
+
+  it('CAS updateRoles: two concurrent calls expecting the same prior roles — only one succeeds', async () => {
+    const telegramId = '357357357';
+    const created = await repository.save(buildUser({ telegramId }));
+    const baseline: readonly RoleType[] = [];
+
+    const [toSuperadmin, toUser] = await Promise.all([
+      repository.updateRoles(created.id, [Role.SUPERADMIN], baseline),
+      repository.updateRoles(created.id, [Role.USER], baseline),
+    ]);
+
+    const results = [toSuperadmin, toUser];
+    expect(results.filter((result) => result !== null)).toHaveLength(1);
+    expect(results.filter((result) => result === null)).toHaveLength(1);
+
+    const winner = (toSuperadmin ?? toUser) as User;
+    const found = await repository.findById(created.id);
+    expect(found?.roles).toEqual(winner.roles);
 
     await repository.delete(created.id);
   });

@@ -59,10 +59,20 @@ export class AdminPromoteCommand extends CommandRunner {
       return;
     }
 
-    await this.userRepository.updateRoles(user.id, [
-      ...user.roles,
-      Role.SUPERADMIN,
-    ]);
+    const currentRoles = user.roles;
+    const updated = await this.userRepository.updateRoles(
+      user.id,
+      [...currentRoles, Role.SUPERADMIN],
+      currentRoles,
+    );
+
+    if (!updated) {
+      this.logger.error(
+        { username: telegramUsername, userId: user.id },
+        'Promotion failed: roles changed concurrently since this command read them (CAS conflict). Re-run the command to retry against the latest roles.',
+      );
+      process.exit(1);
+    }
 
     this.logger.info(
       { username: telegramUsername, userId: user.id },

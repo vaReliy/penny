@@ -95,9 +95,18 @@ class FakeUserRepository implements IUserRepository {
   public async updateRoles(
     id: string,
     roles: readonly RoleType[],
+    expectedRoles?: readonly RoleType[],
   ): Promise<User | null> {
     const user = this.store.get(id);
     if (!user) return null;
+    if (
+      expectedRoles !== undefined &&
+      JSON.stringify(user.roles) !== JSON.stringify(expectedRoles)
+    ) {
+      // CAS failure: persisted roles no longer match what the caller read,
+      // mirroring MongoUserRepository's filter-doesn't-match null.
+      return null;
+    }
     const updated = new User({
       id: user.id,
       telegramId: user.telegramId,
@@ -128,11 +137,12 @@ const CLI_CONFIG_STUB: CliConfig = {
 describe('AdminPromoteCommand', () => {
   let command: AdminPromoteCommand;
   let repository: FakeUserRepository;
+  let silentLogger: pino.Logger;
 
   beforeEach(async () => {
     repository = new FakeUserRepository();
 
-    const silentLogger = pino({ level: 'silent' });
+    silentLogger = pino({ level: 'silent' });
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -176,6 +186,28 @@ describe('AdminPromoteCommand', () => {
 
     const updated = await repository.findById(USER_ID);
     expect(updated?.roles).toEqual([Role.SUPERADMIN]);
+  });
+
+  it('calls process.exit(1) and logs a clear CAS-conflict message when roles changed concurrently', async () => {
+    repository.seed(buildActiveUser([]));
+
+    const errorSpy = vi.spyOn(silentLogger, 'error');
+    vi.spyOn(repository, 'updateRoles').mockResolvedValueOnce(null);
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
+      throw new Error('process.exit called');
+    });
+
+    await expect(
+      command.run([], { telegramUsername: TELEGRAM_USERNAME }),
+    ).rejects.toThrow('process.exit called');
+
+    expect(exitSpy).toHaveBeenCalledWith(1);
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: USER_ID }),
+      expect.stringMatching(/concurrently|CAS conflict/i),
+    );
+
+    exitSpy.mockRestore();
   });
 
   it('calls process.exit(1) when the telegram username is not found', async () => {

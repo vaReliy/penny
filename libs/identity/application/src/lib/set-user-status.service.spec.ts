@@ -1,10 +1,15 @@
-import { AuthenticationError, DomainError, NotFoundError } from 'shared-errors';
+import {
+  AuthenticationError,
+  DomainError,
+  HttpStatus,
+  NotFoundError,
+} from 'shared-errors';
 import { User, UserStatus } from 'identity-core';
 import type { IUserRepository, UserProfileUpdate } from 'identity-core';
 import type { CallerIdentity, ServiceContext } from 'shared-kernel';
 import { Role } from 'shared-contracts';
 import type { RoleType } from 'shared-contracts';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   SUPERADMIN_ROLE,
@@ -52,9 +57,18 @@ class FakeUserRepository implements IUserRepository {
   public async updateStatus(
     id: string,
     status: UserStatus,
+    expectedCurrentStatus?: UserStatus,
   ): Promise<User | null> {
     const existing = this.usersById.get(id);
     if (!existing) {
+      return null;
+    }
+    if (
+      expectedCurrentStatus !== undefined &&
+      existing.status !== expectedCurrentStatus
+    ) {
+      // CAS failure: persisted status no longer matches what the caller
+      // read, mirroring MongoUserRepository's filter-doesn't-match null.
       return null;
     }
     const updated = new User({
@@ -198,6 +212,35 @@ describe('ApproveUserService', () => {
     await expect(
       service.run({ userId: 'missing' }, buildContext(ADMIN_CALLER)),
     ).rejects.toBeInstanceOf(NotFoundError);
+  });
+
+  it('surfaces a 409 DomainError (not a silent overwrite) when a concurrent status change wins the CAS race', async () => {
+    const pending = buildPendingUser();
+    repository.seed(pending);
+
+    // Simulate a concurrent admin action that already flipped the status
+    // in the store between this test's read and its write, by rejecting the
+    // user out from under the in-flight `service.run` call above the fake
+    // repository's `updateStatus` layer.
+    const updateStatusSpy = vi.spyOn(repository, 'updateStatus');
+    updateStatusSpy.mockImplementationOnce(async () => null);
+
+    const error = await service
+      .run({ userId: pending.id }, buildContext(ADMIN_CALLER))
+      .catch((err: unknown) => err);
+
+    expect(error).toBeInstanceOf(DomainError);
+    expect((error as DomainError).statusCode).toBe(HttpStatus.CONFLICT);
+    expect(updateStatusSpy).toHaveBeenCalledWith(
+      pending.id,
+      UserStatus.ACTIVE,
+      UserStatus.PENDING,
+    );
+
+    // The user's status must remain untouched by the failed write — no
+    // silent partial success.
+    const stillPending = await repository.findById(pending.id);
+    expect(stillPending?.status).toBe(UserStatus.PENDING);
   });
 });
 
