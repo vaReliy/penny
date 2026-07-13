@@ -1,0 +1,19 @@
+{
+  "name": "identity-testing",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/identity/testing/src",
+  "projectType": "library",
+  "tags": ["scope:identity", "type:testing", "platform:server"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/identity/testing",
+        "main": "libs/identity/testing/src/index.ts",
+        "tsConfig": "libs/identity/testing/tsconfig.lib.json",
+        "assets": []
+      }
+    }
+  }
+}

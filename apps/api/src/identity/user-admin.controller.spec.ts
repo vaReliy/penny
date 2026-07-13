@@ -33,6 +33,7 @@ import { AuthenticationError, NotFoundError } from 'shared-errors';
 import { Role, UserStatus } from 'shared-contracts';
 import { ApproveUserService, RejectUserService } from 'identity-application';
 import { User } from 'identity-core';
+import { createFakeUserRepository } from 'identity-testing';
 
 import { SessionGuard } from '../auth/session.guard.js';
 import { ActiveUserGuard } from '../auth/active-user.guard.js';
@@ -120,16 +121,16 @@ describe('UserAdminController (real SessionGuard in the chain)', () => {
       verify: vi.fn(),
     } as unknown as ITokenIssuer;
 
-    sessionUserRepository = {
+    sessionUserRepository = createFakeUserRepository({
       findById: vi.fn().mockResolvedValue(makeSessionRepoUser()),
-    } as unknown as IUserRepository;
+    });
 
     guard = new SessionGuard(tokenIssuer, sessionUserRepository);
 
-    userRepository = {
+    userRepository = createFakeUserRepository({
       findById: vi.fn(),
       updateStatus: vi.fn(),
-    } as unknown as IUserRepository;
+    });
 
     approveUser = new ApproveUserService({ userRepository });
     rejectUser = new RejectUserService({ userRepository });

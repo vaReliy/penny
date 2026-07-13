@@ -32,7 +32,8 @@
       ],
       "identity-feature-greeting": [
         "./libs/identity/feature-greeting/src/index.ts"
-      ]
+      ],
+      "identity-testing": ["./libs/identity/testing/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

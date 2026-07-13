@@ -43,3 +43,4 @@ Each completed task is one row in the table below.
 | 2026-07-11 | penny | admin-role-assignment-and-jwt-issuance             | T2   | 1      | 0/1/0/0           | 0       | no       | standard       |
 | 2026-07-11 | penny | skeleton-re-review-dod-verification                | T2   | 0      | 0/0/0/0           | 4       | no       | deep           |
 | 2026-07-13 | penny | ci-run-vitest-and-typecheck-targets                | T2   | 0      | 0/0/0/-           | 3       | no       | standard       |
+| 2026-07-13 | penny | fragile-test-repository-interface-casts            | T0   | 0      | 0/0/0/-           | 0       | no       | cheap          |

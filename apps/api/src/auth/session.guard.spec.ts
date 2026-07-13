@@ -9,6 +9,7 @@ import { SessionGuard } from './session.guard.js';
 import { AUTH_COOKIE_NAME, XSRF_COOKIE_NAME } from './cookie.constants.js';
 import { AuthenticationError } from 'shared-errors';
 import { UserStatus } from 'identity-core';
+import { createFakeUserRepository } from 'identity-testing';
 import type { ExecutionContext } from '@nestjs/common';
 import type { ITokenIssuer } from 'identity-application';
 import type { IUserRepository, User } from 'identity-core';
@@ -83,9 +84,9 @@ describe('SessionGuard.canActivate', () => {
         .mockReturnValue({ sub: 'user-1', status: 'active', roles: [] }),
     } as unknown as ITokenIssuer;
 
-    userRepository = {
+    userRepository = createFakeUserRepository({
       findById: vi.fn().mockResolvedValue(makeUser()),
-    } as unknown as IUserRepository;
+    });
 
     guard = new SessionGuard(tokenIssuer, userRepository);
   });
