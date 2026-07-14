@@ -248,4 +248,62 @@ describe('LoginWithTelegramService', () => {
     expect(outcome.data.user.firstName).toBe('NewName');
     expect(outcome.data.status).toBe(UserStatus.ACTIVE);
   });
+
+  describe('LIVR max_length boundary validation on profile fields', () => {
+    it('accepts a firstName at exactly 100 chars (max_length boundary)', async () => {
+      const payload = buildPayload({ firstName: 'a'.repeat(100) });
+
+      const outcome = await service.run(payload, CONTEXT);
+
+      expect(outcome.data.user.firstName).toBe('a'.repeat(100));
+    });
+
+    it('rejects a firstName at 101 chars (over max_length boundary)', async () => {
+      const payload = buildPayload({ firstName: 'a'.repeat(101) });
+
+      await expect(service.run(payload, CONTEXT)).rejects.toThrow();
+    });
+
+    it('accepts a lastName at exactly 50 chars (max_length boundary)', async () => {
+      const payload = buildPayload({ lastName: 'b'.repeat(50) });
+
+      const outcome = await service.run(payload, CONTEXT);
+
+      expect(outcome.data.user.lastName).toBe('b'.repeat(50));
+    });
+
+    it('rejects a lastName at 51 chars (over max_length boundary)', async () => {
+      const payload = buildPayload({ lastName: 'b'.repeat(51) });
+
+      await expect(service.run(payload, CONTEXT)).rejects.toThrow();
+    });
+
+    it('accepts a username at exactly 50 chars (max_length boundary)', async () => {
+      const payload = buildPayload({ username: 'c'.repeat(50) });
+
+      const outcome = await service.run(payload, CONTEXT);
+
+      expect(outcome.data.user.username).toBe('c'.repeat(50));
+    });
+
+    it('rejects a username at 51 chars (over max_length boundary)', async () => {
+      const payload = buildPayload({ username: 'c'.repeat(51) });
+
+      await expect(service.run(payload, CONTEXT)).rejects.toThrow();
+    });
+
+    it('accepts a photoUrl at exactly 2048 chars (max_length boundary)', async () => {
+      const payload = buildPayload({ photoUrl: 'd'.repeat(2048) });
+
+      const outcome = await service.run(payload, CONTEXT);
+
+      expect(outcome.data.user.photoUrl).toBe('d'.repeat(2048));
+    });
+
+    it('rejects a photoUrl at 2049 chars (over max_length boundary)', async () => {
+      const payload = buildPayload({ photoUrl: 'd'.repeat(2049) });
+
+      await expect(service.run(payload, CONTEXT)).rejects.toThrow();
+    });
+  });
 });

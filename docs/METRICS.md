@@ -27,6 +27,7 @@ Each completed task is one row in the table below.
 | Date       | Repo  | Task                                               | Tier | Cycles | Fix Now (t/r/s/q) | Emitted | Hardstop | Model          |
 | ---------- | ----- | -------------------------------------------------- | ---- | ------ | ----------------- | ------- | -------- | -------------- |
 | 2026-07-07 | penny | distill-shared-contracts-alias-into-architecture   | T1   | 0      | 0/0/0/0           | 0       | no       | standard       |
+| 2026-07-14 | penny | livr-max-length-login-profile                      | T0   | 0      | 0/0/0/0           | 0       | no       | cheap          |
 | 2026-07-07 | penny | distill-jwt-array-claim-guard-into-validation-rule | T2   | 0      | 0/0/0/0           | 0       | no       | standard       |
 | 2026-07-07 | penny | skeleton-review-dod-audit-and-backlog-regroom      | T2   | 0      | 0/0/0/0           | 4       | no       | deep           |
 | 2026-07-08 | penny | integration-test-mongo-auth                        | T2   | 0      | 0/0/0/0           | 0       | no       | standard       |

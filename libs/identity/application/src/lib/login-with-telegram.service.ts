@@ -13,13 +13,19 @@ import { InfrastructureError } from 'shared-errors';
  * check); this one validates the already-verified, camelCase
  * `TelegramLoginPayload` produced by `VerifyTelegramLoginService` — the
  * boundary this service itself sits behind.
+ *
+ * `max_length` on the profile fields (`firstName`/`lastName`/`username`/
+ * `photoUrl`) is defense-in-depth: today's Telegram payload is HMAC-verified
+ * upstream by `VerifyTelegramLoginService`, so an attacker cannot forge
+ * oversized values here, but the limits keep this schema safe if a
+ * non-HMAC-verified login source is ever wired into this service.
  */
 const LOGIN_WITH_TELEGRAM_SCHEMA: Record<string, unknown> = {
   id: ['required', 'positive_integer'],
-  firstName: ['required', 'string'],
-  lastName: ['string'],
-  username: ['string'],
-  photoUrl: ['string'],
+  firstName: ['required', 'string', { max_length: 100 }],
+  lastName: ['string', { max_length: 50 }],
+  username: ['string', { max_length: 50 }],
+  photoUrl: ['string', { max_length: 2048 }],
   authDate: ['required', 'positive_integer'],
   hash: ['required', 'string'],
 };
