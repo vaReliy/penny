@@ -22,21 +22,24 @@ jobs:
     # This ensures the agent can process all open PRs on schedule while
     # also reacting to new bot PRs immediately
     if: github.actor == 'dependabot[bot]' || github.actor == 'github-actions[bot]' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
-      
+
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '18'
-      
+          node-version-file: '.nvmrc'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
-      
+        run: pnpm install --frozen-lockfile
+
       - name: Run PR Management Script
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

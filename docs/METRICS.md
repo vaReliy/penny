@@ -32,6 +32,7 @@ Each completed task is one row in the table below.
 | 2026-07-08 | penny | integration-test-mongo-auth                        | T2   | 0      | 0/0/0/0           | 0       | no       | standard       |
 | 2026-07-08 | penny | eslint-injectable-ban                              | T2   | 2      | 2/1/0/0           | 2       | yes      | cheap→standard |
 | 2026-07-08 | penny | cleanup-batch                                      | T2   | 1      | 0/1/0/0           | 0       | no       | cheap          |
+| 2026-07-14 | penny | infra-security-hardening-reopened                  | T2   | 0      | 0/0/0/0           | 2       | no       | standard       |
 | 2026-07-08 | penny | coverage-thresholds                                | T2   | 1      | 0/1/0/0           | 0       | no       | cheap          |
 | 2026-07-08 | penny | ci-e2e-target                                      | T2   | 2      | 1/4/0/0           | 0       | no       | standard       |
 | 2026-07-08 | penny | session-guard-roles-and-opaque-errors              | T2   | 0      | 0/0/0/0           | 2       | no       | standard       |

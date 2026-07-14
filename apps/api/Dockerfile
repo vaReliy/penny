@@ -32,7 +32,7 @@ COPY nx.json ./
 RUN corepack enable && corepack prepare pnpm@11.9.0 --activate
 
 # Install all dependencies (including dev)
-RUN pnpm install --frozen-lockfile --prefer-offline
+RUN pnpm install --frozen-lockfile --prefer-offline --ignore-scripts
 
 # Copy all source code and configuration
 COPY . .
