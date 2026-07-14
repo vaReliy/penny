@@ -1,7 +1,6 @@
 # Penny — Domain Context
 
-This document captures the domain language for Penny's bounded contexts. It is the seed for
-future verticals. New agents and developers should read this before touching domain code.
+This document captures the domain language for Penny's bounded contexts. It is the seed for future verticals. New agents and developers should read this before touching domain code.
 
 ---
 
@@ -44,8 +43,7 @@ The `identity` context owns everything related to user identity, authentication,
 3. API verifies the HMAC and the `auth_date` freshness.
 4. API finds the user by `telegramId` (or creates a new `pending` user).
 5. API issues a signed JWT in an `httpOnly` + `Secure` + `SameSite=Lax` cookie.
-6. Subsequent requests carry the cookie; the API guard re-loads the user from MongoDB on every request
-   to enforce the current `status`.
+6. Subsequent requests carry the cookie; the API guard re-loads the user from MongoDB on every request to enforce the current `status`.
 7. A `pending` or `rejected` user is redirected to the access-status page. An `active` user proceeds.
 
 ### Admin Approval (Skeleton)
@@ -57,14 +55,12 @@ docker compose exec cli npx nest start -- user:approve <telegramId>
 docker compose exec cli npx nest start -- user:reject <telegramId>
 ```
 
-This invokes `ApproveUserService` / `RejectUserService` from `libs/identity/application/` — the same
-application-layer service that an admin UI would call.
+This invokes `ApproveUserService` / `RejectUserService` from `libs/identity/application/` — the same application-layer service that an admin UI would call.
 
 ### Key Invariants
 
 - `telegramId` is immutable after creation.
-- Profile fields (`firstName`, `lastName`, `username`, `photoUrl`) are updated on every successful login
-  to reflect the latest Telegram data.
+- Profile fields (`firstName`, `lastName`, `username`, `photoUrl`) are updated on every successful login to reflect the latest Telegram data.
 - A `rejected` user whose JWT is still valid is blocked on the next API request (DB re-check enforces this).
 - No password or email is stored. The HMAC signature on the Telegram payload is the only credential.
 
@@ -72,8 +68,7 @@ application-layer service that an admin UI would call.
 
 ## Future Verticals
 
-The `identity` context is the first vertical slice and the template every future vertical copies.
-Planned future contexts (not yet implemented):
+The `identity` context is the first vertical slice and the template every future vertical copies. Planned future contexts (not yet implemented):
 
 - `budget` — income, outcome, categories, balance (the original Penny domain).
 - `car` — vehicle history, repairs, expenses.

@@ -19,6 +19,7 @@ After a major upgrade (e.g., Angular version bump from v16 to v21), individual d
 ### 1. GitHub Actions Workflow (`.github/workflows/pr-management.yml`)
 
 The workflow runs:
+
 - **Daily** at 00:00 UTC (scheduled via cron)
 - **On-demand** via manual workflow dispatch
 - **On PR events** (opened, reopened, synchronize) for bot-authored PRs
@@ -45,7 +46,7 @@ Unit tests for version comparison logic to ensure accuracy.
 2. **Filter Bot PRs**: Only processes PRs from known automation accounts
 3. **Analyze package.json Changes**: Examines the diff to extract proposed versions
 4. **Compare Versions**: Compares each proposed version against current package.json
-5. **Determine Obsolescence**: 
+5. **Determine Obsolescence**:
    - PR is obsolete if ALL proposed versions are ≤ current versions
    - PR is valid if ANY proposed version is > current version
 6. **Take Action**:
@@ -55,6 +56,7 @@ Unit tests for version comparison logic to ensure accuracy.
 ### Version Comparison Logic
 
 The script handles various version formats:
+
 - `^21.0.1` (caret notation)
 - `~5.2.3` (tilde notation)
 - `>=1.0.0` (range notation)
@@ -71,19 +73,18 @@ When closing an obsolete PR, the agent posts a structured comment:
 
 Closing this PR as it has been superseded by recent dependency updates.
 
-The recent merge of [#81 - Upgrade Angular from v16.2.2 to v21.1.1](link) 
-has already updated these dependencies to newer versions.
+The recent merge of [#81 - Upgrade Angular from v16.2.2 to v21.1.1](link) has already updated these dependencies to newer versions.
 
 ### Version Comparison
 
-| Package | PR Version | Current Version | Status |
-|---------|------------|-----------------|--------|
-| @angular/common | ^21.0.1 | ^21.1.1 | ⬇️ Older |
-| @angular/cdk | ^21.0.1 | ^21.1.1 | ⬇️ Older |
+| Package         | PR Version | Current Version | Status   |
+| --------------- | ---------- | --------------- | -------- |
+| @angular/common | ^21.0.1    | ^21.1.1         | ⬇️ Older |
+| @angular/cdk    | ^21.0.1    | ^21.1.1         | ⬇️ Older |
 
 ---
-*This PR was automatically reviewed and closed by the PR Management Agent.*
-*The current versions in the base branch are now at or beyond what this PR proposed.*
+
+_This PR was automatically reviewed and closed by the PR Management Agent._ _The current versions in the base branch are now at or beyond what this PR proposed._
 ```
 
 ## Safety Features
@@ -104,6 +105,7 @@ has already updated these dependencies to newer versions.
 ### Bot Accounts
 
 The agent monitors these accounts:
+
 - `dependabot[bot]`
 - `github-actions[bot]`
 - `app/dependabot`
@@ -150,7 +152,7 @@ node manage-prs.js
 1. **Initial State**: Repository has Angular 16.2.2
 2. **Dependabot PR #70**: Proposes upgrading to Angular 21.0.1
 3. **Major Upgrade PR #81**: Merges Angular 21.1.1 upgrade
-4. **Agent Runs**: 
+4. **Agent Runs**:
    - Detects PR #70 proposes 21.0.1
    - Current version is 21.1.1
    - Determines PR #70 is obsolete (21.0.1 < 21.1.1)
@@ -162,6 +164,7 @@ node manage-prs.js
 ### Check Workflow Runs
 
 View workflow execution history:
+
 1. Go to **Actions** tab
 2. Select **PR Management Agent**
 3. View recent runs and their logs
@@ -169,6 +172,7 @@ View workflow execution history:
 ### Logs
 
 The script provides detailed console output:
+
 - PR analysis results
 - Version comparisons
 - Actions taken
@@ -186,7 +190,7 @@ const BOT_AUTHORS = [
   'github-actions[bot]',
   'app/dependabot',
   'app/github-actions',
-  'your-new-bot[bot]'  // Add new bot here
+  'your-new-bot[bot]', // Add new bot here
 ];
 ```
 
@@ -196,12 +200,13 @@ Edit `.github/workflows/pr-management.yml`:
 
 ```yaml
 schedule:
-  - cron: '0 0 * * *'  # Change to your preferred schedule
+  - cron: '0 0 * * *' # Change to your preferred schedule
 ```
 
 ## Permissions Required
 
 The workflow requires these permissions:
+
 - `contents: read` - To read repository files
 - `pull-requests: write` - To comment on and close PRs
 - `issues: write` - To comment on PRs (PRs are issues in GitHub API)
@@ -217,6 +222,7 @@ The workflow requires these permissions:
 ## Future Enhancements
 
 Potential improvements:
+
 - Support for other dependency files (Gemfile, requirements.txt, etc.)
 - Automatic rebase for valid PRs with conflicts
 - Integration with npm audit for security checks
@@ -236,7 +242,8 @@ Potential improvements:
 
 **Issue**: Version comparison logic may not match expectations
 
-**Solution**: 
+**Solution**:
+
 1. Check workflow logs for detailed analysis
 2. Run test script locally: `node test-version-logic.js`
 3. Verify package.json has the expected versions
@@ -245,7 +252,8 @@ Potential improvements:
 
 **Issue**: Workflow conditions not met
 
-**Solution**: 
+**Solution**:
+
 1. Check if PR is from a bot account
 2. Verify workflow file is in `.github/workflows/`
 3. Ensure workflow is enabled in repository settings

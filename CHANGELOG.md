@@ -2,38 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en-1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en-1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
 ### Fixed (Doc hygiene: committed-file self-containment + new starter guide)
 
-- **`rules/nx-generators.md`** — dropped a dangling private decision-ID reference (`D26/D29`) on
-  the `.js`-extension-enforcement note; now points at `DECISIONS.md` ADR-005, the committed record
-  of that decision.
-- **`.github/workflows/ci.yml`** — reworded two stale comments: the `smoke-e2e`-deferral comment
-  no longer references a private task filename (the deferral reason itself — wiring CI to boot the
-  full docker-compose stack — still holds and is now stated directly); the `typecheck` scope
-  comment no longer hardcodes a stale project count (16 explicit `typecheck` targets now exist
-  workspace-wide, up from the 5 the comment previously claimed) and instead describes the actual
-  mechanism so it can't go stale the same way again.
-- **`CHANGELOG.md`** (this file) — de-referenced entries that pointed at private, git-ignored task
-  files or task IDs (`docs/rebuild/tasks/...`, bare `YYYY-MM-DD-NN` identifiers, "Task 04/18"
-  section headers) while keeping every entry's descriptive prose intact, so the change history
-  reads as a self-contained record for anyone cloning the repo fresh.
-- **`DECISIONS.md`** ADR-006 (CSP Nonce Delivery) — updated from "Deferred" to "Accepted and
-  implemented": the nginx `sub_filter`-based per-request nonce pipeline (`apps/web/nginx.conf`,
-  `apps/web/src/app/app.config.ts`) shipped and is verified in the codebase; removed the private
-  task-file reference and described the actual implemented mechanism instead.
-- **`README.md`** — corrected a stale claim that no apps existed yet (`apps/api`, `apps/web`,
-  `apps/cli` all exist and are documented with their start commands); added a pointer to the new
-  `docs/SKELETON.md`.
-- **`docs/SKELETON.md`** (new) — a self-contained guide for forking this repo as a starter for a
-  new Telegram-auth SaaS: what the chassis provides, how to run it locally, a concrete
-  generator-based checklist for adding a new domain vertical (backend/frontend libs, tags, DI
-  wiring, route registration, tests, boundary verification), a rename/strip checklist for
-  Penny-specific naming, and the intended fork/upstream relationship for future chassis fixes.
+- **`rules/nx-generators.md`** — dropped a dangling private decision-ID reference (`D26/D29`) on the `.js`-extension-enforcement note; now points at `DECISIONS.md` ADR-005, the committed record of that decision.
+- **`.github/workflows/ci.yml`** — reworded two stale comments: the `smoke-e2e`-deferral comment no longer references a private task filename (the deferral reason itself — wiring CI to boot the full docker-compose stack — still holds and is now stated directly); the `typecheck` scope comment no longer hardcodes a stale project count (16 explicit `typecheck` targets now exist workspace-wide, up from the 5 the comment previously claimed) and instead describes the actual mechanism so it can't go stale the same way again.
+- **`CHANGELOG.md`** (this file) — de-referenced entries that pointed at private, git-ignored task files or task IDs (`docs/rebuild/tasks/...`, bare `YYYY-MM-DD-NN` identifiers, "Task 04/18" section headers) while keeping every entry's descriptive prose intact, so the change history reads as a self-contained record for anyone cloning the repo fresh.
+- **`DECISIONS.md`** ADR-006 (CSP Nonce Delivery) — updated from "Deferred" to "Accepted and implemented": the nginx `sub_filter`-based per-request nonce pipeline (`apps/web/nginx.conf`, `apps/web/src/app/app.config.ts`) shipped and is verified in the codebase; removed the private task-file reference and described the actual implemented mechanism instead.
+- **`README.md`** — corrected a stale claim that no apps existed yet (`apps/api`, `apps/web`, `apps/cli` all exist and are documented with their start commands); added a pointer to the new `docs/SKELETON.md`.
+- **`docs/SKELETON.md`** (new) — a self-contained guide for forking this repo as a starter for a new Telegram-auth SaaS: what the chassis provides, how to run it locally, a concrete generator-based checklist for adding a new domain vertical (backend/frontend libs, tags, DI wiring, route registration, tests, boundary verification), a rename/strip checklist for Penny-specific naming, and the intended fork/upstream relationship for future chassis fixes.
 
 ### Fixed (Task — Stop-hook chain fails/blocks every agent turn; knowledge-capture nudge scope)
 

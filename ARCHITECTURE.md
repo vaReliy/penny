@@ -2,12 +2,9 @@
 
 ## Overview
 
-Penny is an Nx monorepo containing an Angular 17+ frontend (`apps/web`), a NestJS API (`apps/api`),
-and a NestJS CLI (`apps/cli`), all sharing a framework-agnostic domain core through `libs/`.
+Penny is an Nx monorepo containing an Angular 17+ frontend (`apps/web`), a NestJS API (`apps/api`), and a NestJS CLI (`apps/cli`), all sharing a framework-agnostic domain core through `libs/`.
 
-The architecture follows the **onion (Clean Architecture)** pattern: dependencies always point
-inward — infrastructure depends on application, application depends on domain core, core depends
-on nothing but shared kernel utilities. This keeps business logic framework-free and independently testable.
+The architecture follows the **onion (Clean Architecture)** pattern: dependencies always point inward — infrastructure depends on application, application depends on domain core, core depends on nothing but shared kernel utilities. This keeps business logic framework-free and independently testable.
 
 ---
 
@@ -45,8 +42,7 @@ penny/
   .claude/        AI agent configuration (claude-ts)
 ```
 
-Each future vertical (`budget`, `car`, …) replicates the `identity/` shape:
-`libs/<domain>/{core,application,infrastructure,feature-*,data-access}`.
+Each future vertical (`budget`, `car`, …) replicates the `identity/` shape: `libs/<domain>/{core,application,infrastructure,feature-*,data-access}`.
 
 **Import alias:** `libs/shared/contracts` is imported as the bare `shared-contracts` — not `@penny/shared-contracts`. The `@penny/` prefix is not a real tsconfig path alias and will fail at build time with a module-not-found error.
 
@@ -119,15 +115,13 @@ Every lib carries exactly one tag per dimension in its `project.json`:
 | `type:`     | Backend: `core`, `application`, `infrastructure`, `kernel`, `contracts`, `errors`, `util`, `validation` / Frontend: `feature`, `ui`, `data`, `util` |
 | `platform:` | `server`, `web`, `shared`                                                                                                                           |
 
-Boundary rules are enforced by `@nx/enforce-module-boundaries` in `eslint.config.mjs` — violations
-fail CI and local lint.
+Boundary rules are enforced by `@nx/enforce-module-boundaries` in `eslint.config.mjs` — violations fail CI and local lint.
 
 ---
 
 ## Validation
 
-All external input is validated with **LIVR** (`js-validator-livr`) at the application-layer service
-boundary, before any business logic runs. Shared LIVR schemas live in `libs/shared/validation/`.
+All external input is validated with **LIVR** (`js-validator-livr`) at the application-layer service boundary, before any business logic runs. Shared LIVR schemas live in `libs/shared/validation/`.
 
 See `rules/validation-authorization.md` for the full bootstrap requirement and Telegram HMAC flow.
 
@@ -135,8 +129,7 @@ See `rules/validation-authorization.md` for the full bootstrap requirement and T
 
 ## Serving Topology
 
-Production requests flow through two containers exposed on the Docker bridge network (`penny_net`).
-Only the `web` container has a host port binding; `api` is internal.
+Production requests flow through two containers exposed on the Docker bridge network (`penny_net`). Only the `web` container has a host port binding; `api` is internal.
 
 ```
 Browser
@@ -172,9 +165,6 @@ Browser
 
 - `index.html` is served by **nginx**, not NestJS. NestJS never touches the HTML file.
 - `/api/` requests are proxied by nginx; the API container is not reachable from the host directly.
-- CSP nonce injection (when implemented) must happen at the nginx layer via `sub_filter` —
-  see ADR-006 in `DECISIONS.md`.
-- Static JS/CSS bundles use content-hashed filenames and are cached for 1 year (`immutable`).
-  `index.html` itself is served with `no-cache` so the latest bundle references are always fetched.
-- The `web` container health check hits nginx's `/health` stub location; the `api` container
-  health check hits `/api/health` via `wget`.
+- CSP nonce injection (when implemented) must happen at the nginx layer via `sub_filter` — see ADR-006 in `DECISIONS.md`.
+- Static JS/CSS bundles use content-hashed filenames and are cached for 1 year (`immutable`). `index.html` itself is served with `no-cache` so the latest bundle references are always fetched.
+- The `web` container health check hits nginx's `/health` stub location; the `api` container health check hits `/api/health` via `wget`.

@@ -17,6 +17,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-15 — Enhancement: rules/docs-style.md rewritten to point at Prettier `proseWrap: never` instead of a manual convention
+
+- **Component**: `rules/docs-style.md`, `AGENTS.md` (index entry), `.prettierrc` (not template-inherited itself, but the rule now depends on it)
+- **Type**: Enhancement
+- **What happened**: An earlier same-day entry added `rules/docs-style.md` as a hand-written convention telling agents not to hard-wrap markdown prose. User feedback ("I thought the md formatting rules more to eslint/prettier rules than a separate rule md file") prompted re-checking: `.md` files already run through `prettier --write` on every commit via `lint-staged`, so the fix was to add `"proseWrap": "never"` to `.prettierrc` and let the existing tool enforce it, rather than relying on agents remembering a rule. `rules/docs-style.md` was rewritten to document the mechanism (Prettier) and one real gotcha it exposed: Prettier's markdown parser merges a block into one paragraph if there's no blank line between two logically-distinct lines — this silently destroys tables and glues together adjacent bold-label lines. Two pre-existing instances of this were found and fixed at the source (missing blank line before a table in `rules/workflow.md`, missing blank line between two label lines in `libs/identity/infrastructure/README.md`).
+- **Why it matters upstream**: Any claude-ts consumer already running Prettier on `.md` via lint-staged gets this for free with one config line — a hand-maintained "don't hard-wrap" rule is strictly worse (agents can forget it; Prettier can't). The blank-line-before-structural-element gotcha is a real Prettier/CommonMark interaction any consumer enabling `proseWrap: never` should know about before doing a repo-wide pass.
+- **Suggested upstream change**: Add `"proseWrap": "never"` to the template's `.prettierrc` (if it lints `.md` via lint-staged, which the template does), port `rules/docs-style.md` as-is (content is fully generic), and run `prettier --write` over CTS's own `.md` files in the same PR — so the template repo's docs match the convention it prescribes to consumers, keeping CTS and its consumers formatting-aligned rather than only the consumer side adopting it.
+- **Status**: pending-port
+
+---
+
 ## 2026-07-14 — Enhancement: five generic rules-file additions that bypassed this ledger (written by `/distill-inbox` inlining) + the process fix
 
 - **Component**: `rules/testing.md`, `rules/nx-generators.md`, `rules/dependencies.md`, `rules/docker-commands.md`, `rules/git-operations.md`, `.claude/skills/distill-inbox/SKILL.md` (process fix)

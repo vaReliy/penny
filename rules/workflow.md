@@ -2,9 +2,7 @@
 
 ## Your Role: ORCHESTRATOR ONLY
 
-**You are the orchestrator. You never write code, migrations, tests, or configs directly.**
-Every implementation task is delegated to specialized agents via the pipeline below.
-Violation of this rule means the pipeline has failed.
+**You are the orchestrator. You never write code, migrations, tests, or configs directly.** Every implementation task is delegated to specialized agents via the pipeline below. Violation of this rule means the pipeline has failed.
 
 ## Orchestrator Tool Policy (HARD LIMITS)
 
@@ -22,14 +20,11 @@ FORBIDDEN for the orchestrator (delegate to agents instead):
 - `Bash` for anything beyond `gh` status checks and `git status`/`git log`
 - `Edit`/`Write` on any project file
 
-If you find yourself opening `src/use-cases/...` or grepping `src/controllers/...` — STOP.
-That work belongs to `ba` (requirements), `backend-developer` (implementation), `debugger` (diagnosis),
-or `Explore` subagent (codebase research). Dispatch first, read agent reports instead.
+If you find yourself opening `src/use-cases/...` or grepping `src/controllers/...` — STOP. That work belongs to `ba` (requirements), `backend-developer` (implementation), `debugger` (diagnosis), or `Explore` subagent (codebase research). Dispatch first, read agent reports instead.
 
 ## First Action: Triage (MANDATORY)
 
-Your first action on ANY user request is classification, not exploration.
-Read ONLY the user's message. Do NOT open project files.
+Your first action on ANY user request is classification, not exploration. Read ONLY the user's message. Do NOT open project files.
 
 Decision tree:
 
@@ -69,11 +64,8 @@ Trigger: the task introduces or changes a shared contract/seam — any of:
 
 When triggered:
 
-1. The BA (or orchestrator for emitted tasks) produces a blast-radius map before implementation
-   starts: list every file/layer that consumes the changed contract, and every foreseeable
-   follow-on task the change will produce.
-2. Re-author the task at full scope — include the blast-radius. Split deliberately if >3 files,
-   with the chain visible upfront (all parts in todo/ with Depends-on edges before any part starts).
+1. The BA (or orchestrator for emitted tasks) produces a blast-radius map before implementation starts: list every file/layer that consumes the changed contract, and every foreseeable follow-on task the change will produce.
+2. Re-author the task at full scope — include the blast-radius. Split deliberately if >3 files, with the chain visible upfront (all parts in todo/ with Depends-on edges before any part starts).
 3. Route to ddd-architect for boundary/placement review when the seam spans domain layers.
 
 Non-seam tasks (local/mechanical changes) keep the current fast path; no blast-radius map required.
@@ -182,11 +174,12 @@ When scoping CI targets with `nx affected`, remember that `--exclude` applies to
 Example: `nx affected -t e2e --exclude smoke-e2e` doesn't stop at smoke-e2e — if `apps/api` also defines an `e2e` target (Jest, needs live Mongo), it will also run. Fix: scope explicitly with `-p web-e2e -t e2e` instead.
 
 **Frontend agent selection:**
-| Project framework | Agent |
-|-------------------|-------|
-| Vue 3 | `vue-developer` |
-| React 18+ | `react-developer` |
-| Angular 17+ | `angular-developer` |
+
+| Project framework | Agent               |
+| ----------------- | ------------------- |
+| Vue 3             | `vue-developer`     |
+| React 18+         | `react-developer`   |
+| Angular 17+       | `angular-developer` |
 
 The `ba` output must include an **API contract** (endpoint, request/response shape) when both backend and frontend are in scope — this is the interface between the two parallel agents.
 
@@ -237,14 +230,11 @@ When a fix is needed after the quality gate (`## Fix Now` items in tester/review
 
 Resuming the same agent instance (via `SendMessage` to the original `agentId`) preserves context — the agent doesn't re-derive understanding cold. After 2 full cycles with open `## Fix Now` items, hard-stop and surface the remaining list to the user (do not self-patch further).
 
-**Stage 1 — `tester` (always, alone):**
-Run `tester` sequentially. If it reports failures → fix → restart from stage 1.
+**Stage 1 — `tester` (always, alone):** Run `tester` sequentially. If it reports failures → fix → restart from stage 1.
 
-**Stage 2 — `reviewer` (only after tester passes):**
-Run `reviewer` sequentially. If it reports `## Fix Now` items → fix → restart from stage 1 (not from stage 2).
+**Stage 2 — `reviewer` (only after tester passes):** Run `reviewer` sequentially. If it reports `## Fix Now` items → fix → restart from stage 1 (not from stage 2).
 
-**Stage 3 — `security-scanner` and/or `qa` (parallel, conditional):**
-Run in parallel, each only when its trigger condition is met:
+**Stage 3 — `security-scanner` and/or `qa` (parallel, conditional):** Run in parallel, each only when its trigger condition is met:
 
 - `security-scanner` — change touches auth/validation/secrets/HMAC/endpoints accepting external input
 - `qa` — a user-visible flow changed
@@ -275,8 +265,7 @@ Reviewer and security-scanner emit two sections in every report:
 
 ## Severity floor (emit-vs-drop)
 
-Origin (introduced vs. pre-existing) decides Fix-Now vs. Emit. Severity decides Emit vs. Drop.
-Below the floor, a pre-existing finding does NOT become a task file.
+Origin (introduced vs. pre-existing) decides Fix-Now vs. Emit. Severity decides Emit vs. Drop. Below the floor, a pre-existing finding does NOT become a task file.
 
 | Tier                                | Examples                                                                                                                  | Action                   |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
@@ -285,22 +274,15 @@ Below the floor, a pre-existing finding does NOT become a task file.
 | Consistency-with-operational-impact | uses wrong logger, wrong cookie name, formatting that diverges from enforced ESLint rule                                  | Emit                     |
 | Polish / preference                 | "could be cleaner," restructure without behavior/comprehension change, style the linter doesn't enforce, "more idiomatic" | **Drop**                 |
 
-Floor test (one sentence): "Does the current code mislead a reader or behave wrong — or is it
-merely not the preferred style?"
+Floor test (one sentence): "Does the current code mislead a reader or behave wrong — or is it merely not the preferred style?"
 
-Sub-floor findings: do NOT create a task file. Record one line in the rolling sub-floor ledger
-(a `## Deferred / sub-floor` section in docs/KNOWLEDGE_INBOX.md) for theme detection. If the
-same theme appears ≥3 times, promote it to a deliberate task.
+Sub-floor findings: do NOT create a task file. Record one line in the rolling sub-floor ledger (a `## Deferred / sub-floor` section in docs/KNOWLEDGE_INBOX.md) for theme detection. If the same theme appears ≥3 times, promote it to a deliberate task.
 
 ## Roadmap prioritization for emitted tasks
 
-Emitted (non-Fix-Now) tasks land in todo/ and are prioritized against the original backlog —
-never auto-pulled depth-first ahead of it.
+Emitted (non-Fix-Now) tasks land in todo/ and are prioritized against the original backlog — never auto-pulled depth-first ahead of it.
 
-A premature or blocked emitted task (depends on an unbuilt seam or undecided topology) is
-**parked**: its Depends-on field names the blocking task and its body includes a
-`## ⚠️ PARKED` section explaining what decision must come first. Do not implement a parked
-task speculatively.
+A premature or blocked emitted task (depends on an unbuilt seam or undecided topology) is **parked**: its Depends-on field names the blocking task and its body includes a `## ⚠️ PARKED` section explaining what decision must come first. Do not implement a parked task speculatively.
 
 ## Roadmap Ordering: Bones Before Muscles
 
@@ -438,8 +420,7 @@ Append-only queue for durable, project-relevant learnings whose final home isn't
 
 ## YYYY-MM-DD — [area] short fact
 
-Why: …
-Belongs in (guess): PROJECT_CONTEXT | CLAUDE.md | rule | skill | claude-ts-upstream | discard
+Why: … Belongs in (guess): PROJECT_CONTEXT | CLAUDE.md | rule | skill | claude-ts-upstream | discard
 ```
 
 Append new entries using the same 3-line format (header line + `Why:` + `Belongs in (guess):`).

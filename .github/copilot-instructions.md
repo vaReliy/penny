@@ -7,6 +7,7 @@ Always reference these instructions first and fallback to search or bash command
 ## Working Effectively
 
 ### Bootstrap and Install Dependencies
+
 - **REQUIRED**: Use legacy peer dependencies to resolve version conflicts:
   ```bash
   npm install --legacy-peer-deps
@@ -15,7 +16,9 @@ Always reference these instructions first and fallback to search or bash command
 - **Issues**: Standard `npm install` fails due to tslint/codelyzer version conflicts
 
 ### Build Commands
+
 - **Development build**:
+
   ```bash
   npm run build
   ```
@@ -26,11 +29,13 @@ Always reference these instructions first and fallback to search or bash command
   ```bash
   npm run prod
   ```
-  - **Time**: Takes ~25 seconds. NEVER CANCEL.  
+  - **Time**: Takes ~25 seconds. NEVER CANCEL.
   - **Output**: Creates optimized, minified bundles with hash names
 
 ### Development Server
+
 - **Full application** (recommended):
+
   ```bash
   npm run dev
   ```
@@ -39,6 +44,7 @@ Always reference these instructions first and fallback to search or bash command
   - **Access**: http://localhost:4201
 
 - **Angular only**:
+
   ```bash
   npm run start
   ```
@@ -51,7 +57,9 @@ Always reference these instructions first and fallback to search or bash command
   - Starts only json-server on port 3201
 
 ### Testing and Quality
+
 - **Unit tests**:
+
   ```bash
   npm run test -- --watch=false --browsers=ChromeHeadless
   ```
@@ -60,6 +68,7 @@ Always reference these instructions first and fallback to search or bash command
   - **Note**: Tests exist but are broken. Do not rely on unit tests for validation.
 
 - **Linting**:
+
   ```bash
   npm run lint
   ```
@@ -78,10 +87,11 @@ Always reference these instructions first and fallback to search or bash command
 After making changes, always manually validate the application functionality:
 
 ### Complete Login and Navigation Flow
+
 1. **Start the application**: `npm run dev`
 2. **Login test**:
    - Navigate to http://localhost:4201 (redirects to /login)
-   - Enter credentials: 
+   - Enter credentials:
      - Email: `admin@gmail.com`
      - Password: `12345678`
    - Click "Увійти" (Login)
@@ -94,6 +104,7 @@ After making changes, always manually validate the application functionality:
    - **Записи (Records)**: Add income/expenses and manage categories
 
 ### Key Application Features to Test
+
 - **Financial data**: Check that mock data loads from db.json (users, categories, events)
 - **Form functionality**: Test adding new transactions in Records section
 - **Currency display**: Verify UAH/USD/EUR rates and balance calculations
@@ -102,12 +113,13 @@ After making changes, always manually validate the application functionality:
 ## Project Structure and Key Files
 
 ### Root Directory Contents
+
 ```
 .browserslistrc          - Browser compatibility config
 .editorconfig           - Editor settings
 .eslintrc.json          - ESLint configuration
 .gitignore              - Git ignore rules
-.prettierignore         - Prettier ignore rules  
+.prettierignore         - Prettier ignore rules
 .prettierrc.json        - Prettier formatting config
 README.md               - Basic project info
 angular.json            - Angular CLI configuration
@@ -122,6 +134,7 @@ tslint.json             - TSLint config (deprecated)
 ```
 
 ### Important Directories
+
 - **src/**: Angular application source code
 - **src/app/**: Main application modules and components
 - **src/environments/**: Environment-specific configuration
@@ -129,6 +142,7 @@ tslint.json             - TSLint config (deprecated)
 - **dist/**: Build output directory
 
 ### Mock Backend Data (db.json)
+
 - **Users**: Test user (admin@gmail.com / 12345678)
 - **Categories**: Будинок, Їжа, Машина (House, Food, Car)
 - **Events**: Sample income/expense transactions
@@ -136,6 +150,7 @@ tslint.json             - TSLint config (deprecated)
 - **Rates**: Currency exchange rates (UAH, USD, EUR)
 
 ## Technology Stack
+
 - **Framework**: Angular 16.2.2
 - **Language**: TypeScript 4.9.3
 - **Styling**: Bootstrap 5.2.3, SCSS
@@ -148,24 +163,29 @@ tslint.json             - TSLint config (deprecated)
 ## Common Issues and Workarounds
 
 ### Dependency Installation
+
 - **Issue**: `npm install` fails with peer dependency conflicts
 - **Solution**: Always use `npm install --legacy-peer-deps`
 
 ### Unit Tests
+
 - **Issue**: Tests fail with "zone-testing.js is needed for the fakeAsync()" error
 - **Solution**: Tests are broken in current state. Use manual validation instead.
 
 ### External API Calls
+
 - **Issue**: Console shows blocked requests to monobank.ua and GitHub avatars
 - **Solution**: Expected behavior due to CORS/network restrictions. App functions normally.
 
 ### Browser Compatibility Warnings
+
 - **Issue**: "One or more browsers...will be ignored as ES5 output is not supported"
 - **Solution**: Expected warning for Node.js versions in browserslist. Can be ignored.
 
 ## Validation Commands Summary
 
 Run these commands in sequence to validate any changes:
+
 ```bash
 # 1. Install dependencies (if needed)
 npm install --legacy-peer-deps
@@ -173,7 +193,7 @@ npm install --legacy-peer-deps
 # 2. Lint the code
 npm run lint
 
-# 3. Build the application  
+# 3. Build the application
 npm run build
 
 # 4. Start the application

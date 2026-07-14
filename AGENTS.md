@@ -49,6 +49,7 @@ Read when relevant (never preloaded):
 - `rules/architecture-angular.md` — Angular injection tokens, lazy-load boundaries, dev-server proxy
 - `rules/architecture-backend.md` — NestJS dependency injection, MongoDB patterns, error handling
 - `rules/code-style.md` — shared TypeScript conventions (strict mode, naming, imports, comments)
+- `rules/docs-style.md` — writing/editing any `.md` file: Prettier enforces prose formatting, not manual wrapping
 - `rules/code-style-angular.md` — Angular signals, toSignal, templates, SCSS, forms, accessibility
 - `rules/code-style-backend.md` — backend config, validation, logging, auth/cookies, error handling
 - `rules/testing.md` — writing/structuring tests

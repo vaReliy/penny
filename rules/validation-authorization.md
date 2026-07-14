@@ -6,8 +6,7 @@ All input must be validated before reaching business logic. Validate at the serv
 
 ### LIVR bootstrap (required once per process)
 
-Every process entrypoint (`main.ts`, CLI bootstrap, queue worker) **must** call `registerLivrRules()` from
-`shared-kernel` exactly once at startup, before any `BaseService` or `LIVR.Validator` is constructed.
+Every process entrypoint (`main.ts`, CLI bootstrap, queue worker) **must** call `registerLivrRules()` from `shared-kernel` exactly once at startup, before any `BaseService` or `LIVR.Validator` is constructed.
 
 ```typescript
 // apps/api/src/main.ts (or any other process bootstrap)
@@ -16,8 +15,7 @@ import { registerLivrRules } from 'shared-kernel';
 registerLivrRules(); // must be first — before NestFactory.create() or any service init
 ```
 
-Omitting this call **passes build and tsc but throws at runtime** on the first validation.
-See `rules/nx-generators.md` § 3 for the generator-scaffold reminder.
+Omitting this call **passes build and tsc but throws at runtime** on the first validation. See `rules/nx-generators.md` § 3 for the generator-scaffold reminder.
 
 ---
 
