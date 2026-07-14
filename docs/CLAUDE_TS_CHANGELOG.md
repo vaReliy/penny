@@ -17,6 +17,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-14 — Fix: `rules/workflow.md`'s Command Execution Policy documented a permanent "specs are never type-checked" gap instead of the fixable Nx config issue it actually was
+
+- **Component**: `rules/workflow.md` (Command Execution Policy table / spec-file type-checking note)
+- **Type**: Fix
+- **What happened**: The rule's note near the spec-file type-checking caveat read as an accepted, permanent limitation ("neither `nx build` nor `vite:test` type-checks specs"), when the actual root cause was a fixable Nx config gap: `@nx/vite/plugin`'s `typecheckTargetName` option only auto-generates a `typecheck` target for projects whose test target comes from `@nx/vite:build`, not `@nx/vitest`. This was closed by manually adding an `nx:run-commands`-based `typecheck` target (mirroring Nx's own native pattern exactly, verified via `nx show project <native-typecheck-project> --json`) to every `@nx/vitest`-only project, centralizing cache config via a `targetDefaults.typecheck` block in `nx.json` (using `"default"` inputs, not `"production"`, since `production` excludes spec files/`tsconfig.spec.json`). The rule now documents `nx run <project>:typecheck` / `nx run-many -t typecheck` as a definitive instruction instead of a caveat.
+- **Why it matters upstream**: Any claude-ts consumer using `@nx/vitest` for test-target inference (rather than `@nx/vite:build`) has the identical silent gap — no nx target ever type-checks spec files, and the failure mode is invisible (no error, just quietly-never-checked code). Worth checking whether the template's own example `nx.json`/rules content already assumes vite:build-based typecheck generation and would mislead a vitest-only consumer the same way.
+- **Suggested upstream change**: In the template's base `rules/workflow.md` (or a dedicated Nx-patterns doc), document the `@nx/vite/plugin` `typecheckTargetName` limitation explicitly (only fires for `@nx/vite:build`, not `@nx/vitest`) and give the manual fix recipe: an `nx:run-commands` target running `tsc --noEmit -p tsconfig.spec.json`, cache config centralized via `targetDefaults.<target-name>` (which matches by target name across manual and plugin-inferred targets alike), with `inputs: ["default", "^production", { "externalDependencies": ["typescript"] }]` — not `"production"`, which excludes spec files by design.
+- **Status**: pending-port
+
+---
+
 ## 2026-07-13 — Enhancement: `rules/task-authoring.md` routing moved from `docs/<phase>/tasks/` to a top-level `./tasks/<phase>/` convention
 
 - **Component**: `rules/task-authoring.md` (Routing section), `.gitignore`
@@ -74,7 +85,7 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 - **Component**: `.claude/hooks/knowledge-capture-nudge.sh`
 - **Type**: Fix
-- **What happened**: `rules/workflow.md` marks `docs/METRICS.md` as "Always" required — one append-only row per completed task — with the same enforcement tier as `docs/KNOWLEDGE_INBOX.md`. But the Stop hook only ever checked `INBOX_UPDATED` and `CHANGELOG_UPDATED`; there was no `METRICS_UPDATED` check. Result: two consecutive completed tasks (`2026-07-07-01-web-container-unhealthy`, `2026-07-07-02-integration-test-mongo-auth`) shipped without a METRICS row, and nothing caught it — the orchestrator had to be told by the user before noticing. Fixed by adding a `METRICS_UPDATED` classification and a matching `SOURCE_CHANGED && !METRICS_UPDATED` reminder block, mirroring the existing inbox pattern exactly (same cadence-guard marker convention, same block-JSON output).
+- **What happened**: `rules/workflow.md` marks `docs/METRICS.md` as "Always" required — one append-only row per completed task — with the same enforcement tier as `docs/KNOWLEDGE_INBOX.md`. But the Stop hook only ever checked `INBOX_UPDATED` and `CHANGELOG_UPDATED`; there was no `METRICS_UPDATED` check. Result: two consecutive completed tasks shipped without a METRICS row, and nothing caught it — the orchestrator had to be told by the user before noticing. Fixed by adding a `METRICS_UPDATED` classification and a matching `SOURCE_CHANGED && !METRICS_UPDATED` reminder block, mirroring the existing inbox pattern exactly (same cadence-guard marker convention, same block-JSON output).
 - **Why it matters upstream**: Any claude-ts consumer that adopts a METRICS-style ledger (or any other "Always" per-task ledger declared only in `rules/workflow.md` prose) will hit the same silent-drift failure mode already documented in the 2026-06-26 entry below — spec wording alone doesn't get followed reliably; only a Stop-hook check does. The template's hook should treat every "Always" ledger declared in workflow.md as a first-class check, not just the inbox.
 - **Suggested upstream change**: Port the `METRICS_UPDATED` check pattern into the base `knowledge-capture-nudge.sh` template, and add a lint/audit rule (e.g. in `cts-rule-auditor`) that cross-checks every ledger marked "Always" in `rules/workflow.md`'s knowledge-obligations table against the Stop hook's classification list, flagging any that lack a corresponding `*_UPDATED` check.
 - **Status**: pending-port

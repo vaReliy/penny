@@ -88,14 +88,14 @@ Non-seam tasks (local/mechanical changes) keep the current fast path; no blast-r
 
 **Always invoke project targets via `nx`. Never call underlying tools directly.**
 
-| Task            | ✅ Use                               | ❌ Never use                          |
-| --------------- | ------------------------------------ | ------------------------------------- |
-| Build           | `nx build <project>`                 | `tsc -p tsconfig.json`, `webpack …`   |
-| Type-check only | `nx build <project> --skip-nx-cache` | `pnpm tsc --noEmit`, `npx tsc …`      |
-| Test            | `nx test <project>`                  | `npx vitest run --config …`, `jest …` |
-| Lint            | `nx lint <project>`                  | `npx eslint apps/…/src`, `eslint .`   |
-| E2E             | `nx e2e <project>`                   | `npx playwright test`                 |
-| All projects    | `nx run-many --target=<t>`           | —                                     |
+| Task            | ✅ Use                                                             | ❌ Never use                          |
+| --------------- | ------------------------------------------------------------------ | ------------------------------------- |
+| Build           | `nx build <project>`                                               | `tsc -p tsconfig.json`, `webpack …`   |
+| Type-check only | `nx typecheck <project>` _or_ `nx build <project> --skip-nx-cache` | `pnpm tsc --noEmit`, `npx tsc …`      |
+| Test            | `nx test <project>`                                                | `npx vitest run --config …`, `jest …` |
+| Lint            | `nx lint <project>`                                                | `npx eslint apps/…/src`, `eslint .`   |
+| E2E             | `nx e2e <project>`                                                 | `npx playwright test`                 |
+| All projects    | `nx run-many --target=<t>`                                         | —                                     |
 
 **Why:** nx targets encode the executor, config path, and working directory. Direct commands require the agent to know all three — wrong guesses often exit 0 with no output (e.g., `vitest run` with no matched files silently succeeds). Nx eliminates the guess.
 
@@ -107,7 +107,7 @@ Non-seam tasks (local/mechanical changes) keep the current fast path; no blast-r
 
 **Project names** (from `nx show projects`): `api`, `api-e2e`, `smoke-e2e`, `identity`, `shared` and any libs added later. When in doubt run `nx show projects` to list them.
 
-**Type-checking in tests:** Neither `nx build` nor `nx test` (vitest) type-checks spec files. `nx build` excludes them via `tsconfig.lib.json`; `vite:test` executor (used by this repo) transpiles via esbuild without type-checking. To catch `.spec.ts` type errors, run a dedicated `typecheck` target (`nx run <project>:typecheck`, or `npx tsc -b <project>/tsconfig.spec.json --noEmit`) or configure `vite:test` with `typecheck: true` (slower but comprehensive). The quality gate handoff checklist must NOT claim spec-file type-safety from `build`+`vite:test` alone — type-check specs separately if correctness requires it.
+**Type-checking in tests:** `nx build` excludes spec files via `tsconfig.lib.json`, and `nx vite:test` transpiles via esbuild without type-checking. To catch `.spec.ts` type errors, use the dedicated `typecheck` target: `nx typecheck <project>` (or `nx run-many -t typecheck` for all projects). All projects using `@nx/vitest` have a `typecheck` target wired to `tsc --noEmit -p tsconfig.spec.json`, which type-checks specs without emission. Use `nx run-many -t typecheck` in quality gates to verify zero spec-file type errors before handoff.
 
 **Web project e2e:** The web project test target is `vite:test`, not `test`. Use `nx vite:test web` (not `nx test web`). This applies to all vitest-plugin-inferred projects.
 

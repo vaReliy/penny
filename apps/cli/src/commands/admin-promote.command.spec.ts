@@ -18,7 +18,7 @@ import { AdminPromoteCommand } from './admin-promote.command.js';
 const TELEGRAM_USERNAME = 'ada_lovelace';
 const USER_ID = 'user-abc-123';
 
-function buildActiveUser(roles: string[] = []): User {
+function buildActiveUser(roles: readonly RoleType[] = []): User {
   const now = new Date('2026-01-01T00:00:00.000Z');
   return new User({
     id: USER_ID,

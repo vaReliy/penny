@@ -2,8 +2,9 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../../dist/out-tsc",
-    "module": "commonjs",
-    "types": ["vitest/globals", "node"]
+    "module": "esnext",
+    "types": ["vitest/globals", "node"],
+    "noEmit": true
   },
   "include": [
     "vitest.config.mts",
