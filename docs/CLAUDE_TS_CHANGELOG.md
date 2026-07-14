@@ -17,6 +17,20 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-14 — Enhancement: five generic rules-file additions that bypassed this ledger (written by `/distill-inbox` inlining) + the process fix
+
+- **Component**: `rules/testing.md`, `rules/nx-generators.md`, `rules/dependencies.md`, `rules/docker-commands.md`, `rules/git-operations.md`, `.claude/skills/distill-inbox/SKILL.md` (process fix)
+- **Type**: Enhancement (content) + Fix (process)
+- **What happened**: A CTS-vs-Penny payload diff found five CTS-managed, non-`.ctsignore`'d rules files carrying generic, valuable additions with no ledger entry — so `/cts-contribute` would never see them. Root cause: `/distill-inbox` inlines inbox learnings into rules files but does not fire the "template-inherited file changed → also update CLAUDE_TS_CHANGELOG.md" obligation that pipeline work does. The unledgered generic content: (1) `testing.md` — NestJS guard-decorator-chain testing convention; pino exception-filter dual-arg assertion (`(obj, msg)` vs winston `(msg, meta)`) with `let`-at-describe-scope mock pattern. (2) `nx-generators.md` — always use the generator, never hand-write `project.json` (hand-scaffolded libs silently drop out of `lint`); `@nx/angular:lib` silently ignores positional args without `--directory`. (3) `dependencies.md` — every lib importing a shared lib needs its own `package.json` dep entry (`@nx/dependency-checks`); pnpm root-only deps need `-w`. (4) `docker-commands.md` — use `curl` not BusyBox `wget` for Alpine healthchecks (no happy-eyeballs → IPv4/IPv6 flakiness); `node:22-alpine` has neither, use inline Node HTTP. (5) `git-operations.md` — never `git stash`/`pop` mid-session (mutates the working tree the user/other agents track via `git diff`); use `git show HEAD:<path>` / `git worktree` instead.
+- **Why it matters upstream**: All five additions are framework-generic (NX/pnpm/Docker/git/NestJS-pino) and benefit any consumer. The process gap matters more: every consumer running `/distill-inbox` will silently accumulate the same invisible divergence, making `/cts-contribute` runs incomplete forever.
+- **Suggested upstream change**: (1) Port the five rules-file additions (hunk-level cherry-pick from this repo's files; exclude Penny-specific wording like identity-lib paths). (2) In `.claude/skills/distill-inbox/SKILL.md`, add a mandatory step: when the distillation write target is a CTS-managed file (present in `cts-payload.txt` and not matched by `.ctsignore`), also append a `CLAUDE_TS_CHANGELOG.md` entry in the same pass — optionally backed by a `cts-rule-auditor` check that diffs payload files against upstream and flags unledgered divergence.
+- **Status**: pending-port
+
+- **Contribute-run warning (recorded for the next `/cts-contribute` session)**: do NOT export `.claude/agents/tester.md`, `qa.md`, `angular-developer.md`, `reviewer.md`, `security-scanner.md` — upstream moved ahead of Penny on these (TDD-shift: test authorship moved to implementation agents; tester is now a verify/coverage-audit stage). Penny's copies are older + project-specialized; exporting them would regress claude-ts. Instead run `/cts-update` (3-way merge) first to absorb the TDD-shift into Penny's customized agents, or `.ctsignore` them as deliberate divergence.
+- **Note (2026-07-14, project-local-only)**: `rules/nx-generators.md` additionally received a self-containment fix (private decision-ID reference replaced with a `DECISIONS.md` ADR-005 pointer). Penny-specific hunk — exclude from any upstream port of that file.
+
+---
+
 ## 2026-07-14 — Fix: hardened knowledge-capture Stop hook input handling (SESSION_ID sanitization, jq fallback parity, `--agent` assumption documentation)
 
 - **Component**: `.claude/hooks/knowledge-capture-nudge.sh`

@@ -40,8 +40,8 @@ The repo base (`tsconfig.base.json`) is intentionally minimal: no `strict` block
 - **Libs** are ESM (`"type": "module"` in `package.json`) and inherit `bundler`; they are
   consumed from source via tsconfig `paths` and bundled into apps — never published
   standalone, so `nodenext` is not needed.
-- `.js` extensions on relative imports are enforced **backend-only** via ESLint (D26/D29).
-  Angular/Nx paths use barrel `index.ts` exports and do not need the extension.
+- `.js` extensions on relative imports are enforced **backend-only** via ESLint (see ADR-005 in
+  `DECISIONS.md`). Angular/Nx paths use barrel `index.ts` exports and do not need the extension.
 
 ## 3. Post-generator corrections by framework
 

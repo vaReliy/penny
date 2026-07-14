@@ -76,9 +76,12 @@ jobs:
         # - test target removed: api/cli have explicit test targets (run-commands → vitest)
         #   AND vitest.config.mts files that trigger vite:test inference. Keeping both
         #   would run vitest twice on those projects. vite:test is sufficient.
-        # - typecheck: 5 projects (feature-* libs + web) — others without tsconfig.lib.json
-        #   don't infer it; leaves known gap: typecheck doesn't include .spec.ts scope
-        #   (see KNOWLEDGE_INBOX 2026-07-08)
+        # - typecheck: runs on every project that exposes a typecheck target — both the
+        #   ones @nx/vite/plugin infers automatically and the ones with a manually-added
+        #   nx:run-commands target following that same tsc --noEmit pattern (see
+        #   rules/nx-generators.md). Known gap: targets that typecheck against
+        #   tsconfig.spec.json still only catch spec-file type errors where a project
+        #   opted into that scope — not a blanket guarantee across all projects.
         #
         # MongoDB-dependent tests: libs/identity/infrastructure/{mongo-*.spec.ts}
         # - RUN in CI via GitHub Actions MongoDB service container (mongo:7).
@@ -92,8 +95,11 @@ jobs:
   # Run Playwright e2e tests on web-e2e only.
   # Scope decision:
   # - web-e2e is IN: hermetic tests, API mocked, no live service dependencies
-  # - smoke-e2e is OUT: depends on docker-compose stack + container health checks
-  #   (deferred; requires task 2026-07-07-01 web healthcheck; can be picked up later)
+  # - smoke-e2e is OUT: depends on the full docker-compose stack (mongo + api + web,
+  #   including the api/web container health checks) coming up healthy; the compose
+  #   stack itself works, but wiring a CI job to build/boot/tear down the multi-container
+  #   stack is separate, unstarted work — can be picked up when a CI-friendly compose
+  #   invocation is designed.
   # - api-e2e is OUT: Jest-based tests requiring live MongoDB + running API server
   #   (different infra requirements; not appropriate for this hermetic CI job)
   # Runs after main lint/test/build passes; uses built web app for testing

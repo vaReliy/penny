@@ -52,3 +52,7 @@ Each completed task is one row in the table below.
 | 2026-07-14 | penny | mongo-healthcheck-interval-30s                     | T0   | 0      | 0/0/0/-           | 0       | no       | cheap          |
 | 2026-07-14 | penny | stop-hook-docker-app-and-kc-nudge-scope            | T2   | 0      | 0/0/0/-           | 1       | no       | standard+cheap |
 | 2026-07-14 | penny | harden-kc-nudge-input-handling                     | T0   | 0      | 0/0/0/-           | 0       | no       | standard       |
+| 2026-07-14 | penny | web-e2e-ci-serves-built-artifact                   | T2   | -      | -/-/-/-           | 1       | no       | standard       |
+| 2026-07-14 | penny | fix-stale-e2e-serve-static-example-in-testing-rule | T1   | -      | -/-/-/-           | 0       | no       | cheap          |
+| 2026-07-14 | penny | skeleton-round3-dod-verification-and-close         | T2   | 0      | 0/0/0/-           | 2       | no       | deep           |
+| 2026-07-14 | penny | doc-hygiene-batch-and-skeleton-fork-guide          | T2   | 1      | 0/1/0/-           | 0       | no       | standard       |

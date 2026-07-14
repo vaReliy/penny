@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed (Doc hygiene: committed-file self-containment + new starter guide)
+
+- **`rules/nx-generators.md`** — dropped a dangling private decision-ID reference (`D26/D29`) on
+  the `.js`-extension-enforcement note; now points at `DECISIONS.md` ADR-005, the committed record
+  of that decision.
+- **`.github/workflows/ci.yml`** — reworded two stale comments: the `smoke-e2e`-deferral comment
+  no longer references a private task filename (the deferral reason itself — wiring CI to boot the
+  full docker-compose stack — still holds and is now stated directly); the `typecheck` scope
+  comment no longer hardcodes a stale project count (16 explicit `typecheck` targets now exist
+  workspace-wide, up from the 5 the comment previously claimed) and instead describes the actual
+  mechanism so it can't go stale the same way again.
+- **`CHANGELOG.md`** (this file) — de-referenced entries that pointed at private, git-ignored task
+  files or task IDs (`docs/rebuild/tasks/...`, bare `YYYY-MM-DD-NN` identifiers, "Task 04/18"
+  section headers) while keeping every entry's descriptive prose intact, so the change history
+  reads as a self-contained record for anyone cloning the repo fresh.
+- **`DECISIONS.md`** ADR-006 (CSP Nonce Delivery) — updated from "Deferred" to "Accepted and
+  implemented": the nginx `sub_filter`-based per-request nonce pipeline (`apps/web/nginx.conf`,
+  `apps/web/src/app/app.config.ts`) shipped and is verified in the codebase; removed the private
+  task-file reference and described the actual implemented mechanism instead.
+- **`README.md`** — corrected a stale claim that no apps existed yet (`apps/api`, `apps/web`,
+  `apps/cli` all exist and are documented with their start commands); added a pointer to the new
+  `docs/SKELETON.md`.
+- **`docs/SKELETON.md`** (new) — a self-contained guide for forking this repo as a starter for a
+  new Telegram-auth SaaS: what the chassis provides, how to run it locally, a concrete
+  generator-based checklist for adding a new domain vertical (backend/frontend libs, tags, DI
+  wiring, route registration, tests, boundary verification), a rename/strip checklist for
+  Penny-specific naming, and the intended fork/upstream relationship for future chassis fixes.
+
 ### Fixed (Task — Stop-hook chain fails/blocks every agent turn; knowledge-capture nudge scope)
 
 - **`.claude/settings.json`** — removed the two dead `docker compose exec app npx eslint/prettier` Stop-hook commands: no `app` compose service exists (stack is `mongo`/`api`/`web`), and the production images have no dev toolchain and no source bind mount, so in-container `--fix` could never mutate the host tree. Both commands failed on every turn-end (main session + every subagent), paying Docker daemon/compose resolution cost each time — the primary driver of agents appearing to hang without delivering final reports. `knowledge-capture-nudge.sh` is now the sole Stop hook; lint/format enforcement remains in the quality gate + CI.
@@ -38,7 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Backlog tasks emitted (Task — TOCTOU CAS fix)
 
-- `2026-07-14-01-nx-typecheck-target-for-vitest-projects.md` — none of the touched `@nx/vitest`-based projects (`identity-application`, `identity-infrastructure`, `cli`, likely others workspace-wide) expose a working nx `typecheck` target, so spec files are never type-checked by any nx target today; pre-existing gap, not introduced by this task.
+- None of the touched `@nx/vitest`-based projects (`identity-application`, `identity-infrastructure`, `cli`, likely others workspace-wide) exposed a working nx `typecheck` target, so spec files were never type-checked by any nx target; pre-existing gap, not introduced by this task (since resolved — see the "Added typecheck targets" entry above).
 
 ### Added (Task — wire ServiceContext.caller from session for admin approve/reject)
 
@@ -49,20 +77,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`apps/api/src/auth/auth.module.ts`** — registered `UserAdminController` in the controllers array alongside `AuthController`.
 
-### Added (Task 04 — CSP nonce server-side injection via nginx sub_filter)
+### Added (CSP nonce server-side injection via nginx sub_filter)
 
 - **`apps/web/nginx.conf`** — per-request CSP nonce injection using nginx `$request_id` (128-bit CSPRNG, 32 hex chars): `sub_filter 'name="csp-nonce" content>' 'name="csp-nonce" content="$request_id">'` replaces the minified placeholder in `index.html` at request time (Angular's esbuild production build minifies `content=""` → `content`, so the match targets the minified form); `add_header Content-Security-Policy` on the `location /` block emits a full policy with `style-src 'self' 'nonce-$request_id'` and `frame-ancestors 'self'`; `gzip off` co-located to prevent silent sub_filter bypass on compressed responses.
 - **`apps/web/src/index.html`** — added `<meta name="csp-nonce" content="">` in `<head>` as the nginx sub_filter injection target for Angular's `CSP_NONCE` token.
 - **`apps/web/src/app/app.config.ts`** — root `CSP_NONCE` provider using `useFactory: () => document.querySelector<HTMLMetaElement>('meta[name="csp-nonce"]')?.content || null` so Angular's `ViewEncapsulation.Emulated` adds the nonce attribute to all dynamically inserted `<style>` elements.
 - **`apps/web/src/app/app.config.spec.ts`** — unit tests for the `CSP_NONCE` provider: verifies `useFactory` (not `useValue`), null for absent element, `null` for empty-string content (un-replaced placeholder), correct nonce string for valid content.
-- **`docs/rebuild/tasks/todo/2026-06-29-07-upgrade-insecure-requests-csp.md`** — backlog task (parked until HTTPS topology confirmed) to add `upgrade-insecure-requests` to both the nginx and NestJS CSP directives.
+- Deferred `upgrade-insecure-requests` CSP directive on both nginx and NestJS CSP policies — parked until an HTTPS/TLS termination topology exists in front of `web`; adding it before TLS is in place would break plain-HTTP local/staging access.
 
-### Changed (Task 04 — CSP nonce server-side injection via nginx sub_filter)
+### Changed (CSP nonce server-side injection via nginx sub_filter)
 
 - **`apps/api/src/middleware/csp-policy.ts`** — removed `'unsafe-inline'` from `styleSrc`; NestJS Helmet now emits `style-src 'self'` on API responses, consistent with the nonce-based policy on the HTML document.
 - **`apps/api/src/middleware/csp-policy.spec.ts`** — updated regression test: asserts `style-src 'self'` is present and `'unsafe-inline'` is absent, guarding against accidental reintroduction.
 
-### Added (Task 18 — Docker multi-stage + compose + CI image build)
+### Added (Docker multi-stage + compose + CI image build)
 
 - **`apps/api/Dockerfile`** — multi-stage (deps → build → runtime); non-root `USER node`; production deps only in runtime layer; `--ignore-scripts --no-optional` on prod install to skip husky hook.
 - **`apps/cli/Dockerfile`** — same multi-stage pattern as api; no health check (CLI is not a long-running service).
@@ -73,13 +101,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`.env.example`** — documents all required env vars: `MONGO_DB_NAME`, `MONGO_USER`, `MONGO_PASSWORD`, `JWT_SECRET`, `TELEGRAM_BOT_TOKEN`.
 - **`.github/workflows/ci.yml`** extended — `build-images` job: builds all 3 images with Docker Buildx + GHA layer cache; runs after `ci` job passes (`needs: [ci]`); no registry push yet (extension point documented).
 
-### Backlog tasks emitted (Task 18)
+### Backlog tasks emitted (Docker multi-stage + compose + CI image build)
 
-- `2026-06-29-02-dockerfile-build-stage-ignore-scripts.md` — add `--ignore-scripts` to build stage pnpm install in all 3 Dockerfiles.
-- `2026-06-29-03-compose-api-healthcheck-wget.md` — replace `wget` healthcheck (not in node:22-alpine) with Node.js inline HTTP check so API service reaches `healthy`.
-- `2026-06-29-04-pin-github-actions-sha.md` — pin all GHA action tags to immutable SHA digests.
-- `2026-06-29-05-nginx-hsts-header.md` — add HSTS header once TLS termination topology is decided (PARKED).
-- `2026-06-29-06-nginx-api-duplicate-security-headers.md` — suppress duplicate security headers on `/api/` proxy responses via `proxy_hide_header`.
+- Add `--ignore-scripts` to the build-stage `pnpm install` in all 3 Dockerfiles.
+- Replace the `wget` healthcheck (not present in `node:22-alpine`) with a Node.js inline HTTP check so the API service reaches `healthy`.
+- Pin all GitHub Actions tags to immutable SHA digests.
+- Add an HSTS header once a TLS termination topology is decided (parked).
+- Suppress duplicate security headers on `/api/` proxy responses via `proxy_hide_header`.
 
 ### Changed
 
@@ -88,7 +116,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Backlog tasks emitted
 
-- `2026-06-29-03-filters-migrate-to-pino-logger` — both filters still use `new Logger(FilterName.name)` (NestJS built-in) instead of `@Inject(PINO_LOGGER)`; filter log lines flow through NestJS default formatter rather than the unified pino stream.
+- Both filters still use `new Logger(FilterName.name)` (NestJS built-in) instead of `@Inject(PINO_LOGGER)`; filter log lines flow through NestJS's default formatter rather than the unified pino stream.
 
 ### Added
 
@@ -99,8 +127,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Backlog tasks emitted
 
-- `2026-06-28-04` — expanded scope to include `login.guard.ts` (bare `'active'`/`'pending'`/`'rejected'` literals should use `UserStatus.*` constants from `shared-contracts`, same as pre-existing issue in `status.guard.ts`).
-- `2026-06-28-18` — delete stale `example.spec.ts` Nx scaffold (expects `"Welcome"` h1; app shows login page — has been failing since routes were wired up).
+- `login.guard.ts` should use `UserStatus.*` constants from `shared-contracts` instead of bare `'active'`/`'pending'`/`'rejected'` literals, same as the pre-existing issue in `status.guard.ts`.
+- Delete the stale `example.spec.ts` Nx scaffold (expects a `"Welcome"` h1; the app shows the login page instead — has been failing since routes were wired up).
 
 ### Added
 
@@ -113,7 +141,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Backlog tasks emitted
 
-- `2026-06-28-08` — Add missing `scope:shared` tag to `libs/shared/util/project.json` (pre-existing omission found during review).
+- Add missing `scope:shared` tag to `libs/shared/util/project.json` (pre-existing omission found during review).
 
 ### Added (cont.)
 
@@ -126,11 +154,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Backlog tasks emitted
 
-- `2026-06-28-03` — Replace `status: 'active'` literal in CLI admin caller fixtures with `UserStatus.ACTIVE`.
-- `2026-06-28-04` — Replace bare status string comparisons in `status.guard.ts` with `UserStatus.*` constants.
-- `2026-06-28-05` — Replace bare status literals in `access-status-page.ts` with `UserStatus.*` constants.
-- `2026-06-28-06` — Align `CallerIdentity.roles` type with `RoleType[]` (Nx boundary decision needed).
-- `2026-06-28-07` — Forward JWT roles claim into `SessionUser` and `ServiceContext.caller` for future RBAC HTTP guards.
+- Replace the `status: 'active'` literal in CLI admin caller fixtures with `UserStatus.ACTIVE`.
+- Replace bare status string comparisons in `status.guard.ts` with `UserStatus.*` constants.
+- Replace bare status literals in `access-status-page.ts` with `UserStatus.*` constants.
+- Align `CallerIdentity.roles` type with `RoleType[]` (Nx boundary decision needed).
+- Forward the JWT roles claim into `SessionUser` and `ServiceContext.caller` for future RBAC HTTP guards.
 
 ### Added (cont.)
 

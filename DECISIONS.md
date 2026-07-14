@@ -168,40 +168,45 @@ with NestJS-ESM and Angular's bundler resolver.
 
 ## ADR-006 — CSP Nonce Delivery
 
-**Status:** Deferred — skeleton-phase tradeoff active; implementation task is
-`2026-06-29-04-csp-nonce-server-side-injection`.
+**Status:** Accepted and implemented.
 
 **Context:** Angular's runtime `<style>` injection requires either `style-src 'unsafe-inline'`
 or a per-request CSP nonce embedded in `index.html`. Nonce delivery requires the process that
 serves `index.html` to generate and inject the nonce value on every request — which process does
 that depends on the serving topology.
 
-Task 18 (Docker multi-stage + compose) settled the serving topology: **nginx serves `index.html`**
-(`apps/web` container), not NestJS. The API container has no host port and never touches the HTML.
+The serving topology settled on **nginx serves `index.html`** (`apps/web` container), not NestJS.
+The API container has no host port and never touches the HTML.
 
 **Decision — Option B (nginx serves HTML):** Per-request nonce injection is implemented at the
-nginx layer:
+nginx layer (`apps/web/nginx.conf`):
 
-- nginx generates (or receives) a nonce per request.
-- nginx uses `sub_filter` to replace a placeholder token in `index.html` with the nonce value.
-- nginx sets the `Content-Security-Policy` response header including the nonce.
-- The Angular build embeds the matching placeholder token so `sub_filter` can locate it.
+- nginx generates a per-request nonce from its built-in `$request_id` variable (a 128-bit CSPRNG
+  value, rendered as 32 hex characters) — no custom nonce-generation module needed.
+- The Angular build embeds a placeholder (`<meta name="csp-nonce" content="">` in `index.html`,
+  wired to Angular's `CSP_NONCE` DI token in `apps/web/src/app/app.config.ts`) that `sub_filter`
+  replaces with the live nonce value at request time.
+- nginx sets the `Content-Security-Policy` response header with `style-src 'self' 'nonce-$request_id'`
+  (plus a `sha256-` hash for Angular's own emulated-encapsulation style block).
+- `gzip off` is set on the same location block, since a compressed response would otherwise bypass
+  `sub_filter` silently.
+- `apps/api/src/middleware/csp-policy.ts` (NestJS Helmet CSP for JSON API responses) emits
+  `style-src 'self'` with no `'unsafe-inline'` — the API never serves HTML, so it needs no nonce.
 
 **Alternatives rejected:**
 
 - Option A (NestJS serves HTML via `ServeStaticModule`): would place static-file serving and
   HMAC auth logic in the same process, complicating health checks and adding latency for all
-  static asset requests. Rejected when Task 18 chose nginx.
-- `'unsafe-inline'` permanently: permits injected stylesheets from XSS — not acceptable post-skeleton.
-
-**Skeleton-phase interim tradeoff:**
-
-`style-src 'self' 'unsafe-inline'` is retained intentionally during the skeleton phase. This is
-a documented, time-bounded tradeoff — not silent debt. It permits Angular's runtime style
-injection while the nginx nonce pipeline (`sub_filter` + `add_header`) is not yet in place.
+  static asset requests. Rejected once the nginx serving topology was chosen.
+- `'unsafe-inline'` permanently: permits injected stylesheets from XSS — rejected as a permanent
+  posture; only used as a time-bounded interim tradeoff before the nonce pipeline shipped.
 
 **Consequences:**
 
-- The nginx nonce pipeline requires the Angular build to embed a placeholder token in `index.html`.
-- `'unsafe-inline'` must be removed from `style-src` once Task `2026-06-29-04-csp-nonce-server-side-injection` is complete.
-- The nginx container image must have `ngx_http_sub_module` compiled in (present in the official `nginx:*-alpine` images).
+- Any new Angular build must keep emitting the `csp-nonce` meta placeholder in `index.html`, or
+  `sub_filter` has nothing to replace and the nonce falls back to the un-replaced placeholder value.
+- The nginx container image must have `ngx_http_sub_module` compiled in (present in the official
+  `nginx:*-alpine` images).
+- The hardcoded `sha256-...` hash in `apps/web/nginx.conf` for Angular's own style block must be
+  regenerated (from the browser's CSP violation console, or by extracting the built stylesheet)
+  whenever `nx build web`'s output for that block changes.

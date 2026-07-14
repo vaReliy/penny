@@ -59,7 +59,14 @@ pnpm install
 pnpm nx report
 ```
 
-No apps exist yet — they're added in subsequent rebuild tasks.
+Three apps exist: `apps/api` (NestJS HTTP API), `apps/web` (Angular SPA), and `apps/cli`
+(NestJS CLI for admin/dev commands, run via `nest-commander`). Start them locally with
+`pnpm nx serve api`, `pnpm nx serve web`, and `pnpm nx build cli && node dist/apps/cli/main.js <command>`
+respectively, or bring up the full stack with `docker compose up` (see below).
+
+**Using this repo as a starter for a new project?** See `docs/SKELETON.md` for what's the
+reusable chassis versus the `identity`-specific example, and for the checklist to add a new
+domain vertical.
 
 ### Environment configuration
 
