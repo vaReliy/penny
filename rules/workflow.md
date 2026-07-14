@@ -373,7 +373,11 @@ Written claims of completion (task moves, comments, inbox entries) must be verif
 
 ## Phase 6: Knowledge Capture (Mandatory After Every Session That Touches Code)
 
-**This phase is non-negotiable.** After every feature, bugfix, or CI/CD pipeline completes — and after ANY session where source, config, or template-inherited files were changed — the orchestrator MUST capture learnings before declaring the task done. This applies equally to formal pipeline runs and to direct/trivial edits: the trigger is "did real files change?", not "did we run a pipeline?".
+**This phase is non-negotiable.** After every feature, bugfix, or CI/CD pipeline completes — and after ANY session where source, config, or template-inherited files were changed — the orchestrator MUST capture learnings before declaring the task done. This applies equally to formal pipeline runs and to direct/trivial edits: the trigger is "did real files change?", not "did we run a pipeline?"
+
+### Mid-pipeline transcription
+
+When any subagent's final report contains a `## Learnings` section, the orchestrator appends the corresponding `docs/KNOWLEDGE_INBOX.md` entry (3-line format) **immediately upon receiving the report, before dispatching the next agent** — not deferred to Phase 6. This ensures later agents' pre-flight inbox reads pick up the learning without delay. Phase 6 remains the final sweep/verification that nothing reported went untranscribed, plus the CHANGELOG/METRICS/distillation duties. **Limitation**: agents already running in parallel (impl teams) do not re-read the inbox mid-task; if a learning is urgent for an in-flight teammate, relay it via `SendMessage`.
 
 ### What to update
 

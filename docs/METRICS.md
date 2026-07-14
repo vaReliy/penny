@@ -50,3 +50,5 @@ Each completed task is one row in the table below.
 | 2026-07-13 | penny | stale-read-modify-write-races-toctou-cas           | T2   | 0      | 0/0/0/-           | 1       | no       | standard       |
 | 2026-07-14 | penny | nx-typecheck-target-for-vitest-projects            | T1   | 1      | 0/1/0/-           | 0       | no       | standard       |
 | 2026-07-14 | penny | mongo-healthcheck-interval-30s                     | T0   | 0      | 0/0/0/-           | 0       | no       | cheap          |
+| 2026-07-14 | penny | stop-hook-docker-app-and-kc-nudge-scope            | T2   | 0      | 0/0/0/-           | 1       | no       | standard+cheap |
+| 2026-07-14 | penny | harden-kc-nudge-input-handling                     | T0   | 0      | 0/0/0/-           | 0       | no       | standard       |

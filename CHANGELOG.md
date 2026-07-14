@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed (Task — Stop-hook chain fails/blocks every agent turn; knowledge-capture nudge scope)
+
+- **`.claude/settings.json`** — removed the two dead `docker compose exec app npx eslint/prettier` Stop-hook commands: no `app` compose service exists (stack is `mongo`/`api`/`web`), and the production images have no dev toolchain and no source bind mount, so in-container `--fix` could never mutate the host tree. Both commands failed on every turn-end (main session + every subagent), paying Docker daemon/compose resolution cost each time — the primary driver of agents appearing to hang without delivering final reports. `knowledge-capture-nudge.sh` is now the sole Stop hook; lint/format enforcement remains in the quality gate + CI.
+- **`.claude/hooks/knowledge-capture-nudge.sh`** — nudge is now orchestrator-only: early exit 0 when stdin JSON carries `agent_id`/`agent_type` (subagent/teammate session), in both the jq and grep/sed fallback branches. Subagents surface durable learnings via the `## Learnings` section of their final report instead of being independently blocked once per session (the old per-`session_id` marker never deduped across a multi-agent task).
+- **`rules/workflow.md` + `CLAUDE.md`** — new mid-pipeline transcription rule: when a subagent's report contains `## Learnings`, the orchestrator appends the `docs/KNOWLEDGE_INBOX.md` entry immediately upon receipt, before the next dispatch, so later agents' pre-flight inbox reads pick it up; Phase 6 is reframed as the final sweep/verification, not the first write. In-flight parallel teammates still need a `SendMessage` relay for urgent learnings.
+- **`.claude/agents/ba.md`, `.claude/agents/ddd-architect.md`** — added the `## Learnings` final-report requirement (previously only the 12 file-touching technical agents had it).
+- Gate: tester/reviewer/security-scanner all passed, 0 Fix Now; 1 pre-existing finding emitted as a hardening task and implemented same day (next section).
+
+### Fixed (Task — harden knowledge-capture-nudge.sh input handling)
+
+- **`.claude/hooks/knowledge-capture-nudge.sh`** — three micro-fixes from the previous task's gate findings: (1) `SESSION_ID` is sanitized to `[A-Za-z0-9_-]` before marker-path interpolation, closing a latent path-traversal (`../evil` → `evil`); (2) empty/malformed-parse `SESSION_ID` normalizes to `"unknown"` post-extraction — jq's `// "default"` only applies on successful parses, silently diverging from the grep/sed branch's `|| echo default` on malformed stdin; (3) header comment documents that `agent_id`/`agent_type` presence means "not a plain top-level session" (includes `claude --agent` sessions), the assumption behind the orchestrator-only guard.
+- Gate: tester (isolated scratch-repo proof of block path + traversal-payload matrix) / reviewer / security-scanner all passed, 0 Fix Now, 0 emitted; security-scanner explicitly confirmed its prior path-traversal finding CLOSED (marker path is absolute-prefixed, so no leading-`-` argument ambiguity either). Accepted cosmetic residual: jq parse-error noise on stderr for malformed stdin — unreachable via real Claude Code input.
+
 ### Fixed (Task — resurrect dead ESLint fuses, lint apps/api and apps/cli)
 
 - **`eslint.config.mjs`** — the `.js`-extension-on-relative-imports gate and the `localStorage` ban were silently dead under `nx lint <project>`: project-local configs spread `baseConfig`, but ESLint resolves the root config's path-anchored `files` globs against each project's own basePath, so globs like `libs/**/core/**/*.ts` never matched a file at `libs/identity/application/src/lib/foo.ts`. Also resurrected the previously-parked `@Injectable` ban (application/core/kernel layers must stay framework-free) via the same mechanism.
