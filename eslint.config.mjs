@@ -9,6 +9,9 @@ export default [
       '**/dist',
       '**/vite.config.*.timestamp*',
       '**/vitest.config.*.timestamp*',
+      '**/.angular/cache',
+      '**/node_modules',
+      '**/.history',
     ],
   },
   {
@@ -231,4 +234,56 @@ export default [
       ],
     },
   },
+  // @Injectable ban — application/core/kernel layers are framework-free.
+  // Separate config object to scope the rule only to these layers (not infrastructure/errors/contracts/validation/util).
+  // ESLint flat config applies all matching config objects to a file; same-named rule keys don't merge.
+  // This config object comes after the .js extension rules, so for files matching both globs,
+  // this rule completely replaces the .js extension rules above. To avoid losing the .js extension rules
+  // for these files, they are intentionally duplicated below.
+  {
+    files: [
+      'libs/**/application/**/*.ts',
+      'libs/**/core/**/*.ts',
+      'libs/shared/kernel/**/*.ts',
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            'ImportDeclaration[source.value=/^\\.\\.?\\//]:not([source.value=/\\.js$/])',
+          message:
+            'Relative imports must use the .js extension (NodeNext idiom). Add .js to the specifier.',
+        },
+        {
+          selector:
+            'ExportNamedDeclaration[source.value=/^\\.\\.?\\//]:not([source.value=/\\.js$/])',
+          message:
+            'Relative re-exports must use the .js extension (NodeNext idiom). Add .js to the specifier.',
+        },
+        {
+          selector:
+            'ExportAllDeclaration[source.value=/^\\.\\.?\\//]:not([source.value=/\\.js$/])',
+          message:
+            'Relative re-exports must use the .js extension (NodeNext idiom). Add .js to the specifier.',
+        },
+        {
+          selector: "Decorator > CallExpression[callee.name='Injectable']",
+          message:
+            'application/core layers are framework-free — no NestJS DI decorators. Wire DI in apps/* via Symbol-token factory providers.',
+        },
+      ],
+    },
+  },
 ];
+
+export const injectableBanRules = {
+  'no-restricted-syntax': [
+    'error',
+    {
+      selector: "Decorator > CallExpression[callee.name='Injectable']",
+      message:
+        'application/core layers are framework-free — no NestJS DI decorators. Wire DI in apps/* via Symbol-token factory providers.',
+    },
+  ],
+};

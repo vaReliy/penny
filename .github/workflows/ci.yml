@@ -55,6 +55,13 @@ jobs:
       - name: Check exact pins
         run: node tools/check-exact-pins.mjs
 
+      - name: Root-level lint (path-anchored rules)
+        run: pnpm nx lint:root
+        # Root-level lint covers path-anchored ESLint rules (e.g., .js-extension gate,
+        # localStorage ban, @Injectable ban) that are dead under per-project linting
+        # due to basePath resolution. This runs from the repo root where root-relative
+        # globs work natively. Must run before per-project lint to catch violations.
+
       - name: Lint, test, build affected projects
         run: pnpm nx affected -t lint,vite:test,typecheck,build
         env:

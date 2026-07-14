@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed (Task — resurrect dead ESLint fuses, lint apps/api and apps/cli)
+
+- **`eslint.config.mjs`** — the `.js`-extension-on-relative-imports gate and the `localStorage` ban were silently dead under `nx lint <project>`: project-local configs spread `baseConfig`, but ESLint resolves the root config's path-anchored `files` globs against each project's own basePath, so globs like `libs/**/core/**/*.ts` never matched a file at `libs/identity/application/src/lib/foo.ts`. Also resurrected the previously-parked `@Injectable` ban (application/core/kernel layers must stay framework-free) via the same mechanism.
+- **`project.json`** (new root-level Nx project) + **`tools/lint-root.mjs`** (new) — a `lint:root` target that runs ESLint from the true workspace root (`cwd: {workspaceRoot}`), so the root-anchored globs resolve correctly. Runs alongside per-project `nx lint <project>`, not instead of it.
+- **`apps/api/eslint.config.mjs`**, **`apps/cli/eslint.config.mjs`** (new) — `apps/api` and `apps/cli` previously had no ESLint config and no lint target at all; both are now linted (`nx show projects --with-target lint` now includes `api`/`cli`).
+- **`.github/workflows/ci.yml`** — added a `pnpm nx lint:root` step so the resurrected path-anchored rules actually run in CI.
+- Verified live: scratch violations introduced and reverted for all three rules (including a combined `.js`-extension + `@Injectable` violation in the same file, confirming no same-key `no-restricted-syntax` clobbering across the merged selector arrays).
+
 ### Changed (Task — fix TOCTOU races in status transitions and role promotions via CAS)
 
 - **`libs/identity/core/src/lib/user-repository.ts`** — `IUserRepository.updateStatus`/`updateRoles` gain optional `expectedCurrentStatus`/`expectedRoles` params for optimistic-concurrency control.

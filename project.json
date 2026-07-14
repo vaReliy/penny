@@ -1,0 +1,20 @@
+{
+  "name": "root",
+  "$schema": "./node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "targets": {
+    "lint:root": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/lint-root.mjs",
+        "cwd": "{workspaceRoot}"
+      },
+      "cache": true,
+      "inputs": [
+        "default",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ]
+    }
+  }
+}
