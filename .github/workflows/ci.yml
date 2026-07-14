@@ -142,7 +142,7 @@ jobs:
       - name: Run Playwright e2e tests
         run: pnpm nx affected -p web-e2e -t e2e
         env:
-          # Signal to playwright.config.mts that we're running in CI
+          # Signal to playwright.config.mts to use serve-static (built artifact) instead of dev server
           CI: 'true'
 
   # Build Docker images for all applications

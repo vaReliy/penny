@@ -31,9 +31,11 @@ export default defineConfig({
   },
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'pnpm exec nx run web:serve',
+    command: process.env['CI']
+      ? 'pnpm exec nx run web:serve-static'
+      : 'pnpm exec nx run web:serve',
     url: 'http://localhost:4200',
-    reuseExistingServer: true,
+    reuseExistingServer: !process.env['CI'],
     cwd: workspaceRoot,
   },
   projects: [

@@ -297,13 +297,13 @@ Do not confuse integration specs (which connect to real Mongo) with unit tests t
 
 ### E2E static server: `@nx/web:file-server` not raw `http-server`
 
-Raw `http-server` has no SPA fallback — `page.goto('/greeting')` in a Playwright spec gets a 404 for client-side routes. Use the project's existing Nx target instead:
+Raw `http-server` has no SPA fallback — `page.goto('/greeting')` in a Playwright spec gets a 404 for client-side routes. Use the project's existing Nx target instead. In CI, serve the built artifact (`web:serve-static`) to test the production bundle (esbuild minification differences, etc.); locally, use the dev server (`web:serve`) for faster iteration:
 
 ```typescript
 // playwright.config.mts
 export default defineConfig({
   webServer: {
-    command: 'pnpm exec nx run web:serve-static',
+    command: process.env['CI'] ? 'pnpm exec nx run web:serve-static' : 'pnpm exec nx run web:serve',
     url: 'http://localhost:4200',
     reuseExistingServer: !process.env['CI'],
   },
