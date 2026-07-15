@@ -5,6 +5,7 @@ description: >-
   
   Українською: очистити inbox, дистилювати знання, перенести записи до rules, прибрати KNOWLEDGE_INBOX, розкласти по місцях.
 
+
 triggers:
   - distill-inbox
   - distill inbox
@@ -61,6 +62,10 @@ EXISTING section of the target file (do not append a dump at the bottom).
 Then delete those entries — and all Category A entries — from the inbox.
 Leave Category C entries untouched.
 
+When inlining, follow these constraints to avoid fabricating broken examples or embellishing causal claims:
+- **Code examples**: Lift real code verbatim from the file or commit the inbox entry names (cite the path). Include no code at all if you cannot point to a real source — never invent illustrative snippets, as fabricated examples are where broken shell/pseudo-facts creep in.
+- **Causal claims**: Preserve the entry's stated mechanisms exactly. Do not upgrade, generalize, or reword explanations. Example: "breaks nginx sub_filter matching" must not become "a CSP violation."
+
 Category A (delete only):
 <list each entry heading>
 
@@ -75,6 +80,16 @@ TARGET: rules/architecture-backend.md
 
 [… grouped by target file …]
 ```
+
+## Step 4.5 — Verify against sources
+
+After docs-writer completes, re-read each distilled section side-by-side with the original inbox entry text. Check:
+
+1. Any code block traces to real code in the repo/commit history (cites a file path, doesn't invent).
+2. No semantic drift in causal claims — verify the distilled wording states the same mechanism, not a generalization.
+3. The target file's surrounding section still reads coherently and isn't corrupted by the splice (check for orphaned bullets, misplaced headings, or mangled lists).
+
+Any failure → fix before reporting.
 
 ## Step 5 — Report
 

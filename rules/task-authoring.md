@@ -111,6 +111,14 @@ One task = one clean session. Split when the task would touch **>3 files**, cros
 
 When the foresight gate fires (see rules/workflow.md), the task body must include a `## Blast radius` section listing all files/layers that consume the changed contract and all foreseeable follow-on tasks. This section is the explicit evidence that the task was scoped correctly up front.
 
+### Premise Verification for "Fix This" Tasks
+
+Before implementing a task whose stated premise is "X is broken/unfixed/missing," verify the premise against recent git history. The fix may already be partially or fully landed in an earlier commit, making the real remaining scope narrower than the task text states.
+
+Pattern: run `git log -S<suspected-fix-marker> -- <named-files>` to search for commits that added the suspected fix, or manually review recent changes to the named files to check whether the problem statement is still accurate. This avoids duplicate work and surfaces the actual gaps (e.g., "X is fixed in file A but not yet in file B") so the task scope can be narrowed before execution.
+
+Example: a task described a missing Mongo per-file test isolation as unfixed, but the spec already had the fix (inline random-suffix DB name + `dropDatabase()`) from a prior commit. Only a second spec file still lacked the treatment. Reviewing the git history first would have caught this stale premise and narrowed the task to the one remaining file.
+
 ### Parked tasks
 
 A parked task (blocked on an upstream seam decision) must:

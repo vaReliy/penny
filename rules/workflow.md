@@ -494,6 +494,17 @@ A full-repo-scan (reading all source code) should only happen after topology doc
 - **No chatter**: quality gate agents report independently, orchestrator reads all reports and decides
 - **Always cleanup**: TeamDelete after phase completes (pass or fail)
 
+## Skill Renaming
+
+Renaming a Claude Code CLI skill requires updating four independent touch-points to avoid leaving the old name active:
+
+1. **Directory**: Rename the skill's directory under `.claude/skills/`.
+2. **Frontmatter `name:` field**: Update the `name:` metadata in the skill's `SKILL.md` file (this is what the dispatch system actually routes).
+3. **Triggers list**: Update the `triggers:` array in `SKILL.md` to remove the old skill name and add the new one if desired.
+4. **Prose self-references**: Grep the skill's body for any prose/comments that mention the skill by its old name and update them.
+
+Also update any references in `AGENTS.md` skill tables and append an entry to `docs/CLAUDE_TS_CHANGELOG.md` documenting the rename (since skills are often inherited from `claude-ts` via CTS).
+
 ## Agent Quick Routing
 
 | Need                                    | Agent                   |

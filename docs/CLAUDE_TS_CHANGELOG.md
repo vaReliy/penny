@@ -17,6 +17,61 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-15 — Enhancement: `rules/workflow.md` documents skill-renaming four-touch-point checklist
+
+- **Component**: `rules/workflow.md` (new "Skill Renaming" section)
+- **Type**: Enhancement
+- **What happened**: Added a "Skill Renaming" section documenting the four touch-points required to fully rename a Claude Code CLI skill: directory, frontmatter `name:` field, `triggers:` array, and prose self-references. Also includes guidance to update AGENTS.md tables and CLAUDE_TS_CHANGELOG.md.
+- **Why it matters upstream**: Any claude-ts consumer working with the skill system needs this checklist to avoid leaving the old skill name active after a directory rename (the dispatch system routes by `name:` frontmatter, not directory).
+- **Suggested upstream change**: Port the "Skill Renaming" section verbatim into the template's base `rules/workflow.md` as a new top-level section after "Agent Quick Routing" or in a dedicated "Skill Management" section.
+- **Status**: pending-port
+
+---
+
+## 2026-07-15 — Enhancement: `.claude/skills/cts-rule-auditor/SKILL.md` added Check 11 for `.claude/settings.json` hook-path validation
+
+- **Component**: `.claude/skills/cts-rule-auditor/SKILL.md` (Check 11, description header)
+- **Type**: Enhancement
+- **What happened**: Added a new 11th structural consistency check: every `command` field in `.claude/settings.json` hook definitions must resolve to a path listed in `cts-payload.txt`. This catches a payload-sync gap where a settings file could reference a hook script that doesn't exist in a consumer after a fresh `/cts-setup` or `/cts-update`.
+- **Why it matters upstream**: Any claude-ts consumer using Stop hooks in `.claude/settings.json` (e.g., knowledge-capture, notification hooks) has the same risk if a payload file is extended to reference a new script path without adding that path to `cts-payload.txt`.
+- **Suggested upstream change**: Port the new Check 11 section (entire check description and finding format) into the template's `cts-rule-auditor/SKILL.md`, update the skill description header to say "11 structural checks" instead of "10", and update the main skill description to mention `.claude/settings.json` validation.
+- **Status**: pending-port
+
+---
+
+## 2026-07-15 — Enhancement: `rules/testing.md` documents Playwright E2E production-artifact testing and `.env` secret loading
+
+- **Component**: `rules/testing.md` (E2E static server section + new "Reading .env Secrets" section)
+- **Type**: Enhancement
+- **What happened**: Enhanced the existing E2E static server section to emphasize that CI e2e tests must serve the **built production bundle** (via `web:serve-static`), not the dev server — dev-server transformations can hide production-only issues like nginx `sub_filter` string-match breakage when esbuild minifies `content=""` to `content`, causing CSP-nonce injection to silently fail. Added clear guidance to set `CI: 'true'` in workflows with explanatory comment. Separately added a new "Reading .env Secrets Without Display" section documenting the `set -a && source .env && set +a` pattern for loading test database credentials into shell sessions without exposing secrets in transcripts.
+- **Why it matters upstream**: Any claude-ts consumer running e2e tests has the production-bundle-testing priority; the `.env`-loading pattern is useful for any consumer with authenticated test databases.
+- **Suggested upstream change**: Port both additions verbatim into the template's base `rules/testing.md`.
+- **Status**: pending-port
+
+---
+
+## 2026-07-15 — Enhancement: `rules/code-style-backend.md` added shell-script conventions for dual-path parsing parity
+
+- **Component**: `rules/code-style-backend.md` (new "Shell Script Conventions" section)
+- **Type**: Enhancement
+- **What happened**: Added a "Shell Script Conventions" section documenting that jq's `// "default"` alternative operator and shell's `|| echo default` fallback do NOT behave identically on malformed input — jq yields empty string on parse failure, while the shell fallback always produces a value. This leads to silent divergence (e.g., empty marker-path collisions) when both branches are used in sequence. Recommended pattern: normalize empty values once after both branches, independent of which path was taken.
+- **Why it matters upstream**: Any claude-ts consumer writing shell scripts with dual-path JSON/grep parsing (common for Stop hooks, CLI utilities) has the same parity gap and can hit silent failures on malformed input.
+- **Suggested upstream change**: Port the "Shell Script Conventions" section verbatim into the template's base `rules/code-style-backend.md`.
+- **Status**: pending-port
+
+---
+
+## 2026-07-15 — Enhancement: `rules/task-authoring.md` added premise-verification guidance for "fix this" tasks
+
+- **Component**: `rules/task-authoring.md` (new "Premise Verification for 'Fix This' Tasks" section)
+- **Type**: Enhancement
+- **What happened**: Added a new section ("Premise Verification for 'Fix This' Tasks") recommending that before implementing any task whose premise is "X is broken/unfixed," the executor verify the premise against recent git history via `git log -S<marker>`. The fix may already be partially landed, narrowing the actual remaining scope. Includes a concrete example: a test-db-isolation task was stale — one spec already had the fix from a prior commit; only a second spec still needed it.
+- **Why it matters upstream**: Any claude-ts consumer relying on task-based workflows has the same risk of stale task premises if a later commit shipped the fix between authoring and execution.
+- **Suggested upstream change**: Port the "Premise Verification for 'Fix This' Tasks" section verbatim into the template's base `rules/task-authoring.md` (positioned before "Parked tasks" or after "Splitting Rule").
+- **Status**: pending-port
+
+---
+
 ## 2026-07-15 — Fix: `rules/workflow.md` carried a doc/config mismatch on the vitest test-target name; resolved by renaming the target itself to Nx-conventional `test`
 
 - **Component**: `rules/workflow.md` (Command Execution Policy table + target-name note), `rules/nx-generators.md`, `rules/testing.md`, plus workspace config (`nx.json`, `.github/workflows/ci.yml`)
@@ -319,4 +374,15 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 - **What happened**: `/distill-inbox` was inlining Category B entries into rules files without checking whether the target file is CTS-managed, so distillations into template-inherited files went unledgered and were invisible to `/cts-contribute`. A 2026-07-14 CTS payload diff found five such unledgered files. Added a step that checks whether the target file path is template-inherited (under `rules/**`, `.claude/agents/**`, `.claude/skills/**`, or is `CLAUDE.md`/`AGENTS.md`) and requires a CLAUDE_TS_CHANGELOG.md entry when it is.
 - **Why it matters upstream**: the same leak exists in the base template's distill-inbox skill for any consumer with a CTS-managed rules split.
 - **Suggested upstream change**: port the same "check CTS-managed ledger obligation" step into the template's distill-inbox skill.
+- **Status**: pending-port
+
+---
+
+## 2026-07-15 — Fix: `distill-inbox/SKILL.md` anti-fabrication guardrails added after a distillation pass broke shell examples and embellished causal claims
+
+- **Component**: `.claude/skills/distill-inbox/SKILL.md` (Step 4 dispatch constraints + new Step 4.5 verification)
+- **Type**: Fix
+- **What happened**: A distillation pass fabricated broken shell script examples (invented multi-pipeline code in "Bad" block; broken stdin redirection in "Good" block) and embellished a causal claim ("breaks nginx sub_filter matching" → "a real CSP violation"). Both defect classes stemmed from missing anti-fabrication constraints on the docs-writer dispatch. Added two explicit guardrails to Step 4 (code examples must be lifted verbatim from real sources; causal claims must preserve the entry's exact wording, not reword/generalize). Added a new Step 4.5 verification step: after docs-writer completes, re-read each distilled section side-by-side with the original inbox entry, checking (1) code blocks cite real code, (2) no semantic drift in mechanisms, (3) surrounding prose coherence and markdown structure integrity.
+- **Why it matters upstream**: Any `distill-inbox` consumer runs the same risk — lifting/rewording conventions prevent fabricated examples and silent causal drift, but only a post-write verification step catches structural corruption (e.g., new `##` heading spliced into middle of a bullet list) that a subagent's own summary won't flag.
+- **Suggested upstream change**: Port the Step 4 guardrail constraints and the new Step 4.5 verification step verbatim into the template's `distill-inbox/SKILL.md`.
 - **Status**: pending-port
