@@ -199,3 +199,25 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 - **Why it matters upstream**: Any `BaseService`-style pattern requiring a manual one-time bootstrap call has the same silent-failure risk, regardless of which validation library is chosen.
 - **Suggested upstream change**: Not ported in the 2026-07-01 contribution session (js-validator-livr is one of three validator options CTS documents, not the default — the manual-bootstrap footgun is specific to that library's registration model). If contributing, generalize to "libraries with a manual bootstrap/registration step must be called once at process startup — document the exact call for whichever validator your project uses" rather than LIVR-specific wording.
 - **Status**: pending-port (needs generalization before export)
+
+---
+
+## 2026-07-15 — Enhancement: Added same-session micro-resolution lane for orchestrator to resolve ≤3 qualifying findings immediately after gate close
+
+- **Component**: `rules/workflow.md` (Quality gate output contract), `CLAUDE.md` (quality-gate paragraph)
+- **Type**: Enhancement
+- **What happened**: Added a "same-session micro-resolution lane" allowing the orchestrator to resolve up to 3 qualifying `## Emit as Task` findings (≤2 files each, no new deps, no architectural/security relevance, batch-verified once) immediately in the same session instead of always spawning a fresh clean session per finding, based on 2026-07-14 METRICS.md evidence that mechanical T0/T1 follow-ups were costing full-session bootstrap overhead disproportionate to their fix size.
+- **Why it matters upstream**: any claude-ts consumer with the same "Emit as Task → fresh session" pattern pays the same bootstrap tax on small mechanical follow-ups; the lane is generic governance logic, not Penny-specific.
+- **Suggested upstream change**: port the same rule text into the template's base rules/workflow.md Quality gate output contract section and CLAUDE.md quality-gate paragraph.
+- **Status**: pending-port
+
+---
+
+## 2026-07-15 — Enhancement: Added CTS-managed ledger check to distill-inbox; require CLAUDE_TS_CHANGELOG.md entry when distilling into template-inherited files
+
+- **Component**: `.claude/skills/distill-inbox/SKILL.md`
+- **Type**: Enhancement
+- **What happened**: `/distill-inbox` was inlining Category B entries into rules files without checking whether the target file is CTS-managed, so distillations into template-inherited files went unledgered and were invisible to `/cts-contribute`. A 2026-07-14 CTS payload diff found five such unledgered files. Added a step that checks whether the target file path is template-inherited (under `rules/**`, `.claude/agents/**`, `.claude/skills/**`, or is `CLAUDE.md`/`AGENTS.md`) and requires a CLAUDE_TS_CHANGELOG.md entry when it is.
+- **Why it matters upstream**: the same leak exists in the base template's distill-inbox skill for any consumer with a CTS-managed rules split.
+- **Suggested upstream change**: port the same "check CTS-managed ledger obligation" step into the template's distill-inbox skill.
+- **Status**: pending-port

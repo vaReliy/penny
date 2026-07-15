@@ -261,6 +261,15 @@ Reviewer and security-scanner emit two sections in every report:
 - `## Emit as Task` items present → orchestrator creates one task file per finding (following `rules/task-authoring.md`), then **closes the gate** for the current task. Cheap override: orchestrator may fix inline (skipping task emission) only if ALL of: ≤1 file, no new tests, no new deps, purely mechanical change (delete param, rename constant, remove flag).
 - All sections empty (`_none_`) → proceed to phase 5.
 
+**Same-session micro-resolution lane.** After the gate closes for the current task (all `## Fix Now` resolved, `## Emit as Task` list written), the orchestrator MAY resolve emitted findings immediately in the same session when ALL hold per finding:
+
+- ≤2 files; no new runtime dependencies; no architectural/seam decision (foresight gate not triggered); no owner decision required; **not security-relevant** (auth/validation/secrets/ HMAC findings always keep the full pipeline);
+- the natural executor is an agent instance already warm in this session (resume via `SendMessage`) or the change is within the orchestrator's own ledger-file scope;
+- batch cap: ≤3 findings per session, verified **once as a batch** (tester if code changed, then reviewer over the combined micro-diff) — not per finding, and with at most 1 verification pass: any failure → stop, emit the remainder as tasks normally (no retry loop);
+- each resolved finding still gets its own suggested commit message and its own `docs/METRICS.md` row, so owner review granularity is preserved.
+
+Rationale: a warm-context resume skips session bootstrap and pre-flight re-reads; the lane trades none of the gate's rigor (batch verification still runs) for a large token saving on mechanical follow-ups. Findings that miss any criterion emit as tasks exactly as before.
+
 **Closing checklist — if `.claude/**`or`rules/**` changed this session:** suggest running `/rules-audit` before closing. This is a suggestion to the human, not an auto-dispatch.
 
 ## Severity floor (emit-vs-drop)
