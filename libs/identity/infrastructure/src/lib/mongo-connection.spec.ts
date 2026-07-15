@@ -6,6 +6,8 @@ import {
   pingMongo,
   type MongoConnectionConfig,
 } from './mongo-connection.js';
+import { generateTestDbName } from './test-db-name.js';
+import type { Connection } from 'mongoose';
 
 /**
  * Smoke test: connect to MongoDB via the factory, ping it, and disconnect.
@@ -21,14 +23,23 @@ describe('Mongo Connection (smoke test)', () => {
    * The URI is read from `MONGO_TEST_URI` (see `.env` / `README.md`),
    * falling back to an unauthenticated localhost URI for environments
    * where auth is disabled.
+   *
+   * Unique database name per spec-file run — avoids races when Vitest runs
+   * spec files in parallel workers against the same Mongo instance.
    */
   const config: MongoConnectionConfig = {
     uri: process.env['MONGO_TEST_URI'] ?? 'mongodb://localhost:27017',
-    dbName: 'penny-test',
+    dbName: generateTestDbName('penny-test'),
   };
 
+  // Tracked at describe scope so `afterEach` can clean up even if an
+  // assertion in the test body throws before reaching manual cleanup code —
+  // otherwise a failed assertion leaks an open connection and, since the db
+  // name is uniquely generated per run, a permanently orphaned database.
+  let connection: Connection | undefined;
+
   it('connects to mongo and pings the server', async () => {
-    const connection = await createMongoConnection(config);
+    connection = await createMongoConnection(config);
 
     expect(connection).toBeDefined();
     expect(connection.readyState).toBe(1); // 1 = connected
@@ -36,14 +47,20 @@ describe('Mongo Connection (smoke test)', () => {
     // Ping the server to prove connectivity
     const pingResult = await pingMongo(connection);
     expect(pingResult).toBe(true);
-
-    // Clean up
-    await disconnectMongoConnection(connection);
-    expect(connection.readyState).toBe(0); // 0 = disconnected
   });
 
   afterEach(async () => {
-    // Ensure connection is closed after each test
-    // No reconnection attempt — just close what was created in the test body above.
+    // Guard: if `createMongoConnection` itself threw, `connection` is still
+    // undefined — nothing to clean up.
+    if (!connection) {
+      return;
+    }
+
+    // Drop the per-run database (even though this spec writes no documents,
+    // `createMongoConnection` still provisions the database) and close the
+    // connection — runs even when an assertion above throws.
+    await connection.dropDatabase();
+    await disconnectMongoConnection(connection);
+    connection = undefined;
   });
 });

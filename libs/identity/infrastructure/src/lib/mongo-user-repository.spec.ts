@@ -12,6 +12,7 @@ import {
   type MongoConnectionConfig,
 } from './mongo-connection.js';
 import { MongoUserRepository } from './mongo-user-repository.js';
+import { generateTestDbName } from './test-db-name.js';
 import { getUserModel } from './user.model.js';
 import type { Connection } from 'mongoose';
 
@@ -27,28 +28,11 @@ import type { Connection } from 'mongoose';
  * falling back to an unauthenticated localhost URI for environments without auth.
  */
 describe('MongoUserRepository (integration)', () => {
-  // Use a unique database name per test run to avoid conflicts when tests run in parallel.
-  // Use a UUID-like random suffix to ensure uniqueness across concurrent test executions.
-  const generateRandomSuffix = () => {
-    const arr = new Uint8Array(12);
-    if (
-      typeof globalThis.crypto !== 'undefined' &&
-      globalThis.crypto.getRandomValues
-    ) {
-      globalThis.crypto.getRandomValues(arr);
-    } else {
-      for (let i = 0; i < arr.length; i++) {
-        arr[i] = Math.floor(Math.random() * 256);
-      }
-    }
-    return Array.from(arr, (byte) => byte.toString(16).padStart(2, '0')).join(
-      '',
-    );
-  };
-  const dbNameSuffix = generateRandomSuffix();
+  // Unique database name per spec-file run — avoids races when Vitest runs
+  // spec files in parallel workers against the same Mongo instance.
   const config: MongoConnectionConfig = {
     uri: process.env['MONGO_TEST_URI'] ?? 'mongodb://localhost:27017',
-    dbName: `penny-test-${dbNameSuffix}`,
+    dbName: generateTestDbName('penny-test'),
   };
 
   let connection: Connection;
