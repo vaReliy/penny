@@ -15,11 +15,11 @@ export default defineConfig(() => ({
       reportsDirectory: '../../../coverage/libs/identity/core',
       provider: 'v8' as const,
       // Enforce thresholds on every run (not only when --coverage is passed on the CLI)
-      // so any invocation of the vite:test target (including CI's explicit
-      // `nx affected -t vite:test`) is gated by coverage requirements.
+      // so any invocation of the test target (including CI's explicit
+      // `nx affected -t test`) is gated by coverage requirements.
       enabled: true,
-      // Ratchet, not aspiration: measured baseline 2026-07-08 was statements 81.81%,
-      // branches 100%, functions 78.94%, lines 81.81% (`npx nx vite:test identity-core
+      // Ratchet, not aspiration: measured baseline was statements 81.81%,
+      // branches 100%, functions 78.94%, lines 81.81% (`npx nx test identity-core
       // --skip-nx-cache -- --coverage`). Thresholds set ~5 points below measured to
       // catch regressions while leaving headroom for minor fluctuation.
       thresholds: { statements: 76, branches: 95, functions: 73, lines: 76 },

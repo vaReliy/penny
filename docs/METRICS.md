@@ -56,3 +56,5 @@ Each completed task is one row in the table below.
 | 2026-07-14 | penny | fix-stale-e2e-serve-static-example-in-testing-rule | T1   | -      | -/-/-/-           | 0       | no       | cheap          |
 | 2026-07-14 | penny | skeleton-round3-dod-verification-and-close         | T2   | 0      | 0/0/0/-           | 2       | no       | deep           |
 | 2026-07-14 | penny | doc-hygiene-batch-and-skeleton-fork-guide          | T2   | 1      | 0/1/0/-           | 0       | no       | standard       |
+| 2026-07-15 | penny | api-cli-lint-coverage-and-orphaned-test-targets    | T1   | 1      | 0/1/0/-           | 0       | no       | deep           |
+| 2026-07-15 | penny | grill-vite-test-target-naming-decision             | T1   | 0      | 0/0/0/-           | 0       | no       | deep           |

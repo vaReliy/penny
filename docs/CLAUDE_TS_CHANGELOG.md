@@ -17,6 +17,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-15 — Fix: `rules/workflow.md` carried a doc/config mismatch on the vitest test-target name; resolved by renaming the target itself to Nx-conventional `test`
+
+- **Component**: `rules/workflow.md` (Command Execution Policy table + target-name note), `rules/nx-generators.md`, `rules/testing.md`, plus workspace config (`nx.json`, `.github/workflows/ci.yml`)
+- **Type**: Fix
+- **What happened**: The Command Execution Policy table said `nx test <project>` while the workspace actually registered the vitest target as `vite:test` (a buried note lower in the same file had the correct name, scoped misleadingly to "the web project"). Investigation showed `vite:test` was never a deliberate choice: it's an `addPlugin` conflict-avoidance fallback frozen at scaffold time — the current `@nx/vitest` plugin default is `test`, its init generator doesn't even offer `vite:test` as a candidate, and the target that originally forced the fallback no longer exists. Rather than rewriting the docs to entrench the nonstandard name, the target was renamed to `test` in `nx.json` (plus every reference: CI's affected list, one explicit `"vite:test"` target-override key in a lib's `project.json`, and three rules/docs files), making the table row correct as originally written. The rules now state the general invariant instead of a name: target names come from `nx.json` plugin registrations, `nx affected -t <name>` silently skips projects lacking the named target, and any rename must update the table and CI list in the same change.
+- **Why it matters upstream**: Two lessons. (1) A quick-reference table an agent trusts at a glance outranks a correct-but-buried caveat — keep the table the single source of truth and drop redundant duplicate notes. (2) When a workspace's target name deviates from Nx convention, the right fix may be renaming the target to match convention rather than teaching all docs/agents the deviation — generator-produced names can be conflict-avoidance fossils, so check the plugin's current defaults before documenting a deviation as intentional.
+- **Suggested upstream change**: In the template's base `rules/workflow.md`, make the Command Execution Policy table the single source of truth for target names and add the invariant note (plugin registrations define names; `nx affected` silently skips missing targets; renames must move table + CI in lockstep) instead of maintaining the same fact in two places.
+- **Status**: pending-port
+
+---
+
 ## 2026-07-15 — Enhancement: rules/docs-style.md rewritten to point at Prettier `proseWrap: never` instead of a manual convention
 
 - **Component**: `rules/docs-style.md`, `AGENTS.md` (index entry), `.prettierrc` (not template-inherited itself, but the rule now depends on it)

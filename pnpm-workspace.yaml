@@ -1,6 +1,8 @@
-packages:
-  - 'apps/*'
-  - 'libs/*'
+# Deliberately NO `packages` globs: this is an integrated Nx workspace with a single
+# root importer. Per-project package.json files (libs/**, apps/api, apps/cli) are
+# metadata for the Nx graph and @nx/dependency-checks, NOT pnpm workspace members —
+# adding them as importers would fork installs and rewrite the lockfile. Revisit only
+# if/when Docker deployment adopts Nx's pruned per-app install flow.
 saveExact: true
 strictDepBuilds: true
 allowBuilds:

@@ -1,0 +1,25 @@
+{
+  "name": "@penny/api",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "@nestjs/common": "11.1.27",
+    "@nestjs/core": "11.1.27",
+    "@nestjs/platform-express": "11.1.27",
+    "@nestjs/throttler": "6.5.0",
+    "express": "5.2.1",
+    "express-mongo-sanitize": "2.2.0",
+    "mongoose": "8.24.1",
+    "pino": "9.14.0",
+    "pino-http": "11.0.0",
+    "reflect-metadata": "0.2.2",
+    "shared-contracts": "0.0.1",
+    "identity-application": "0.0.1",
+    "shared-errors": "0.0.1",
+    "identity-core": "0.0.1",
+    "identity-infrastructure": "0.0.1",
+    "shared-kernel": "0.0.1",
+    "shared-infrastructure": "0.0.1",
+    "helmet": "8.2.0"
+  }
+}

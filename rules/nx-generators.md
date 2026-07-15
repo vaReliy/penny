@@ -34,7 +34,7 @@ The repo base (`tsconfig.base.json`) is intentionally minimal: no `strict` block
 
 ### Vitest Test Target Configuration
 
-The Nx plugin registers the test target as `vite:test` (configured via `testTargetName: "vite:test"` in `nx.json`). Running `pnpm nx test <project>` silently resolves to nothing. Always use `pnpm nx vite:test <project> --skip-nx-cache` for unit test runs in this repo.
+The `@nx/vitest` plugin registers the inferred test target as `test` (the `testTargetName` option in `nx.json`, kept at Nx's conventional default). Use `pnpm nx test <project> --skip-nx-cache` for unit test runs. Gotcha that motivated this note: `nx <target> <project>` for a target name the project doesn't have silently resolves to nothing — after running any generator, confirm the registered target names in `nx.json` match what CI and the rules table invoke.
 
 ### Angular Style Files — SCSS Only
 

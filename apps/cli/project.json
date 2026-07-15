@@ -21,13 +21,6 @@
         }
       }
     },
-    "test": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "vitest run --config vitest.config.mts",
-        "cwd": "apps/cli"
-      }
-    },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {

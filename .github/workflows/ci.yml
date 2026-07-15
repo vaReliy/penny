@@ -19,11 +19,9 @@ jobs:
       mongo:
         image: mongo:7
         options: >-
-          --health-cmd "mongosh --eval \"db.adminCommand('ping')\""
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-          --health-start-period 15s
+          --health-cmd "mongosh --eval \"db.adminCommand('ping')\"" --health-interval 10s --health-timeout 5s --health-retries 5 --health-start-period 15s
+
+
         ports:
           - 27017:27017
         env:
@@ -63,19 +61,18 @@ jobs:
         # globs work natively. Must run before per-project lint to catch violations.
 
       - name: Lint, test, build affected projects
-        run: pnpm nx affected -t lint,vite:test,typecheck,build
+        run: pnpm nx affected -t lint,test,typecheck,build
         env:
           # MongoDB service container (mongo:7) is available in this job via services.mongo.
           # Uses root user (from services.mongo env vars MONGO_INITDB_ROOT_USERNAME/PASSWORD).
           # Tests connect to penny-test database on localhost:27017.
           MONGO_TEST_URI: 'mongodb://test-user:test-password@localhost:27017/penny-test?authSource=admin'
         # Note on targets:
-        # - Nx plugins @nx/vitest (testTargetName: vite:test) and @nx/vite/plugin
+        # - Nx plugins @nx/vitest (testTargetName: test) and @nx/vite/plugin
         #   (typecheckTargetName: typecheck) register these inferred targets.
-        # - vite:test: 16 projects (all libs + web + api + cli)
-        # - test target removed: api/cli have explicit test targets (run-commands → vitest)
-        #   AND vitest.config.mts files that trigger vite:test inference. Keeping both
-        #   would run vitest twice on those projects. vite:test is sufficient.
+        # - test: 16 projects (all libs + web + api + cli), inferred from vitest.config.mts.
+        #   This list must stay in lockstep with nx.json plugin registrations — nx affected
+        #   silently skips projects when a named target does not exist (no error).
         # - typecheck: runs on every project that exposes a typecheck target — both the
         #   ones @nx/vite/plugin infers automatically and the ones with a manually-added
         #   nx:run-commands target following that same tsc --noEmit pattern (see

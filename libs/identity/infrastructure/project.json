@@ -15,7 +15,7 @@
         "assets": []
       }
     },
-    "vite:test": {
+    "test": {
       "executor": "nx:run-commands",
       "options": {
         "cwd": "libs/identity/infrastructure",

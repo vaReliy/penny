@@ -99,9 +99,9 @@ Non-seam tasks (local/mechanical changes) keep the current fast path; no blast-r
 
 **Project names** (from `nx show projects`): `api`, `api-e2e`, `smoke-e2e`, `identity`, `shared` and any libs added later. When in doubt run `nx show projects` to list them.
 
-**Type-checking in tests:** `nx build` excludes spec files via `tsconfig.lib.json`, and `nx vite:test` transpiles via esbuild without type-checking. To catch `.spec.ts` type errors, use the dedicated `typecheck` target: `nx typecheck <project>` (or `nx run-many -t typecheck` for all projects). All projects using `@nx/vitest` have a `typecheck` target wired to `tsc --noEmit -p tsconfig.spec.json`, which type-checks specs without emission. Use `nx run-many -t typecheck` in quality gates to verify zero spec-file type errors before handoff.
+**Type-checking in tests:** `nx build` excludes spec files via `tsconfig.lib.json`, and `nx test` transpiles via esbuild without type-checking. To catch `.spec.ts` type errors, use the dedicated `typecheck` target: `nx typecheck <project>` (or `nx run-many -t typecheck` for all projects). All projects using `@nx/vitest` have a `typecheck` target wired to `tsc --noEmit -p tsconfig.spec.json`, which type-checks specs without emission. Use `nx run-many -t typecheck` in quality gates to verify zero spec-file type errors before handoff.
 
-**Web project e2e:** The web project test target is `vite:test`, not `test`. Use `nx vite:test web` (not `nx test web`). This applies to all vitest-plugin-inferred projects.
+**Target names are defined by `nx.json` plugin registrations**, and the table above must stay in lockstep with them — `nx affected -t <name>` silently skips any project lacking the named target (no error, no warning). Generator-produced target names can be conflict-avoidance fallbacks rather than deliberate choices, so when a name deviates from Nx convention (`test`/`build`/`lint`/`serve`/`e2e`), verify it against the plugin's current defaults instead of assuming intent. If a plugin registration ever renames a target, update this table and `.github/workflows/ci.yml`'s affected target list in the same change.
 
 ## Execution Model
 

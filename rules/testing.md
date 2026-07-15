@@ -291,7 +291,7 @@ const mongoUri = process.env['MONGO_TEST_URI'] ?? 'mongodb://localhost:27017';
 // Document in .env.example: MONGO_TEST_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@localhost:27017
 ```
 
-Run with: `npx nx run identity-infrastructure:vite:test --skip-nx-cache` (note: target is `vite:test`, not `test`).
+Run with: `npx nx run identity-infrastructure:test --skip-nx-cache`.
 
 Do not confuse integration specs (which connect to real Mongo) with unit tests that hard-code `mongodb://localhost:27017` as a stub config value — the latter is intentional and doesn't need auth.
 
