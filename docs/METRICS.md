@@ -59,3 +59,4 @@ Each completed task is one row in the table below.
 | 2026-07-14 | penny | doc-hygiene-batch-and-skeleton-fork-guide                    | T2   | 1      | 0/1/0/-           | 0       | no       | standard       |
 | 2026-07-15 | penny | api-cli-lint-coverage-and-orphaned-test-targets              | T1   | 1      | 0/1/0/-           | 0       | no       | deep           |
 | 2026-07-15 | penny | grill-vite-test-target-naming-decision                       | T1   | 0      | 0/0/0/-           | 0       | no       | deep           |
+| 2026-07-15 | penny | nx-console-tree-view-grill-and-includedScripts-fix           | T0   | 0      | 0/0/0/-           | 0       | no       | standard       |

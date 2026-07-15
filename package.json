@@ -9,6 +9,9 @@
   "scripts": {
     "prepare": "husky"
   },
+  "nx": {
+    "includedScripts": []
+  },
   "private": true,
   "dependencies": {
     "@angular-devkit/build-angular": "21.2.7",
