@@ -32,6 +32,20 @@ Example fix:
 
 Reproducible installs across machines and CI; no silent minor/patch drift. Nx generators are the most common source of injected caret ranges (webpack, webpack-cli, webpack-dev-server, axios, etc.), so the audit is mandatory whenever a generator touched `package.json`.
 
+## Pinning CI Actions to a Commit SHA
+
+When resolving a tag to a commit SHA for pinning, always dereference via `refs/tags/<tag>^{}` (or use `gh api repos/<owner>/<repo>/commits/<tag>`, which returns the commit directly) — never trust the bare `refs/tags/<tag>` SHA without checking whether the tag is annotated. `git ls-remote refs/tags/<tag>` on an **annotated** tag returns the tag _object_ SHA, not the commit it points at; both are 40 hex characters, so "is this 40 hex chars" does not catch the mistake. In this repo: `pnpm/action-setup@v4` resolved via the bare ref to `f40ffcd9...` (a real-looking SHA, but a tag object) instead of the actual commit `b906affc...`; six other actions pinned in the same pass happened to use lightweight tags (where the bare ref already equals the commit SHA) and weren't affected — only independently re-resolving and diffing every pin would have caught this.
+
+## Metadata-Only Manifests (`@nx/dependency-checks` file-scoping)
+
+`@nx/dependency-checks` only fires on files whose path ends in `/package.json` — the rule silently no-ops (returns `{}`) on any project with no manifest at all, with no error or warning. A project's `package.json` for this purpose does **not** need to be a pnpm workspace member (ESLint and the Nx graph don't consult pnpm) — this repo's pattern is a **metadata-only manifest**: every project (including `apps/api`, `apps/cli`) carries a `package.json` purely for the Nx graph and dependency-checks, deliberately excluded from `pnpm-workspace.yaml`'s globs so it never becomes a pnpm importer (a first attempt that left the globs in place forked the install into 3 importers and put per-app `node_modules` on disk for no benefit).
+
+Declare every workspace-lib import as a real `"<lib>": "0.0.1"` dependency in the importing project's `package.json` (`nx lint <project> --fix` writes these automatically) — never blanket `ignoredDependencies`, which mutes exactly the drift the rule exists to catch. The one legitimate use of `ignoredDependencies` in this repo is `vitest` on lib projects (spec-only import; app webpack builds use `default` cache inputs so specs count as project files, but libs' `production` inputs exclude them).
+
+**Verification is not a claim** — see `rules/workflow.md`'s quality-gate scratch-violation-proof rule: confirm a dependency-checks fix actually fires by removing an imported dep, running `nx lint <project>`, and watching it fail, before trusting "it will fire" from an agent's report.
+
+**Lockfile-diff false alarm**: a large `pnpm-lock.yaml` diff (e.g. +3k/−8.4k lines) after `pnpm install` can be pure re-serialization by a newer pnpm version (e.g. 11.9.0 inlines `resolution:` objects that an older format spread over multiple lines) rather than an actual dependency change. Verify by diffing the sorted package-key sets before suspecting dependency drift — if they're byte-identical, it's reserialization noise.
+
 ## Monorepo Library Dependencies
 
 ### Every lib that directly imports a shared lib needs its own `package.json` entry

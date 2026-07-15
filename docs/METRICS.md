@@ -38,6 +38,7 @@ Each completed task is one row in the table below.
 | 2026-07-08 | penny | coverage-thresholds                                          | T2   | 1      | 0/1/0/0           | 0       | no       | cheap          |
 | 2026-07-08 | penny | ci-e2e-target                                                | T2   | 2      | 1/4/0/0           | 0       | no       | standard       |
 | 2026-07-08 | penny | session-guard-roles-and-opaque-errors                        | T2   | 0      | 0/0/0/0           | 2       | no       | standard       |
+| 2026-07-15 | penny | distill-inbox-into-rules                                     | T1   | 0      | 0/0/0/0           | 0       | no       | cheap          |
 | 2026-07-08 | penny | fix-fakeuserrepository-missing-interface-methods             | T0   | 0      | 0/0/0/0           | 0       | no       | standard       |
 | 2026-07-09 | penny | telegram-hash-nginx-logs                                     | T2   | 2      | 0/1/1/0           | 1       | no       | standard       |
 | 2026-07-10 | penny | session-guard-full-opaque-401                                | T2   | 1      | 1/0/0/0           | 2       | no       | standard       |

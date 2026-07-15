@@ -12,7 +12,7 @@ Every plan, grill, or grooming session must emit one or more task files into the
 
 `/tasks` is **git-ignored** (see `.gitignore`) — private working artifacts, not committed. The committed, durable record is: commit history + `KNOWLEDGE_INBOX.md` + `CHANGELOG.md`. The rule file itself is committed; the task files it governs are private.
 
-Because this directory is git-ignored, always move task files with plain `mv`, never `git mv` — git does not track these paths, so `git mv` fails on them.
+Because this directory is git-ignored (since commit `3476a45`, "docs: consolidate task backlog under top-level tasks/, gitignore it"), always use plain filesystem `mv`/`cp`/`rm` for anything under `tasks/` — never a `git`-prefixed variant. `git status`/`git diff` correctly showing nothing for these moves is expected, not a sign something went wrong; `git mv`/`git add` fail with "not under version control" on these paths. If a git operation unexpectedly fails here, run `git check-ignore -v <path>` to confirm the exclusion.
 
 ## Naming Convention
 
@@ -126,6 +126,10 @@ The executing agent does NOT commit and does NOT move the task file — moving i
 > All acceptance criteria met. Suggested commit message: `<one-line message>`. After committing, move this task file to `done/`.
 
 The owner then reviews `git diff`, commits, and moves the file with plain `mv` (`tasks/` is gitignored — never `git mv`).
+
+## Deferred ADRs Go Stale Without an Explicit Closing Step
+
+Docs don't self-maintain: an ADR recorded with a "Deferred"/interim Status doesn't get revisited automatically once the deferred work actually ships. Any task implementing work an ADR recorded as Deferred/interim must carry an acceptance-criterion line to update that ADR's Status as part of the task's own Acceptance criteria — not as a separate follow-up someone might forget. In this repo, `DECISIONS.md` ADR-006 still said "Deferred / unsafe-inline retained" long after the nginx CSP-nonce pipeline it was deferring had fully shipped and was even referenced in later CHANGELOG entries. Periodic doc-hygiene audits (grep ADR "Deferred" statuses against `CHANGELOG.md`) are also worth running independently of task-level ACs, since the AC only catches ADRs tied to a tracked task.
 
 ## Dependencies
 

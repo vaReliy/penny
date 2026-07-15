@@ -82,6 +82,23 @@ When `nx g @nx/js:lib` is skipped in favour of hand-crafting `project.json` + ts
 
 However, Angular libs must always use the `@nx/angular:lib` generator — never create them manually.
 
+### Consequence of skipping the generator: silently dropped out of `lint` forever
+
+A hand-scaffolded lib missing `eslint.config.mjs` gets no inferred `lint` target from `@nx/eslint/plugin` (which infers the target from that file's presence) — `nx show projects --with-target lint` silently excludes it, and `nx affected -t lint` never touches it, with no error or warning. In this repo: `libs/shared/testing` was hand-scaffolded (`project.json`/`tsconfig*.json` written by hand, `tsconfig.base.json` path alias added manually) and was missing `eslint.config.mjs`, `package.json`, and `README.md` compared to a generator-created sibling. Caught only by diffing the new lib's file listing against a known-generated one. Periodic audit: compare `nx show projects` against `nx show projects --with-target lint` (see `rules/workflow.md`'s Command Execution Policy section).
+
+### `@nx/vitest`-based projects need a manually-added `typecheck` target
+
+`@nx/vite/plugin`'s `typecheckTargetName` option only auto-generates a `typecheck` target for projects whose test target comes from `@nx/vite:build` — projects whose test target is inferred by `@nx/vitest` get no `typecheck` target at all, so a type error in a spec file (wrong mock shape, stale import, `any`-typed mock hiding a real error) can pass silently forever. Fix: add an `nx:run-commands` target by hand that replicates Nx's own inferred pattern exactly (`tsc --noEmit -p tsconfig.spec.json`) — verify the native pattern via `nx show project <native-typecheck-project> --json` on a project that does get one inferred, rather than inventing a shape.
+
+Two gotchas when wiring this by hand:
+
+- `nx.json`'s `targetDefaults` keys match by **target name**, not executor — a `targetDefaults.typecheck` block applies uniformly to every target literally named `typecheck`, whether manually declared or plugin-inferred, so cache config can be centralized once instead of duplicated per-project.
+- The `production` named input excludes spec files and `tsconfig.spec.json` — a target that typechecks against `tsconfig.spec.json` must use `"default"` (which includes spec files) in its cache `inputs`, or the cache will hide changes to the very files being checked.
+
+### `includedScripts` (hiding npm scripts from Nx/NX Console) belongs in `package.json`, not `project.json`
+
+Any per-project Nx option must validate against `project-schema.json` — if it doesn't, grep for it in `node_modules/nx/dist` before assuming it works rather than being silently ignored. In this repo: a top-level `"includedScripts": []` in root `project.json` silently did nothing (the key doesn't exist in `project-schema.json` at all); Nx core's actual reader (`readTargetsFromPackageJson`) only checks `packageJson.nx?.includedScripts`, falling back to all `Object.keys(scripts)` when absent. Fix: move the key into `package.json`'s own `"nx"` block. `nx.json` is workspace-global (target defaults, input globs, inference-plugin registration) and never carries per-project data like which scripts to expose.
+
 ## 7. A green build does not close the task
 
 `nx build` exiting 0 proves compilation, not correctness. The quality gate (`tester` + `reviewer`, see `rules/workflow.md`) still runs. Advance to Phase 4 — do not declare the task done.

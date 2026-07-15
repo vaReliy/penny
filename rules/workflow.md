@@ -99,15 +99,23 @@ Non-seam tasks (local/mechanical changes) keep the current fast path; no blast-r
 
 **Project names** (from `nx show projects`): `api`, `api-e2e`, `smoke-e2e`, `identity`, `shared` and any libs added later. When in doubt run `nx show projects` to list them.
 
+**Audit for hand-scaffolded projects**: periodically compare `nx show projects` against `nx show projects --with-target lint` — a project present in the first list but absent from the second was likely hand-scaffolded (missing `eslint.config.mjs`) rather than created via the proper generator, and silently never gets linted.
+
+**ESLint path-anchored fuses are enforced ONLY via `lint:root`**, not per-project `nx lint` — per-project `nx lint` resolves the root config's path-anchored globs against the project basePath, so verifying them from inside a project directory returns a false negative. Correct probe: `npx eslint --config eslint.config.mjs --print-config <file>` run **from the repo root** — the rule must come back level 2.
+
 **Type-checking in tests:** `nx build` excludes spec files via `tsconfig.lib.json`, and `nx test` transpiles via esbuild without type-checking. To catch `.spec.ts` type errors, use the dedicated `typecheck` target: `nx typecheck <project>` (or `nx run-many -t typecheck` for all projects). All projects using `@nx/vitest` have a `typecheck` target wired to `tsc --noEmit -p tsconfig.spec.json`, which type-checks specs without emission. Use `nx run-many -t typecheck` in quality gates to verify zero spec-file type errors before handoff.
 
-**Target names are defined by `nx.json` plugin registrations**, and the table above must stay in lockstep with them — `nx affected -t <name>` silently skips any project lacking the named target (no error, no warning). Generator-produced target names can be conflict-avoidance fallbacks rather than deliberate choices, so when a name deviates from Nx convention (`test`/`build`/`lint`/`serve`/`e2e`), verify it against the plugin's current defaults instead of assuming intent. If a plugin registration ever renames a target, update this table and `.github/workflows/ci.yml`'s affected target list in the same change.
+**Target names are defined by `nx.json` plugin registrations**, and the table above must stay in lockstep with them — `nx affected -t <name>` silently skips any project lacking the named target (no error, no warning). Generator-produced target names can be conflict-avoidance fallbacks rather than deliberate choices (e.g. the `vite:test` fossil documented in `docs/CLAUDE_TS_CHANGELOG.md`'s 2026-07-15 entry) — so when a name deviates from Nx convention (`test`/`build`/`lint`/`serve`/`e2e`), check the plugin's current defaults and `git log -p` on the config file before assuming intent is deliberate rather than a frozen conflict-avoidance artifact. If a plugin registration ever renames a target, update this table and `.github/workflows/ci.yml`'s affected target list in the same change.
 
 ## Execution Model
 
 - **Sequential steps** → Agent tool with `subagent_type` (output feeds next step)
 - **Parallel phase** → TeamCreate + spawn teammates (2+ independent agents, no data dependency between them)
 - Do not create a team for a single agent
+
+### Dispatch/report protocol
+
+Every dispatch prompt must explicitly instruct the agent to "report back via SendMessage to main" — an agent finishing its work without proactively calling `SendMessage` is a distinct failure mode from hook-chain stalls, and both look identical from the orchestrator's side (a bare `idle_notification` with no report). On a bare `idle_notification`, ping the agent once for its report instead of re-dispatching a duplicate — a duplicate agent re-derives everything at full cost. In this repo, 3 of 5 agents dispatched in one session (devops, reviewer, security-scanner) went idle with only `idle_notification` and each delivered a complete report immediately after a single ping.
 
 ## Standard Feature Pipeline
 
@@ -204,6 +212,10 @@ Spawn 3 teammates: `ba`, `ddd-architect`, `devil`.
 ### Quality Gate (Mandatory — Sequential)
 
 **Never skip.** "The build passes" is not a substitute for the quality gate. A successful webpack/tsc build proves compilation, not correctness — even when the Phase 3 handoff checklist is fully green, the quality gate still runs. The orchestrator must run this pipeline before reporting a task complete.
+
+**Verify working-tree side effects before dispatching `tester`.** A detailed, confident narrative completion report from an implementation agent is not evidence that files actually changed — the orchestrator independently runs `git diff --stat` / `git status` on the working tree after every implementation dispatch, before advancing to `tester`. In this repo: a `devops` agent's background-mode completion report cited specific SHAs and verification output for a 4-step task, but `git status --short` immediately after showed zero changes — the report was entirely fabricated or described work that never persisted.
+
+**A plain-English claim that a lint/lint-adjacent rule "will fire" is not proof.** Require a before/after scratch-violation demonstration: introduce the violation the rule is meant to catch, run the check, confirm it fails, then restore. In this repo: an agent claimed `@nx/dependency-checks` was configured and would fire on `nx lint`, but the rule silently no-ops on projects with no `package.json` (it is file-scoped, matching only `context.filename` ending in `/package.json`) — only a scratch removal of an actually-imported dep, followed by `nx lint`, exposed that it never ran.
 
 **Execution order:**
 

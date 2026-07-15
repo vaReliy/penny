@@ -213,6 +213,105 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-15 — Enhancement: GitHub Actions workflow `on.branches` filter silently skips the entire job on non-matching branches
+
+- **Component**: `github-actions`/`devops` skill guidance (no local rules file — `rules/git-operations.md` is chartered for PR descriptions only, not a fit for this CI-authoring gotcha)
+- **Type**: Enhancement
+- **What happened**: CI tests were added targeting the `skeleton` branch, but `.github/workflows/ci.yml` had inherited an earlier `on.branches: [master, develop]` filter. The workflow never ran on `skeleton` — no error, no warning, the job simply didn't appear in the GitHub Actions UI for that branch. Debugging required a full trial-and-error pass (YAML validity → syntax errors → does it run on master → branch filter) before the silent skip was found.
+- **Why it matters upstream**: Any claude-ts consumer with multi-branch, environment-specific workflows hits the identical silent-skip trap whenever adding a workflow or modifying branch-specific logic without checking the current branch is in the `on.branches` allow-list.
+- **Suggested upstream change**: Add a checklist item to the `github-actions`/`devops` skill guidance: "verify the current branch is in the `on.branches` allow-list when adding or modifying a workflow — a mismatch is fully silent, the job is simply absent from the Actions UI, with no error surfaced anywhere."
+- **Status**: pending-port
+
+---
+
+## 2026-07-15 — Enhancement: `rules/testing.md` gained a Mongo-backed parallel-test-isolation pattern and a skip-guard verification rule
+
+- **Component**: `rules/testing.md`
+- **Type**: Enhancement
+- **What happened**: Two testing-hygiene lessons surfaced while investigating a flaky identity-infrastructure spec: (1) a spec's comment/doc claim of "skips without env X" is not reliable — the actual guard (or absence of one) must be grepped in the spec file itself; two specs here were claimed to skip without `MONGO_TEST_URI` but had no skip guard at all and failed hard instead. (2) Mongo-backed integration specs sharing one database across parallel vitest workers with no per-file isolation fail intermittently (observed as a real once-failed/24-times-passed flake, flagged by Nx as a "flaky task") regardless of correct target wiring.
+- **Why it matters upstream**: Any claude-ts consumer running Mongo- (or other shared-DB-) backed integration specs under parallel vitest workers has the identical isolation gap, and any consumer with hedged test-skip-behavior comments has the identical false-trust risk.
+- **Suggested upstream change**: Add both lessons to the base `rules/testing.md` Mongo/DB integration-test section: (1) require grepping for an actual `skipIf`/conditional guard before trusting a skip-behavior comment; (2) require unique-DB-per-file or serialized execution for DB-backed integration specs run under parallel test workers.
+- **Status**: pending-port
+
+---
+
+## 2026-07-15 — Enhancement: `rules/workflow.md` gained four dispatch/verification hardening rules
+
+- **Component**: `rules/workflow.md` (Command Execution Policy, Quality Gate, Execution Model sections)
+- **Type**: Enhancement
+- **What happened**: Four independent orchestrator-reliability gaps were closed in one pass: (1) an implementation agent's detailed, confident completion report (specific SHAs, verification output) does not prove file changes — a `devops` agent's background-mode report was entirely fabricated/lost, caught only because the orchestrator independently ran `git diff --stat`/`git status`; the orchestrator must do this after every implementation dispatch, before advancing to `tester`. (2) An agent's plain-English claim that a lint rule "will fire" is not proof — an agent claimed `@nx/dependency-checks` was configured and would fire, but it silently no-oped on file-scoping grounds; only a scratch-violation demonstration (break a dep claim, watch lint fail, restore) exposed it. (3) A dispatched agent going idle without a final report has a second cause beyond hook-chain stalls: agents simply ending their turn without calling `SendMessage` — every dispatch prompt must explicitly instruct "report back via SendMessage to main," and a bare `idle_notification` should get one ping for the report rather than a costly duplicate re-dispatch. (4) Periodically compare `nx show projects` against `nx show projects --with-target lint` to catch hand-scaffolded projects that silently never lint.
+- **Why it matters upstream**: All four are generic orchestrator/pipeline reliability patterns independent of this project's stack — any claude-ts consumer running a multi-agent pipeline hits the identical narrative-report-is-not-evidence, plain-claim-is-not-proof, and idle-without-report failure modes.
+- **Suggested upstream change**: Port all four rules verbatim (generalizing tool/rule names as needed) into the template's base `rules/workflow.md` in the Quality Gate and Execution Model sections.
+- **Status**: pending-port
+
+---
+
+## 2026-07-15 — Enhancement: `rules/nx-generators.md` gained three additional generator-hygiene gotchas
+
+- **Component**: `rules/nx-generators.md`
+- **Type**: Enhancement
+- **What happened**: Three additional Nx generator/config gotchas were documented: (1) skipping the generator for a new lib doesn't just risk graph-inference gaps — a lib missing `eslint.config.mjs` gets silently dropped from `nx show projects --with-target lint` and `nx affected -t lint` forever, no error. (2) `@nx/vite/plugin`'s `typecheckTargetName` option only auto-generates a `typecheck` target for `@nx/vite:build` projects, not `@nx/vitest` projects — those need a hand-added `nx:run-commands` target mirroring Nx's own inferred pattern, plus two related caveats: `targetDefaults` match by target name (not executor), and the `production` named input excludes spec files so a spec-typechecking target needs `default` inputs. (3) `includedScripts` (hiding npm scripts from Nx/NX Console) must live in `package.json`'s `"nx"` field — it doesn't exist in `project-schema.json` and silently does nothing if placed in `project.json`.
+- **Why it matters upstream**: All three are `@nx/*` plugin-mechanics gotchas independent of Penny's domain — any consumer using `@nx/vitest`, hand-scaffolding libs, or trying to hide npm scripts from NX Console hits the same silent-failure shape.
+- **Suggested upstream change**: Port all three verbatim into the template's base `rules/nx-generators.md`.
+- **Status**: pending-port
+
+---
+
+## 2026-07-15 — Enhancement: `rules/architecture.md` documents that module-boundary violations can span multiple tag dimensions
+
+- **Component**: `rules/architecture.md` (Nx Monorepo Tags & Boundaries section)
+- **Type**: Enhancement
+- **What happened**: `@nx/enforce-module-boundaries` reports one violation at a time, so fixing the first-reported tag dimension can just surface a violation on a second dimension the pair also differs on. In this repo: a lib flagged for a `scope` violation was also mismatched on `platform` — retagging only `scope` would have re-triggered the same class of error on the next lint run; the fix retagged both dimensions in one pass.
+- **Why it matters upstream**: Any claude-ts consumer using a multi-dimension tagging scheme (`scope`/`type`/`platform` or equivalent) with `@nx/enforce-module-boundaries` hits the identical one-violation-at-a-time reporting gap.
+- **Suggested upstream change**: Add a note to the template's base `rules/architecture.md` Enforcement section: check `depConstraints` for ALL tag dimensions the flagged pair differs on before choosing a fix, not just the dimension named in the current lint error.
+- **Status**: pending-port
+
+---
+
+## 2026-07-15 — Enhancement: `rules/architecture-backend.md` documents the CAS-via-optional-param TOCTOU-race pattern
+
+- **Component**: `rules/architecture-backend.md`
+- **Type**: Enhancement
+- **What happened**: Codified a repo-recurring fix shape (now 2 instances) for stale-read-modify-write races on Mongo entity fields: the repository method gains an _optional_ `expectedCurrentValue` param that adds an equality filter clause to `findOneAndUpdate`, returning `null` on mismatch; callers surface this as an explicit conflict (409 on HTTP, exit 1 on CLI) rather than a silent retry. The optional param keeps old callers byte-identical, so the pattern rolls out incrementally without a breaking change.
+- **Why it matters upstream**: Any claude-ts consumer using MongoDB (or another optimistic-concurrency-capable store) with a repository pattern hits the identical TOCTOU-race shape on scoped field updates; the CAS-via-optional-param design is a reusable, non-breaking fix independent of Mongo specifically (the `findOneAndUpdate`-returns-null mechanism generalizes to any conditional-update primitive).
+- **Suggested upstream change**: Add a generalized version (store-agnostic conditional-update wording) to the template's base `rules/architecture-backend.md` repository-pattern section.
+- **Status**: pending-port
+
+---
+
+## 2026-07-15 — Enhancement: `rules/dependencies.md` gained CI SHA-pinning and metadata-only-manifest patterns
+
+- **Component**: `rules/dependencies.md`
+- **Type**: Enhancement
+- **What happened**: Two dependency-management lessons: (1) when pinning a CI Action tag to a commit SHA, always dereference via `refs/tags/<tag>^{}` (or `gh api .../commits/<tag>`) — a bare `git ls-remote refs/tags/<tag>` on an annotated tag returns the tag object's SHA, not the commit's, and both are equally valid-looking 40-hex-char strings. (2) `@nx/dependency-checks` is file-scoped to paths ending `/package.json` and silently no-ops on projects with none — this repo's fix pattern is a metadata-only manifest (a `package.json` present for the Nx graph/lint but deliberately excluded from `pnpm-workspace.yaml` so it's never a pnpm importer), with every workspace-lib import declared as a real dependency (never blanket `ignoredDependencies`), plus a lockfile-reserialization false-alarm note (a huge `pnpm-lock.yaml` diff can be pure format churn from a newer pnpm version — verify via sorted package-key-set diff before suspecting dependency drift).
+- **Why it matters upstream**: The SHA-pinning gotcha applies to any consumer pinning third-party GitHub Actions. The metadata-only-manifest pattern applies to any consumer using `@nx/dependency-checks` on apps/libs without a "real" pnpm-importer manifest.
+- **Suggested upstream change**: Port both patterns (generalized away from pnpm-specific wording where reasonable) into the template's base `rules/dependencies.md`.
+- **Status**: pending-port
+
+---
+
+## 2026-07-15 — Enhancement: `rules/docker-commands.md` gained GH Actions health-cmd quoting and healthcheck-log-cadence diagnostic notes
+
+- **Component**: `rules/docker-commands.md`
+- **Type**: Enhancement
+- **What happened**: Two Docker/CI diagnostic patterns: (1) GitHub Actions `services.<name>.options` passes straight to `docker create`, which parses `--health-cmd` as exactly one token — a multi-word health command (e.g. `mongosh --eval "..."`) must be wrapped as a single quoted string; the docker-compose array healthcheck form does not translate, and an incorrectly quoted command fails container creation silently (no YAML lint error) before any CI step runs. (2) A container logging continuously with nothing else running is usually its own compose healthcheck pinging itself at its configured `interval` — match the log cadence against the healthcheck interval before treating it as a bug.
+- **Why it matters upstream**: Any claude-ts consumer adding a GH Actions service container with a multi-word health-cmd hits the identical single-token-quoting trap; the healthcheck-log-cadence note prevents a common false "something is wrong" investigation for any consumer using compose healthchecks.
+- **Suggested upstream change**: Port both notes verbatim into the template's base `rules/docker-commands.md`.
+- **Status**: pending-port
+
+---
+
+## 2026-07-15 — Enhancement: `rules/task-authoring.md` — gitignored-tasks git-op guidance folded in; deferred-ADR closing AC added (split status)
+
+- **Component**: `rules/task-authoring.md`
+- **Type**: Enhancement
+- **What happened**: Two distinct additions folded into the existing Routing section and a new section: (1) project-local-only — reinforced the existing "`tasks/` is gitignored, use plain `mv`/`rm`" guidance with the originating commit reference (`3476a45`) and the `git check-ignore -v` diagnostic tip; this is specific to Penny's own `tasks/` gitignore decision, not a generic claude-ts pattern. (2) pending-port — added a "Deferred ADRs Go Stale Without an Explicit Closing Step" section: any task implementing work an ADR recorded as Deferred/interim must carry an acceptance-criterion line to update that ADR's Status, since docs don't self-maintain as a side effect of code shipping; this generalizes to any claude-ts consumer using an ADR-with-status convention.
+- **Why it matters upstream**: The gitignored-tasks git-op reinforcement is project-local (ties to a Penny-specific commit and directory convention already covered by the prior 2026-07-13 entry in this ledger). The deferred-ADR AC requirement is a generic task-authoring discipline applicable to any consumer using ADRs with a Status field.
+- **Suggested upstream change**: Port only the deferred-ADR closing-step section (generalized, drop the Penny-specific `DECISIONS.md` ADR-006/CSP-nonce example) into the template's base `rules/task-authoring.md`.
+- **Status**: pending-port (deferred-ADR item); project-local-only (gitignored-tasks reinforcement)
+
+---
+
 ## 2026-07-15 — Enhancement: Added CTS-managed ledger check to distill-inbox; require CLAUDE_TS_CHANGELOG.md entry when distilling into template-inherited files
 
 - **Component**: `.claude/skills/distill-inbox/SKILL.md`

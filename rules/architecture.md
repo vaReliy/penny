@@ -139,6 +139,8 @@ When a `type:contracts` lib becomes the authoritative source for domain primitiv
 - **`no-restricted-syntax`** — ESLint rule for localStorage ban
 - Both fail merge automatically if violated
 
+**Violations can span multiple tag dimensions at once** (this repo: `scope:*`, `type:*`, `platform:*`) — ESLint reports one violation at a time, so fixing the first-reported dimension can just surface the next. Before choosing a fix, check `depConstraints` in the root `eslint.config.mjs` for ALL dimensions the flagged pair differs on, not just the one in the current error message. In this repo: `libs/shared/testing` (tagged `scope:shared`, `platform:shared`) imported from `identity-core` (`scope:identity`, `platform:server`) — retagging only `scope` to `scope:identity` would have left `platform:shared` importing `platform:server`, re-triggering the same class of error on the next lint run. The fix retagged both dimensions at once (`libs/identity/testing`, tagged `["scope:identity", "type:testing", "platform:server"]`).
+
 ## Nginx & Static Serving
 
 ### Feature-to-contracts re-export pattern

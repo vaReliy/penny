@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en-1.1.0/),
 
 ## [Unreleased]
 
+### Fixed (Inbox distillation: 16 KNOWLEDGE_INBOX entries distilled into 8 rules files + 9 CTS ledger entries + 1 task file)
+
+- **Distillation session** — `docs/KNOWLEDGE_INBOX.md` down from 23 to 7 entries (retained 7 upstream/parked learnings; distilled 16). Net effect: (1) `rules/testing.md` — skip-guard verification + Mongo parallel-isolation pattern (task emitted: `2026-07-15-01-mongo-test-db-parallel-isolation.md`); (2) `rules/workflow.md` — 4 quality-gate/dispatch hardenings (git-diff verification, scratch-violation-proof, idle-report protocol, hand-scaffold audit); (3) `rules/nx-generators.md` — 3 generator hygiene gotchas (hand-scaffold lint-drop, `@nx/vitest` typecheck-target, `includedScripts` placement); (4) `rules/architecture.md` — multi-dimension module-boundary violations; (5) `rules/architecture-backend.md` — CAS-via-optional-param TOCTOU pattern; (6) `rules/dependencies.md` — CI SHA-pinning + metadata-only-manifest patterns; (7) `rules/docker-commands.md` — GH Actions health-cmd quoting + healthcheck-log-cadence notes; (8) `rules/task-authoring.md` — deferred-ADR closing AC requirement. `docs/CLAUDE_TS_CHANGELOG.md` received 9 entries for the 8 edited rules files + 1 for the branch-filter ledger-only finding (route to upstream `devops` skill guidance).
+- No substance lost: condensation focused on session-log narrative reduction, keeping all durable lessons and examples.
+- Deduplication fix: merged redundant `workflow.md` paragraphs on generator-produced target names, avoiding the same-fact-in-two-places anti-pattern.
+
 ### Fixed (Doc hygiene: committed-file self-containment + new starter guide)
 
 - **`rules/nx-generators.md`** — dropped a dangling private decision-ID reference (`D26/D29`) on the `.js`-extension-enforcement note; now points at `DECISIONS.md` ADR-005, the committed record of that decision.

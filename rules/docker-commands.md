@@ -113,6 +113,20 @@ services:
       start_period: 10s
 ```
 
+### GitHub Actions service-container health-cmd needs single-token quoting
+
+GitHub Actions `services.<name>.options` is passed straight to `docker create`, which parses `--health-cmd` as taking exactly one token — the docker-compose array healthcheck form (`test: ['CMD', 'mongosh', '--eval', "..."]`) does not translate to this syntax. A multi-word health command must be wrapped as one single quoted string:
+
+```yaml
+options: --health-cmd "mongosh --eval \"db.adminCommand('ping')\""
+```
+
+An unquoted `--health-cmd mongosh --eval "db.adminCommand('ping')"` fails with `unknown flag: --eval` (exit 125) at container-creation time, before any CI step runs — a silent trap because the YAML itself has no lint error. Always dry-run the equivalent `docker create --health-cmd ... <image>` locally before trusting `services.*.options` health-cmd quoting in CI.
+
+### Continuous healthcheck-cadence logs are not a bug
+
+A container logging continuously with nothing else running is usually its own compose `healthcheck` pinging itself, not a crash-loop — match the log cadence against the healthcheck's `interval` before treating it as a bug. In this repo: `penny-mongo` emitted recurring ~10s bursts (`Connection accepted` → `Connection not authenticating` → `Connection ended`) matching its `healthcheck`'s `interval: 10s`; `"Connection not authenticating"` is informational since credential-less pings don't authenticate, not an auth failure.
+
 ## Dockerfile Production Image
 
 ### Nginx location block inheritance: `add_header` replacement, not merging

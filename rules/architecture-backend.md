@@ -186,6 +186,12 @@ await this.model.findOneAndUpdate({ telegramId }, { $setOnInsert: { status: 'PEN
 
 Concurrent losers retrieve the winner's document unchanged — no accidental status overwrites.
 
+### CAS-via-optional-param: canonical pattern for closing TOCTOU races on scoped updates
+
+When a stale-read-modify-write race is possible on a Mongo entity field (a caller reads a value, computes a new value, then writes it back — racing another writer doing the same), the established fix shape is compare-and-swap via an _optional_ parameter, not a new required API: the repository method gains an optional `expectedCurrentValue` param that, when present, adds `{ field: expectedValue }` to the `findOneAndUpdate` filter (array fields use `{ field: { $eq: expectedArray } }` — equivalent to the bare shorthand, `$eq` just self-documents the intent). `findOneAndUpdate` returns `null` on a filter mismatch, which the caller must surface as an explicit, observable conflict — never a silent retry: `409 DomainError.conflict()` on the HTTP path, `logger.error` + `process.exit(1)` on the CLI path. The optional param keeps old callers byte-identical (no breaking change), so the pattern rolls out incrementally.
+
+In this repo, `mongo-user-repository.ts`'s `updateStatus()` (used by `SetUserStatusService`) and `updateRoles()` (used by `admin-promote.command.ts`) are the two established instances — use this shape for any future TOCTOU finding on a Mongo entity field rather than re-deriving it.
+
 ### Repository pattern: domain methods, not repository methods
 
 `IUserRepository` has **no `updateStatus()` method**. Status transitions are domain methods on the User entity:

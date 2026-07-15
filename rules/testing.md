@@ -282,6 +282,14 @@ Real Telegram widget auth cannot run on localhost — the widget only renders/au
 
 Reviewers must not flag the mocks as a coverage gap — the live-auth verification is accepted manual process.
 
+### Never trust a comment/doc claim of test skip-behavior — grep the actual guard
+
+A spec described in a comment or CI writeup as "skips if env X is unset" may not actually skip — verify by grepping for a real `skipIf`/conditional guard in the spec file itself. In this repo: `mongo-connection.spec.ts` and `mongo-user-repository.spec.ts` were claimed to "skip without `MONGO_TEST_URI`," but both do `process.env['MONGO_TEST_URI'] ?? 'mongodb://localhost:27017'` with no skip guard at all — without a reachable Mongo they fail hard (ECONNREFUSED, or `undefined.dropDatabase()` in `afterAll`), they don't skip.
+
+### Mongo-backed integration specs need explicit isolation under parallel vitest workers
+
+Integration specs sharing one database across parallel vitest workers, with no per-file isolation (unique DB/collection per run, or serialized execution), fail intermittently regardless of correct target wiring — Nx surfaces this as a flagged "flaky task," not a deterministic failure. In this repo: `mongo-user-repository.spec.ts`'s `updateProfile does not overwrite status (concurrent login + approval safety)` test failed once against a real local Mongo, then passed 24/24 on the immediate next run — the parallel workers share the `penny-test` database with no per-file isolation. Unfixed; tracked in `tasks/rebuild/todo/2026-07-15-01-mongo-test-db-parallel-isolation.md`.
+
 ### Identity Mongo integration tests: need `MONGO_TEST_URI` env var
 
 `mongo-user-repository.spec.ts` and `mongo-connection.spec.ts` need the authenticated MongoDB connection string. The `docker-compose.yml` mongo service has auth enabled, so tests must use:
