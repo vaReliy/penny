@@ -1,12 +1,11 @@
 ---
 name: angular-expert
 description: >-
-  Angular specialist for building modern Angular applications. Use when working
-  with Angular components, services, signals, RxJS, NgRx, Angular Router,
-  standalone components, or TypeScript+Angular patterns.
+  Angular specialist for building modern Angular applications. Use when working with Angular components, services, signals, RxJS, NgRx, Angular Router, standalone components, or TypeScript+Angular patterns.
+  
+  Українською: Angular, компонент, сервіс, сигнали, RxJS, NgRx, маршрутизатор, standalone компонент, декоратор, inject, Angular форма, HttpClient.
 
-  Українською: Angular, компонент, сервіс, сигнали, RxJS, NgRx, маршрутизатор,
-  standalone компонент, декоратор, inject, Angular форма, HttpClient.
+
 triggers:
   - Angular
   - NgModule

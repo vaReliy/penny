@@ -5,6 +5,7 @@ description: >-
   
   Українською: аудит правил, перевірка агентів, дрейф конфігурації, перевірити rules, перевірити агентів, KNOWLEDGE_INBOX застарілий.
 
+
 triggers:
   - cts-rule-auditor
   - rules-audit

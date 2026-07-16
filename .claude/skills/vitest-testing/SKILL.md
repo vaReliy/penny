@@ -1,12 +1,11 @@
 ---
 name: vitest-testing
 description: >-
-  Testing with Vitest (or Jest) for TypeScript applications. Use when writing
-  unit tests, integration tests, mocking, coverage, mutation testing (Stryker),
-  or TDD workflows in Node.js/TypeScript.
+  Testing with Vitest (or Jest) for TypeScript applications. Use when writing unit tests, integration tests, mocking, coverage, mutation testing (Stryker), or TDD workflows in Node.js/TypeScript.
+  
+  Українською: тестування Vitest, Jest, написати тест, юніт тест, інтеграційний тест, мок, покриття, мутаційне тестування, TDD, vi.fn, vi.mock, describe, it.
 
-  Українською: тестування Vitest, Jest, написати тест, юніт тест, інтеграційний
-  тест, мок, покриття, мутаційне тестування, TDD, vi.fn, vi.mock, describe, it.
+
 triggers:
   - Vitest
   - Jest

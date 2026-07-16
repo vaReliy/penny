@@ -2,9 +2,9 @@
 
 /**
  * Workflow YAML Validation Script
- * 
+ *
  * Validates the syntax and structure of the PR Management workflow.
- * 
+ *
  * Requirements: npm install js-yaml (dev dependency, not in package.json)
  * Usage: node .github/scripts/validate-workflow.js
  */
@@ -19,7 +19,7 @@ try {
     console.error(`❌ Workflow file not found: ${workflowPath}`);
     process.exit(1);
   }
-  
+
   const doc = yaml.load(fs.readFileSync(workflowPath, 'utf8'));
   console.log('✅ Workflow YAML is valid');
   console.log('Workflow name:', doc.name);
