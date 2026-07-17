@@ -8,7 +8,7 @@
 
 The orchestrator may use ONLY these tools directly:
 
-- `Agent`, `TeamCreate`, `TeamDelete`, `SendMessage` — dispatch & coordination
+- `Agent`, `SendMessage` — dispatch & coordination
 - `AskUserQuestion` — clarify ambiguous requirements
 - `TaskCreate`/`TaskUpdate` — track pipeline progress
 - `Read` — ONLY for @.claude/\*\* config files, @rules/\*\* and @AGENTS.md, plan files, agent reports
@@ -22,18 +22,26 @@ FORBIDDEN for the orchestrator (delegate to agents instead):
 
 If you find yourself opening `src/use-cases/...` or grepping `src/controllers/...` — STOP. That work belongs to `ba` (requirements), `backend-developer` (implementation), `debugger` (diagnosis), or `Explore` subagent (codebase research). Dispatch first, read agent reports instead.
 
-## First Action: Triage (MANDATORY)
+## First Action: Triage (MANDATORY) — Tiered Planning Ladder (T0–T3)
 
 Your first action on ANY user request is classification, not exploration. Read ONLY the user's message. Do NOT open project files.
 
-Decision tree:
+Non-ladder routes (checked first, before tiering):
 
-1. Trivial? (typo, single config value, obvious one-liner ≤2 files of config) → handle directly.
-2. Bug report? → `debugger` pipeline.
-3. Infra/CI/Docker? → `devops` pipeline.
-4. Feature / code change / "add X" / "change Y"? → feature pipeline, start with `ba`.
-5. Requirements ambiguous? → ONE round of `AskUserQuestion`, then pipeline.
-6. Pure research question ("how does X work in this codebase?") → dispatch `Explore` subagent.
+1. Bug report → `debugger` pipeline (write a failing test first).
+2. Infra/CI/Docker → `devops` pipeline.
+3. Pure research question ("how does X work in this codebase?") → dispatch `Explore` subagent.
+4. Requirements ambiguous → ONE round of `AskUserQuestion`, then re-classify into a tier.
+
+Everything else is classified into exactly one tier. File-count/config-type checks only decide the T0/T1 ceiling (whether a task is small and mechanical enough to skip requirements authorship); they never gate T1→T2. **The foresight gate below is the sole T1→T2 selector — do not layer a second risk heuristic on top of it to decide whether `ba` is required.**
+
+**T0 — trivial**: ≤2 files, no executable config (not ESLint rules, CI scripts, tsconfig settings, build configs — those are executable and correctness-bearing even at 1 file) → handle directly, then run `reviewer` only. No pipeline.
+
+**T1 — local**: ≤3 files, the foresight gate below does NOT fire, no new endpoint/migration → skip `ba`; the orchestrator writes 5-line acceptance criteria directly from the user's message, then dispatches the implementation agent directly. The full quality gate still runs — T1 skips requirements authoring, not verification. This includes a small frontend component/page change by itself (no seam) — that no longer auto-requires `ba` the way the old "Pipeline Trigger" list mandated; only crossing the foresight gate (or exceeding 3 files) escalates it to T2.
+
+**T2 — seam/contract**: the foresight gate fires (new enum/registry/const object consumed across files/layers, a field/interface change consumed in >1 layer, a new endpoint/route/DTO, a database migration, authorization logic, or a topology/serving-boundary change) → `ba` required → route to `ddd-architect` too when the seam spans domain layers → impl → quality gate.
+
+**T3 — architecture decision**: the task requires weighing multiple structural approaches, deciding domain boundaries, or picking a topology with no clearly-better default → full Planning Team (`ba` + `ddd-architect` + `devil`, see Planning Team section) → impl → quality gate.
 
 You are NOT allowed to:
 
@@ -43,32 +51,22 @@ You are NOT allowed to:
 
 If you feel the urge to look at code — that's the signal to dispatch `ba` or `Explore`.
 
-## Pipeline Trigger: REQUIRED When ANY Applies
-
-- Creates or modifies a UseCase, Service, or Handler class
-- Requires a database migration (Prisma/TypeORM)
-- Adds or changes a route, controller, or request DTO
-- Adds or changes a frontend component or page (Vue/React/Angular)
-- Involves authorization logic (guards, middleware, RBAC)
-- Touches more than 2 files
-
-If none apply (e.g. typo fix, config value) — skip the pipeline.
-
-## Foresight gate (seam-touching tasks only)
+## Foresight gate (T1→T2 tier selector)
 
 Trigger: the task introduces or changes a shared contract/seam — any of:
 
 - A new enum, registry, or const object consumed across multiple files/layers
 - A field or interface change consumed in >1 layer (entity, use-case, API, frontend)
 - A change to who-serves-what (topology, middleware order, serving boundary)
+- A new endpoint/route/controller/DTO, a database migration, or authorization logic (guards, middleware, RBAC)
 
-When triggered:
+When triggered (task is T2 or T3):
 
 1. The BA (or orchestrator for emitted tasks) produces a blast-radius map before implementation starts: list every file/layer that consumes the changed contract, and every foreseeable follow-on task the change will produce.
 2. Re-author the task at full scope — include the blast-radius. Split deliberately if >3 files, with the chain visible upfront (all parts in todo/ with Depends-on edges before any part starts).
-3. Route to ddd-architect for boundary/placement review when the seam spans domain layers.
+3. Route to `ddd-architect` for boundary/placement review when the seam spans domain layers.
 
-Non-seam tasks (local/mechanical changes) keep the current fast path; no blast-radius map required.
+When it does not fire, the task is at most T1 — no `ba`, no blast-radius map, fast path.
 
 ## Core Principles
 
@@ -97,25 +95,21 @@ Non-seam tasks (local/mechanical changes) keep the current fast path; no blast-r
 - `--projects=<name>` with `run-many` — scope to specific projects
 - `--verbose` — show full executor output for debugging
 
-**Project names** (from `nx show projects`): `api`, `api-e2e`, `smoke-e2e`, `identity`, `shared` and any libs added later. When in doubt run `nx show projects` to list them.
+**Project names**: run `nx show projects` to list the current apps/libs — do not hardcode project names in this file, they're project-specific and grow as libs are added.
 
-**Audit for hand-scaffolded projects**: periodically compare `nx show projects` against `nx show projects --with-target lint` — a project present in the first list but absent from the second was likely hand-scaffolded (missing `eslint.config.mjs`) rather than created via the proper generator, and silently never gets linted.
+**Type-checking in tests:** `nx build` excludes spec files via `tsconfig.lib.json`, and `nx test` transpiles via esbuild without type-checking. To catch `.spec.ts` type errors, use a dedicated `typecheck` target: `nx typecheck <project>` (or `nx run-many -t typecheck` for all projects). If your project uses `@nx/vitest` for test-target inference (rather than `@nx/vite:build`), `@nx/vite/plugin`'s `typecheckTargetName` option will NOT auto-generate this target for you — it only fires for `@nx/vite:build` projects. Add a hand-written `nx:run-commands` target running `tsc --noEmit -p tsconfig.spec.json`, with cache config centralized via `targetDefaults.typecheck` using `inputs: ["default", "^production", { "externalDependencies": ["typescript"] }]` — not `"production"`, which excludes spec files by design. Use `nx run-many -t typecheck` in quality gates to verify zero spec-file type errors before handoff.
 
-**ESLint path-anchored fuses are enforced ONLY via `lint:root`**, not per-project `nx lint` — per-project `nx lint` resolves the root config's path-anchored globs against the project basePath, so verifying them from inside a project directory returns a false negative. Correct probe: `npx eslint --config eslint.config.mjs --print-config <file>` run **from the repo root** — the rule must come back level 2.
-
-**Type-checking in tests:** `nx build` excludes spec files via `tsconfig.lib.json`, and `nx test` transpiles via esbuild without type-checking. To catch `.spec.ts` type errors, use the dedicated `typecheck` target: `nx typecheck <project>` (or `nx run-many -t typecheck` for all projects). All projects using `@nx/vitest` have a `typecheck` target wired to `tsc --noEmit -p tsconfig.spec.json`, which type-checks specs without emission. Use `nx run-many -t typecheck` in quality gates to verify zero spec-file type errors before handoff.
-
-**Target names are defined by `nx.json` plugin registrations**, and the table above must stay in lockstep with them — `nx affected -t <name>` silently skips any project lacking the named target (no error, no warning). Generator-produced target names can be conflict-avoidance fallbacks rather than deliberate choices (e.g. the `vite:test` fossil documented in `docs/CLAUDE_TS_CHANGELOG.md`'s 2026-07-15 entry) — so when a name deviates from Nx convention (`test`/`build`/`lint`/`serve`/`e2e`), check the plugin's current defaults and `git log -p` on the config file before assuming intent is deliberate rather than a frozen conflict-avoidance artifact. If a plugin registration ever renames a target, update this table and `.github/workflows/ci.yml`'s affected target list in the same change.
+**Target names are defined by `nx.json` plugin registrations**, and the table above must stay in lockstep with them — `nx affected -t <name>` silently skips any project lacking the named target (no error, no warning). Generator-produced target names can be conflict-avoidance fallbacks rather than deliberate choices — so when a name deviates from Nx convention (`test`/`build`/`lint`/`serve`/`e2e`), check the plugin's current defaults and `git log -p` on the config file before assuming intent is deliberate rather than a frozen conflict-avoidance artifact. If a plugin registration ever renames a target, update this table and the CI workflow's affected-target list in the same change.
 
 ## Execution Model
 
 - **Sequential steps** → Agent tool with `subagent_type` (output feeds next step)
-- **Parallel phase** → TeamCreate + spawn teammates (2+ independent agents, no data dependency between them)
-- Do not create a team for a single agent
+- **Parallel phase** → spawn 2+ independent teammates via `Agent` (no data dependency between them)
+- Do not spawn a team of one — a single agent is a plain sequential dispatch
 
 ### Dispatch/report protocol
 
-Every dispatch prompt must explicitly instruct the agent to "report back via SendMessage to main" — an agent finishing its work without proactively calling `SendMessage` is a distinct failure mode from hook-chain stalls, and both look identical from the orchestrator's side (a bare `idle_notification` with no report). On a bare `idle_notification`, ping the agent once for its report instead of re-dispatching a duplicate — a duplicate agent re-derives everything at full cost. In this repo, 3 of 5 agents dispatched in one session (devops, reviewer, security-scanner) went idle with only `idle_notification` and each delivered a complete report immediately after a single ping.
+Every dispatch prompt must explicitly instruct the agent to "report back via SendMessage to main" — an agent finishing its work without proactively calling `SendMessage` is a distinct failure mode from hook-chain stalls, and both look identical from the orchestrator's side (a bare `idle_notification` with no report). On a bare `idle_notification`, ping the agent once for its report instead of re-dispatching a duplicate — a duplicate agent re-derives everything at full cost.
 
 ## Standard Feature Pipeline
 
@@ -125,37 +119,37 @@ ba → ddd-architect? → impl-{slug} team ══╣
                                          ╚═══ vue/react/angular-developer (if UI change)
                               ║
                     [Quality Gate — sequential]
-                    tester ──► reviewer ──► security-scanner ┐
-                                       └──► qa              ┘ (parallel final stage)
+                    tester(verify) ──► reviewer ──► security-scanner ┐
+                                                └──► qa              ┘ (parallel final stage)
                               ║
                         docs-writer
                               ║
                      knowledge capture  ← orchestrator (mandatory)
 ```
 
-| Phase                | Mode                                    | Agent(s)                                      | Output                              |
-| -------------------- | --------------------------------------- | --------------------------------------------- | ----------------------------------- |
-| 1. Requirements      | sequential                              | `ba`                                          | User stories, scope, API contract   |
-| 2. Architecture      | sequential _(skip if no arch decision)_ | `ddd-architect`                               | Domain model, placement             |
-| 3. Implementation    | **team** `impl-{slug}`                  | `backend-developer` + frontend agent(s) if UI | Code + ESLint + tsc                 |
-| 4. Quality Gate      | sequential then parallel (mandatory)    | `tester` → `reviewer` → conditional parallel  | Stage reports; restart from tester  |
-| 5. Documentation     | sequential                              | `docs-writer`                                 | PR description + `gh pr create`     |
-| 6. Knowledge Capture | orchestrator (mandatory — never skip)   | —                                             | Updated docs + inbox/permanent home |
+This diagram is the T2/T3 path (`ba` required). **T1 skips Phase 1 entirely**: the orchestrator writes the 5-line acceptance criteria itself (see Tiered Planning Ladder above) and starts directly at Phase 3 — everything from Phase 3 onward (impl team, quality gate, docs, knowledge capture) still runs unchanged.
+
+| Phase                | Mode                                                                            | Agent(s)                                             | Output                                     |
+| -------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------ |
+| 1. Requirements      | sequential _(skipped for T1 — orchestrator writes acceptance criteria instead)_ | `ba`                                                 | User stories, scope, API contract          |
+| 2. Architecture      | sequential _(skip if no arch decision)_                                         | `ddd-architect`                                      | Domain model, placement                    |
+| 3. Implementation    | **team** `impl-{slug}`                                                          | `backend-developer` + frontend agent(s) if UI        | Code + ESLint + tsc                        |
+| 4. Quality Gate      | sequential then parallel (mandatory)                                            | `tester(verify)` → `reviewer` → conditional parallel | Stage reports; restart from tester(verify) |
+| 5. Documentation     | sequential                                                                      | `docs-writer`                                        | PR description + `gh pr create`            |
+| 6. Knowledge Capture | orchestrator (mandatory — never skip)                                           | —                                                    | Updated docs + inbox/permanent home        |
 
 ### Pre-flight obligation for technical agents
 
-When dispatching a technical agent (`backend-developer`, `angular-developer`, `tester`, `qa`, `devops`, `dba`, `debugger`, `refactoring-expert`, `integration-architect`, `queue-specialist`), the agent definition already includes mandatory pre-flight reads (`docs/KNOWLEDGE_INBOX.md` + `rules/code-style.md` + context-dependent rules). Do not pass these as inline context — the agent reads them from disk so they reflect the current state of the repo.
-
-**Scoping note**: `rules/architecture.md` (Clean Architecture layer patterns) applies only to agents writing **application code** (UseCase/Service/Repository/DTO layers). Agents whose output is purely infrastructure config (`devops` writing Dockerfiles/CI/env config, `dba` writing schema migrations) skip `rules/architecture.md` — the read is inert but wastes tokens (haiku model).
+When dispatching a technical agent (`backend-developer`, `angular-developer`, `tester`, `qa`, `devops`, `dba`, `debugger`, `refactoring-expert`, `integration-architect`, `queue-specialist`), the agent definition already includes mandatory pre-flight reads (`docs/KNOWLEDGE_INBOX.md` + `rules/architecture.md` + `rules/code-style.md`). Do not pass these as inline context — the agent reads them from disk so they reflect the current state of the repo.
 
 ### Routing Mixed Infrastructure + Application Code
 
 When a task blends infrastructure config (Docker Compose, CI YAML) with application-level code (database connection factory, DI setup), the orchestrator must split dispatch:
 
 - **Infrastructure + container orchestration** → `devops` (writes Dockerfiles, CI YAML, env configs, scripts)
-- **Application-level DB connection factory** (e.g., Mongoose/Typegoose connection pool in `libs/*/infrastructure`) → `backend-developer` (applies strict TS conventions, DI boundaries, Nx tag compliance)
+- **Application-level DB connection factory** (e.g., a database driver's connection pool in `libs/*/infrastructure`) → `backend-developer` (applies strict TS conventions, DI boundaries, Nx tag compliance)
 
-Routing the whole task to `devops` produces rough implementations: global mongoose singleton instead of `createConnection()`, unpinned dependency versions, healthcheck workarounds rather than diagnosis. The `backend-developer` agent applies architectural rigor that `devops` does not — split the dispatch to preserve code quality.
+Routing the whole task to `devops` produces rough implementations: a global connection singleton instead of a scoped factory, unpinned dependency versions, healthcheck workarounds rather than diagnosis. The `backend-developer` agent applies architectural rigor that `devops` does not — split the dispatch to preserve code quality.
 
 ### Implementation Team (Phase 3)
 
@@ -164,7 +158,7 @@ Team name: `impl-{feature-slug}` (e.g. `impl-user-registration`)
 **When to run as a team vs sequential:**
 
 - Backend-only change (no UI) → run `backend-developer` sequentially (no team needed)
-- Backend + UI change → TeamCreate with `backend-developer` + the relevant frontend agent(s)
+- Backend + UI change → spawn `backend-developer` + the relevant frontend agent(s) as parallel teammates
 - Frontend-only change → run the relevant frontend agent sequentially (no team needed)
 
 **Handoff checklist (orchestrator verifies before advancing to Phase 4):**
@@ -174,12 +168,6 @@ Team name: `impl-{feature-slug}` (e.g. `impl-user-registration`)
 - [ ] Generated tsconfig explicitly declares the strict block (the repo base omits it): `strict`, `noImplicitOverride`, `noPropertyAccessFromIndexSignature`, `noImplicitReturns`, `noFallthroughCasesInSwitch`, `forceConsistentCasingInFileNames`. For an app, also verify `module`/`moduleResolution` per `rules/nx-generators.md` — apps differ from libs, do NOT blindly copy a lib's `"bundler"` resolution.
 
 Passing this checklist authorizes advancing to the quality gate (Phase 4) — it does **not** authorize declaring the task done. The gate still runs.
-
-### CI scoping: `nx affected -t <target> --exclude <project>` semantics
-
-When scoping CI targets with `nx affected`, remember that `--exclude` applies to project names, not target names. Before using `--exclude` to scope an invocation, enumerate every project that exposes that target name (via `nx show projects` and `grep project.json`). An exclude-list covering only the one project you thought of is silently wrong the moment another project gains the same target.
-
-Example: `nx affected -t e2e --exclude smoke-e2e` doesn't stop at smoke-e2e — if `apps/api` also defines an `e2e` target (Jest, needs live Mongo), it will also run. Fix: scope explicitly with `-p web-e2e -t e2e` instead.
 
 **Frontend agent selection:**
 
@@ -191,16 +179,22 @@ Example: `nx affected -t e2e --exclude smoke-e2e` doesn't stop at smoke-e2e — 
 
 The `ba` output must include an **API contract** (endpoint, request/response shape) when both backend and frontend are in scope — this is the interface between the two parallel agents.
 
-### Planning Team
+### CI scoping: `nx affected -t <target> --exclude <project>` semantics
+
+When scoping CI targets with `nx affected`, remember that `--exclude` applies to project names, not target names. Before using `--exclude` to scope an invocation, enumerate every project that exposes that target name (via `nx show projects` and `grep project.json`). An exclude-list covering only the one project you thought of is silently wrong the moment another project gains the same target.
+
+Example: `nx affected -t e2e --exclude smoke-e2e` doesn't stop at smoke-e2e — if `apps/api` also defines an `e2e` target (Jest, needs live Mongo), it will also run. Fix: scope explicitly with `-p web-e2e -t e2e` instead.
+
+### Planning Team (T3)
 
 Team name: `plan-{feature-slug}` (e.g. `plan-user-auth`)
 
 Spawn 3 teammates: `ba`, `ddd-architect`, `devil`.
 
-**When to include `devil` and `ddd-architect`:**
+**When to spawn the full team vs `ba` alone:**
 
-- Task involves architectural decisions → include both
-- Simple feature, no arch decision needed → run `ba` sequentially only (no team)
+- T3 (architecture decision — see Tiered Planning Ladder above) → spawn the full team
+- T2 (seam/contract, no structural tradeoff to weigh) → run `ba` sequentially only (no team); add `ddd-architect` sequentially if the seam spans domain layers, per the foresight gate
 
 **Resolution:**
 
@@ -209,20 +203,65 @@ Spawn 3 teammates: `ba`, `ddd-architect`, `devil`.
 - `devil` accepts response → silent on that point
 - `devil` escalates ignored challenge → orchestrator decides before proceeding to implementation phase
 
+**Spawn-context requirement**: when spawning a reviewer/challenger agent (e.g. `devil`) into an ongoing planning chain, paste every prior agent's **full** output into the new agent's spawn prompt up front — do not summarize and rely on the new agent fetching the rest via `SendMessage` to a teammate that may already be idle. A spawned agent cannot assume a previously-spawned teammate will re-serve its own past output on request once its own turn has ended; a direct `SendMessage` to an idle agent produces only an idle-notification ping, not the requested content, forcing a costly manual re-paste round-trip.
+
 ### Quality Gate (Mandatory — Sequential)
 
 **Never skip.** "The build passes" is not a substitute for the quality gate. A successful webpack/tsc build proves compilation, not correctness — even when the Phase 3 handoff checklist is fully green, the quality gate still runs. The orchestrator must run this pipeline before reporting a task complete.
 
-**Verify working-tree side effects before dispatching `tester`.** A detailed, confident narrative completion report from an implementation agent is not evidence that files actually changed — the orchestrator independently runs `git diff --stat` / `git status` on the working tree after every implementation dispatch, before advancing to `tester`. In this repo: a `devops` agent's background-mode completion report cited specific SHAs and verification output for a 4-step task, but `git status --short` immediately after showed zero changes — the report was entirely fabricated or described work that never persisted.
+**Verify working-tree side effects before dispatching `tester`.** A detailed, confident narrative completion report from an implementation agent is not evidence that files actually changed — the orchestrator independently runs `git diff --stat` / `git status` on the working tree after every implementation dispatch, before advancing to `tester`. A background-mode agent report can cite specific SHAs and verification output while describing work that never actually persisted.
 
-**A plain-English claim that a lint/lint-adjacent rule "will fire" is not proof.** Require a before/after scratch-violation demonstration: introduce the violation the rule is meant to catch, run the check, confirm it fails, then restore. In this repo: an agent claimed `@nx/dependency-checks` was configured and would fire on `nx lint`, but the rule silently no-ops on projects with no `package.json` (it is file-scoped, matching only `context.filename` ending in `/package.json`) — only a scratch removal of an actually-imported dep, followed by `nx lint`, exposed that it never ran.
+**A plain-English claim that a lint/lint-adjacent rule "will fire" is not proof.** Require a before/after scratch-violation demonstration: introduce the violation the rule is meant to catch, run the check, confirm it fails, then restore. A rule can be file-scoped or otherwise silently no-op on the project in question even when an agent confidently claims it's configured and will fire — only a scratch demonstration exposes that gap.
 
 **Execution order:**
 
 ```
-tester ──► reviewer ──► security-scanner ┐
-                    └──► qa              ┘ (parallel final stage)
+tester(verify) ──► reviewer ──► security-scanner ┐
+                            └──► qa              ┘ (parallel final stage)
 ```
+
+**Stage 1 — `tester` runs verify/coverage-audit, not primary authorship (always, alone):** Implementation agents (`backend-developer` and the frontend agents) write tests with the code per the `tdd` skill — red/green/refactor during Phase 3, not a separate authoring stage. `tester` runs the suite, audits for coverage gaps (missed edge cases, untested branches, weak assertions), and adds only the tests needed to close those gaps. If the suite fails, or a newly-added gap-filling test fails (revealing a real bug) → fix → restart from stage 1. A gap-filling test that passes closes the gap silently — it does not trigger a restart.
+
+**Stage 2 — `reviewer` (only after tester passes):** Run `reviewer` sequentially. If it reports `## Fix Now` items → fix → restart from stage 1 (not from stage 2).
+
+**Stage 3 — `security-scanner` and/or `qa` (parallel, conditional):** Run in parallel, each only when its trigger condition is met:
+
+- `security-scanner` — change touches auth/validation/secrets/HMAC/endpoints accepting external input
+- `qa` — a user-visible flow changed
+
+If either reports `## Fix Now` items → fix → restart from stage 1.
+
+**Max 2 full restart cycles total** (across all stages). After 2 cycles with open `## Fix Now` items → **hard stop**: do NOT self-patch. Instead, invoke the `handoff` skill to produce a continuation task containing the open `## Fix Now` items, a per-cycle attempt log (what was tried each restart and why it didn't close), and current hypotheses about the remaining failure(s). Save it under `todo/` and surface it to the user — this replaces a bare "surface remaining list to user" stop with a document a fresh session can act on directly.
+
+**Quality gate output contract:**
+
+Reviewer and security-scanner emit two sections in every report:
+
+```
+## Fix Now
+- [finding] — introduced by this changeset; must be resolved before gate passes
+
+## Emit as Task
+- [finding] — pre-existing issue, not introduced here; task file: <suggested-filename>
+```
+
+**Orchestrator actions (deterministic — no judgment calls):**
+
+- `## Fix Now` items present → route to responsible implementation agent → restart quality gate from stage 1. Max 2 full cycles. After 2 cycles with open Fix Now items → **hard stop**: emit a continuation task via the `handoff` skill (open Fix Now items, attempt log, hypotheses) instead of a bare surface-to-user stop, do NOT self-patch.
+- `## Emit as Task` items present → orchestrator creates one task per context cluster: findings that share a module/seam/file-area become ONE task file with a findings checklist inside it; findings unrelated to each other stay as separate task files (following `rules/task-authoring.md`). Then **closes the gate** for the current task. Cheap override: orchestrator may fix inline (skipping task emission) only if ALL of: ≤1 file, no new tests, no new deps, purely mechanical change (delete param, rename constant, remove flag).
+- **Generation damping at G≥2**: At Generation ≥ 2 (a task itself emitted from another emitted task's gate — see `rules/task-authoring.md`'s Generation row), only Correctness/Security findings (per the Severity floor table below) may spawn a new G(n+1) task file. Comprehension and Consistency findings at G≥2 do NOT get their own task file — instead, record them in the sub-floor ledger (`## Deferred / sub-floor` section in `docs/KNOWLEDGE_INBOX.md`) for theme detection, using the existing ≥3-occurrences-promotes-to-a-task rule that applies to sub-floor findings (see below). This overrides the normal Severity floor only at high generation; the floor table and roadmap-prioritization rules remain unchanged.
+- All sections empty (`_none_`) → proceed to phase 5.
+
+**Same-session micro-resolution lane.** After the gate closes for the current task (all `## Fix Now` resolved, `## Emit as Task` list written), the orchestrator MAY resolve emitted findings immediately in the same session when ALL hold per finding:
+
+- ≤2 files; no new runtime dependencies; no architectural/seam decision; no owner decision required; **not security-relevant** (auth/validation/secrets/HMAC findings always keep the full pipeline);
+- the natural executor is an agent instance already warm in this session (resume via `SendMessage`) or the change is within the orchestrator's own ledger-file scope;
+- batch cap: ≤3 findings per session, verified **once as a batch** (tester if code changed, then reviewer over the combined micro-diff) — not per finding, and with at most 1 verification pass: any failure → stop, emit the remainder as tasks normally (no retry loop);
+- each resolved finding still gets its own suggested commit message and its own ledger entry, so owner review granularity is preserved.
+
+Rationale: a warm-context resume skips session bootstrap and pre-flight re-reads; the lane trades none of the gate's rigor (batch verification still runs) for a large token saving on mechanical follow-ups. Findings that miss any criterion emit as tasks exactly as before.
+
+**Closing checklist — if `.claude/**`or`rules/**` changed this session:** suggest running `/rules-audit` before closing. This is a suggestion to the human, not an auto-dispatch.
 
 ### Quality gate stage sequencing
 
@@ -240,49 +279,7 @@ When a fix is needed after the quality gate (`## Fix Now` items in tester/review
 2. **Source logic change** → resume `backend-developer` via `SendMessage` to its existing agent ID → run `tester` → `reviewer` + `security-scanner` in parallel
 3. **Test-only change** → resume `tester` via `SendMessage` to its existing agent ID → run `reviewer` + `security-scanner`
 
-Resuming the same agent instance (via `SendMessage` to the original `agentId`) preserves context — the agent doesn't re-derive understanding cold. After 2 full cycles with open `## Fix Now` items, hard-stop and surface the remaining list to the user (do not self-patch further).
-
-**Stage 1 — `tester` (always, alone):** Run `tester` sequentially. If it reports failures → fix → restart from stage 1.
-
-**Stage 2 — `reviewer` (only after tester passes):** Run `reviewer` sequentially. If it reports `## Fix Now` items → fix → restart from stage 1 (not from stage 2).
-
-**Stage 3 — `security-scanner` and/or `qa` (parallel, conditional):** Run in parallel, each only when its trigger condition is met:
-
-- `security-scanner` — change touches auth/validation/secrets/HMAC/endpoints accepting external input
-- `qa` — a user-visible flow changed
-
-If either reports `## Fix Now` items → fix → restart from stage 1.
-
-**Max 2 full restart cycles total** (across all stages). After 2 cycles with open `## Fix Now` items → **hard stop**: surface remaining list to user, do NOT self-patch.
-
-**Quality gate output contract:**
-
-Reviewer and security-scanner emit two sections in every report:
-
-```
-## Fix Now
-- [finding] — introduced by this changeset; must be resolved before gate passes
-
-## Emit as Task
-- [finding] — pre-existing issue, not introduced here; task file: <suggested-filename>
-```
-
-**Orchestrator actions (deterministic — no judgment calls):**
-
-- `## Fix Now` items present → route to responsible implementation agent → restart quality gate from stage 1. Max 2 full cycles. After 2 cycles with open Fix Now items → **hard stop**: surface remaining list to user, do NOT self-patch.
-- `## Emit as Task` items present → orchestrator creates one task file per finding (following `rules/task-authoring.md`), then **closes the gate** for the current task. Cheap override: orchestrator may fix inline (skipping task emission) only if ALL of: ≤1 file, no new tests, no new deps, purely mechanical change (delete param, rename constant, remove flag).
-- All sections empty (`_none_`) → proceed to phase 5.
-
-**Same-session micro-resolution lane.** After the gate closes for the current task (all `## Fix Now` resolved, `## Emit as Task` list written), the orchestrator MAY resolve emitted findings immediately in the same session when ALL hold per finding:
-
-- ≤2 files; no new runtime dependencies; no architectural/seam decision (foresight gate not triggered); no owner decision required; **not security-relevant** (auth/validation/secrets/ HMAC findings always keep the full pipeline);
-- the natural executor is an agent instance already warm in this session (resume via `SendMessage`) or the change is within the orchestrator's own ledger-file scope;
-- batch cap: ≤3 findings per session, verified **once as a batch** (tester if code changed, then reviewer over the combined micro-diff) — not per finding, and with at most 1 verification pass: any failure → stop, emit the remainder as tasks normally (no retry loop);
-- each resolved finding still gets its own suggested commit message and its own `docs/METRICS.md` row, so owner review granularity is preserved.
-
-Rationale: a warm-context resume skips session bootstrap and pre-flight re-reads; the lane trades none of the gate's rigor (batch verification still runs) for a large token saving on mechanical follow-ups. Findings that miss any criterion emit as tasks exactly as before.
-
-**Closing checklist — if `.claude/**`or`rules/**` changed this session:** suggest running `/rules-audit` before closing. This is a suggestion to the human, not an auto-dispatch.
+Resuming the same agent instance (via `SendMessage` to the original `agentId`) preserves context — the agent doesn't re-derive understanding cold.
 
 ## Severity floor (emit-vs-drop)
 
@@ -338,7 +335,7 @@ debugger → responsible agent ═══╗
 - `backend-developer` — bug in UseCase / Service / Repository / route handler
 - `vue-developer` / `react-developer` / `angular-developer` — bug in frontend component / store / composable
 
-Same resolution rule (origin-based): `## Fix Now` items → back to phase 2. Max 2 cycles. After 2 cycles with open Fix Now items → hard stop, surface to user. `## Emit as Task` items → create task file per finding, close the verify phase.
+Same resolution rule (origin-based): `## Fix Now` items → back to phase 2. Max 2 cycles. After 2 cycles with open Fix Now items → hard stop via the same `handoff`-based continuation task described in the Quality Gate section above. `## Emit as Task` items → create tasks per the context-cluster grouping rule (see Quality Gate section above), close the verify phase.
 
 ## CI/CD Pipeline
 
@@ -376,7 +373,7 @@ Written claims of completion (task moves, comments, inbox entries) must be verif
 
 ## Phase 6: Knowledge Capture (Mandatory After Every Session That Touches Code)
 
-**This phase is non-negotiable.** After every feature, bugfix, or CI/CD pipeline completes — and after ANY session where source, config, or template-inherited files were changed — the orchestrator MUST capture learnings before declaring the task done. This applies equally to formal pipeline runs and to direct/trivial edits: the trigger is "did real files change?", not "did we run a pipeline?"
+**This phase is non-negotiable.** After every feature, bugfix, or CI/CD pipeline completes — and after ANY session where source, config, or template-inherited files were changed — the orchestrator MUST capture learnings before declaring the task done. This applies equally to formal pipeline runs and to direct/trivial edits: the trigger is "did real files change?", not "did we run a pipeline?".
 
 ### Mid-pipeline transcription
 
@@ -448,7 +445,7 @@ Append new entries using the same 3-line format (header line + `Why:` + `Belongs
 
 **Automatic distillation:** during every Phase 6, check `docs/KNOWLEDGE_INBOX.md`. If it has more than 10 entries or exceeds ~3 KB, distill it as part of this phase (a `cheap`-tier agent may be dispatched for this): move each entry into its permanent home (`PROJECT_CONTEXT.md`, `CLAUDE.md`, a rule, a skill, or `docs/CLAUDE_TS_CHANGELOG.md` for upstream-bound learnings — or discard if no longer useful), then delete the entry from the inbox. Also distill on explicit request ("distill the knowledge inbox") or at the end of a roadmap phase.
 
-**Hard constraint:** never `@`-reference `docs/KNOWLEDGE_INBOX.md` from `CLAUDE.md` or `AGENTS.md` — that would force-load it into every conversation as noise. Reference it only as a plain path in on-demand indexes.
+**Hard constraint:** never `@`-reference `docs/KNOWLEDGE_INBOX.md` from `CLAUDE.md` or `AGENTS.md` — that would force-load it into every conversation as noise. Reference it only as a plain path in on-demand indexes. The same constraint applies to `docs/METRICS.md`: never `@`-referenced, for the same reason.
 
 **Division of labor:**
 
@@ -490,9 +487,8 @@ A full-repo-scan (reading all source code) should only happen after topology doc
 ## Team Conventions
 
 - **Naming**: `{purpose}-{slug}` — e.g. `qg-user-registration`, `verify-403-policy`
-- **Lifecycle**: TeamCreate before phase → spawn teammates → collect results → shutdown → TeamDelete
+- **Lifecycle**: spawn teammates with names under the phase's naming convention → collect results via their reports/`SendMessage` — there is no separate team object to create or delete
 - **No chatter**: quality gate agents report independently, orchestrator reads all reports and decides
-- **Always cleanup**: TeamDelete after phase completes (pass or fail)
 
 ## Skill Renaming
 
@@ -503,7 +499,7 @@ Renaming a Claude Code CLI skill requires updating four independent touch-points
 3. **Triggers list**: Update the `triggers:` array in `SKILL.md` to remove the old skill name and add the new one if desired.
 4. **Prose self-references**: Grep the skill's body for any prose/comments that mention the skill by its old name and update them.
 
-Also update any references in `AGENTS.md` skill tables and append an entry to `docs/CLAUDE_TS_CHANGELOG.md` documenting the rename (since skills are often inherited from `claude-ts` via CTS).
+Also update any references in `AGENTS.md` skill tables and, in consumer projects, append an entry to `docs/CLAUDE_TS_CHANGELOG.md` documenting the rename.
 
 ## Agent Quick Routing
 
@@ -530,35 +526,40 @@ Also update any references in `AGENTS.md` skill tables and append an entry to `d
 
 ## Tool API Reference
 
-### TeamCreate
+**Team scoping is name-based, not object-based.** The `Agent` tool's `team_name` parameter is deprecated and ignored — the session has a single implicit team. There is no `TeamCreate`/`TeamDelete` call to make and nothing to explicitly tear down; a "team" is simply a set of agents spawned via plain `Agent` calls that address each other by name via `SendMessage`. If earlier revisions of this file (or a consumer project's copy) reference `TeamCreate`/`TeamDelete`/`team_name` as live tools, that documentation has drifted from the tool's actual behavior — update it to match this section rather than the reverse.
 
-```
-TeamCreate({ name: "qg-user-registration" })
-```
-
-### Spawn Agent into Team
+### Spawn agents into a team
 
 ```
 Agent({
   subagent_type: "tester",
-  team_name: "qg-user-registration",
+  name: "qg-user-registration-tester",
   prompt: "..."
 })
 ```
+
+Give each spawned agent a distinct `name` within the team's naming convention (see Team Conventions above) so other agents can address it directly.
+
+**Per-call model override.** `Agent` also accepts an optional `model` parameter (`sonnet` / `opus` / `haiku` / `fable`) that overrides whatever model tier the target agent's own frontmatter specifies, for that one dispatch only:
+
+```
+Agent({
+  subagent_type: "reviewer",
+  name: "qg-deep-tier-reviewer",
+  model: "opus",
+  prompt: "..."
+})
+```
+
+Use this when a specific dispatch needs to force `deep` tier regardless of the dispatching session's own model or the target agent's default frontmatter tier — e.g. a judgment-layer review step that must always run on opus. Prefer pinning `model:` in the target agent/skill's own frontmatter when the tier requirement is permanent; reserve the per-call override for cases where the same agent type is dispatched at different tiers depending on context.
 
 ### SendMessage (challenge / respond)
 
 ```
 SendMessage({
-  to: "ba",          // agent name within the team
+  to: "qg-user-registration-tester",  // agent name from its own spawn call
   message: "..."
 })
 ```
 
-### TeamDelete
-
-```
-TeamDelete({ name: "qg-user-registration" })
-```
-
-Always call TeamDelete after the team phase completes, whether it passed or failed.
+`SendMessage` only reaches an agent that is still active or idle-but-resumable in this session — it cannot fetch content from an agent whose turn has fully ended without a live process to resume. See the Planning Team section's "Spawn-context requirement" above: paste prior agents' full output into a new agent's spawn prompt rather than relying on a later `SendMessage` fetch.

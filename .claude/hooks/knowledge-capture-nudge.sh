@@ -125,7 +125,7 @@ done <<< "$CHANGED_PATHS"
 
 # ── 5. Cadence guard — nudge once per session per unmet category ──────────────
 TMPDIR_SAFE="${TMPDIR:-/tmp}"
-MARKER_BASE="${TMPDIR_SAFE}/penny-kc-nudge-${SESSION_ID}"
+MARKER_BASE="${TMPDIR_SAFE}/cts-kc-nudge-${SESSION_ID}"
 
 already_nudged() { [ -f "${MARKER_BASE}-${1}" ]; }
 mark_nudged()    { touch "${MARKER_BASE}-${1}" 2>/dev/null || true; }

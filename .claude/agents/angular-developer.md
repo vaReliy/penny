@@ -71,13 +71,18 @@ Before writing or modifying any code, additionally read:
 - Reactive Forms over template-driven forms for complex forms
 - `takeUntilDestroyed()` to prevent subscription leaks
 
+## Tests-with-Code (mandatory)
+
+Write component/service tests alongside every piece of UI you produce — red/green/refactor per the `tdd` skill. Do not defer test authorship to `tester`: that agent now runs as the quality gate's verify/coverage-audit stage, not the primary author. Ship code and its tests as one unit of work.
+
 ## Skills to Activate
 
-| Skill               | When to Activate                                     |
-| ------------------- | ---------------------------------------------------- |
-| `angular-expert`    | **Always** — Angular 17+ patterns and best practices |
-| `code-reviewer`     | Self-review after component implementation           |
-| `security-reviewer` | When handling user-controlled content in templates   |
+| Skill               | When to Activate                                           |
+| ------------------- | ---------------------------------------------------------- |
+| `angular-expert`    | **Always** — Angular 17+ patterns and best practices       |
+| `tdd`               | **Always** — write tests with the code, red/green/refactor |
+| `code-reviewer`     | Self-review after component implementation                 |
+| `security-reviewer` | When handling user-controlled content in templates         |
 
 ## Accessibility Standards
 

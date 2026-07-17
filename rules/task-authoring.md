@@ -10,9 +10,9 @@ Every plan, grill, or grooming session must emit one or more task files into the
 - **Phase-dependent tasks** (part of a named rebuild/migration phase, or a standalone feature area big enough to warrant its own folder) → `tasks/<phase>/todo/` (project-specific; adapt the phase directory name to your project)
 - **General / cross-cutting tasks** with no clear phase → `tasks/todo/` directly (created lazily on first use)
 
-`/tasks` is **git-ignored** (see `.gitignore`) — private working artifacts, not committed. The committed, durable record is: commit history + `KNOWLEDGE_INBOX.md` + `CHANGELOG.md`. The rule file itself is committed; the task files it governs are private.
+Add a committed `/tasks` line to `.gitignore` so this is a clone-portable exclusion, not a local-only `.git/info/exclude` entry — the latter doesn't travel with a fresh checkout. `/tasks` is git-ignored — private working artifacts, not committed. The committed, durable record is: commit history + `KNOWLEDGE_INBOX.md` + `CHANGELOG.md`. The rule file itself is committed; the task files it governs are private.
 
-Because this directory is git-ignored (since commit `3476a45`, "docs: consolidate task backlog under top-level tasks/, gitignore it"), always use plain filesystem `mv`/`cp`/`rm` for anything under `tasks/` — never a `git`-prefixed variant. `git status`/`git diff` correctly showing nothing for these moves is expected, not a sign something went wrong; `git mv`/`git add` fail with "not under version control" on these paths. If a git operation unexpectedly fails here, run `git check-ignore -v <path>` to confirm the exclusion.
+Because this directory is git-ignored, always use plain filesystem `mv`/`cp`/`rm` for anything under `tasks/` — never a `git`-prefixed variant. `git status`/`git diff` correctly showing nothing for these moves is expected, not a sign something went wrong; `git mv`/`git add` fail with "not under version control" on these paths. If a git operation unexpectedly fails here, run `git check-ignore -v <path>` to confirm the exclusion.
 
 ## Naming Convention
 
@@ -117,8 +117,6 @@ Before implementing a task whose stated premise is "X is broken/unfixed/missing,
 
 Pattern: run `git log -S<suspected-fix-marker> -- <named-files>` to search for commits that added the suspected fix, or manually review recent changes to the named files to check whether the problem statement is still accurate. This avoids duplicate work and surfaces the actual gaps (e.g., "X is fixed in file A but not yet in file B") so the task scope can be narrowed before execution.
 
-Example: a task described a missing Mongo per-file test isolation as unfixed, but the spec already had the fix (inline random-suffix DB name + `dropDatabase()`) from a prior commit. Only a second spec file still lacked the treatment. Reviewing the git history first would have caught this stale premise and narrowed the task to the one remaining file.
-
 ### Parked tasks
 
 A parked task (blocked on an upstream seam decision) must:
@@ -137,7 +135,7 @@ The owner then reviews `git diff`, commits, and moves the file with plain `mv` (
 
 ## Deferred ADRs Go Stale Without an Explicit Closing Step
 
-Docs don't self-maintain: an ADR recorded with a "Deferred"/interim Status doesn't get revisited automatically once the deferred work actually ships. Any task implementing work an ADR recorded as Deferred/interim must carry an acceptance-criterion line to update that ADR's Status as part of the task's own Acceptance criteria — not as a separate follow-up someone might forget. In this repo, `DECISIONS.md` ADR-006 still said "Deferred / unsafe-inline retained" long after the nginx CSP-nonce pipeline it was deferring had fully shipped and was even referenced in later CHANGELOG entries. Periodic doc-hygiene audits (grep ADR "Deferred" statuses against `CHANGELOG.md`) are also worth running independently of task-level ACs, since the AC only catches ADRs tied to a tracked task.
+Docs don't self-maintain: an ADR recorded with a "Deferred"/interim Status doesn't get revisited automatically once the deferred work actually ships. Any task implementing work an ADR recorded as Deferred/interim must carry an acceptance-criterion line to update that ADR's Status as part of the task's own Acceptance criteria — not as a separate follow-up someone might forget. Periodic doc-hygiene audits (grep ADR "Deferred" statuses against `CHANGELOG.md`) are also worth running independently of task-level ACs, since the AC only catches ADRs tied to a tracked task.
 
 ## Dependencies
 

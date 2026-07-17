@@ -59,6 +59,7 @@ Read when relevant (never preloaded):
 - `rules/docker-commands.md` — running anything in containers
 - `rules/mcp-stack.md` — MCP tool selection
 - `rules/git-operations.md` — PR description rules
+- `rules/shell-scripting.md` — bash gotchas with traps, symlinks, prettier defaults
 - `rules/nx-generators.md` — after running ANY `nx g …` generator (apps, libs, configs)
 - `rules/dependencies.md` — adding/updating/removing npm deps; auditing generator-injected ranges
 - `README.md` — setup, install profile, common commands

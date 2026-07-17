@@ -6,3 +6,7 @@
 .angular
 
 .nx/self-healing
+
+# Vendored third-party skill with its own build/validate process — never
+# reformat its content, per its own README.md.
+.claude/skills/postgres-best-practices/

@@ -38,6 +38,10 @@ Why: Domain logic becomes testable without framework dependencies and reusable a
 
 **Exception**: Infrastructure and application layers _may_ import framework code to adapt domain interfaces.
 
+### CAS-via-optional-param: canonical pattern for closing TOCTOU races on scoped updates
+
+When a stale-read-modify-write race is possible on an entity field (a caller reads a value, computes a new value, then writes it back — racing another writer doing the same), the established fix shape is compare-and-swap via an _optional_ parameter, not a new required API: the repository method gains an optional `expectedCurrentValue` param that, when present, adds an equality filter clause on that field to the underlying conditional-update primitive (`findOneAndUpdate`, `UPDATE ... WHERE`, etc.). The update returns no match on a filter mismatch, which the caller must surface as an explicit, observable conflict — never a silent retry: `409` on the HTTP path, a logged error + non-zero exit on the CLI path. The optional param keeps old callers byte-identical (no breaking change), so the pattern rolls out incrementally. This generalizes across any store with a conditional-update primitive, not just document stores.
+
 ## Nx Monorepo: Tags & Boundaries
 
 Every Nx library must carry exactly one tag per dimension in its `project.json`.

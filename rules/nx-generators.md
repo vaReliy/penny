@@ -44,7 +44,7 @@ Repo standard: all style files must use SCSS (not CSS). The `@nx/angular:app` an
 
 - `@nx/angular:app` and `@nx/angular:lib` **must** be scaffolded via `nx g`, never created manually. The generator registers the project in the NX workspace graph, ensures the full tsconfig inheritance chain, and configures targets/executors correctly. Manual creation (writing project.json by hand) breaks `nx affected` and may misconfigure lint/test runners. Always use: `pnpm nx g @nx/angular:lib <path> --tags=… --style=scss --standalone --no-interactive`, then audit per this file's sections.
 
-- `@nx/angular:lib` generator **silently ignores positional arguments** when `--directory` is absent. Running `nx g @nx/angular:lib identity/feature-access-status` (positional) without `--directory` strips the prefix and places the lib in the wrong location. Always pair `--name=<project-name>` with `--directory=libs/<path>` explicitly. The generator output confirms the resolved root — verify it matches the intended path.
+- `@nx/angular:lib` generator **silently ignores positional arguments** when `--directory` is absent. Running `nx g @nx/angular:lib <group>/<name>` (positional) without `--directory` strips the prefix and places the lib in the wrong location. Always pair `--name=<project-name>` with `--directory=libs/<path>` explicitly. The generator output confirms the resolved root — verify it matches the intended path.
 
 - `@nx/angular:app` and `@nx/angular:lib` require `--name` flag for the project name (not a positional arg). Correct: `pnpm nx g @nx/angular:app --name=web --directory=apps/web …`. Positional arguments fail with "Schema does not support positional arguments".
 - `@nx/angular:component` uses `--path=libs/<lib>/src/lib/<component-folder>/<component-name>` (path to the component file without extension), not `--project`. This changed in Nx v23.
@@ -59,7 +59,7 @@ Repo standard: all style files must use SCSS (not CSS). The `@nx/angular:app` an
 
 Also audit the generated stub spec file — it may import the class name without the "Component" suffix (e.g., `GreetingPage` instead of `GreetingPageComponent`). Correct the import before writing test logic.
 
-## 5. Wire process bootstrap (LIVR)
+## 4. Wire process bootstrap (LIVR)
 
 A new process entrypoint (`main.ts`, CLI, queue worker) must call `registerLivrRules()` from `shared-kernel` **exactly once** at startup, before any `BaseService` or `LIVR.Validator` runs. `BaseService` does not self-register rules.
 
@@ -67,14 +67,14 @@ A new process entrypoint (`main.ts`, CLI, queue worker) must call `registerLivrR
 
 See `rules/validation-authorization.md` → _LIVR bootstrap_ section for the call site.
 
-## 6. Audit companion projects
+## 5. Audit companion projects
 
 Generators scaffold sibling projects (e.g. `apps/<name>-e2e`). Audit them too:
 
 - Remove or narrow any blanket `/* eslint-disable */` the generator added — fix the underlying lint issue (e.g. `no-var → const/let`) instead of suppressing the whole file.
 - Delete a companion project you don't intend to use rather than leaving it lint-disabled.
 
-## Manual Library Creation
+## 6. Generator-Hygiene Gotchas
 
 ### Manually created JS/TS libs (non-Angular) are auto-detected
 
@@ -82,9 +82,9 @@ When `nx g @nx/js:lib` is skipped in favour of hand-crafting `project.json` + ts
 
 However, Angular libs must always use the `@nx/angular:lib` generator — never create them manually.
 
-### Consequence of skipping the generator: silently dropped out of `lint` forever
+### Skipping the generator: silently dropped out of `lint` forever
 
-A hand-scaffolded lib missing `eslint.config.mjs` gets no inferred `lint` target from `@nx/eslint/plugin` (which infers the target from that file's presence) — `nx show projects --with-target lint` silently excludes it, and `nx affected -t lint` never touches it, with no error or warning. In this repo: `libs/shared/testing` was hand-scaffolded (`project.json`/`tsconfig*.json` written by hand, `tsconfig.base.json` path alias added manually) and was missing `eslint.config.mjs`, `package.json`, and `README.md` compared to a generator-created sibling. Caught only by diffing the new lib's file listing against a known-generated one. Periodic audit: compare `nx show projects` against `nx show projects --with-target lint` (see `rules/workflow.md`'s Command Execution Policy section).
+A hand-scaffolded lib missing `eslint.config.mjs` gets no inferred `lint` target from `@nx/eslint/plugin` (which infers the target from that file's presence) — `nx show projects --with-target lint` silently excludes it, and `nx affected -t lint` never touches it, with no error or warning. In this repo: `libs/shared/testing` was hand-scaffolded (`project.json`/`tsconfig*.json` written by hand, `tsconfig.base.json` path alias added manually) and was missing `eslint.config.mjs`, `package.json`, and `README.md` compared to a generator-created sibling — caught only by diffing the new lib's file listing against a known-generated one. Periodic audit: compare `nx show projects` against `nx show projects --with-target lint` (see `rules/workflow.md`'s Command Execution Policy section). If a hand-scaffolded lib is found missing config files, diff its file listing against a known-generated sibling to find the gaps.
 
 ### `@nx/vitest`-based projects need a manually-added `typecheck` target
 
