@@ -2,7 +2,20 @@
 
 A personal family platform — budget tracking first, more household domains later. The project is being rebuilt clean-sheet on an Nx monorepo (Angular + NestJS, shared libs).
 
-This branch (`skeleton`) is the empty, domain-free foundation: tooling and a trivial auth-gated "hello world" slice, nothing product-specific yet.
+This branch (`main`) is the empty, domain-free foundation: tooling and a trivial auth-gated "hello world" slice, nothing product-specific yet.
+
+## Branch Strategy
+
+This repo uses a multi-branch model combining GitFlow and a reusable template pattern:
+
+| Branch     | Status                 | Purpose                                                                                                                                                                                                                                                                                                                                                               |
+| ---------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `master`   | DEPRECATED (read-only) | Legacy codebase — kept only for reference and rollback during migration. No new PRs should open against it.                                                                                                                                                                                                                                                           |
+| `main`     | ACTIVE (stable)        | Primary development branch; the modern Nx monorepo created from `skeleton`. This is the long-term repository main.                                                                                                                                                                                                                                                    |
+| `develop`  | ACTIVE (integration)   | GitFlow-style long-term integration branch for ongoing migration work. Accepts PRs from feature branches; periodically syncs into `main` once validated. Used to migrate the old `master` codebase to the modern pattern (Angular 17+ standalone components, NestJS services, Telegram auth, Docker). Will remain permanent for future feature integration workflows. |
+| `skeleton` | STABLE (template)      | Permanent reusable bootstrap/template branch — the clean Nx scaffolding used to seed `main` (and available for re-seeding/reference). Not a one-time throwaway; can be used to initialize new projects or reset a reference checkpoint.                                                                                                                               |
+
+The `develop ← skeleton ← main` flow: `skeleton` is the immutable baseline; `main` diverges for the modern architecture; `develop` branches from `skeleton` to integrate the migration work (old screens on new stack) before promotion to `main`.
 
 ## Prerequisites
 
