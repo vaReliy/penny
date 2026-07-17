@@ -17,6 +17,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-17 — Enhancement: `rules/code-style-angular.md` gained an Internationalization (Transloco) section
+
+- **Component**: `rules/code-style-angular.md`
+- **Type**: Enhancement
+- **What happened**: The i18n-transloco-foundation task (T2, `ba`-planned) wired `@jsverse/transloco` into `apps/web` and needed a durable, discoverable convention doc for future `angular-developer` dispatches: scope-per-domain pattern (`provideTranslocoScope('<scope>')` co-located in `@Component.providers`), the file-placement convention (`apps/web/public/i18n/<scope>/<lang>.json`, reusing the existing static-asset copy path — no new Nx build wiring), full `<scope>.<key>` naming (scope providers do NOT auto-prefix template pipe keys — see the companion `docs/KNOWLEDGE_INBOX.md` entry on `TranslocoPipe.updateValue()`'s behavior), and the `TranslocoTestingModule` testing pattern (`<scope>/<lang>` module keys, double `detectChanges()`/`whenStable()` needed for pipe resolution). Landed as a new section in the file `AGENTS.md`'s on-demand rules index already points future agents to for Angular component-authoring conventions, rather than a new `docs/` file.
+- **Why it matters upstream**: any claude-ts consumer adopting Transloco (or a similarly scope-based Angular i18n library) for the first time will hit the identical "which file documents the key convention" placement question and the identical scope-doesn't-auto-prefix-pipe-keys gotcha — worth a generic (non-Penny-specific) version of this section in the template's own Angular code-style rule, gated behind "if the project uses Transloco" framing since the base template shouldn't assume a specific i18n library choice.
+- **Suggested upstream change**: add a generalized (library-choice-agnostic framing, or explicitly Transloco-scoped with a note that other i18n libraries would need their own section) "Internationalization" subsection to the template's `rules/code-style-angular.md`, covering: (1) scope-per-domain co-location pattern, (2) static-asset file placement reusing the existing Nx asset-copy convention rather than inventing new build config, (3) the full-scope-qualified-key-in-templates gotcha, (4) the testing-module setup pattern including the double-`detectChanges` requirement.
+- **Status**: pending-port
+
+---
+
 ## 2026-07-17 — Fix: phantom-baseline sync loss repaired via etalon; root cause and guards landed upstream
 
 - **Component**: whole CTS payload (22 files: `CLAUDE.md`, `rules/workflow.md`, `rules/nx-generators.md`, `.claude/agents/{tester,backend-developer,angular-developer,qa,reviewer}.md`, `.claude/scripts/cts-sync.sh`, `.claude/skills/{cts-update,cts-contribute,distill-inbox,github-actions}`, `.prettierignore`, `rules/shell-scripting.md` (new), hand-merges into `.ctsignore`'d `AGENTS.md`/`rules/architecture.md`/`rules/code-style.md`)

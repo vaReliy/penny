@@ -34,7 +34,7 @@ test.describe('auth flow — status routing guard', () => {
     await page.waitForURL('**/login');
 
     await expect(
-      page.getByRole('heading', { name: 'Sign in to Penny' }),
+      page.getByRole('heading', { name: 'Вхід до Penny' }),
     ).toBeVisible();
   });
 
@@ -53,11 +53,9 @@ test.describe('auth flow — status routing guard', () => {
     await page.waitForURL('**/access-status');
 
     await expect(
-      page.getByText('Your access is awaiting approval'),
+      page.getByText('Ваш доступ очікує підтвердження'),
     ).toBeVisible();
-    await expect(
-      page.getByText('Your access request has been declined'),
-    ).not.toBeVisible();
+    await expect(page.getByText('У доступі відмовлено')).toBeHidden();
   });
 
   test('rejected user navigating to /greeting is redirected to /access-status with rejection message', async ({
@@ -74,12 +72,10 @@ test.describe('auth flow — status routing guard', () => {
     await page.goto('/greeting');
     await page.waitForURL('**/access-status');
 
+    await expect(page.getByText('У доступі відмовлено')).toBeVisible();
     await expect(
-      page.getByText('Your access request has been declined'),
-    ).toBeVisible();
-    await expect(
-      page.getByText('Your access is awaiting approval'),
-    ).not.toBeVisible();
+      page.getByText('Ваш доступ очікує підтвердження'),
+    ).toBeHidden();
   });
 
   test('active user navigating to /greeting sees the personalised greeting', async ({

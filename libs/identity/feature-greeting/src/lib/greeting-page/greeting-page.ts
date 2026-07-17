@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, map, of, startWith } from 'rxjs';
+import { TranslocoPipe, provideTranslocoScope } from '@jsverse/transloco';
 import { IdentityService } from 'identity-data-access';
 
 type GreetingState =
@@ -10,7 +11,8 @@ type GreetingState =
 
 @Component({
   selector: 'lib-greeting-page',
-  imports: [],
+  imports: [TranslocoPipe],
+  providers: [provideTranslocoScope('identity')],
   templateUrl: './greeting-page.html',
   styleUrl: './greeting-page.scss',
 })

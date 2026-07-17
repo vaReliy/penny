@@ -193,3 +193,76 @@ Use `useFactory` (lazy-evaluated during DI resolution) rather than `useValue` (e
 - Keyboard navigation on all interactive elements
 - WCAG AA contrast ratios
 - Angular CDK `a11y` utilities for focus management
+
+## Internationalization (Transloco)
+
+`@jsverse/transloco` provides i18n. Only `uk` ships today (see `tasks/migration/parked/2026-07-16-25-en-locale-and-multi-currency.md` for the parked `en`/multi-currency work) — root providers are wired once in `apps/web/src/app/app.config.ts` via `provideTransloco()`, with a hand-written `TranslocoHttpLoader` (`apps/web/src/app/transloco-http-loader.ts`) since the `@jsverse/transloco` package ships no default HTTP loader.
+
+### Scope-per-domain pattern
+
+Each feature domain gets its own lazy-loaded scope, matching the Nx lib grouping (e.g. `identity`, `budget`). Co-locate the scope provider directly on the `@Component` decorator of every component that needs it:
+
+```typescript
+@Component({
+  selector: 'lib-login-page',
+  imports: [TranslocoPipe],
+  providers: [provideTranslocoScope('identity')],
+  templateUrl: './login-page.component.html',
+})
+export class LoginPageComponent {}
+```
+
+Cross-cutting strings shared by multiple domains (e.g. a generic "Loading..." state) go in the root scope instead — no `provideTranslocoScope()` needed for those.
+
+### Key naming — always write the full scope-qualified key in templates
+
+`provideTranslocoScope('identity')` only makes Transloco fetch and merge `identity/uk.json` into the active language; it does **not** let you drop the scope prefix when calling the `transloco` pipe. Always write the fully qualified `<scope>.<component>.<element>` key:
+
+```html
+<!-- ✓ Correct — full scope-qualified key -->
+<h1>{{ 'identity.login.heading' | transloco }}</h1>
+
+<!-- ❌ Wrong — pipe does not auto-prefix scoped keys, this looks up the root
+     scope and silently falls back to echoing the raw key -->
+<h1>{{ 'login.heading' | transloco }}</h1>
+```
+
+Root-scope (unscoped) keys use no prefix: `{{ 'common.loading' | transloco }}`.
+
+### Loader contract — `lang` is already scope-qualified, don't re-prefix it
+
+`TranslocoLoader.getTranslation(lang, data?)` is called by Transloco's own service internals, not by application code. When a scope is active, Transloco passes the already-scope-qualified path as `lang` itself (e.g. `'identity/uk'`, not `'uk'`) — `data.scope` is only the parsed-out scope name for convenience, not something the loader should re-prepend. A custom loader must request `` `/i18n/${lang}.json` `` unconditionally:
+
+```typescript
+// ✓ Correct — lang already contains the scope prefix when applicable
+public getTranslation(lang: string): Observable<Translation> {
+  return this.http.get<Translation>(`/i18n/${lang}.json`);
+}
+
+// ❌ Wrong — double-prefixes the scope, produces
+// GET /i18n/identity/identity/uk.json (404)
+public getTranslation(lang: string, data?: TranslocoLoaderData) {
+  const path = data?.scope ? `${data.scope}/${lang}` : lang;
+  return this.http.get<Translation>(`/i18n/${path}.json`);
+}
+```
+
+This is a different mechanism from the template-key-prefix rule above (that one is about what you type in `{{ '...' | transloco }}`; this one is about what the loader requests over HTTP) — don't conflate the two when debugging a missing-translation report.
+
+### File placement
+
+Translation JSON lives under `apps/web/public/i18n/`, reusing the existing `apps/web/public` → `dist/apps/web/browser` asset-copy path (no new build target wiring needed):
+
+- `apps/web/public/i18n/uk.json` — root/common scope
+- `apps/web/public/i18n/identity/uk.json` — `identity` scope
+- `apps/web/public/i18n/budget/uk.json` — `budget` scope (empty placeholder until Result-2 screens land)
+
+When a new domain needs its own scope, add `apps/web/public/i18n/<scope>/uk.json` and call `provideTranslocoScope('<scope>')` on that domain's components — no other wiring required.
+
+### No new key literal in templates
+
+Never invent an ad-hoc string directly in a template — every user-facing literal must resolve through the `transloco` pipe against a key defined in the relevant scope's JSON file. Dynamic, backend-supplied text (e.g. a greeting message returned by an API) is the one exception: interpolate it directly (`{{ state.message }}`), it is not a translatable literal.
+
+### Testing
+
+Use `TranslocoTestingModule.forRoot({ langs, translocoConfig })` in specs. `langs` keys follow the `<scope>/<lang>` convention Transloco uses internally (e.g. `{ uk: {...}, 'identity/uk': {...} }`). After `fixture.detectChanges()`, `await fixture.whenStable()` then `fixture.detectChanges()` again before asserting — scope loading resolves asynchronously even against the in-memory testing loader.

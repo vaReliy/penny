@@ -1,12 +1,7 @@
 @if (userStatus() === null) {
-<p>Loading...</p>
+<p>{{ 'common.loading' | transloco }}</p>
 } @else if (userStatus() === 'pending') {
-<p>
-  Your access is awaiting approval. An admin will review your request shortly.
-</p>
+<p>{{ 'identity.accessStatus.pending' | transloco }}</p>
 } @else {
-<p>
-  Your access request has been declined. Please contact support if you believe
-  this is an error.
-</p>
+<p>{{ 'identity.accessStatus.rejected' | transloco }}</p>
 }

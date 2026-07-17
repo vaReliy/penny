@@ -1,8 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NEVER, of, throwError } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { TranslocoTestingModule } from '@jsverse/transloco';
 import { AccessStatusPageComponent } from './access-status-page.js';
 import { IdentityService } from 'identity-data-access';
+
+const UK_TRANSLATIONS = { common: { loading: 'Завантаження...' } };
+const IDENTITY_UK_TRANSLATIONS = {
+  accessStatus: {
+    pending:
+      'Ваш доступ очікує підтвердження. Адміністратор незабаром розгляне ваш запит.',
+    rejected:
+      'У доступі відмовлено. Якщо ви вважаєте це помилкою, зверніться в підтримку.',
+  },
+};
 
 describe('AccessStatusPageComponent', () => {
   let fixture: ComponentFixture<AccessStatusPageComponent>;
@@ -12,49 +23,54 @@ describe('AccessStatusPageComponent', () => {
     mockIdentityService = { getMe: vi.fn() };
 
     await TestBed.configureTestingModule({
-      imports: [AccessStatusPageComponent],
+      imports: [
+        AccessStatusPageComponent,
+        TranslocoTestingModule.forRoot({
+          langs: {
+            uk: UK_TRANSLATIONS,
+            'identity/uk': IDENTITY_UK_TRANSLATIONS,
+          },
+          translocoConfig: { availableLangs: ['uk'], defaultLang: 'uk' },
+        }),
+      ],
       providers: [{ provide: IdentityService, useValue: mockIdentityService }],
     }).compileComponents();
   });
 
-  function createComponent(): void {
+  async function createComponent(): Promise<void> {
     fixture = TestBed.createComponent(AccessStatusPageComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
   }
 
-  it('shows loading text when getMe() never emits', () => {
+  it('shows loading text when getMe() never emits', async () => {
     mockIdentityService.getMe.mockReturnValue(NEVER);
-    createComponent();
+    await createComponent();
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.textContent?.trim()).toBe('Loading...');
+    expect(el.textContent?.trim()).toBe('Завантаження...');
   });
 
   it('shows pending text when status is pending', async () => {
     mockIdentityService.getMe.mockReturnValue(of({ status: 'pending' }));
-    createComponent();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await createComponent();
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.textContent?.trim()).toContain('awaiting approval');
+    expect(el.textContent?.trim()).toContain('очікує підтвердження');
   });
 
   it('shows rejected text when status is rejected', async () => {
     mockIdentityService.getMe.mockReturnValue(of({ status: 'rejected' }));
-    createComponent();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await createComponent();
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.textContent?.trim()).toContain('declined');
+    expect(el.textContent?.trim()).toContain('відмовлено');
   });
 
   it('shows loading text on error (null fallback)', async () => {
     mockIdentityService.getMe.mockReturnValue(
       throwError(() => new Error('oops')),
     );
-    createComponent();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await createComponent();
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.textContent?.trim()).toBe('Loading...');
+    expect(el.textContent?.trim()).toBe('Завантаження...');
   });
 });

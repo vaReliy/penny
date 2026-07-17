@@ -2,8 +2,18 @@ import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject, of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { TranslocoTestingModule } from '@jsverse/transloco';
 import { IdentityService, TELEGRAM_BOT_USERNAME } from 'identity-data-access';
 import { LoginPageComponent } from './login-page.component.js';
+
+const IDENTITY_UK_TRANSLATIONS = {
+  login: {
+    heading: 'Вхід до Penny',
+    pending: 'Виконується вхід…',
+    error: 'Не вдалося увійти. Спробуйте ще раз.',
+    widgetLabel: 'Віджет входу через Telegram',
+  },
+};
 
 const VALID_TELEGRAM_PARAMS: Record<string, string> = {
   id: '123456',
@@ -23,7 +33,14 @@ describe('LoginPageComponent', () => {
     navigateMock = vi.fn().mockResolvedValue(true);
 
     await TestBed.configureTestingModule({
-      imports: [LoginPageComponent],
+      imports: [
+        LoginPageComponent,
+        TranslocoTestingModule.forRoot({
+          langs: { uk: {}, 'identity/uk': IDENTITY_UK_TRANSLATIONS },
+          translocoConfig: { availableLangs: ['uk'], defaultLang: 'uk' },
+          preloadLangs: true,
+        }),
+      ],
       providers: [
         {
           provide: ActivatedRoute,
@@ -47,6 +64,18 @@ describe('LoginPageComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.componentInstance).toBeTruthy();
+  });
+
+  it('renders the translated heading, not the raw transloco key', async () => {
+    const fixture = TestBed.createComponent(LoginPageComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const nativeEl = fixture.nativeElement as HTMLElement;
+    expect(nativeEl.querySelector('#login-heading')?.textContent?.trim()).toBe(
+      'Вхід до Penny',
+    );
   });
 
   it('injects a <script> tag with telegram-widget.js src after init', () => {

@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { TranslocoPipe, provideTranslocoScope } from '@jsverse/transloco';
 import { IdentityService, TELEGRAM_BOT_USERNAME } from 'identity-data-access';
 import type { RawTelegramLoginPayload } from 'identity-data-access';
 
@@ -11,7 +12,8 @@ const TELEGRAM_WIDGET_VERSION = '22';
 @Component({
   selector: 'lib-login-page',
   standalone: true,
-  imports: [],
+  imports: [TranslocoPipe],
+  providers: [provideTranslocoScope('identity')],
   templateUrl: './login-page.component.html',
   styleUrl: './login-page.component.scss',
 })
