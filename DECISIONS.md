@@ -158,6 +158,285 @@ The serving topology settled on **nginx serves `index.html`** (`apps/web` contai
 - `gzip off` is set on the same location block, since a compressed response would otherwise bypass `sub_filter` silently.
 - `apps/api/src/middleware/csp-policy.ts` (NestJS Helmet CSP for JSON API responses) emits `style-src 'self'` with no `'unsafe-inline'` — the API never serves HTML, so it needs no nonce.
 
+---
+
+## ADR-007 — Budget Domain: Entities, Aggregates, and Scoping
+
+**Status:** Accepted
+
+**Date:** 2026-07-19
+
+**Context:** The budget application is migrating from a legacy monolithic model (`Bill` singleton, numeric category FKs, date strings) to a domain-driven workspace-scoped model. The planning team (ba + ddd-architect + devil) resolved all 10 key design decisions, confirmed compatibility with the parked Workspace feature, and ratified provisional entity names.
+
+**Decision:** The budget bounded context defines four aggregates (`Account`, `Category`, `Transaction`, `MonthlyBudget`), all workspace-scoped, with immutable entities following onion architecture (plain TypeScript classes in `core`, no ORM or framework imports). Balance is derived from transaction aggregation. Categories support soft-archive semantics. Transactions carry an explicit sign via `type: 'income' | 'expense'` (stored in `budget/contracts`, not shared). All aggregates reside in `libs/budget/*` scope, mirroring `identity`'s template shape: core, application, infrastructure, feature-\*, ui, data-access.
+
+### Entities and Invariants
+
+**Account (aggregate root)**
+
+```ts
+{
+  id: string;
+  workspaceId: string;
+  name: string;
+  currency: CurrencyCode; // 'UAH' in MVP
+  createdAt: Date;
+}
+```
+
+- Immutable class in `libs/budget/core` with a static `create(id, workspaceId, name, currency, now)` factory.
+- No stored balance field — balance is derived as `Σ(income) − Σ(expense)` via aggregation over all workspace transactions attributed to this account.
+- `archivedAt` omitted at MVP (single seeded default account); additive later as a soft-delete flag.
+- Mutators (if added later) return new instances, never mutate in place.
+- Invariant breaches throw `DomainError`.
+
+**Category (aggregate root)**
+
+```ts
+{
+  id: string
+  workspaceId: string
+  name: string
+  archivedAt?: Date  // soft-delete
+}
+```
+
+- **Type-agnostic tag:** no `income` / `expense` field. Categories apply semantically at the `MonthlyBudget` level (budgets apply to expense only); transactions tag-reference categories freely (both income and expense transactions can cite the same category — classification is up to the user).
+- `capacity` field removed entirely (moved to per-month, per-category `MonthlyBudget`).
+- Name unique per workspace, case-insensitive, among **non-archived only** (the constraint is `UNIQUE {workspaceId:1, name:1}` with partial filter + collation).
+- One-way soft-archive: `archive(reason?)` sets `archivedAt`, throws if already archived. Unarchive is deferred (additive later).
+- Archived categories remain on historical transactions as-is; the archived status hides them from "create transaction" / "set budget" selection UI only, never from historical aggregations (`sumExpenseByCategory` includes archived tags).
+- Owner UX note: the History screen may highlight an archived/stale category on a past transaction to suggest re-tagging — a presentation affordance, not a domain rule.
+
+**Transaction (aggregate root)**
+
+```ts
+{
+  id: string
+  workspaceId: string
+  accountId: string  // REQUIRED (attributed to account for per-account balance)
+  categoryId: string  // REQUIRED (tagged for analytics)
+  type: TransactionType  // 'income' | 'expense'
+  amount: Money  // positive minor units + currency
+  date: Date  // economic date (transaction month attribution)
+  description?: string  // optional note
+  createdBy: string  // userId (audit trail)
+  createdAt: Date
+}
+```
+
+- `amount` is **always positive**; sign is conveyed by `type`, never a negative amount.
+- `date` is the economic date (e.g., purchase date) and drives month attribution for `MonthlyBudget` calculations.
+- **Editable + deletable (deferred to Q5):** immutable at MVP; an edit/delete path will arrive in a later phase.
+- `createdBy` populated from `context.caller.userId` at the API/CLI boundary.
+- No lifecycle/state machine — transactions have no status transitions.
+
+**MonthlyBudget (aggregate root)**
+
+```ts
+{
+  id: string;
+  workspaceId: string;
+  categoryId: string;
+  month: string; // 'YYYY-MM' format
+  amount: Money; // positive minor units + currency
+}
+```
+
+- Unique per `(workspaceId, categoryId, month)` — only one budget per category per month.
+- Month attribution: the `month` field is a fixed string `'YYYY-MM'`; a transaction is included in the budget via its `date` calendar month **in the Europe/Kyiv timezone** (no TZ math in the pipeline — computed once in the application layer at the boundary, yielded as a half-open UTC instant range; the repo stays agnostic).
+- **Applies to expense only** — MonthlyBudget amounts are ceiling targets for spending. Income transactions are never compared to a budget.
+- **Any category may be budgeted** — no validation restricts which categories are budgetable (free-form MVP risk accepted by owner, Q3 addendum).
+- No lifecycle — budgets exist, are upserted, or deleted; no approval/draft states.
+
+**TransactionType (const export from `libs/budget/contracts`)**
+
+```ts
+export const TransactionType = {
+  INCOME: 'income',
+  EXPENSE: 'expense',
+} as const;
+```
+
+Placed in `libs/budget/contracts`, not `shared/contracts`, because budget DTOs are domain-specific. Kept as an `as const` object (not an enum) per code-style conventions.
+
+### Design Decisions
+
+**1. Names ratified unchanged**
+
+Ratified: `Account`, `Category`, `Transaction`, `MonthlyBudget`; type literal `'income' | 'expense'` (not legacy `'outcome'`).
+
+Rejected alternatives: `Record` (collides with TypeScript's `Record<>` utility type — actively harmful), `Entry` (vaguer), legacy `outcome` (non-idiomatic). Renaming after the budget contracts and DTOs ship is expensive; changed now while the design is still fluid.
+
+**2. Workspace scoping**
+
+Every budget document carries `workspaceId: string`; repository interfaces take `workspaceId` as a first-class parameter. All aggregates reference workspaces by identity only — budget imports nothing from a future `scope:workspace` lib. This identity-only reference design is compatible with future workspace-scoped authorization: when workspace-membership authorization is added later, only the boundary constant (`DEFAULT_WORKSPACE_ID` location) changes — additive, zero budget-schema change. MVP authorization is `context.caller` active-status only; workspace-membership authorization is the additive seam (no new domain code).
+
+**3. Balance is derived**
+
+Balance = aggregation over transactions: `Σ(income) − Σ(expense)` per account/workspace. Concurrency story: no stored balance field ⇒ no read-modify-write race ⇒ no compare-and-swap needed. Inserts are append-only; balance is always recomputed from the authoritative transaction set. No multi-document MongoDB transactions needed at MVP (standalone compose mongo lacks them; budget has no cross-collection money moves). Scale path: a materialized `AccountBalanceSnapshot` served behind the same repo method later — callers unchanged, not a rearchitecture.
+
+Rejected: stored balance + CAS updates (unnecessary race surface; unsafe across collections without transactions).
+
+**4. Transaction requires accountId**
+
+`accountId` is a REQUIRED field now, attributed for per-account derived balance math. Single seeded account in MVP; multi-account support additive later (no backfill when it ships). Defaulted to the seeded account at the API/CLI boundary, never in the core aggregate.
+
+**5. MonthlyBudget month semantics are permanent**
+
+"Monthly" is baked into both the entity name and the `'YYYY-MM'` field format — future non-monthly periods (weekly, yearly, savings goals) will be new aggregates, not field additions to `MonthlyBudget`. Budgets apply to **expense only**; income transactions are never checked against a budget.
+
+**6. Category soft-archive, never hard delete**
+
+`archive()` sets `archivedAt`, making the category hidden from UI selections but preserved on historical transactions. Hard delete is forbidden (owner decision Q4) — the historical tag survives. Archived categories remain in aggregation queries (`sumExpenseByCategory`, `sumAmountsByType`); archive hides a category from _selection_ UI only, never from historical math. A future presentation affordance (History screen may highlight archived/stale tags) is a rendering detail, not a domain rule.
+
+**7. "Amount ≤ balance" rule dropped**
+
+Expense creation never validates that remaining balance is sufficient — a family legitimately overspends or goes negative. A soft UI warning is deferred; MVP accepts the owner's "users manage their own discipline" posture.
+
+**8. Money storage: integer minor units via Mongoose BigInt**
+
+The shared `Money` value object (minor units + currency) is stored as **Mongoose-native `BigInt` SchemaType → BSON int64** (`@prop({ type: () => BigInt })`), round-tripping `bigint ↔ Long`, no float, `$sum`-compatible, zero new dependencies. Fallback (only if the pinned Mongoose/Typegoose versions' BigInt support proves unreliable): BSON `Decimal128` storing the integer value via string. The `Money.toJSON()` transport form (string `amount`) is transport-only — the string must NOT be stored in the database (breaks `$sum` aggregation).
+
+Standing rule: a spike at the **start of the schema implementation** verifies BigInt+`$sum` support via context7 against the pinned versions; low-regret switch to Decimal128 if needed (only infrastructure serialization changes, not contracts).
+
+Rejected: IEEE 754 `double` (violates the Money-never-float fuse), `int32` (overflows at ~21M UAH), stored string (breaks aggregation).
+
+**9. No state machine**
+
+Transaction and MonthlyBudget have no lifecycle — they exist in a single "stable" state. Category's active/archived is a 2-state soft-delete flag, not a workflow. Recorded explicitly so it isn't re-litigated in a future phase.
+
+**10. Contracts and validation in budget scope**
+
+`libs/budget/contracts` (DTOs, `TransactionType`, `DEFAULT_WORKSPACE_ID`) and `libs/budget/validation` (LIVR schemas) are **not** in `shared/contracts/validation`. Rationale: shared libraries should contain only cross-cutting code that is isomorphic across platforms (server/client/CLI), whereas budget DTOs are domain-specific. Nx tag machinery natively supports domain `type:contracts`/`type:validation`; keeps the vertical slice self-contained. Identity's earlier precedent (contracts in shared) is a skeleton-phase artifact superseded once multiple domains exist. The validation lib's fuse is strict: `type:validation` may depend ONLY on `type:util` — LIVR schemas are self-contained runtime objects, never importing contract TS types.
+
+**`DEFAULT_WORKSPACE_ID`** lives in `libs/budget/contracts`, applied **ONLY at the API/CLI boundary** to stamp `workspaceId` on inbound requests; core/application never import it. A TODO marks its swap point when workspace-scoped multitenancy is implemented.
+
+### Repository Interfaces
+
+Base `IRepository<T, string>` pattern: `findById`, `save` (create-only; `id === ''` is a signal to the infra layer to generate it), `delete`.
+
+**IAccountRepository**
+
+- `findByWorkspace(workspaceId): Promise<Account[]>`
+- `findByIdInWorkspace(id, workspaceId): Promise<Account | null>`
+
+**ICategoryRepository**
+
+- `findByWorkspace(workspaceId, includeArchived?: false): Promise<Category[]>`
+- `findByIdInWorkspace(id, workspaceId): Promise<Category | null>`
+- `findByNameInWorkspace(name, workspaceId): Promise<Category | null>` (case-insensitive, non-archived only — uniqueness check helper)
+- `archive(id, workspaceId): Promise<void>`
+
+**ITransactionRepository**
+
+- `findByWorkspace(workspaceId, filter?: {type?, categoryId?, accountId?, from?: Date, to?: Date}): Promise<Transaction[]>`
+- `findByIdInWorkspace(id, workspaceId): Promise<Transaction | null>`
+- `existsForCategory(categoryId, workspaceId): Promise<boolean>` (used in archive-validation)
+- `updateInWorkspace(id, workspaceId, fields): Promise<void>` (deferred to Q5 edit phase)
+- `deleteInWorkspace(id, workspaceId): Promise<void>` (deferred to Q5)
+- `sumAmountsByType(workspaceId, filter?: {accountId?, from?, to?}): Promise<{income: bigint, expense: bigint}>` (balance derivation)
+- `sumExpenseByCategory(workspaceId, filter?: {from?, to?}): Promise<Array<{categoryId, total: bigint}>>` (chart data)
+
+Aggregation methods return **bigint minor units** — the application layer constructs `Money(account.currency)` from them (keeps Money construction above infrastructure).
+
+**IMonthlyBudgetRepository**
+
+- `findByWorkspaceAndMonth(workspaceId, month: 'YYYY-MM'): Promise<MonthlyBudget[]>`
+- `findByWorkspaceCategoryMonth(workspaceId, categoryId, month): Promise<MonthlyBudget | null>`
+- `upsertAmount(workspaceId, categoryId, month, amount: Money): Promise<void>`
+
+### Database Indexes
+
+- **accounts**: `{workspaceId:1}`
+- **categories**: UNIQUE `{workspaceId:1, name:1}` (case-insensitive collation, strength:2) + `partialFilterExpression: {archivedAt: null}` (uniqueness only among non-archived); query index `{workspaceId:1, archivedAt:1}`
+- **transactions**: `{workspaceId:1, accountId:1, type:1}` (balance), `{workspaceId:1, date:-1}` (history/period), `{workspaceId:1, categoryId:1, date:1}` (planner/pie/existsForCategory)
+- **monthlyBudgets**: UNIQUE `{workspaceId:1, categoryId:1, month:1}` + query index `{workspaceId:1, month:1}` (planner month view)
+
+### Month Attribution
+
+No timezone math in the pipeline. The application layer converts `'YYYY-MM' + Europe/Kyiv` → a half-open UTC instant range `[fromInstant, toInstant)` (recommend a `budget/core` value object `Month.toInstantRange(tz)` using a pinned `Intl` or `date-fns-tz`, confined to that one VO), passes plain `Date` instants to the repo. The pipeline stays timezone-agnostic and compares stored UTC `date` against the instant range. Handles Kyiv DST edges correctly because the boundary is computed once in the app layer, not per-document in the DB.
+
+### Canonical `libs/budget/*` Layout
+
+Identity's real shape is authoritative (supersedes the roadmap's provisional shorthand):
+
+```
+libs/budget/
+  core/            scope:budget type:core           platform:server
+  contracts/       scope:budget type:contracts      platform:shared
+  validation/      scope:budget type:validation     platform:shared
+  application/     scope:budget type:application    platform:server
+  infrastructure/  scope:budget type:infrastructure platform:server
+  data-access/     scope:budget type:data           platform:web
+  ui/              scope:budget type:ui             platform:web
+  feature-account/ scope:budget type:feature        platform:web
+  feature-records/ scope:budget type:feature        platform:web
+  feature-history/ scope:budget type:feature        platform:web
+  feature-planner/ scope:budget type:feature        platform:web
+  testing/         (test fakes — mirror libs/identity/testing)
+```
+
+**ESLint configuration prerequisite:** add `{ sourceTag: 'scope:budget', onlyDependOnLibsWithTags: ['scope:budget','scope:shared'] }` to `eslint.config.mjs` (currently only `scope:shared`/`scope:identity` are enumerated) — an unfenced source tag can import anything. This configuration change must be made before budget library implementation begins to enforce the scope boundary.
+
+### Budget Domain Diagram
+
+```mermaid
+classDiagram
+  class Account {
+    id: string
+    workspaceId: string
+    name: string
+    currency: CurrencyCode
+    createdAt: Date
+  }
+
+  class Category {
+    id: string
+    workspaceId: string
+    name: string
+    archivedAt?: Date
+  }
+
+  class Transaction {
+    id: string
+    workspaceId: string
+    accountId: string
+    categoryId: string
+    type: 'income'|'expense'
+    amount: Money
+    date: Date
+    description?: string
+    createdBy: string
+    createdAt: Date
+  }
+
+  class MonthlyBudget {
+    id: string
+    workspaceId: string
+    categoryId: string
+    month: string
+    amount: Money
+  }
+
+  class Money {
+    amount: bigint
+    currency: CurrencyCode
+  }
+
+  Transaction "many" --> "1" Account : accountId
+  Transaction "many" --> "1" Category : categoryId
+  Transaction "1" --> "1" Money : amount
+  MonthlyBudget "many" --> "1" Category : categoryId
+  MonthlyBudget "1" --> "1" Money : amount
+```
+
+### Devil Sign-Off
+
+**DEVIL SIGN-OFF:** No blocking objections. Accepts all ba/ddd resolutions including both overrides (TransactionType in budget/contracts; Mongoose-native-BigInt with Decimal128 fallback). Escalated one item — the category-type/budget-eligibility question — now resolved by the owner (type-agnostic tag, no eligibility validation, free-form MVP risk consciously accepted). Non-blocking clarifications folded into this ADR: archived-category aggregation, monthly-name permanence, BigInt-storage verification spike at the schema implementation start.
+
+---
+
 **Alternatives rejected:**
 
 - Option A (NestJS serves HTML via `ServeStaticModule`): would place static-file serving and HMAC auth logic in the same process, complicating health checks and adding latency for all static asset requests. Rejected once the nginx serving topology was chosen.
