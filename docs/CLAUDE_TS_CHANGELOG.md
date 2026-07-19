@@ -17,6 +17,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-19 — Override: Angular CSS (Tailwind) replaces SCSS-only mandate
+
+- **Component**: `rules/code-style-angular.md`, `rules/nx-generators.md`
+- **Type**: Override
+- **What happened**: Adopting Tailwind v4 (ADR-008) required a repo-wide flip from SCSS to plain CSS across all Angular projects (`apps/web` and feature libs `libs/identity/*`, `libs/budget/*`). Tailwind v4 explicitly does not work with CSS preprocessors and follows Angular's own official integration guide. Updated styling section in `code-style-angular.md` to mandate `.css` (not `.scss`), changed `nx-generators.md`'s "SCSS Only" section to "CSS (not SCSS)" with the rationale, and removed `--style=scss` instructions. Also updated `docs/SKELETON.md` (project-specific, non-template-inherited) to remove `--style=scss` from the Angular lib scaffold command and removed the post-gen "rename `.css` → `.scss`" instruction.
+- **Why it matters upstream**: Any claude-ts consumer adopting Tailwind v4 (or any CSS-first framework that forbids preprocessors) for Angular will hit the identical need to flip these rules from SCSS-only to CSS-standard. The current template's SCSS-mandate default would conflict with Tailwind adoption.
+- **Suggested upstream change**: For projects choosing to adopt Tailwind v4 or other preprocessor-incompatible styling frameworks, conditionally (or selectively in platform-specific `code-style-angular.md` if the template gains multi-platform split) override the styling section to mandate `.css` with a note: "Tailwind v4 does not work with CSS preprocessors — use plain CSS per Angular's official integration guide (see link to Angular docs)." For projects still using SCSS with other frameworks, the current SCSS-mandate continues to apply.
+- **Status**: pending-port
+
+---
+
 ## 2026-07-17 — Enhancement: `rules/code-style-angular.md` gained an Internationalization (Transloco) section
 
 - **Component**: `rules/code-style-angular.md`

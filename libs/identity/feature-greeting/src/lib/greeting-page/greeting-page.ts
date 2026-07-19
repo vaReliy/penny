@@ -14,7 +14,7 @@ type GreetingState =
   imports: [TranslocoPipe],
   providers: [provideTranslocoScope('identity')],
   templateUrl: './greeting-page.html',
-  styleUrl: './greeting-page.scss',
+  styleUrl: './greeting-page.css',
 })
 export class GreetingPageComponent {
   private readonly identityService = inject(IdentityService);

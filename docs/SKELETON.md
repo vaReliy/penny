@@ -36,7 +36,7 @@ Do not duplicate `README.md` here — it's the source of truth for exact command
 
 This is the core value of this document. `identity` is the concrete example to copy — reference its actual files by path rather than re-deriving the shape from scratch.
 
-**Never hand-scaffold a new lib.** Manually writing `project.json`/`tsconfig*.json` produces a project that's silently missing from `lint` (no inferred `lint` target without a generator-created `eslint.config.mjs`) — see `rules/nx-generators.md` for the full consequence list. Always run the generator, then apply the post-generator corrections that file documents (tsconfig strictness, SCSS-not-CSS for Angular, `vite.config.mts` cleanup, etc.).
+**Never hand-scaffold a new lib.** Manually writing `project.json`/`tsconfig*.json` produces a project that's silently missing from `lint` (no inferred `lint` target without a generator-created `eslint.config.mjs`) — see `rules/nx-generators.md` for the full consequence list. Always run the generator, then apply the post-generator corrections that file documents (tsconfig strictness, `vite.config.mts` cleanup, etc.).
 
 ### 1. Scaffold the backend libs
 
@@ -56,10 +56,10 @@ Mirror `libs/identity/{feature-login,feature-access-status,feature-greeting,data
 
 ```bash
 pnpm nx g @nx/angular:lib --name=<domain>-feature-<x> --directory=libs/<domain>/feature-<x> \
-  --tags="scope:<domain>,type:feature,platform:web" --style=scss --standalone --no-interactive
+  --tags="scope:<domain>,type:feature,platform:web" --standalone --no-interactive
 ```
 
-`--name` and `--directory` must both be explicit (the generator silently drops the domain prefix from a positional argument without `--directory`) — see `rules/nx-generators.md`. Run the Angular-generator post-fixes from that same file (remove `@nx/vite/plugins/…` imports from `vite.config.mts`, rename `.css` → `.scss`, audit the stub spec's component-class import name).
+`--name` and `--directory` must both be explicit (the generator silently drops the domain prefix from a positional argument without `--directory`) — see `rules/nx-generators.md`. Run the Angular-generator post-fixes from that same file (remove `@nx/vite/plugins/…` imports from `vite.config.mts`, audit the stub spec's component-class import name).
 
 ### 3. Per-lib `package.json` dependencies
 

@@ -36,13 +36,13 @@ The repo base (`tsconfig.base.json`) is intentionally minimal: no `strict` block
 
 The `@nx/vitest` plugin registers the inferred test target as `test` (the `testTargetName` option in `nx.json`, kept at Nx's conventional default). Use `pnpm nx test <project> --skip-nx-cache` for unit test runs. Gotcha that motivated this note: `nx <target> <project>` for a target name the project doesn't have silently resolves to nothing — after running any generator, confirm the registered target names in `nx.json` match what CI and the rules table invoke.
 
-### Angular Style Files — SCSS Only
+### Angular Style Files — CSS (not SCSS)
 
-Repo standard: all style files must use SCSS (not CSS). The `@nx/angular:app` and `@nx/angular:lib` generators default to CSS; generated files must be renamed `.css` → `.scss` and all `styleUrl`/`styles` references updated. Also update `apps/*/project.json` `"styles"` array. Pass `--style=scss` to generators to reduce post-gen work.
+Repo standard: all style files use plain CSS (not SCSS) — Tailwind v4 does not work with CSS preprocessors (see ADR-008). The `@nx/angular:app` and `@nx/angular:lib` generators default to CSS, which is correct; no post-gen renaming is needed. Do not pass `--style=scss` to generators.
 
 ### Angular Generator Flag Requirements
 
-- `@nx/angular:app` and `@nx/angular:lib` **must** be scaffolded via `nx g`, never created manually. The generator registers the project in the NX workspace graph, ensures the full tsconfig inheritance chain, and configures targets/executors correctly. Manual creation (writing project.json by hand) breaks `nx affected` and may misconfigure lint/test runners. Always use: `pnpm nx g @nx/angular:lib <path> --tags=… --style=scss --standalone --no-interactive`, then audit per this file's sections.
+- `@nx/angular:app` and `@nx/angular:lib` **must** be scaffolded via `nx g`, never created manually. The generator registers the project in the NX workspace graph, ensures the full tsconfig inheritance chain, and configures targets/executors correctly. Manual creation (writing project.json by hand) breaks `nx affected` and may misconfigure lint/test runners. Always use: `pnpm nx g @nx/angular:lib <path> --tags=… --standalone --no-interactive`, then audit per this file's sections.
 
 - `@nx/angular:lib` generator **silently ignores positional arguments** when `--directory` is absent. Running `nx g @nx/angular:lib <group>/<name>` (positional) without `--directory` strips the prefix and places the lib in the wrong location. Always pair `--name=<project-name>` with `--directory=libs/<path>` explicitly. The generator output confirms the resolved root — verify it matches the intended path.
 

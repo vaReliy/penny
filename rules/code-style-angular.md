@@ -118,17 +118,17 @@ Use a computed signal instead of `$any()` casts to preserve strict mode.
 
 ## Styling
 
-- All Angular style files must use SCSS (not CSS)
-- File extension: `.scss` not `.css`
-- When generating components via `nx g @nx/angular:component`, always pass `--style=scss`
-- After generation, verify `styleUrl` / `styles` references use `.scss`
+- All Angular style files use plain CSS (not SCSS) — Tailwind v4 does not work with CSS preprocessors (see ADR-008)
+- File extension: `.css` not `.scss`
+- When generating components via `nx g @nx/angular:component`, do not pass `--style=scss` (let the generator default to CSS)
+- After generation, verify `styleUrl` / `styles` references use `.css`
 
 Example:
 
 ```typescript
 @Component({
   selector: 'app-greeting',
-  styleUrl: './greeting.component.scss', // ✓ must be .scss
+  styleUrl: './greeting.component.css', // ✓ must be .css
   template: `...`,
   standalone: true,
 })

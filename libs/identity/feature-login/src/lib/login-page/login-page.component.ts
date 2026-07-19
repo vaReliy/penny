@@ -15,7 +15,7 @@ const TELEGRAM_WIDGET_VERSION = '22';
   imports: [TranslocoPipe],
   providers: [provideTranslocoScope('identity')],
   templateUrl: './login-page.component.html',
-  styleUrl: './login-page.component.scss',
+  styleUrl: './login-page.component.css',
 })
 export class LoginPageComponent implements OnInit {
   private readonly document = inject(DOCUMENT);

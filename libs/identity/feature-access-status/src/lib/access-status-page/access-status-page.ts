@@ -9,7 +9,7 @@ import { IdentityService, UserStatus } from 'identity-data-access';
   imports: [TranslocoPipe],
   providers: [provideTranslocoScope('identity')],
   templateUrl: './access-status-page.html',
-  styleUrl: './access-status-page.scss',
+  styleUrl: './access-status-page.css',
 })
 export class AccessStatusPageComponent {
   private readonly identityService = inject(IdentityService);

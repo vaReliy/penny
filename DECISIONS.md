@@ -158,6 +158,17 @@ The serving topology settled on **nginx serves `index.html`** (`apps/web` contai
 - `gzip off` is set on the same location block, since a compressed response would otherwise bypass `sub_filter` silently.
 - `apps/api/src/middleware/csp-policy.ts` (NestJS Helmet CSP for JSON API responses) emits `style-src 'self'` with no `'unsafe-inline'` — the API never serves HTML, so it needs no nonce.
 
+**Alternatives rejected:**
+
+- Option A (NestJS serves HTML via `ServeStaticModule`): would place static-file serving and HMAC auth logic in the same process, complicating health checks and adding latency for all static asset requests. Rejected once the nginx serving topology was chosen.
+- `'unsafe-inline'` permanently: permits injected stylesheets from XSS — rejected as a permanent posture; only used as a time-bounded interim tradeoff before the nonce pipeline shipped.
+
+**Consequences:**
+
+- Any new Angular build must keep emitting the `csp-nonce` meta placeholder in `index.html`, or `sub_filter` has nothing to replace and the nonce falls back to the un-replaced placeholder value.
+- The nginx container image must have `ngx_http_sub_module` compiled in (present in the official `nginx:*-alpine` images).
+- The hardcoded `sha256-...` hash in `apps/web/nginx.conf` for Angular's own style block must be regenerated (from the browser's CSP violation console, or by extracting the built stylesheet) whenever `nx build web`'s output for that block changes.
+
 ---
 
 ## ADR-007 — Budget Domain: Entities, Aggregates, and Scoping
@@ -437,13 +448,100 @@ classDiagram
 
 ---
 
+## ADR-008 — CSS Framework: Tailwind CSS v4
+
+**Status:** Accepted
+
+**Date:** 2026-07-19
+
+**Decision:** Use Tailwind CSS v4 (utility-first, CSS-first config) for `apps/web` styling. Angular CDK primitives (menu, overlay, dialog, focus-trap) supply behavior for anything Bootstrap components would have covered; Tailwind classes supply the styling. This task records the decision and the design-token seam; it does not install Tailwind (see task `2026-07-16-04-web-shell-mobile-first-restyle`, which installs against this ADR).
+
+**Context:** `apps/web` is mid-rebuild (mobile-first, agent-written UI) with only unstyled skeleton pages. The prior legacy app used Bootstrap 5 + ng-bootstrap; the `master:design/` mockups are desktop-oriented and reused only loosely in the new mobile-first design. Owner confirmed the decision 2026-07-16 ("lets use tailwind in this migration, agree") after reviewing a Tailwind-vs-Bootstrap comparison.
+
+**Rationale:**
+
+- **Framework-decoupled upgrades.** ng-bootstrap has historically lagged Angular majors, creating friction with the Renovate/`nx migrate` discipline (see ADR-004; the D22 pattern from the legacy app). Tailwind ships CSS utilities with no Angular-version coupling.
+- **Agent-codegen-friendly.** Most UI implementation in this migration is agent-written. Utility classes are self-contained per template (no cross-file theme/SCSS coordination needed to style a single component correctly), which suits AI-generated markup better than a component-class-based framework.
+- **Low mockup reuse.** The mobile-first redesign reuses little of the Bootstrap-era `master:design/` mockups, so there is no meaningful sunk cost in staying on Bootstrap for continuity.
+
 **Alternatives rejected:**
 
-- Option A (NestJS serves HTML via `ServeStaticModule`): would place static-file serving and HMAC auth logic in the same process, complicating health checks and adding latency for all static asset requests. Rejected once the nginx serving topology was chosen.
-- `'unsafe-inline'` permanently: permits injected stylesheets from XSS — rejected as a permanent posture; only used as a time-bounded interim tradeoff before the nonce pipeline shipped.
+- **Bootstrap 5 + ng-bootstrap.** Honest upside: 3–4 ready-made components (modal, dropdown, progressbar) and continuity with the `master:design/` mockups. Rejected because that upside is narrow — Angular CDK primitives (`@angular/cdk/overlay`, `@angular/cdk/menu`, `@angular/cdk/a11y`) plus Tailwind utility classes cover the same behavior, and the version-lag friction (ADR-004's exact-pin/Renovate discipline) outweighs the convenience for a small, greenfield-styled shell.
+
+**Revisit triggers:**
+
+- Component-library needs grow past what CDK primitives + Tailwind utilities comfortably cover (e.g., a data-grid, a rich date-picker, or a design system with many themed variants) — reconsider a headless component library (e.g., Angular CDK + a dedicated library) or a Tailwind-based component kit before reaching for ng-bootstrap.
+- Dark theme (parked UX backlog item, see Design Tokens below) turns out to need per-component theming beyond CSS custom-property swaps.
+
+### Tailwind v4 Integration Approach (verified 2026-07-19)
+
+Verified via web search against Tailwind's official docs, the Nx blog's Tailwind-v4-in-Nx-Angular guide, and npm registry version listings (context7 lookup was attempted first but the configured API key was invalid — this was covered by direct web verification instead, per the "not from memory" requirement).
+
+**Versions (exact-pinned per ADR-004):**
+
+- `tailwindcss`: `4.3.3` (latest npm `dist-tag: latest` as of 2026-07-19)
+- `@tailwindcss/postcss`: `4.3.3`
+
+**Integration shape** — `apps/web` builds with the `@angular/build:application` (esbuild) executor, which resolves CSS through PostCSS. No `tailwind.config.js`: v4 is CSS-first config via `@theme` in CSS.
+
+1. `apps/web/.postcssrc.json`:
+   ```json
+   { "plugins": { "@tailwindcss/postcss": {} } }
+   ```
+2. `apps/web/src/styles.css` (plain CSS, not SCSS — Tailwind v4 is not designed to run through CSS preprocessors like Sass, and this matches Angular's own official Tailwind integration guide and its `--style=tailwind` CLI convention):
+   ```css
+   @import 'tailwindcss' source('./app');
+   ```
+   The `source('./app')` modifier restricts Tailwind v4's automatic content scanning to `apps/web/src/app` — v4 otherwise scans from the workspace root by default, which would pull unrelated workspace files into the class scan.
+3. Any `libs/budget/ui`, `libs/budget/feature-*`, etc. that contribute templates must be added as explicit `@source` directives in `styles.css` (e.g. `@source "../../../libs/budget/ui/src";`) so their utility classes aren't purged. Add each new UI-bearing lib's `@source` line when that lib is created; there is no sync-generator dependency in this repo, so this stays a manual step task 04 and later screen tasks must remember.
+4. `@theme { … }` in `styles.css` (or an imported partial) declares the design tokens below as CSS custom properties, making them available as Tailwind utility values (e.g. a `--spacing-touch: 2.75rem;` token backs `min-h-touch`).
+
+### Design Tokens (consumed by task 04 and all screen tasks 16–19)
+
+Expressed the Tailwind-v4 way — paste directly into an `@theme` block:
+
+```css
+@theme {
+  /* Breakpoints — mobile-first; base (360px) is unprefixed/default, these are the up-breakpoints */
+  --breakpoint-sm: 40rem; /* 640px */
+  --breakpoint-md: 48rem; /* 768px */
+  --breakpoint-lg: 64rem; /* 1024px */
+
+  /* Spacing scale — Tailwind's default 0.25rem (4px) step is kept as-is; only the semantic touch-target token is added */
+  --spacing-touch: 2.75rem; /* 44px — minimum touch target (iOS HIG); use min-h-touch min-w-touch on tappable controls */
+
+  /* Type scale — mobile-first base sizes */
+  --text-xs: 0.75rem; /* 12px — helper text, captions */
+  --text-sm: 0.875rem; /* 14px — secondary body */
+  --text-base: 1rem; /* 16px — body default (never smaller, avoids iOS input zoom) */
+  --text-lg: 1.125rem; /* 18px — emphasized body */
+  --text-xl: 1.25rem; /* 20px — section headings */
+  --text-2xl: 1.5rem; /* 24px — screen titles */
+
+  /* Color roles — light theme only; dark is parked UX backlog (see revisit triggers) */
+  --color-background: #ffffff;
+  --color-surface: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #64748b;
+  --color-primary: #2563eb; /* brand/action */
+  --color-primary-contrast: #ffffff;
+  --color-income: #16a34a; /* income/positive amounts */
+  --color-expense: #dc2626; /* expense/negative amounts */
+  --color-warning: #d97706;
+
+  /* Border radius / elevation basics */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.08);
+}
+```
+
+**Icon strategy:** a lightweight inlined SVG icon set (e.g. Lucide), imported per-component as needed — not legacy self-hosted FontAwesome. Rationale: FontAwesome's webfont/CSS-class model is the same "framework-coupled, not self-contained per template" shape this ADR moves away from; inlined SVGs are tree-shakeable, require no extra font asset or CSP-affecting `@font-face`, and match the "agent writes one self-contained template" rationale above.
 
 **Consequences:**
 
-- Any new Angular build must keep emitting the `csp-nonce` meta placeholder in `index.html`, or `sub_filter` has nothing to replace and the nonce falls back to the un-replaced placeholder value.
-- The nginx container image must have `ngx_http_sub_module` compiled in (present in the official `nginx:*-alpine` images).
-- The hardcoded `sha256-...` hash in `apps/web/nginx.conf` for Angular's own style block must be regenerated (from the browser's CSP violation console, or by extracting the built stylesheet) whenever `nx build web`'s output for that block changes.
+- Task 04 installs the exact-pinned packages above, wires the two config files, and pastes the `@theme` block — no re-research needed.
+- Every screen task (16–19) styles exclusively with Tailwind utilities driven by these tokens; ad hoc hex colors or magic spacing values in templates are a review finding.
+- New UI-bearing libs must add their `@source` directive in `apps/web/src/styles.css` or their classes silently get purged from the production build (see Integration Approach, step 3).
