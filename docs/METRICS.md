@@ -67,3 +67,4 @@ Each completed task is one row in the table below.
 | 2026-07-19 | penny | budget-domain-model-adr                                      | T3   | 0      | -/-/-/-           | 0       | no       | deep           |
 | 2026-07-19 | penny | css-framework-decision-adr-scss-to-css-followup              | T1   | 1      | 0/3/-/-           | 0       | no       | standard       |
 | 2026-07-20 | penny | web-shell-mobile-first-restyle                               | T2   | 1      | 0/1/-/0           | 2       | no       | standard       |
+| 2026-07-20 | penny | budget-core-entities                                         | T2   | 0      | 0/0/-/-           | 0       | no       | standard       |

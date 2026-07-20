@@ -32,6 +32,10 @@ export default [
               sourceTag: 'scope:identity',
               onlyDependOnLibsWithTags: ['scope:identity', 'scope:shared'],
             },
+            {
+              sourceTag: 'scope:budget',
+              onlyDependOnLibsWithTags: ['scope:budget', 'scope:shared'],
+            },
             // platform: web ⊥ server; both may use shared
             {
               sourceTag: 'platform:shared',
