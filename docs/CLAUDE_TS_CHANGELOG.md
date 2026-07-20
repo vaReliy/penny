@@ -17,6 +17,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-20 — Fix: `rules/nx-generators.md` trigger-wording gap exposed hand-author path
+
+- **Component**: `rules/nx-generators.md`, `AGENTS.md`
+- **Type**: Fix
+- **What happened**: The trigger conditions for when to read `rules/nx-generators.md` were worded as post-hoc ("read AFTER running a generator"), even though §6 of the file explicitly permits hand-authoring non-Angular libs. An agent taking the hand-author path never tripped the stated trigger and thus never saw §6's completeness checklist — the ambiguity was caught only after direct interrogation. Rewording the trigger in both the file header and `AGENTS.md`'s index to "before creating any new app or lib — whether generated or hand-authored" ensures agents read the file regardless of which path they choose. Also added a requirement that completion reports explicitly state which path was taken (exact `nx g` command, or "hand-authored" with companion-file diff confirmation), closing the ambiguity.
+- **Why it matters upstream**: Any claude-ts consumer allowing hand-authored non-framework libs (as this project does for plain TypeScript libraries) faces the identical gap: a rule file can permit a path that its own trigger condition doesn't account for. The trigger condition needs to fire on either path, not just one.
+- **Suggested upstream change**: In the template's `rules/nx-generators.md` (if hand-authoring is permitted for non-Angular libs), reword the opening trigger from "Read this AFTER running any `nx g …` generator" to "Read this BEFORE creating any new app or lib — whether via an `nx g …` generator or hand-authored." Also add to §6 ("Generator-Hygiene Gotchas") a requirement that any implementation report explicitly state which path was taken (exact generator command, or "hand-authored" + companion-file audit confirmation). In `AGENTS.md`'s index, reword the trigger phrase from "after running ANY `nx g …` generator" to "before creating any new app or lib (generated or hand-authored), or after running ANY `nx g …` generator."
+- **Status**: pending-port
+
+---
+
 ## 2026-07-19 — Override: Angular CSS (Tailwind) replaces SCSS-only mandate
 
 - **Component**: `rules/code-style-angular.md`, `rules/nx-generators.md`

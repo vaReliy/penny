@@ -1,6 +1,6 @@
 # Nx Generator Hygiene
 
-Read this AFTER running any `nx g …` generator (apps, libs, configs) and BEFORE handing off to the quality gate. Generators produce working-but-unpolished output; every item below has shipped as a real defect.
+Read this BEFORE creating any new app or lib — whether via an `nx g …` generator or hand-authored — and BEFORE handing off to the quality gate. Generators produce working-but-unpolished output; every item below has shipped as a real defect.
 
 ## 1. Audit injected dependencies
 
@@ -85,6 +85,8 @@ However, Angular libs must always use the `@nx/angular:lib` generator — never 
 ### Skipping the generator: silently dropped out of `lint` forever
 
 A hand-scaffolded lib missing `eslint.config.mjs` gets no inferred `lint` target from `@nx/eslint/plugin` (which infers the target from that file's presence) — `nx show projects --with-target lint` silently excludes it, and `nx affected -t lint` never touches it, with no error or warning. In this repo: `libs/shared/testing` was hand-scaffolded (`project.json`/`tsconfig*.json` written by hand, `tsconfig.base.json` path alias added manually) and was missing `eslint.config.mjs`, `package.json`, and `README.md` compared to a generator-created sibling — caught only by diffing the new lib's file listing against a known-generated one. Periodic audit: compare `nx show projects` against `nx show projects --with-target lint` (see `rules/workflow.md`'s Command Execution Policy section). If a hand-scaffolded lib is found missing config files, diff its file listing against a known-generated sibling to find the gaps.
+
+Any implementation or quality-gate report must explicitly state which path was taken: either the exact `nx g` command run (if generated), or "hand-authored" plus confirmation that the file listing was diffed against a known-generated sibling lib for completeness (if hand-authored). This closes the ambiguity around whether a lib's creation path was intentional or accidentally bypassed.
 
 ### `@nx/vitest`-based projects need a manually-added `typecheck` target
 
