@@ -58,6 +58,35 @@ The web app (`apps/web`) requires local environment files before running `nx ser
 
 Once set up, both files are git-ignored — they won't be committed, so each developer can keep their own local values.
 
+### Local dev auth
+
+The Telegram Login Widget requires a registered domain with BotFather, which is impractical for local development. To log in locally without HTTPS/ngrok, use two CLI commands:
+
+1. **Create a dev user** (once per username):
+
+   ```
+   set -a && source .env && set +a && pnpm nx build cli && node dist/apps/cli/main.js dev:create-user --telegram-username mydevuser --name "My Dev User"
+   ```
+
+   This creates a user with a deterministic fake `telegramId` (safe for dev — cannot collide with real Telegram user IDs).
+
+2. **Issue a dev token** (before each session):
+   ```
+   set -a && source .env && set +a && pnpm nx build cli && node dist/apps/cli/main.js dev:token --telegram-username mydevuser
+   ```
+   This issues a 7-day JWT and outputs two cookie values:
+   ```
+   Set these cookies in DevTools (Application → Cookies):
+   token=<JWT>
+   XSRF-TOKEN=<random>
+   ```
+
+Paste both values into your browser's DevTools (Developer Tools → Application → Cookies, select your localhost origin), and refresh the page. You'll be logged in.
+
+The `--status` flag on `dev:token` is optional (defaults to `active`); use it only if you need to test a specific user status (e.g. `--status pending`).
+
+Both commands are guarded to refuse running in production mode.
+
 ### Integration tests (MongoDB)
 
 Some tests (e.g. `libs/identity/infrastructure`) connect to a real MongoDB instance instead of mocking it. `docker-compose.yml`'s `mongo` service has auth enabled (`MONGO_INITDB_ROOT_USERNAME`/`MONGO_INITDB_ROOT_PASSWORD`, sourced from `MONGO_USER`/`MONGO_PASSWORD` in `.env`), so these tests read their connection string from the `MONGO_TEST_URI` env var rather than hard-coding an unauthenticated URI.
