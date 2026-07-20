@@ -1,1 +1,41 @@
-/* You can add global styles to this file, and also import other style files */
+@import 'tailwindcss' source('./app');
+@source '../../../libs/identity/feature-login/src';
+@source '../../../libs/identity/feature-access-status/src';
+@source '../../../libs/identity/feature-greeting/src';
+@source '../../../libs/shared/web-shell/src';
+
+@theme {
+  /* Breakpoints — mobile-first; base (360px) is unprefixed/default, these are the up-breakpoints */
+  --breakpoint-sm: 40rem; /* 640px */
+  --breakpoint-md: 48rem; /* 768px */
+  --breakpoint-lg: 64rem; /* 1024px */
+
+  /* Spacing scale — Tailwind's default 0.25rem (4px) step is kept as-is; only the semantic touch-target token is added */
+  --spacing-touch: 2.75rem; /* 44px — minimum touch target (iOS HIG); use min-h-touch min-w-touch on tappable controls */
+
+  /* Type scale — mobile-first base sizes */
+  --text-xs: 0.75rem; /* 12px — helper text, captions */
+  --text-sm: 0.875rem; /* 14px — secondary body */
+  --text-base: 1rem; /* 16px — body default (never smaller, avoids iOS input zoom) */
+  --text-lg: 1.125rem; /* 18px — emphasized body */
+  --text-xl: 1.25rem; /* 20px — section headings */
+  --text-2xl: 1.5rem; /* 24px — screen titles */
+
+  /* Color roles — light theme only; dark is parked UX backlog (see revisit triggers) */
+  --color-background: #ffffff;
+  --color-surface: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #64748b;
+  --color-primary: #2563eb; /* brand/action */
+  --color-primary-contrast: #ffffff;
+  --color-income: #16a34a; /* income/positive amounts */
+  --color-expense: #dc2626; /* expense/negative amounts */
+  --color-warning: #d97706;
+
+  /* Border radius / elevation basics */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.08);
+}

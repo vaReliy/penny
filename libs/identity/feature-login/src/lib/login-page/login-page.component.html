@@ -1,14 +1,19 @@
-<main class="login-page" aria-labelledby="login-heading">
-  <h1 id="login-heading">{{ 'identity.login.heading' | transloco }}</h1>
+<main
+  class="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-4 text-center text-text-primary"
+  aria-labelledby="login-heading"
+>
+  <h1 id="login-heading" class="text-2xl font-semibold text-primary">
+    {{ 'identity.login.heading' | transloco }}
+  </h1>
 
   @if (loginStatus() === 'pending') {
-    <p aria-live="polite" aria-busy="true">
+    <p aria-live="polite" aria-busy="true" class="text-sm text-text-secondary">
       {{ 'identity.login.pending' | transloco }}
     </p>
   }
 
   @if (loginStatus() === 'error') {
-    <p role="alert" class="login-error">
+    <p role="alert" class="text-sm text-expense">
       {{ 'identity.login.error' | transloco }}
     </p>
   }

@@ -2,7 +2,6 @@ import type { Routes } from '@angular/router';
 import { loginGuard, statusGuard } from 'identity-data-access';
 
 export const appRoutes: Routes = [
-  { path: '', redirectTo: 'greeting', pathMatch: 'full' },
   {
     path: 'login',
     canActivate: [loginGuard],
@@ -18,9 +17,39 @@ export const appRoutes: Routes = [
       ),
   },
   {
-    path: 'greeting',
+    path: '',
     canActivate: [statusGuard],
     loadComponent: () =>
-      import('identity-feature-greeting').then((m) => m.GreetingPageComponent),
+      import('shared-web-shell').then((m) => m.AppShellComponent),
+    children: [
+      { path: '', redirectTo: 'greeting', pathMatch: 'full' },
+      {
+        path: 'greeting',
+        loadComponent: () =>
+          import('identity-feature-greeting').then(
+            (m) => m.GreetingPageComponent,
+          ),
+      },
+      {
+        path: 'account',
+        loadComponent: () =>
+          import('shared-web-shell').then((m) => m.PlaceholderPageComponent),
+      },
+      {
+        path: 'history',
+        loadComponent: () =>
+          import('shared-web-shell').then((m) => m.PlaceholderPageComponent),
+      },
+      {
+        path: 'planner',
+        loadComponent: () =>
+          import('shared-web-shell').then((m) => m.PlaceholderPageComponent),
+      },
+      {
+        path: 'records',
+        loadComponent: () =>
+          import('shared-web-shell').then((m) => m.PlaceholderPageComponent),
+      },
+    ],
   },
 ];

@@ -1,7 +1,15 @@
-@if (userStatus() === null) {
-<p>{{ 'common.loading' | transloco }}</p>
-} @else if (userStatus() === 'pending') {
-<p>{{ 'identity.accessStatus.pending' | transloco }}</p>
-} @else {
-<p>{{ 'identity.accessStatus.rejected' | transloco }}</p>
-}
+<main
+  class="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4 text-center text-text-primary"
+>
+  @if (userStatus() === null) {
+  <p class="text-text-secondary">{{ 'common.loading' | transloco }}</p>
+  } @else if (userStatus() === 'pending') {
+  <p class="text-lg text-warning">
+    {{ 'identity.accessStatus.pending' | transloco }}
+  </p>
+  } @else {
+  <p class="text-lg text-expense">
+    {{ 'identity.accessStatus.rejected' | transloco }}
+  </p>
+  }
+</main>

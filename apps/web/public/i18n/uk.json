@@ -1,5 +1,22 @@
 {
   "common": {
     "loading": "Завантаження..."
+  },
+  "shell": {
+    "brand": "Penny",
+    "nav": {
+      "label": "Основна навігація",
+      "account": "Рахунок",
+      "history": "Історія",
+      "planner": "Планувальник",
+      "records": "Записи"
+    },
+    "profile": {
+      "menuLabel": "Меню профілю",
+      "logout": "Вийти"
+    },
+    "placeholder": {
+      "comingSoon": "Цей розділ ще в розробці"
+    }
   }
 }

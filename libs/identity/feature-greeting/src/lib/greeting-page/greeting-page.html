@@ -1,7 +1,12 @@
-@let state = greeting(); @if (state.kind === 'loading') {
-<p>{{ 'common.loading' | transloco }}</p>
-} @else if (state.kind === 'success') {
-<p>{{ state.message }}</p>
-} @else {
-<p>{{ 'identity.greeting.error' | transloco }}</p>
-}
+@let state = greeting();
+<main
+  class="flex min-h-full flex-col items-center justify-center gap-4 p-6 text-center text-text-primary"
+>
+  @if (state.kind === 'loading') {
+  <p class="text-text-secondary">{{ 'common.loading' | transloco }}</p>
+  } @else if (state.kind === 'success') {
+  <p class="text-lg">{{ state.message }}</p>
+  } @else {
+  <p class="text-expense">{{ 'identity.greeting.error' | transloco }}</p>
+  }
+</main>

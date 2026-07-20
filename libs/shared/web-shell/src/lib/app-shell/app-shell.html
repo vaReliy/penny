@@ -1,0 +1,97 @@
+<div class="flex min-h-screen flex-col bg-background text-text-primary">
+  <header
+    class="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-4 py-3"
+  >
+    <span class="select-none text-xl font-semibold text-primary"
+      >{{ 'shell.brand' | transloco }}</span
+    >
+
+    <nav
+      class="hidden lg:flex lg:items-center lg:gap-1"
+      [attr.aria-label]="'shell.nav.label' | transloco"
+    >
+      @for (item of navItems; track item.path) {
+      <a
+        [routerLink]="item.path"
+        routerLinkActive="bg-primary text-primary-contrast"
+        ariaCurrentWhenActive="page"
+        class="rounded-md px-3 py-2 text-sm font-medium text-text-secondary hover:bg-background"
+      >
+        {{ item.labelKey | transloco }}
+      </a>
+      }
+    </nav>
+
+    <button
+      type="button"
+      class="flex min-h-touch min-w-touch cursor-pointer items-center justify-center rounded-full text-text-secondary hover:bg-background"
+      [attr.aria-label]="'shell.profile.menuLabel' | transloco"
+      [cdkMenuTriggerFor]="profileMenu"
+    >
+      <svg
+        class="h-6 w-6"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        aria-hidden="true"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.25a7.5 7.5 0 0 1 15 0"
+        />
+      </svg>
+    </button>
+
+    <ng-template #profileMenu>
+      <div
+        cdkMenu
+        class="min-w-40 rounded-md border border-border bg-background py-1 shadow-card"
+      >
+        <button
+          cdkMenuItem
+          type="button"
+          class="block w-full min-h-touch px-4 py-2 text-left text-sm text-text-primary hover:bg-surface"
+          (click)="onLogout()"
+        >
+          {{ 'shell.profile.logout' | transloco }}
+        </button>
+      </div>
+    </ng-template>
+  </header>
+
+  <main class="flex-1 pb-20 lg:pb-0">
+    <router-outlet />
+  </main>
+
+  <nav
+    class="fixed inset-x-0 bottom-0 z-10 flex border-t border-border bg-surface lg:hidden"
+    [attr.aria-label]="'shell.nav.label' | transloco"
+  >
+    @for (item of navItems; track item.path) {
+    <a
+      [routerLink]="item.path"
+      routerLinkActive="text-primary"
+      ariaCurrentWhenActive="page"
+      class="flex min-h-touch flex-1 flex-col items-center justify-center gap-0.5 text-xs text-text-secondary"
+    >
+      <svg
+        class="h-5 w-5"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        aria-hidden="true"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          [attr.d]="item.icon"
+        />
+      </svg>
+      <span>{{ item.labelKey | transloco }}</span>
+    </a>
+    }
+  </nav>
+</div>
