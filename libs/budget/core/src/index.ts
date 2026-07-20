@@ -4,6 +4,5 @@ export * from './lib/category.js';
 export * from './lib/category-repository.js';
 export * from './lib/transaction.js';
 export * from './lib/transaction-repository.js';
-export * from './lib/transaction-type.js';
 export * from './lib/monthly-budget.js';
 export * from './lib/monthly-budget-repository.js';

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Money } from 'shared-util';
 
 import { Transaction } from './transaction.js';
-import { TransactionType } from './transaction-type.js';
+import { TransactionType } from 'budget-contracts';
 
 const NOW = new Date('2026-07-01T00:00:00.000Z');
 const DATE = new Date('2026-06-15T00:00:00.000Z');

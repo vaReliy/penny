@@ -28,6 +28,7 @@ Each completed task is one row in the table below.
 | ---------- | ----- | ------------------------------------------------------------ | ---- | ------ | ----------------- | ------- | -------- | -------------- |
 | 2026-07-07 | penny | distill-shared-contracts-alias-into-architecture             | T1   | 0      | 0/0/0/0           | 0       | no       | standard       |
 | 2026-07-20 | penny | budget-contracts-livr-validation                             | T2   | 0      | 0/0/0/0           | 2       | no       | standard       |
+| 2026-07-20 | penny | budget-core-transaction-type-migration                       | T1   | 0      | 0/0/-/-           | 0       | no       | standard       |
 | 2026-07-14 | penny | livr-max-length-login-profile                                | T0   | 0      | 0/0/0/0           | 0       | no       | cheap          |
 | 2026-07-07 | penny | distill-jwt-array-claim-guard-into-validation-rule           | T2   | 0      | 0/0/0/0           | 0       | no       | standard       |
 | 2026-07-07 | penny | skeleton-review-dod-audit-and-backlog-regroom                | T2   | 0      | 0/0/0/0           | 4       | no       | deep           |

@@ -1,7 +1,7 @@
 import type { IRepository } from 'shared-kernel';
 
 import type { Transaction, TransactionProps } from './transaction.js';
-import type { TransactionType } from './transaction-type.js';
+import type { TransactionType } from 'budget-contracts';
 
 /** Optional narrowing filter for {@link ITransactionRepository.findByWorkspace}. */
 export interface TransactionFilter {

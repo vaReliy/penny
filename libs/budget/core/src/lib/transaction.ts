@@ -1,7 +1,7 @@
 import { DomainError } from 'shared-errors';
 import type { Money } from 'shared-util';
 
-import { TransactionType } from './transaction-type.js';
+import { TransactionType } from 'budget-contracts';
 
 /** Constructor input for {@link Transaction}. */
 export interface TransactionProps {
