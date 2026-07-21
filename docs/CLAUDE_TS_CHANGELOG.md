@@ -17,6 +17,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-21 — Fix: `### CI scoping` example in `rules/workflow.md` recommended an Nx-23-invalid flag
+
+- **Component**: `rules/workflow.md` (`### CI scoping: nx affected -t <target> --exclude <project> semantics` section — one of the 7 penny-invented sections noted in the 2026-07-17 entry below, so this is project-local content, not upstream)
+- **Type**: Fix
+- **What happened**: The section's own "Fix" example told readers to scope with `-p web-e2e -t e2e`. `.github/workflows/ci.yml`'s e2e job used exactly that syntax and failed in CI (`error: unknown option '-p'`) — Nx 23.0.1 recognizes neither `-p` nor `--projects` on `nx affected` (both are `run-many`-only) and, rather than erroring, silently forwards the unrecognized flag to the inferred target's underlying command (here, `playwright test`, which then rejected it). A first fix attempt (`--projects=web-e2e`) was itself caught wrong by `reviewer` via live execution against the pinned `pnpm nx` binary — it is forwarded exactly like `-p` was, and additionally fails to scope out `smoke-e2e`/`api-e2e`. Corrected the example to `nx affected -t e2e --exclude=smoke-e2e,api-e2e` (the only real per-project scoping mechanism for `nx affected`) and added a note that `nx affected` has no native include-by-name filter at all. Full root-cause writeup: `docs/KNOWLEDGE_INBOX.md`, 2026-07-21 entry.
+- **Why it matters upstream**: since this section originated as penny-local content, it isn't yet upstream — but if it (or an equivalent CI-scoping note) gets ported to `claude-ts`, it must carry the corrected `--exclude=` syntax, not `-p`/`--projects`, since any consumer running Nx 23+ with `nx affected` against multiple projects sharing a target name (any inferred-target plugin — Playwright, etc. — is enough to trigger it) would hit the identical silent-forward failure.
+- **Suggested upstream change**: when porting the `### CI scoping` section to `claude-ts`, use `--exclude=<name1>,<name2>` in all examples and include the caveat: "`nx affected` has no native include-by-project-name filter — `-p`/`--projects` exist only on `nx run-many`; passing either to `nx affected` is silently forwarded as a passthrough arg to the target's underlying command instead of erroring. `--exclude` (applies to project names) is the only real scoping mechanism."
+- **Status**: project-local-only (section not yet ported upstream at all; this fix travels with it whenever that happens)
+
+---
+
 ## 2026-07-17 — Fix: phantom-baseline sync loss repaired via etalon; root cause and guards landed upstream
 
 - **Component**: whole CTS payload (22 files: `CLAUDE.md`, `rules/workflow.md`, `rules/nx-generators.md`, `.claude/agents/{tester,backend-developer,angular-developer,qa,reviewer}.md`, `.claude/scripts/cts-sync.sh`, `.claude/skills/{cts-update,cts-contribute,distill-inbox,github-actions}`, `.prettierignore`, `rules/shell-scripting.md` (new), hand-merges into `.ctsignore`'d `AGENTS.md`/`rules/architecture.md`/`rules/code-style.md`)

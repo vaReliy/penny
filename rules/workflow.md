@@ -183,7 +183,7 @@ The `ba` output must include an **API contract** (endpoint, request/response sha
 
 When scoping CI targets with `nx affected`, remember that `--exclude` applies to project names, not target names. Before using `--exclude` to scope an invocation, enumerate every project that exposes that target name (via `nx show projects` and `grep project.json`). An exclude-list covering only the one project you thought of is silently wrong the moment another project gains the same target.
 
-Example: `nx affected -t e2e --exclude smoke-e2e` doesn't stop at smoke-e2e — if `apps/api` also defines an `e2e` target (Jest, needs live Mongo), it will also run. Fix: scope explicitly with `-p web-e2e -t e2e` instead.
+Example: `nx affected -t e2e --exclude smoke-e2e` doesn't stop at smoke-e2e — if `apps/api-e2e` also defines an `e2e` target (Jest, needs live Mongo), it will also run. Fix: enumerate every other project exposing that target and exclude them all: `nx affected -t e2e --exclude=smoke-e2e,api-e2e`. Note: `nx affected` has **no native project-name include filter** — neither `-p` nor `--projects` (both `run-many`-only) are recognized; either is silently forwarded as a passthrough arg to the selected task's underlying command (e.g. `playwright test --projects=web-e2e` → `error: unknown option '--projects=web-e2e'`), and the affected set is left unscoped. `--exclude` is the only real per-project scoping mechanism for `nx affected`.
 
 ### Planning Team (T3)
 

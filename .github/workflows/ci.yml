@@ -152,7 +152,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run Playwright e2e tests
-        run: pnpm nx affected -p web-e2e -t e2e
+        run: pnpm nx affected -t e2e --exclude=smoke-e2e,api-e2e
         env:
           # Signal to playwright.config.mts to use serve-static (built artifact) instead of dev server
           CI: 'true'
