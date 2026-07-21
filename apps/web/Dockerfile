@@ -24,6 +24,11 @@ COPY . .
 # Generate production environment file from build arg (file is gitignored)
 ARG TELEGRAM_BOT_USERNAME
 RUN test -n "$TELEGRAM_BOT_USERNAME" || (echo "ERROR: TELEGRAM_BOT_USERNAME build arg is required" && exit 1) && \
+    case "$TELEGRAM_BOT_USERNAME" in \
+      *[!A-Za-z0-9_]*) \
+        echo "ERROR: TELEGRAM_BOT_USERNAME must contain only alphanumeric characters and underscores" >&2; \
+        exit 1 ;; \
+    esac && \
     printf "export const environment = { telegramBotUsername: '%s' };\n" "$TELEGRAM_BOT_USERNAME" \
     > apps/web/src/environments/environment.ts
 
