@@ -24,10 +24,10 @@ Do not duplicate `README.md` here — it's the source of truth for exact command
 
 1. Install Node 22 + enable Corepack (`README.md` § Prerequisites).
 2. `pnpm install`.
-3. Register a Telegram bot with [@BotFather](https://t.me/BotFather) and get its username and token (`README.md` § Environment configuration for the two `environment*.ts` files; `.env.example` for `TELEGRAM_BOT_TOKEN`/`TELEGRAM_BOT_USERNAME` used by the API/Docker build).
+3. Register a Telegram bot with [@BotFather](https://t.me/BotFather) and get its token (the username is already committed in `apps/web/src/environments/environment.ts`). Add `TELEGRAM_BOT_TOKEN` to your `.env` — it's required by the API and Docker build.
 4. Either:
 
-- **Full stack via Docker:** copy `.env.example` to `.env`, fill in real values, then `docker compose up`. Serves the SPA on `http://localhost` (port 80), reverse-proxying `/api/` to the NestJS API; MongoDB runs as a third container.
+- **Full stack via Docker:** copy `.env.example` to `.env`, fill in real values (database, JWT secret, Telegram bot token), then `docker compose up`. Serves the SPA on `http://localhost` (port 80), reverse-proxying `/api/` to the NestJS API; MongoDB runs as a third container.
 - **Local dev servers:** `pnpm nx serve api` and `pnpm nx serve web` in separate terminals, with `docker compose up -d mongo` for the database (see `README.md` § Integration tests for the `MONGO_TEST_URI` env var needed by Mongo-backed specs).
 
 5. Approve the first user as admin via the CLI, e.g. `pnpm nx build cli && node dist/apps/cli/main.js user:approve <telegramId>` (or the Docker-container equivalent). See `apps/cli/src/commands/` for the full command list (`user-approve`, `user-reject`, `admin-promote`, `dev-token`, `dev-create-user` — the last two are dev-only shortcuts, not for production use).

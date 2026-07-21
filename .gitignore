@@ -10,9 +10,7 @@
 # local compose overrides (developer-specific)
 docker-compose.override.yml
 
-# Angular environment files (copy from environment.example.ts)
-apps/web/src/environments/environment.ts
-apps/web/src/environments/environment.development.ts
+# (Angular environment files now tracked — see README.md § Environment configuration)
 
 # compiled output
 dist

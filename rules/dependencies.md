@@ -70,13 +70,6 @@ This applies to workspace-root-only deps like build tools, CLI packages, and wor
 
 ## Frontend Environment Files
 
-### Angular gitignored environment files need setup instructions
+### Angular environment config (Telegram bot username)
 
-Angular's `project.json` `fileReplacements` creates a hard dependency on `environment.ts` and `environment.development.ts`. When both are gitignored (correct, to avoid committing secrets), a fresh `git clone` + `nx serve` fails immediately because the file-replacement source/target are missing.
-
-Fix: two-part approach:
-
-1. **Document the copy step** in `README.md` — add setup instructions for new developers
-2. **Optional: add a postinstall check** that prints a human-readable error when the files are absent (not a hard block in the build, just visibility)
-
-Include a checked-in `environment.example.ts` template so developers know what to fill in.
+`apps/web/src/environments/environment.ts` is **committed** (not gitignored) and contains only non-secret config: the Telegram bot username (rendered in the DOM as `data-telegram-login`). The bot token is a backend-only secret, living in `.env` / API config exclusively. A single `environment.ts` file is shared across all build contexts (dev, production, Docker, CI) via `@angular/build` with no `fileReplacements`. No manual setup needed; the file is already tracked.

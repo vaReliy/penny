@@ -133,17 +133,19 @@ jobs:
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ~/.cache/ms-playwright
-          # Key based on Playwright version in lockfile ensures cache invalidation
-          # when dependencies change, without storing per-browser breakdowns
-          key: playwright-${{ hashFiles('pnpm-lock.yaml') }}
+          # Key encodes browser set (all three) + Playwright version (lockfile).
+          # Prefix change from "playwright-" to "playwright-all-" forces a cache miss on the
+          # first run after this change, ensuring firefox + webkit are installed and cached.
+          # Subsequent runs hit this key exactly and use the full three-browser cache.
+          key: playwright-all-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
-            playwright-
+            playwright-all-
 
-      - name: Install Playwright browsers (Chromium only for CI speed)
-        run: npx playwright install --with-deps chromium
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
 
       - name: Run Playwright e2e tests
-        run: pnpm nx affected -p web-e2e -t e2e
+        run: pnpm nx e2e web-e2e
         env:
           # Signal to playwright.config.mts to use serve-static (built artifact) instead of dev server
           CI: 'true'

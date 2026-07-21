@@ -61,8 +61,6 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-      args:
-        TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME}
     container_name: penny-web
     restart: unless-stopped
     depends_on:
