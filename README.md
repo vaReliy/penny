@@ -58,6 +58,8 @@ The web app (`apps/web`) requires local environment files before running `nx ser
 
 Once set up, both files are git-ignored — they won't be committed, so each developer can keep their own local values.
 
+**Docker builds:** When using `docker compose up` or building the web image locally, `TELEGRAM_BOT_USERNAME` must be in your `.env` file (same as `MONGO_USER`/`MONGO_PASSWORD`). For GitHub Actions CI builds, it must be configured as a GitHub Actions secret — see `docs/CI_SECRETS.md` for setup instructions.
+
 ### Integration tests (MongoDB)
 
 Some tests (e.g. `libs/identity/infrastructure`) connect to a real MongoDB instance instead of mocking it. `docker-compose.yml`'s `mongo` service has auth enabled (`MONGO_INITDB_ROOT_USERNAME`/`MONGO_INITDB_ROOT_PASSWORD`, sourced from `MONGO_USER`/`MONGO_PASSWORD` in `.env`), so these tests read their connection string from the `MONGO_TEST_URI` env var rather than hard-coding an unauthenticated URI.

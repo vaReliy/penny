@@ -199,4 +199,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
+            # TELEGRAM_BOT_USERNAME secret must be configured in Settings > Secrets and variables > Actions.
+            # See docs/CI_SECRETS.md for setup instructions.
             TELEGRAM_BOT_USERNAME=${{ secrets.TELEGRAM_BOT_USERNAME }}
