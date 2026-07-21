@@ -53,6 +53,12 @@ jobs:
       - name: Check exact pins
         run: node tools/check-exact-pins.mjs
 
+      - name: Generate Angular environment files
+        # web:typecheck/test/build all resolve apps/web/src/app/app.config.ts,
+        # which imports the git-ignored ../environments/environment. Any job running
+        # an nx target against `web` must generate it first (see tools/generate-web-env.mjs).
+        run: node tools/generate-web-env.mjs
+
       - name: Root-level lint (path-anchored rules)
         run: pnpm nx lint:root
         # Root-level lint covers path-anchored ESLint rules (e.g., .js-extension gate,
@@ -127,9 +133,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate Angular environment files
-        run: |
-          cp apps/web/src/environments/environment.example.ts apps/web/src/environments/environment.ts
-          cp apps/web/src/environments/environment.example.ts apps/web/src/environments/environment.development.ts
+        run: node tools/generate-web-env.mjs
 
       - name: Build web app
         run: pnpm nx build web
