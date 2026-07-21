@@ -7,8 +7,7 @@
   },
   "packageManager": "pnpm@11.9.0",
   "scripts": {
-    "prepare": "husky",
-    "env:web": "node tools/generate-web-env.mjs"
+    "prepare": "husky"
   },
   "nx": {
     "includedScripts": []

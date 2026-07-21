@@ -50,14 +50,13 @@ Three apps exist: `apps/api` (NestJS HTTP API), `apps/web` (Angular SPA), and `a
 
 ### Environment configuration
 
-The web app (`apps/web`) requires local environment files before running `nx serve web`. The template is committed; run the generator script, then fill in your Telegram bot details:
+The web app (`apps/web`) requires local environment files before running `nx serve web`. The template is committed; make two copies and fill in your Telegram bot details:
 
-1. Run `pnpm env:web` to create `apps/web/src/environments/environment.ts` (used by Docker production builds) and `environment.development.ts` (used by `nx serve web` local development) from `environment.example.ts`. Already-existing files are left as-is — pass `--force` to overwrite them.
-2. In both files, replace `PLACEHOLDER_BOT` with your Telegram bot username (the name from BotFather ending in `bot`, without the `@` prefix — e.g., `mypennybot`)
+1. Copy `apps/web/src/environments/environment.example.ts` to `apps/web/src/environments/environment.ts` (used by Docker production builds)
+2. Copy it again to `apps/web/src/environments/environment.development.ts` (used by `nx serve web` local development)
+3. In both files, replace `PLACEHOLDER_BOT` with your Telegram bot username (the name from BotFather ending in `bot`, without the `@` prefix — e.g., `mypennybot`)
 
 Once set up, both files are git-ignored — they won't be committed, so each developer can keep their own local values.
-
-**Docker builds:** When using `docker compose up` or building the web image locally, `TELEGRAM_BOT_USERNAME` must be in your `.env` file (same as `MONGO_USER`/`MONGO_PASSWORD`). For GitHub Actions CI builds, it must be configured as a GitHub Actions secret — see `docs/CI_SECRETS.md` for setup instructions.
 
 ### Integration tests (MongoDB)
 

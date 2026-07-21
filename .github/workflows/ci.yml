@@ -53,12 +53,6 @@ jobs:
       - name: Check exact pins
         run: node tools/check-exact-pins.mjs
 
-      - name: Generate Angular environment files
-        # web:typecheck/test/build all resolve apps/web/src/app/app.config.ts,
-        # which imports the git-ignored ../environments/environment. Any job running
-        # an nx target against `web` must generate it first (see tools/generate-web-env.mjs).
-        run: node tools/generate-web-env.mjs
-
       - name: Root-level lint (path-anchored rules)
         run: pnpm nx lint:root
         # Root-level lint covers path-anchored ESLint rules (e.g., .js-extension gate,
@@ -132,9 +126,6 @@ jobs:
       - name: Install dependencies (frozen lockfile)
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Angular environment files
-        run: node tools/generate-web-env.mjs
-
       - name: Build web app
         run: pnpm nx build web
 
@@ -152,7 +143,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run Playwright e2e tests
-        run: pnpm nx affected -t e2e --exclude=smoke-e2e,api-e2e
+        run: pnpm nx affected -p web-e2e -t e2e
         env:
           # Signal to playwright.config.mts to use serve-static (built artifact) instead of dev server
           CI: 'true'
@@ -202,7 +193,3 @@ jobs:
           push: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            # TELEGRAM_BOT_USERNAME secret must be configured in Settings > Secrets and variables > Actions.
-            # See docs/CI_SECRETS.md for setup instructions.
-            TELEGRAM_BOT_USERNAME=${{ secrets.TELEGRAM_BOT_USERNAME }}
