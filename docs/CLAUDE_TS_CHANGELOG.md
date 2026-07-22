@@ -39,6 +39,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-22 — [Enhancement] Nx generator post-gen checklist missing Tailwind v4 `@source` registration step for new consuming Angular libs
+
+- **Component**: `rules/nx-generators.md` § 3 "Post-generator corrections by framework"
+- **Type**: Enhancement
+- **What happened**: Debugging a header-nav styling issue surfaced that `apps/web/src/styles.css` uses Tailwind v4's CSS-first config with `@import 'tailwindcss' source('./app')` plus one manually-added `@source '../../../libs/<path>/src'` line per consuming lib (four such lines existed for `identity/feature-login`, `identity/feature-access-status`, `identity/feature-greeting`, `shared/web-shell`). `source('./app')` scopes Tailwind's automatic content-scanning to the app's own tree and does not reach sibling Nx libs, so every new consuming lib needs its own explicit `@source` line or its Tailwind classes silently never compile — no build/lint/test failure signals the gap, just unstyled elements at runtime. This obligation existed only as an unwritten convention (visible by example in `styles.css`, not stated anywhere in `rules/`). Added a new subsection, "Tailwind `@source` Registration for New Consuming Angular Libs", to `rules/nx-generators.md` § 3, parallel to the existing "Angular Style Files — CSS (not SCSS)" subsection.
+- **Why it matters upstream**: Any claude-ts consumer adopting Tailwind v4's CSS-first `@source`-per-lib pattern in an Nx monorepo (rather than Tailwind's default whole-tree auto-detection) hits the identical silent-failure mode on every new lib generation, since Nx generators have no hook to update a consumer app's `styles.css`.
+- **Suggested upstream change**: Add the same subsection to the template's `rules/nx-generators.md` § 3, conditioned on projects that actually use the CSS-first `@source`-per-lib pattern (not universal — projects relying on Tailwind's default auto-detection heuristic don't need it).
+- **Status**: pending-port
+
+---
+
 ## 2026-07-22 — [Fix] Close hand-authored-scaffold gap: mandatory-nx-g rule + agent pre-flight enforcement + dispatch cross-reference
 
 - **Component**: `rules/nx-generators.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/agents/{backend-developer,angular-developer,dba,queue-specialist,integration-architect,refactoring-expert}.md`

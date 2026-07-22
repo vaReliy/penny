@@ -62,6 +62,12 @@ The `@nx/vitest` plugin registers the inferred test target as `test` (the `testT
 
 Repo standard: all style files use plain CSS (not SCSS) — Tailwind v4 does not work with CSS preprocessors (see ADR-008). The `@nx/angular:app` and `@nx/angular:lib` generators default to CSS, which is correct; no post-gen renaming is needed. Do not pass `--style=scss` to generators.
 
+### Tailwind `@source` Registration for New Consuming Angular Libs
+
+`apps/web/src/styles.css` uses Tailwind v4's CSS-first config (`@import 'tailwindcss' source('./app')`) and explicitly registers every consuming lib with its own `@source '../../../libs/<path>/src'` line, since `source('./app')` scopes automatic detection to the app's own `src/app` tree and does not reach sibling Nx libs.
+
+**When you generate a new Angular lib that will be imported by `apps/web`** (a `feature-*` lib, `shared/*` lib, or any lib whose templates use Tailwind utility classes), add a matching `@source` line to `apps/web/src/styles.css` in the same changeset. Skipping this does not error anywhere — the lib compiles and lints clean, but any Tailwind class used only in that lib's templates silently never makes it into the compiled stylesheet (Tailwind's static content-scanning never sees the source files), producing unstyled elements with no build failure to point at the cause.
+
 ### Angular Generator Flag Requirements
 
 - `@nx/angular:app` and `@nx/angular:lib` **must** be scaffolded via `nx g`, never created manually. The generator registers the project in the NX workspace graph, ensures the full tsconfig inheritance chain, and configures targets/executors correctly. Manual creation (writing project.json by hand) breaks `nx affected` and may misconfigure lint/test runners. Always use: `pnpm nx g @nx/angular:lib <path> --tags=… --standalone --no-interactive`, then audit per this file's sections.
