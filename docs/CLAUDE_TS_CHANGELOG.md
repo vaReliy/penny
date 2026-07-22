@@ -17,6 +17,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-22 — [Fix] `docs/METRICS.md` append instruction didn't specify anchoring, so an Edit landed a new row mid-table instead of at the true tail
+
+- **Component**: `docs/METRICS.md` (Entries section header comment)
+- **Type**: Fix
+- **What happened**: The file instructed appending "one row per completed task" to its table but never said how to perform the edit mechanically. A prior append used an `Edit` with `old_string` anchored on an unrelated earlier row (from 2026-07-08) instead of the file's actual last row, so the new row for a 2026-07-22 task landed spliced between two older, unrelated rows rather than at the end (commit `9301b70`). The `Edit` tool call succeeded silently because `old_string` matched somewhere in the file, just not at the tail — nothing enforced insertion point in a plain markdown table. Fixed by adding an explicit anchoring instruction to the file's own header comment: read the file's tail (or at least its last table row) first, then anchor `old_string` to that physically-last row, never to an earlier one. The misplaced row itself was manually relocated to its correct position.
+- **Why it matters upstream**: Any claude-ts consumer with an append-only markdown ledger (this template's own `docs/METRICS.md` pattern) faces the identical gap: "append a row" is not a safe instruction on its own for an `Edit`-based tool, because a stale or loosely-chosen anchor can match mid-file and insert there instead of at the true end. This generalizes beyond METRICS to any append-only table any AI tool maintains in the repo.
+- **Suggested upstream change**: In the template's `docs/METRICS.md` file, update the "Append one row..." header comment to require anchoring `Edit` `old_string` to the physically-last row (read the tail first if unsure).
+- **Status**: pending-port
+
+---
+
 ## 2026-07-22 — [Fix] cts-rule-auditor Check 11 is unrunnable in consumer projects (`cts-payload.txt` lives only in the template repo)
 
 - **Component**: `.claude/skills/cts-rule-auditor/SKILL.md`
