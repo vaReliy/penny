@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { NgClass } from '@angular/common';
 import {
   Router,
   RouterLink,
@@ -13,6 +14,7 @@ import { SHELL_NAV_ITEMS } from '../shell-nav-item';
 @Component({
   selector: 'lib-app-shell',
   imports: [
+    NgClass,
     RouterLink,
     RouterLinkActive,
     RouterOutlet,

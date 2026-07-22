@@ -12,10 +12,16 @@
     >
       @for (item of navItems; track item.path) {
       <a
+        #desktopRla="routerLinkActive"
         [routerLink]="item.path"
-        routerLinkActive="bg-primary text-primary-contrast"
+        routerLinkActive
         ariaCurrentWhenActive="page"
-        class="rounded-md px-3 py-2 text-sm font-medium text-text-secondary hover:bg-background"
+        class="rounded-md px-3 py-2 text-sm font-medium"
+        [ngClass]="
+          desktopRla.isActive
+            ? 'bg-primary text-primary-contrast'
+            : 'text-text-secondary hover:bg-background'
+        "
       >
         {{ item.labelKey | transloco }}
       </a>
@@ -71,10 +77,16 @@
   >
     @for (item of navItems; track item.path) {
     <a
+      #mobileRla="routerLinkActive"
       [routerLink]="item.path"
-      routerLinkActive="text-primary"
+      routerLinkActive
       ariaCurrentWhenActive="page"
-      class="flex min-h-touch flex-1 flex-col items-center justify-center gap-0.5 text-xs text-text-secondary"
+      class="mx-1 my-1 flex min-h-touch flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-xs"
+      [ngClass]="
+        mobileRla.isActive
+          ? 'bg-primary/10 text-primary'
+          : 'text-text-secondary'
+      "
     >
       <svg
         class="h-5 w-5"
