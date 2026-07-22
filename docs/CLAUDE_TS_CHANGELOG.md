@@ -197,3 +197,13 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 - **Status**: project-local-only
 
 ---
+
+## 2026-07-23 — Enhancement: `.claude/settings.json` — permission-rule overhaul, marketplace self-registration, MCP removal
+
+- **Component**: `.claude/settings.json` (also deleted `.mcp.json`; project-local `.claude/settings.local.json` reorganized in the same session)
+- **Type**: Enhancement
+- **What happened**: (1) Replaced 26 accreted per-lib compound test-allow entries with 4 composable per-subcommand rules (`Bash(set -a)`, `Bash(set +a)`, `Bash(source .env)`, `Bash(pnpm nx test *)`) — Claude Code evaluates each `&&`-separated subcommand independently, so decomposed rules cover every current/future lib with zero settings churn and stay chain-safe. (2) Promoted the safe read-only command core (git read-only family, `rg`/`grep`/`jq`/etc., prettier, nx lint/build/typecheck, context7 plugin tools, docs-site WebFetch domains) from local to project scope. (3) Hardened deny: `rm -fr` flag-order variant, `Read(./.env.*)`, and blanket `Bash(git commit*)`/`Bash(git push*)` (owner reviews and commits manually — codifies the AGENTS.md Git Safety rule as enforcement). (4) Added `extraKnownMarketplaces.superpowers-marketplace` so the repo self-describes the marketplace its `superpowers@superpowers-marketplace` plugin needs (was registered only in one machine's user settings). (5) Pinned `context7@claude-plugins-official` at project level and deleted `.mcp.json` entirely (context7 now plugin-only; figma/github MCP servers removed as unused).
+- **Why it matters upstream**: Three candidates: (a) the CTS template ships `"superpowers@superpowers-marketplace": true` in `.claude/settings.json` WITHOUT the matching `extraKnownMarketplaces` registration — every fresh-machine consumer install has a silently unresolvable plugin; template should ship both keys together (or consider switching to `superpowers@claude-plugins-official`, now at v6.1.1 vs marketplace 5.0.7, which needs no registration). (b) The per-subcommand decomposition pattern for env-sourcing test commands is reusable by any consumer whose tests need `.env`. (c) The commit/push blanket deny is a candidate template default since AGENTS.md already mandates never auto-committing.
+- **Status**: pending-port
+
+---

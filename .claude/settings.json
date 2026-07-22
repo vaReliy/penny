@@ -3,11 +3,17 @@
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
   "enabledPlugins": {
-    "superpowers@superpowers-marketplace": true
+    "superpowers@superpowers-marketplace": true,
+    "context7@claude-plugins-official": true,
+    "explanatory-output-style@claude-plugins-official": true
   },
-  "enabledMcpjsonServers": ["context7", "figma", "github"],
-  "permissions": {
-    "deny": ["Read(./.env)"]
+  "extraKnownMarketplaces": {
+    "superpowers-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers-marketplace"
+      }
+    }
   },
   "model": "opusplan",
   "hooks": {
@@ -21,6 +27,54 @@
           }
         ]
       }
+    ]
+  },
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Bash(rm -rf *)",
+      "Bash(rm -fr *)",
+      "Bash(sudo *)",
+      "Bash(git commit*)",
+      "Bash(git push*)"
+    ],
+    "allow": [
+      "Bash(set -a)",
+      "Bash(set +a)",
+      "Bash(source .env)",
+      "Bash(pnpm nx test *)",
+      "Bash(pnpm nx lint *)",
+      "Bash(pnpm nx build *)",
+      "Bash(pnpm nx typecheck *)",
+      "Bash(pnpm nx graph *)",
+      "Bash(pnpm nx show *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git show*)",
+      "Bash(git ls-files*)",
+      "Bash(git check-ignore*)",
+      "Bash(git blame*)",
+      "Bash(rg *)",
+      "Bash(grep *)",
+      "Bash(ls *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "Bash(uniq *)",
+      "Bash(diff *)",
+      "Bash(jq *)",
+      "Bash(sed -n *)",
+      "Bash(pnpm info *)",
+      "Bash(npx prettier *)",
+      "Bash(pnpm exec prettier *)",
+      "Bash(node_modules/.bin/prettier *)",
+      "WebFetch(domain:nx.dev)",
+      "WebFetch(domain:angular.dev)",
+      "WebFetch(domain:docs.nestjs.com)",
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "mcp__plugin_context7_context7__query-docs"
     ]
   }
 }
