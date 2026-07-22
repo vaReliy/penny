@@ -50,13 +50,7 @@ Three apps exist: `apps/api` (NestJS HTTP API), `apps/web` (Angular SPA), and `a
 
 ### Environment configuration
 
-The web app (`apps/web`) requires local environment files before running `nx serve web`. The template is committed; make two copies and fill in your Telegram bot details:
-
-1. Copy `apps/web/src/environments/environment.example.ts` to `apps/web/src/environments/environment.ts` (used by Docker production builds)
-2. Copy it again to `apps/web/src/environments/environment.development.ts` (used by `nx serve web` local development)
-3. In both files, replace `PLACEHOLDER_BOT` with your Telegram bot username (the name from BotFather ending in `bot`, without the `@` prefix — e.g., `mypennybot`)
-
-Once set up, both files are git-ignored — they won't be committed, so each developer can keep their own local values.
+The Telegram bot username is served at runtime by the API (`GET /api/config`), fetched and provided to the frontend at bootstrap via `provideAppInitializer` (Angular 17+). The bot username is not secret (it's rendered in the DOM as `data-telegram-login` by the login widget) and is environment-agnostic at the frontend layer. Copy `.env.example` to `.env` and set `TELEGRAM_BOT_USERNAME` (used by the API service); the frontend fetches it dynamically and needs no manual setup.
 
 ### Local dev auth
 

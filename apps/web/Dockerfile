@@ -21,12 +21,6 @@ RUN pnpm install --frozen-lockfile --prefer-offline --ignore-scripts
 # Copy all source code and configuration
 COPY . .
 
-# Generate production environment file from build arg (file is gitignored)
-ARG TELEGRAM_BOT_USERNAME
-RUN test -n "$TELEGRAM_BOT_USERNAME" || (echo "ERROR: TELEGRAM_BOT_USERNAME build arg is required" && exit 1) && \
-    printf "export const environment = { telegramBotUsername: '%s' };\n" "$TELEGRAM_BOT_USERNAME" \
-    > apps/web/src/environments/environment.ts
-
 # Build the Angular application in production mode
 RUN NODE_ENV=production pnpm nx build web
 

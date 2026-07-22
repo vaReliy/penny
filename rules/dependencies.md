@@ -70,13 +70,10 @@ This applies to workspace-root-only deps like build tools, CLI packages, and wor
 
 ## Frontend Environment Files
 
-### Angular gitignored environment files need setup instructions
+### Angular environment config — runtime API fetch, not build-time injection
 
-Angular's `project.json` `fileReplacements` creates a hard dependency on `environment.ts` and `environment.development.ts`. When both are gitignored (correct, to avoid committing secrets), a fresh `git clone` + `nx serve` fails immediately because the file-replacement source/target are missing.
+The Telegram bot username (non-secret, rendered in the DOM as `data-telegram-login` by the login widget) is no longer committed in a frontend `environment.ts` file. Instead, it is served by the API at `GET /api/config` and fetched at SPA bootstrap via `provideAppInitializer` (Angular 17+), making the web Docker image environment-agnostic and deployable to any bot without rebuilding.
 
-Fix: two-part approach:
+The bot **token** remains secret and backend-only, living in `.env` / API config exclusively. The bot **username** is public config, living as an environment variable passed to the `api` service (via `docker-compose.yml`'s `services.api.environment:`) with no value embedded in the frontend bundle at all.
 
-1. **Document the copy step** in `README.md` — add setup instructions for new developers
-2. **Optional: add a postinstall check** that prints a human-readable error when the files are absent (not a hard block in the build, just visibility)
-
-Include a checked-in `environment.example.ts` template so developers know what to fill in.
+**Why:** A frontend environment file cannot contain a secret, because everything in a browser bundle is public by construction. Treating a non-secret value as if it were secret produces a gitignored generated file, which means every context compiling the app (the CI job, the e2e job, the Dockerfile, and any fresh clone) must regenerate it independently before any build target will compile — converting correctness from a property of the repository into a property of every execution context. Committing the file was rejected because it's domain-specific (Penny's username). Moving the value to the API (read at runtime, not baked into the build) splits the responsibilities correctly: the bot token is API config (secret, backend-only); the username is API config too, but public, and is fetched by the frontend when it needs it.

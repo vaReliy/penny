@@ -4,6 +4,7 @@ export interface ApiConfig {
   readonly mongoDbName: string;
   readonly jwtSecret: string;
   readonly botToken: string;
+  readonly telegramBotUsername: string;
   readonly port: number;
   readonly mode: 'production' | 'development';
 }
@@ -23,12 +24,16 @@ export function loadApiConfig(): ApiConfig {
   const mongoDbName = process.env['MONGO_DB_NAME'];
   const jwtSecret = process.env['JWT_SECRET'];
   const botToken = process.env['TELEGRAM_BOT_TOKEN'];
+  const telegramBotUsername = process.env['TELEGRAM_BOT_USERNAME'];
   const portRaw = process.env['PORT'];
 
   if (!mongoUri) throw new Error('Missing env var: MONGO_URI');
   if (!mongoDbName) throw new Error('Missing env var: MONGO_DB_NAME');
   if (!jwtSecret) throw new Error('Missing env var: JWT_SECRET');
   if (!botToken) throw new Error('Missing env var: TELEGRAM_BOT_TOKEN');
+  if (!telegramBotUsername) {
+    throw new Error('Missing env var: TELEGRAM_BOT_USERNAME');
+  }
 
   const port = portRaw ? parseInt(portRaw, 10) : 3000;
   if (!Number.isFinite(port)) {
@@ -40,6 +45,7 @@ export function loadApiConfig(): ApiConfig {
     mongoDbName,
     jwtSecret,
     botToken,
+    telegramBotUsername,
     port,
     mode:
       process.env['NODE_ENV'] === 'production' ? 'production' : 'development',
