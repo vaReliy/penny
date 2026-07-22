@@ -71,3 +71,4 @@ Each completed task is one row in the table below.
 | 2026-07-20 | penny | web-shell-mobile-first-restyle                               | T2   | 1      | 0/1/-/0           | 2       | no       | standard       |
 | 2026-07-20 | penny | budget-core-entities                                         | T2   | 0      | 0/0/-/-           | 0       | no       | standard       |
 | 2026-07-22 | penny | runtime-bot-config-endpoint                                  | T2   | 0      | 0/0/0/0           | 0       | no       | standard       |
+| 2026-07-22 | penny | budget-application-transactions                              | T2   | 1      | 0/0/1/0           | 2       | no       | standard       |

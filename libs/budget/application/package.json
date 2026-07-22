@@ -6,6 +6,7 @@
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
+    "budget-contracts": "0.0.1",
     "budget-core": "0.0.1",
     "budget-validation": "0.0.1",
     "shared-contracts": "0.0.1",
