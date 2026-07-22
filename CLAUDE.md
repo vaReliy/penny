@@ -13,6 +13,8 @@
 
 Full tier definitions and the foresight gate: `rules/workflow.md`.
 
+**Dispatch-Prompt Cross-Reference (every dispatch)**: When writing a dispatch prompt, cross-reference `AGENTS.md`'s on-demand rules index against the task's described file-touching surface to identify task-specific rules the target agent's pre-flight may miss (new lib → `rules/nx-generators.md`; new endpoint/migration → `rules/validation-authorization.md`/`rules/migrations-queue.md`; etc.). This is a second layer of defense alongside each agent's own pre-flight list — an agent's pre-flight can drift out of sync with a specific task's needs.
+
 **Routing**:
 
 | Need                          | Agent                             |

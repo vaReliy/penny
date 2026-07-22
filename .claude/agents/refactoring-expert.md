@@ -25,6 +25,7 @@ Before writing or modifying any code, additionally read:
 
 - `rules/architecture.md`
 - `rules/code-style.md`
+- Before creating any new app or lib (or after running any `nx g …` generator): `rules/nx-generators.md`
 
 ## Scope Boundary
 

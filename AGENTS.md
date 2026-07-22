@@ -60,7 +60,7 @@ Read when relevant (never preloaded):
 - `rules/mcp-stack.md` — MCP tool selection
 - `rules/git-operations.md` — PR description rules
 - `rules/shell-scripting.md` — bash gotchas with traps, symlinks, prettier defaults
-- `rules/nx-generators.md` — before creating any new app or lib (generated or hand-authored), or after running ANY `nx g …` generator
+- `rules/nx-generators.md` — before creating any new app or lib, or after running ANY `nx g …` generator
 - `rules/dependencies.md` — adding/updating/removing npm deps; auditing generator-injected ranges
 - `README.md` — setup, install profile, common commands
 - `docs/KNOWLEDGE_INBOX.md` — append-only inbox for durable-but-unplaced learnings; any AI tool working in the repo may append entries in the 3-line format from `rules/workflow.md`'s Knowledge Inbox section, which also defines the distillation policy

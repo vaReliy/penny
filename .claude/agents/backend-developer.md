@@ -31,6 +31,7 @@ Before writing or modifying any code, additionally read:
 - `rules/architecture-backend.md` (NestJS DI, MongoDB, error handling)
 - `rules/code-style.md` (shared TypeScript)
 - `rules/code-style-backend.md` (backend-specific: logging, validation, auth, config)
+- Before creating any new app or lib (or after running any `nx g …` generator): `rules/nx-generators.md`
 
 ## Scope
 

@@ -1,6 +1,12 @@
 # Nx Generator Hygiene
 
-Read this BEFORE creating any new app or lib — whether via an `nx g …` generator or hand-authored — and BEFORE handing off to the quality gate. Generators produce working-but-unpolished output; every item below has shipped as a real defect.
+Read this BEFORE creating any new app or lib — and BEFORE handing off to the quality gate. **Always run the actual `nx g` generator for new apps and libs; never hand-author scaffolds by diffing a sibling.** Generators produce working-but-unpolished output; every item below has shipped as a real defect.
+
+## Mandatory: Always run `nx g` — never hand-author scaffolds by diffing
+
+All new apps and libs — regardless of framework — must be created via the actual `nx g` generator. Never hand-author a scaffold by copying and diffing file-for-file against a sibling lib: generators are deterministic and apply all transitive config inheritance (`tsconfig.base.json`, `eslint.config.mjs`, `nx.json`, Nx's own defaults), while hand-diffing a sibling requires guessing which config details matter and silently misses ones that aren't relevant to the sibling but are critical for the new lib.
+
+**Concrete incident**: `libs/budget/application` was hand-authored by diffing `libs/identity/application` rather than running `nx g @nx/js:lib`. The copied `tsconfig.json` (identity-application never imports the BigInt-backed `Money` value object) inherited the base `es2015` target; `budget-application` does import `Money` and failed typecheck with `TS2737: BigInt literals are not available when targeting lower than ES2020`. A generator run wouldn't have regressed this — `libs/budget/core`, a sibling that does import `Money`, carries the `es2020` override as visible precedent — but diffing identity-application made that override invisible. Hand-authored scaffolds can also silently drop out of `lint` targets entirely (section 6).
 
 ## 1. Audit injected dependencies
 
@@ -31,6 +37,22 @@ The repo base (`tsconfig.base.json`) is intentionally minimal: no `strict` block
 - `.js` extensions on relative imports are enforced **backend-only** via ESLint (see ADR-005 in `DECISIONS.md`). Angular/Nx paths use barrel `index.ts` exports and do not need the extension.
 
 ## 3. Post-generator corrections by framework
+
+### TypeScript Value Objects Requiring ES2020+ (BigInt)
+
+Any lib importing `shared-util`'s `Money` value object (or any other BigInt-based utility) must override the repo's base `tsconfig.base.json`'s `target: "es2015"` in its own `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "target": "es2020"
+  }
+}
+```
+
+**Why**: `shared-util`'s `Money` (in `libs/shared/util/src/lib/money.ts`) uses BigInt minor units and contains `0n` literals in `Money.zero`, `isZero`, `isNegative`. These literals require `target: "es2020"` per TypeScript's specification. Even if you only import `Money` via a type-only import through a barrel index (`import type { SerializedMoney } from "shared-util"`), tsc must still fully resolve the module graph behind the barrel and will recompile `money.ts` under your lib's own tsconfig settings, failing with `TS2737: BigInt literals are not available when targeting lower than ES2020` if you inherit the base `es2015` target.
+
+**Pattern**: Apply the override preemptively to any new lib that imports from `shared-util` by value or type-only, rather than discovering this at typecheck time.
 
 ### Vitest Test Target Configuration
 
@@ -76,17 +98,15 @@ Generators scaffold sibling projects (e.g. `apps/<name>-e2e`). Audit them too:
 
 ## 6. Generator-Hygiene Gotchas
 
-### Manually created JS/TS libs (non-Angular) are auto-detected
+### Nx auto-detecting a hand-written lib is NOT permission to hand-author
 
-When `nx g @nx/js:lib` is skipped in favour of hand-crafting `project.json` + tsconfigs, the NX workspace graph still auto-detects the project (e.g., `shared-kernel`, `shared-contracts`, `shared-infrastructure`). Unlike Angular libs (which require the generator), plain TypeScript libs that follow the existing monorepo structure can be safely created manually without breaking `nx affected` or graph inference.
-
-However, Angular libs must always use the `@nx/angular:lib` generator — never create them manually.
+Hand-authoring is prohibited for ALL apps and libs — see "Mandatory: Always run `nx g`" at the top of this file. The Nx workspace graph does auto-detect a hand-written `project.json` + tsconfigs (so `nx affected` keeps working, as with the historical `shared-kernel`/`shared-contracts` libs), but auto-detection proves graph inclusion, not config correctness — the diffed-sibling incident in the Mandatory section is exactly the failure mode auto-detection cannot catch.
 
 ### Skipping the generator: silently dropped out of `lint` forever
 
 A hand-scaffolded lib missing `eslint.config.mjs` gets no inferred `lint` target from `@nx/eslint/plugin` (which infers the target from that file's presence) — `nx show projects --with-target lint` silently excludes it, and `nx affected -t lint` never touches it, with no error or warning. In this repo: `libs/shared/testing` was hand-scaffolded (`project.json`/`tsconfig*.json` written by hand, `tsconfig.base.json` path alias added manually) and was missing `eslint.config.mjs`, `package.json`, and `README.md` compared to a generator-created sibling — caught only by diffing the new lib's file listing against a known-generated one. Periodic audit: compare `nx show projects` against `nx show projects --with-target lint` (see `rules/workflow.md`'s Command Execution Policy section). If a hand-scaffolded lib is found missing config files, diff its file listing against a known-generated sibling to find the gaps.
 
-Any implementation or quality-gate report must explicitly state which path was taken: either the exact `nx g` command run (if generated), or "hand-authored" plus confirmation that the file listing was diffed against a known-generated sibling lib for completeness (if hand-authored). This closes the ambiguity around whether a lib's creation path was intentional or accidentally bypassed.
+Any implementation or quality-gate report covering a new app or lib must state the exact `nx g` command that created it. "Hand-authored" is not a reportable creation path (see the Mandatory section) — a report that cannot cite the generator command signals the mandate was bypassed and the scaffold must be regenerated or fully audited against a known-generated sibling.
 
 ### `@nx/vitest`-based projects need a manually-added `typecheck` target
 

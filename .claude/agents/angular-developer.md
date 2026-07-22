@@ -32,6 +32,7 @@ Before writing or modifying any code, additionally read:
 - `rules/architecture-angular.md` (Angular-specific: injection tokens, lazy-load boundaries, dev server proxy)
 - `rules/code-style.md` (shared TypeScript)
 - `rules/code-style-angular.md` (Angular-specific: signals, templates, SCSS, forms)
+- Before creating any new app or lib (or after running any `nx g …` generator): `rules/nx-generators.md`
 
 ## Scope Boundary
 
