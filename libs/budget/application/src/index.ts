@@ -11,3 +11,6 @@ export * from './lib/resolve-month-range.js';
 export * from './lib/record-transaction.service.js';
 export * from './lib/list-transactions.service.js';
 export * from './lib/get-transaction.service.js';
+export * from './lib/get-balance.service.js';
+export * from './lib/get-planner-summary.service.js';
+export * from './lib/get-history-chart.service.js';

@@ -6,3 +6,4 @@ export * from './lib/list-monthly-budget-by-month.schema.js';
 export * from './lib/create-transaction.schema.js';
 export * from './lib/transaction-filter.schema.js';
 export * from './lib/planner-summary-filter.schema.js';
+export * from './lib/history-chart-filter.schema.js';
