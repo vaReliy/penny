@@ -17,6 +17,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-22 — [Fix] `cts-sync.sh` self-overwrite mid-run produces a spurious non-zero exit after a fully successful sync
+
+- **Component**: `.claude/scripts/cts-sync.sh`; `.claude/skills/cts-update/SKILL.md` (step 2 wording)
+- **Type**: Fix
+- **What happened**: `cts-sync.sh` copies `.claude/scripts/` last in the payload order specifically so it overwrites itself only after everything else is synced (see comment above `sync_path()`). But bash does not fully buffer a script's source before executing straight-through code — when `copy_one` overwrites the running script file on disk, bash's subsequent reads for the remainder of the script land on bytes from the _new_ file at the _old_ file's byte offset, which don't align to any coherent statement. Observed result: the run completes all real work (payload copied/merged, `.cts-version` written, "Done. Review with: git diff" printed) but then bash throws a parse error and the process exits non-zero. Verified via `.cts-version` matching the new upstream SHA and `git diff --stat` matching the printed merge/conflict list. Re-verified 2026-07-07 in an isolated sandbox after a sync pulled a new `cts-sync.sh` revision (commit `c512bd8`, which only reworked `merge_one`'s temp-file cleanup and left the self-copy ordering/comment untouched): reproduced the same class of failure with a synthetic mid-file upstream diff to `cts-sync.sh` (exit 127, `line: command not found` — a _different_ garbled error than the original run's exit 2, `syntax error near unexpected token '&&'`), confirming the error text/code is arbitrary noise from misaligned byte offsets, not a stable signal.
+- **Why it matters upstream**: Every consumer running `/cts-update` on a payload that includes a `cts-sync.sh` revision hits this. The non-zero exit contradicts `cts-update/SKILL.md` step 2's assumption that non-zero exit means "did not run" — a false negative that leads agents and users to mis-diagnose fully successful syncs as failures.
+- **Suggested upstream change**: Root cause is structural (self-modifying script under `bash script.sh` invocation) and needs a fix in the sync engine itself — three candidates: (a) re-exec via `exec bash "$0" "$@"` right before the self-copy; (b) defer the self-copy to a `trap ... EXIT` that runs after the interpreter has finished reading the file; (c) copy `.claude/scripts/cts-sync.sh` to a temp path and `cp` it into place as the very last statement with no code after it. Additionally, `cts-update/SKILL.md` step 2 wording should note this known false-negative on exit code.
+- **Status**: pending-port — cross-check first: the 2026-07-16 entry below records the `cts-sync.sh` self-overwrite/source-mismatch bugs as "fixed directly at the engine level" in the local `claude-ts` working tree (verified against a scratch repo). If that fix covers this failure mode, the port step reduces to verifying it upstream and confirming the SKILL.md step-2 wording landed, then marking this ported. Either way, the fix has NOT reached this project's installed `.claude/scripts/cts-sync.sh` as of `c512bd8` (re-verified 2026-07-07) — it arrives via the next `/cts-update`.
+
+---
+
 ## 2026-07-21 — [Fix] `rules/dependencies.md` prescribed gitignored frontend environment files — an anti-pattern that broke CI in four independent contexts
 
 - **Component**: `rules/dependencies.md` § "Frontend Environment Files"
