@@ -1,0 +1,17 @@
+{
+  "name": "budget-infrastructure",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "@typegoose/typegoose": "12.21.1",
+    "budget-core": "0.0.1",
+    "mongoose": "8.24.1",
+    "pino": "9.14.0",
+    "shared-errors": "0.0.1",
+    "shared-util": "0.0.1",
+    "tslib": "2.8.1"
+  }
+}
