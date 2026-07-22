@@ -43,6 +43,13 @@ function buildDuplicateNameError(name: string): DomainError {
   );
 }
 
+/** Builds the `DomainError` thrown when renaming an already-archived category. */
+function buildArchivedCategoryError(id: string): DomainError {
+  return DomainError.conflict(
+    `Category "${id}" is archived and cannot be renamed.`,
+  );
+}
+
 /**
  * Renames an existing `Category` in the caller's workspace.
  *
@@ -84,6 +91,10 @@ export class UpdateCategoryService extends BaseService<
     );
     if (!existing) {
       throw buildUnknownCategoryError(params.id);
+    }
+
+    if (existing.isArchived()) {
+      throw buildArchivedCategoryError(params.id);
     }
 
     const collision = await this.categoryRepository.findByNameInWorkspace(

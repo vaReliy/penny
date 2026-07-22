@@ -217,6 +217,7 @@ The serving topology settled on **nginx serves `index.html`** (`apps/web` contai
 - Name unique per workspace, case-insensitive, among **non-archived only** (the constraint is `UNIQUE {workspaceId:1, name:1}` with partial filter + collation).
 - One-way soft-archive: `archive(reason?)` sets `archivedAt`, throws if already archived. Unarchive is deferred (additive later).
 - Archived categories remain on historical transactions as-is; the archived status hides them from "create transaction" / "set budget" selection UI only, never from historical aggregations (`sumExpenseByCategory` includes archived tags).
+- Renaming an archived category is blocked, not just delete-blocked: `UpdateCategoryService` rejects the rename with `DomainError.conflict` before the collision check runs, since an archived tag is a closed record, not an editable one.
 - Owner UX note: the History screen may highlight an archived/stale category on a past transaction to suggest re-tagging — a presentation affordance, not a domain rule.
 
 **Transaction (aggregate root)**

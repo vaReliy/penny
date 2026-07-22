@@ -176,6 +176,22 @@ describe('UpdateCategoryService', () => {
     expect((error as DomainError).kind).toBe('CONFLICT');
   });
 
+  it('throws a DomainError conflict when renaming an already-archived category', async () => {
+    repository.seed(
+      Category.create(CATEGORY_ID, 'ws-1', 'Groceries').archive(),
+    );
+
+    const error = await service
+      .run(
+        { id: CATEGORY_ID, name: 'Supermarket' },
+        buildContext(ACTIVE_CALLER),
+      )
+      .catch((err: unknown) => err);
+
+    expect(error).toBeInstanceOf(DomainError);
+    expect((error as DomainError).kind).toBe('CONFLICT');
+  });
+
   it('allows a no-op rename to the same name', async () => {
     repository.seed(Category.create(CATEGORY_ID, 'ws-1', 'Groceries'));
 
