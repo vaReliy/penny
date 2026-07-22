@@ -226,7 +226,9 @@ grep -r "rules-auditor" .claude/ rules/ AGENTS.md
 
 ### Check 11 — `.claude/settings.json` hook paths must exist in `cts-payload.txt`
 
-If `.claude/settings.json` exists, read it and extract all `command` fields from any hooks (e.g., `"command": ".claude/hooks/knowledge-capture-nudge.sh"`). For each extracted command path:
+**Template-repo only** — `cts-payload.txt` (the payload manifest) exists only in the CTS template repo. In a consumer project (identified by a `.cts-version` file and no `cts-payload.txt`), run the local half of this check instead: verify each hook `command` path in `.claude/settings.json` resolves to an existing, executable file, and report the manifest half as `N/A (consumer — manifest lives in the template repo)` rather than as a finding.
+
+If `cts-payload.txt` exists (template repo), read `.claude/settings.json` and extract all `command` fields from any hooks (e.g., `"command": ".claude/hooks/knowledge-capture-nudge.sh"`). For each extracted command path:
 
 1. Verify the path is listed somewhere in `cts-payload.txt`
 2. If not found, the hook script's directory is missing from the payload manifest, and a fresh `/cts-setup` or `/cts-update` in any consumer would sync the settings file pointing at a nonexistent script.

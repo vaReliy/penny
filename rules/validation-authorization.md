@@ -247,3 +247,18 @@ const filtered = Object.entries(data).filter(([, v]) => v !== undefined && v !==
 ```
 
 In Telegram auth payloads, `null` in optional fields causes HMAC mismatches if they're included in the data-check-string. Telegram's widget never sends `null` for absent fields (the key is simply omitted), so this is a _practical_ risk for custom validators or non-Telegram payloads. If stricter handling is needed, add a `not_empty` LIVR rule to optional field slots.
+
+### LIVR strips undeclared fields — declare merged path params in the schema
+
+`Validator.validate()` builds its output by iterating the _schema's own_ declared field names (`for (const fieldName in this.validators)` in `Validator.js`), never copying arbitrary keys from the input object. Fields absent from the schema are **silently dropped**, not passed through — no opt-in "strict mode" needed (verified in LIVR v2.10.2 source and by `base-service.spec.ts`'s "strips fields not declared" test).
+
+Practical consequence: when a path param (`id`, `categoryId`, …) is merged into a service's params object, it must be declared in that service's **own** schema — e.g. spread the param rule over an imported base schema. An undeclared param does not "pass through by default"; it vanishes from `validData` with no error.
+
+### LIVR is unknown-key-safe and operator-injection-safe by construction
+
+Two properties verified directly in LIVR v2.10.2 source (`node_modules/.pnpm/livr@2.10.2/lib/rules/**`, `Validator.js`) — future security audits should not re-derive them:
+
+1. Every built-in rule (`string`, `like`, `one_of`, `positive_integer`, `max_number`, `iso_date`, …) gates on `util.isPrimitiveValue(value)` first (`typeof value === 'string'|'number'|'boolean'`). Any object or array — e.g. a Mongo-operator-injection payload like `{ $gt: '' }` — fails this gate with `FORMAT_ERROR` before the rule's own logic runs.
+2. Unknown keys are dropped per the stripping behavior above — arbitrary input fields never reach downstream code.
+
+Both properties hold for every LIVR schema in this repo without per-field enforcement. **Not yet verified**: array-typed filter fields (none exist yet) — an array of operator-objects needs its own array-of-scalar rule verification when the first such field is added.

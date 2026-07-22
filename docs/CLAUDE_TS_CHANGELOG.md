@@ -17,6 +17,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-22 — [Fix] cts-rule-auditor Check 11 is unrunnable in consumer projects (`cts-payload.txt` lives only in the template repo)
+
+- **Component**: `.claude/skills/cts-rule-auditor/SKILL.md`
+- **Type**: Fix
+- **What happened**: Running `/cts-rule-auditor` in this consumer hit Check 11 ("hook paths must exist in `cts-payload.txt`") with no `cts-payload.txt` anywhere in the repo — the payload manifest exists only in the CTS template repo, so the check as written can never pass or fail in a consumer, only error out. Fixed by scoping the check: in a consumer (has `.cts-version`, lacks `cts-payload.txt`) run only the local half (each hook `command` in `.claude/settings.json` resolves to an existing executable file) and report the manifest half as `N/A (consumer)`; the full manifest check runs only where `cts-payload.txt` exists.
+- **Why it matters upstream**: Every consumer that runs the auditor skill hits the same dead check; without the scoping note, audits either skip Check 11 silently or mis-report a HIGH finding for a file that is structurally absent by design.
+- **Suggested upstream change**: Apply the same "Template-repo only" preamble to Check 11 in the template's copy of the skill. Also note: this session's audit ran the local half manually and `knowledge-capture-nudge.sh` resolved fine.
+- **Status**: pending-port
+
+---
+
 ## 2026-07-22 — [Fix] Close hand-authored-scaffold gap: mandatory-nx-g rule + agent pre-flight enforcement + dispatch cross-reference
 
 - **Component**: `rules/nx-generators.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/agents/{backend-developer,angular-developer,dba,queue-specialist,integration-architect,refactoring-expert}.md`
