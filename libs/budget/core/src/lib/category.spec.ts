@@ -73,4 +73,49 @@ describe('Category', () => {
       expect(() => archived.archive(NOW)).toThrow(/already archived/i);
     });
   });
+
+  describe('rename', () => {
+    it('returns a new instance with the name replaced', () => {
+      const category = Category.create('cat-1', 'ws-1', 'Groceries');
+
+      const renamed = category.rename('Supermarket');
+
+      expect(renamed.name).toBe('Supermarket');
+      expect(renamed.id).toBe('cat-1');
+      expect(renamed.workspaceId).toBe('ws-1');
+    });
+
+    it('does not mutate the original instance', () => {
+      const category = Category.create('cat-1', 'ws-1', 'Groceries');
+
+      category.rename('Supermarket');
+
+      expect(category.name).toBe('Groceries');
+    });
+
+    it('trims whitespace from the new name', () => {
+      const category = Category.create('cat-1', 'ws-1', 'Groceries');
+
+      const renamed = category.rename('  Supermarket  ');
+
+      expect(renamed.name).toBe('Supermarket');
+    });
+
+    it('rejects a blank name', () => {
+      const category = Category.create('cat-1', 'ws-1', 'Groceries');
+
+      expect(() => category.rename('   ')).toThrow(/name must not be blank/i);
+    });
+
+    it('preserves archivedAt when renaming an archived category', () => {
+      const archived = Category.create('cat-1', 'ws-1', 'Groceries').archive(
+        NOW,
+      );
+
+      const renamed = archived.rename('Supermarket');
+
+      expect(renamed.isArchived()).toBe(true);
+      expect(renamed.archivedAt).toEqual(NOW);
+    });
+  });
 });

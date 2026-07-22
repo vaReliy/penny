@@ -89,4 +89,20 @@ export class Category {
 
     return new Category({ ...this.props, archivedAt: now });
   }
+
+  /**
+   * Returns a new `Category` with `name` replaced, preserving `id`,
+   * `workspaceId`, and `archivedAt` as-is. Mutator, not a mutation: the
+   * receiver is left untouched, matching `archive()`'s immutable style.
+   *
+   * @throws {DomainError} If `name` is blank.
+   */
+  public rename(name: string): Category {
+    const trimmedName = name.trim();
+    if (trimmedName.length === 0) {
+      throw DomainError.unprocessable('Category name must not be blank.');
+    }
+
+    return new Category({ ...this.props, name: trimmedName });
+  }
 }
