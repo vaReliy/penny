@@ -24,7 +24,7 @@ Do not duplicate `README.md` here — it's the source of truth for exact command
 
 1. Install Node 22 + enable Corepack (`README.md` § Prerequisites).
 2. `pnpm install`.
-3. Register a Telegram bot with [@BotFather](https://t.me/BotFather) and get its token (the username is already committed in `apps/web/src/environments/environment.ts`). Add `TELEGRAM_BOT_TOKEN` to your `.env` — it's required by the API and Docker build.
+3. Register a Telegram bot with [@BotFather](https://t.me/BotFather) and get its token and username. Add `TELEGRAM_BOT_TOKEN` (secret; API only) and `TELEGRAM_BOT_USERNAME` (public; served from API to frontend at runtime) to your `.env` — both are required.
 4. Either:
 
 - **Full stack via Docker:** copy `.env.example` to `.env`, fill in real values (database, JWT secret, Telegram bot token), then `docker compose up`. Serves the SPA on `http://localhost` (port 80), reverse-proxying `/api/` to the NestJS API; MongoDB runs as a third container.

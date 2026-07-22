@@ -8,6 +8,7 @@ const VALID_ENV: Record<string, string> = {
   MONGO_DB_NAME: 'penny_test',
   JWT_SECRET: 'super-secret-jwt-key',
   TELEGRAM_BOT_TOKEN: '123456:ABCDEF',
+  TELEGRAM_BOT_USERNAME: 'test_bot',
   PORT: '4000',
 };
 
@@ -33,6 +34,7 @@ describe('loadApiConfig()', () => {
       mongoDbName: 'penny_test',
       jwtSecret: 'super-secret-jwt-key',
       botToken: '123456:ABCDEF',
+      telegramBotUsername: 'test_bot',
       port: 4000,
       mode: 'development',
     });
@@ -56,6 +58,11 @@ describe('loadApiConfig()', () => {
   it('reads TELEGRAM_BOT_TOKEN into config.botToken', () => {
     stubValidEnv({ TELEGRAM_BOT_TOKEN: '999:XYZ' });
     expect(loadApiConfig().botToken).toBe('999:XYZ');
+  });
+
+  it('reads TELEGRAM_BOT_USERNAME into config.telegramBotUsername', () => {
+    stubValidEnv({ TELEGRAM_BOT_USERNAME: 'my_bot' });
+    expect(loadApiConfig().telegramBotUsername).toBe('my_bot');
   });
 
   it('parses PORT as an integer', () => {
@@ -90,6 +97,13 @@ describe('loadApiConfig()', () => {
     stubValidEnv({ TELEGRAM_BOT_TOKEN: '' });
     expect(() => loadApiConfig()).toThrowError(
       'Missing env var: TELEGRAM_BOT_TOKEN',
+    );
+  });
+
+  it('throws when TELEGRAM_BOT_USERNAME is missing', () => {
+    stubValidEnv({ TELEGRAM_BOT_USERNAME: '' });
+    expect(() => loadApiConfig()).toThrowError(
+      'Missing env var: TELEGRAM_BOT_USERNAME',
     );
   });
 

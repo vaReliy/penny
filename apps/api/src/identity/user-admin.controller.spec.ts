@@ -140,6 +140,7 @@ describe('UserAdminController (real SessionGuard in the chain)', () => {
       mongoDbName: '',
       jwtSecret: 'secret',
       botToken: 'token',
+      telegramBotUsername: 'test_bot',
       port: 3000,
       mode: 'development',
     };

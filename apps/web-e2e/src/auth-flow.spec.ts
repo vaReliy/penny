@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 
 const ME_URL = '**/auth/me';
 const HELLO_URL = '**/api/hello';
+const CONFIG_URL = '**/api/config';
 
 const pendingUser = {
   id: '1',
@@ -25,6 +26,16 @@ const activeUser = {
 };
 
 test.describe('auth flow — status routing guard', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.route(CONFIG_URL, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ telegramBotUsername: 'TEST_BOT' }),
+      }),
+    );
+  });
+
   test('unauthenticated user is redirected to /login', async ({ page }) => {
     await page.route(ME_URL, (route) =>
       route.fulfill({ status: 401, body: '{}' }),

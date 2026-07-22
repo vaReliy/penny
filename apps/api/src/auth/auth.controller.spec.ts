@@ -73,6 +73,7 @@ describe('AuthController', () => {
 
     config = {
       botToken: 'bot-token',
+      telegramBotUsername: 'test_bot',
       jwtSecret: 'secret',
       mongoUri: '',
       mongoDbName: '',

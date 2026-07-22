@@ -50,7 +50,7 @@ Three apps exist: `apps/api` (NestJS HTTP API), `apps/web` (Angular SPA), and `a
 
 ### Environment configuration
 
-The web app (`apps/web`) uses a committed `apps/web/src/environments/environment.ts` file containing the Telegram bot username. This value is not secret (it's rendered in the DOM) and is shared across all contexts (local dev, Docker, CI builds). No manual setup is needed for the frontend — it's already tracked in the repository.
+The Telegram bot username is served at runtime by the API (`GET /api/config`), fetched and provided to the frontend at bootstrap via `provideAppInitializer` (Angular 17+). The bot username is not secret (it's rendered in the DOM as `data-telegram-login` by the login widget) and is environment-agnostic at the frontend layer. Copy `.env.example` to `.env` and set `TELEGRAM_BOT_USERNAME` (used by the API service); the frontend fetches it dynamically and needs no manual setup.
 
 ### Integration tests (MongoDB)
 

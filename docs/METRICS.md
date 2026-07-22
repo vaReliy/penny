@@ -62,3 +62,4 @@ Each completed task is one row in the table below.
 | 2026-07-15 | penny | grill-vite-test-target-naming-decision                       | T1   | 0      | 0/0/0/-           | 0       | no       | deep           |
 | 2026-07-15 | penny | nx-console-tree-view-grill-and-includedScripts-fix           | T0   | 0      | 0/0/0/-           | 0       | no       | standard       |
 | 2026-07-15 | penny | mongo-test-db-parallel-isolation                             | T1   | 1      | 1/1/0/-           | 0       | no       | standard       |
+| 2026-07-22 | penny | runtime-bot-config-endpoint                                  | T2   | 0      | 0/0/0/0           | 0       | no       | standard       |
