@@ -23,9 +23,8 @@ Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated projec
 
 Before writing or modifying any code, additionally read:
 
-- `rules/architecture.md`
-- `rules/code-style.md`
-- Before creating any new app or lib (or after running any `nx g …` generator): `rules/nx-generators.md`
+- `rules/cts/architecture.md`
+- `rules/cts/code-style.md`
 
 ## Scope Boundary
 
@@ -45,7 +44,7 @@ Before writing or modifying any code, additionally read:
 | `debugging-wizard`  | When diagnosing failed jobs            |
 | `security-reviewer` | When jobs handle sensitive data        |
 
-> See `rules/mcp-stack.md` for MCP tool reference.
+> See `rules/cts/mcp-stack.md` for MCP tool reference.
 
 ## Project Queue Stack
 
@@ -60,7 +59,7 @@ Before writing or modifying any code, additionally read:
 
 ## Job Creation Pattern
 
-> Code patterns and canonical examples: see @rules/migrations-queue.md.
+> Code patterns and canonical examples: see @rules/cts/migrations-queue.md.
 
 ### Worker Anatomy
 
@@ -113,9 +112,9 @@ Dispatch from UseCases or Services — never from route handlers directly.
 3. `queue.retryJobs({ status: 'failed' })` to retry
 4. `queue.obliterate()` — flush queue (development only)
 
-> See `rules/docker-commands.md` for all commands.
+> See `rules/cts/docker-commands.md` for all commands.
 
-> Conventions: see @rules/code-style.md, @rules/docker-commands.md, @rules/git-operations.md.
+> Conventions: see @rules/cts/code-style.md, @rules/cts/docker-commands.md, @rules/cts/git-operations.md.
 
 ## Report Format (mandatory)
 
@@ -126,3 +125,7 @@ Reports back to orchestrator: terse fragments, bullets, no prose, ≤300 words.
 - Status markers: 🔴 critical / 🟡 important / 🟢 ok (quality-gate agents).
 - If you discovered something durable and non-obvious (config recipe, wrong-pattern gotcha, test anti-pattern, library constraint), add a `## Learnings` section at the end of your report — the orchestrator records it in `docs/KNOWLEDGE_INBOX.md`.
 - EXEMPT from compression: code, migrations, API contracts, user stories consumed by next phase, PR descriptions — these stay complete and precise.
+
+## Local Override
+
+If `.claude/agents-local/queue-specialist.md` exists, Read it first; its instructions override conflicting ones above.

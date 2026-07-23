@@ -1,21 +1,12 @@
 {
-  "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
-  },
+  "enabledMcpjsonServers": ["context7", "figma", "github"],
   "enabledPlugins": {
-    "superpowers@superpowers-marketplace": true,
     "context7@claude-plugins-official": true,
     "explanatory-output-style@claude-plugins-official": true
   },
-  "extraKnownMarketplaces": {
-    "superpowers-marketplace": {
-      "source": {
-        "source": "github",
-        "repo": "obra/superpowers-marketplace"
-      }
-    }
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
-  "model": "opusplan",
   "hooks": {
     "Stop": [
       {
@@ -29,16 +20,8 @@
       }
     ]
   },
+  "model": "opusplan",
   "permissions": {
-    "deny": [
-      "Read(./.env)",
-      "Read(./.env.*)",
-      "Bash(rm -rf *)",
-      "Bash(rm -fr *)",
-      "Bash(sudo *)",
-      "Bash(git commit*)",
-      "Bash(git push*)"
-    ],
     "allow": [
       "Bash(set -a)",
       "Bash(set +a)",
@@ -75,6 +58,19 @@
       "WebFetch(domain:docs.nestjs.com)",
       "mcp__plugin_context7_context7__resolve-library-id",
       "mcp__plugin_context7_context7__query-docs"
+    ],
+    "deny": [
+      "Bash(git commit*)",
+      "Bash(git push*)",
+      "Bash(rm -fr *)",
+      "Bash(rm -rf *)",
+      "Bash(sudo *)",
+      "Edit(./.cts/**)",
+      "Edit(./rules/cts/**)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Write(./.cts/**)",
+      "Write(./rules/cts/**)"
     ]
   }
 }

@@ -1,4 +1,4 @@
-source: ../claude-ts
-branch: skeleton
-synced: 2026-07-17T15:37:37Z
-outcome: manual etalon repair (2026-07-17), Tier A + Tier B restored, engine bypassed
+source: /home/vh/Projects/vg/claude-ts
+branch: refactor/two-layer-distribution
+synced: 2026-07-23T16:01:55Z
+outcome: 139 files synced, 0 ownership warning(s), 0 override-rot warning(s)
