@@ -17,6 +17,10 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+**Note (2026-07-23)**: This project migrated to CTS's two-layer distribution model (`rules/cts/**` synced verbatim, `rules/local/**` for consumer overrides, single file-ownership sync — see commit `2413f0c`). Entries below this note that describe the old 3-way-merge sync engine (`cts-sync.sh` merge/conflict markers, phantom-baseline/etalon repairs, `.ctsignore` hand-merge behavior, etc.) are historical record of issues under that superseded model and are left unedited; they do not describe current sync behavior.
+
+---
+
 ## 2026-07-22 — [Fix] `docs/METRICS.md` append instruction didn't specify anchoring, so an Edit landed a new row mid-table instead of at the true tail
 
 - **Component**: `docs/METRICS.md` (Entries section header comment)

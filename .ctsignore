@@ -15,12 +15,13 @@
 .claude/skills/vue-expert/
 .claude/skills/react-expert/
 
-# NOTE: Penny's Mongo/Mongoose/Typegoose, onion architecture, and LIVR
-# customizations now live as override files instead of whole-file forks —
-# see AGENTS.local.md, rules/local/architecture.md, rules/local/code-style.md,
-# rules/local/validation-authorization.md. Those upstream paths are no longer
-# .ctsignore'd and receive plain CTS overwrites again, with the overrides
-# layered on top per the lex-specialis convention.
+# NOTE: Penny's Mongo/Mongoose/Typegoose, onion architecture, LIVR, and other
+# per-file customizations now live as override files instead of whole-file
+# forks — see AGENTS.local.md and rules/local/{architecture,code-style,
+# validation-authorization,dependencies,docker-commands,nx-generators,
+# testing,workflow}.md. Those upstream paths are no longer .ctsignore'd and
+# receive plain CTS overwrites again, with the overrides layered on top per
+# the lex-specialis convention.
 #
 # rules/architecture-angular.md, rules/architecture-backend.md,
 # rules/code-style-angular.md, rules/code-style-backend.md are project-only
@@ -34,6 +35,3 @@
 /DECISIONS.md
 /CONTEXT.md
 
-# Project-only, outside the CTS payload — not touched by sync either way, noted for clarity.
-
-docs/rebuild/
