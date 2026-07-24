@@ -56,6 +56,12 @@ Real examples from `cts-sync.sh`:
 - `[ "$target" = "$changed" ] && ROT_WARNINGS+=(...)` as the last statement in a loop inside a function.
 - `is_owner_only_skill "$rel" && { ...; return; }` — same shape but called in production-critical code paths.
 
+## Fixtures Simulating a Stale/Old-Model Engine Need a Real Baseline, Not Just an Old Script Binary
+
+When a `tests/cts-sync.test.sh` case exists to prove behavior around an old-model (pre-refactor) `cts-sync.sh`, dropping the old script into the fixture directory is not sufficient by itself. The old engine's merge/conflict code paths (e.g. `is_locally_modified()`, `merge_one()` in the pre-two-layer 3-way-merge model) gate on `OLD_SHA`, sourced from `.cts-version`. A fixture with no pre-existing `.cts-version` never reaches those code paths at all — `update` silently degrades to a plain file copy regardless of which engine is on disk, and the test will pass identically whether or not the fix under test is even present.
+
+**Solution**: any regression test for old-engine merge/conflict behavior must hand-seed `.cts-version` to a real ancestor commit SHA plus a payload file that has diverged locally from that ancestor (so a genuine 3-way conflict is possible), not just stage the old script and run `update`. Always pair such a fixture with a negative control — the same precondition, with the fix under test omitted — asserting the failure mode actually reproduces; only then does the positive assertion (fix applied → no conflict markers) prove anything. See `tests/cts-sync.test.sh` cases 17a (negative control, no preflight, asserts conflict markers DO appear) / 17b (preflight applied, asserts clean) for a working example.
+
 **Solution**: Convert bare `cond && action` to explicit `if/then/fi`, and/or ensure functions end with an explicit `return 0` rather than relying on the last statement's exit status:
 
 ```bash

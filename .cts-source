@@ -1,4 +1,4 @@
-source: /home/vh/Projects/vg/claude-ts
-branch: refactor/two-layer-distribution
-synced: 2026-07-23T16:01:55Z
-outcome: 139 files synced, 0 ownership warning(s), 0 override-rot warning(s)
+source: ../claude-ts
+branch: main
+synced: 2026-07-24T07:09:32Z
+outcome: 139 files synced, 10 ownership warning(s), 2 override-rot warning(s)

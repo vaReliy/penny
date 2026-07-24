@@ -22,19 +22,57 @@ Each completed task is one row in the table below.
 
 ## Entries
 
-<!-- Append one row per completed task to the table below. -->
+<!-- Append one row per completed task to the table below — ALWAYS use the last table row as the Edit anchor to avoid mid-table insertion. Read the file tail first if unsure. -->
 
-| Date       | Repo      | Task                                            | Tier | Cycles | Fix Now (t/r/s/q) | Emitted | Hardstop | Model    |
-| ---------- | --------- | ----------------------------------------------- | ---- | ------ | ----------------- | ------- | -------- | -------- |
-| 2026-07-16 | claude-ts | distill-inbox-guess-resolution                  | T1   | 2      | 0/5/0/0           | 1       | no       | standard |
-| 2026-07-23 | claude-ts | drop-superpowers-plugin-dependency              | T1   | 0      | 0/0/0/0           | 0       | no       | standard |
-| 2026-07-16 | claude-ts | distill-inbox-step3-host-repo-ledger            | T1   | 0      | 0/0/0/0           | 0       | no       | standard |
-| 2026-07-17 | claude-ts | cts-sync-append-merge-hardening-etalon-verify   | T2   | 2      | 0/3/0/0           | 1       | no       | standard |
-| 2026-07-17 | claude-ts | cts-sync-is-ignored-trailing-newline            | T1   | 1      | 0/0/0/0           | 0       | no       | standard |
-| 2026-07-17 | claude-ts | cts-sync-round2-review-residuals                | T1   | 0      | 0/0/0/0           | 0       | no       | standard |
-| 2026-07-17 | claude-ts | phantom-baseline-repair-and-sync-guards         | T2   | 0      | 0/0/0/0           | 2       | no       | deep     |
-| 2026-07-18 | claude-ts | cts-sync-crosscheck-hint-presync-local          | T1   | 0      | 0/1/0/0           | 1       | no       | standard |
-| 2026-07-18 | claude-ts | cts-sync-quote-hint-paths                       | T0   | 0      | 0/0/0/0           | 0       | no       | standard |
-| 2026-07-23 | claude-ts | two-layer-cts-distribution-refactor             | T3   | 3      | 1/4/2/0           | 2       | yes      | standard |
-| 2026-07-23 | claude-ts | fix-cts-setup-existing-project-stale-engine-gap | T1   | 0      | 0/0/0/0           | 0       | no       | standard |
-| 2026-07-23 | claude-ts | fix-agents-md-docs-style-index-gap              | T0   | 0      | 0/0/0/0           | 0       | no       | standard |
+| Date       | Repo  | Task                                                         | Tier | Cycles | Fix Now (t/r/s/q) | Emitted | Hardstop | Model          |
+| ---------- | ----- | ------------------------------------------------------------ | ---- | ------ | ----------------- | ------- | -------- | -------------- |
+| 2026-07-07 | penny | distill-shared-contracts-alias-into-architecture             | T1   | 0      | 0/0/0/0           | 0       | no       | standard       |
+| 2026-07-20 | penny | budget-contracts-livr-validation                             | T2   | 0      | 0/0/0/0           | 2       | no       | standard       |
+| 2026-07-20 | penny | budget-core-transaction-type-migration                       | T1   | 0      | 0/0/-/-           | 0       | no       | standard       |
+| 2026-07-14 | penny | livr-max-length-login-profile                                | T0   | 0      | 0/0/0/0           | 0       | no       | cheap          |
+| 2026-07-07 | penny | distill-jwt-array-claim-guard-into-validation-rule           | T2   | 0      | 0/0/0/0           | 0       | no       | standard       |
+| 2026-07-07 | penny | skeleton-review-dod-audit-and-backlog-regroom                | T2   | 0      | 0/0/0/0           | 4       | no       | deep           |
+| 2026-07-15 | penny | workflow-micro-resolution-lane-and-distill-ledger-obligation | T1   | 1      | 0/2/0/0           | 0       | no       | standard       |
+| 2026-07-08 | penny | integration-test-mongo-auth                                  | T2   | 0      | 0/0/0/0           | 0       | no       | standard       |
+| 2026-07-08 | penny | eslint-injectable-ban                                        | T2   | 2      | 2/1/0/0           | 2       | yes      | cheap→standard |
+| 2026-07-08 | penny | cleanup-batch                                                | T2   | 1      | 0/1/0/0           | 0       | no       | cheap          |
+| 2026-07-14 | penny | infra-security-hardening-reopened                            | T2   | 0      | 0/0/0/0           | 2       | no       | standard       |
+| 2026-07-08 | penny | coverage-thresholds                                          | T2   | 1      | 0/1/0/0           | 0       | no       | cheap          |
+| 2026-07-08 | penny | ci-e2e-target                                                | T2   | 2      | 1/4/0/0           | 0       | no       | standard       |
+| 2026-07-08 | penny | session-guard-roles-and-opaque-errors                        | T2   | 0      | 0/0/0/0           | 2       | no       | standard       |
+| 2026-07-15 | penny | distill-inbox-into-rules                                     | T1   | 0      | 0/0/0/0           | 0       | no       | cheap          |
+| 2026-07-08 | penny | fix-fakeuserrepository-missing-interface-methods             | T0   | 0      | 0/0/0/0           | 0       | no       | standard       |
+| 2026-07-09 | penny | telegram-hash-nginx-logs                                     | T2   | 2      | 0/1/1/0           | 1       | no       | standard       |
+| 2026-07-10 | penny | session-guard-full-opaque-401                                | T2   | 1      | 1/0/0/0           | 2       | no       | standard       |
+| 2026-07-09 | penny | wire-request-caller-identity-from-session-user               | T2   | 1      | 0/2/0/0           | 1       | no       | standard       |
+| 2026-07-10 | penny | session-guard-timing-and-cookie-signal                       | T2   | 1      | 0/0/1/0           | 1       | no       | standard       |
+| 2026-07-11 | penny | admin-role-assignment-and-jwt-issuance                       | T2   | 1      | 0/1/0/0           | 0       | no       | standard       |
+| 2026-07-14 | penny | eslint-dead-fuses-and-unlinted-apps                          | T2   | 0      | 0/0/0/0           | 0       | no       | standard       |
+| 2026-07-11 | penny | skeleton-re-review-dod-verification                          | T2   | 0      | 0/0/0/0           | 4       | no       | deep           |
+| 2026-07-13 | penny | ci-run-vitest-and-typecheck-targets                          | T2   | 0      | 0/0/0/-           | 3       | no       | standard       |
+| 2026-07-13 | penny | fragile-test-repository-interface-casts                      | T0   | 0      | 0/0/0/-           | 0       | no       | cheap          |
+| 2026-07-13 | penny | stale-read-modify-write-races-toctou-cas                     | T2   | 0      | 0/0/0/-           | 1       | no       | standard       |
+| 2026-07-14 | penny | nx-typecheck-target-for-vitest-projects                      | T1   | 1      | 0/1/0/-           | 0       | no       | standard       |
+| 2026-07-14 | penny | mongo-healthcheck-interval-30s                               | T0   | 0      | 0/0/0/-           | 0       | no       | cheap          |
+| 2026-07-14 | penny | stop-hook-docker-app-and-kc-nudge-scope                      | T2   | 0      | 0/0/0/-           | 1       | no       | standard+cheap |
+| 2026-07-14 | penny | harden-kc-nudge-input-handling                               | T0   | 0      | 0/0/0/-           | 0       | no       | standard       |
+| 2026-07-14 | penny | web-e2e-ci-serves-built-artifact                             | T2   | -      | -/-/-/-           | 1       | no       | standard       |
+| 2026-07-14 | penny | fix-stale-e2e-serve-static-example-in-testing-rule           | T1   | -      | -/-/-/-           | 0       | no       | cheap          |
+| 2026-07-14 | penny | skeleton-round3-dod-verification-and-close                   | T2   | 0      | 0/0/0/-           | 2       | no       | deep           |
+| 2026-07-14 | penny | doc-hygiene-batch-and-skeleton-fork-guide                    | T2   | 1      | 0/1/0/-           | 0       | no       | standard       |
+| 2026-07-15 | penny | api-cli-lint-coverage-and-orphaned-test-targets              | T1   | 1      | 0/1/0/-           | 0       | no       | deep           |
+| 2026-07-15 | penny | grill-vite-test-target-naming-decision                       | T1   | 0      | 0/0/0/-           | 0       | no       | deep           |
+| 2026-07-15 | penny | nx-console-tree-view-grill-and-includedScripts-fix           | T0   | 0      | 0/0/0/-           | 0       | no       | standard       |
+| 2026-07-15 | penny | mongo-test-db-parallel-isolation                             | T1   | 1      | 1/1/0/-           | 0       | no       | standard       |
+| 2026-07-16 | penny | close-result1-cut-develop-branch                             | T1   | 0      | 0/0/0/-           | 0       | no       | cheap          |
+| 2026-07-18 | penny | i18n-transloco-foundation                                    | T2   | 1      | 1/1/-/0           | 0       | no       | standard       |
+| 2026-07-19 | penny | budget-domain-model-adr                                      | T3   | 0      | -/-/-/-           | 0       | no       | deep           |
+| 2026-07-19 | penny | css-framework-decision-adr-scss-to-css-followup              | T1   | 1      | 0/3/-/-           | 0       | no       | standard       |
+| 2026-07-20 | penny | web-shell-mobile-first-restyle                               | T2   | 1      | 0/1/-/0           | 2       | no       | standard       |
+| 2026-07-20 | penny | budget-core-entities                                         | T2   | 0      | 0/0/-/-           | 0       | no       | standard       |
+| 2026-07-22 | penny | runtime-bot-config-endpoint                                  | T2   | 0      | 0/0/0/0           | 0       | no       | standard       |
+| 2026-07-22 | penny | budget-application-transactions                              | T2   | 1      | 0/0/1/0           | 2       | no       | standard       |
+| 2026-07-22 | penny | budget-application-analytics                                 | T2   | 0      | 0/1/0/0           | 0       | no       | standard       |
+| 2026-07-22 | penny | budget-infrastructure-category-budget-repos                  | T2   | 1      | 2/1/-/-           | 0       | no       | standard       |
+| 2026-07-22 | penny | header-navlink-active-hover-mobile-fix                       | T1   | 0      | -/-/-/-           | 0       | no       | standard       |
+| 2026-07-22 | penny | budget-infrastructure-transactions-aggregations              | T2   | 0      | 0/0/-/-           | 0       | no       | standard       |
