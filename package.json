@@ -104,6 +104,6 @@
     "vitest": "4.1.9",
     "webpack": "5.105.2",
     "webpack-cli": "7.0.3",
-    "webpack-dev-server": "5.2.3"
+    "webpack-dev-server": "5.2.6"
   }
 }
