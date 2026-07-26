@@ -1,6 +1,6 @@
 ## Extends rules/cts/code-style.md § "Imports"
 
-Shared conventions for TypeScript code across all platforms (backend Node.js, frontend Angular). For platform-specific guidance, see `rules/code-style-angular.md` and `rules/code-style-backend.md`.
+Shared conventions for TypeScript code across all platforms (backend Node.js, frontend Angular). For platform-specific guidance, see `rules/local/code-style-angular.md` and `rules/local/code-style-backend.md`.
 
 ## Overrides rules/cts/code-style.md § relative-import-extension convention (NodeNext)
 

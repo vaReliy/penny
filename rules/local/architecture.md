@@ -12,7 +12,7 @@ Penny uses an Nx-enforced onion architecture (scope/type/platform tags) instead 
 
 ## Layer Dependencies
 
-For backend (see `rules/architecture-backend.md` for NestJS specifics):
+For backend (see `rules/local/architecture-backend.md` for NestJS specifics):
 
 ```
 Route Handler / Controller → UseCase → Service + Repository Interface
@@ -22,7 +22,7 @@ Repository Interface → ORM Implementation
 
 Each layer depends only on the layers below it. No skipping layers; no upward dependencies.
 
-For frontend (see `rules/architecture-angular.md` for Angular specifics):
+For frontend (see `rules/local/architecture-angular.md` for Angular specifics):
 
 ```
 Feature Component → Data/UI services → API adapters + Local state

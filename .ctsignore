@@ -23,8 +23,8 @@
 # receive plain CTS overwrites again, with the overrides layered on top per
 # the lex-specialis convention.
 #
-# rules/architecture-angular.md, rules/architecture-backend.md,
-# rules/code-style-angular.md, rules/code-style-backend.md are project-only
+# rules/local/architecture-angular.md, rules/local/architecture-backend.md,
+# rules/local/code-style-angular.md, rules/local/code-style-backend.md are project-only
 # splits that were never CTS payload (not present in claude-ts's
 # cts-payload.txt / rules/cts/) — nothing to protect them from, so no entry
 # needed here either.
@@ -34,12 +34,4 @@
 /ARCHITECTURE.md
 /DECISIONS.md
 /CONTEXT.md
-
-# Project-specific metrics ledger — accumulates penny's own completed-task
-# rows; CTS payload sync would otherwise overwrite it with claude-ts's own
-# dogfood ledger rows (happened once already, restored from git history on
-# 2026-07-24). Tracked as CTS backlog item
-# tasks/todo/2026-07-24-01-metrics-md-should-not-be-cts-overwritten-payload.md
-# in claude-ts to fix this at the engine level; until then, ignore locally.
-/docs/METRICS.md
 
