@@ -5,7 +5,6 @@ description: >-
   
   Українською: TypeScript, Node.js, строга типізація, async/await, NestJS, Prisma, Express, Fastify, декоратори, generic типи, utility types.
 
-
 triggers:
   - TypeScript
   - Node.js

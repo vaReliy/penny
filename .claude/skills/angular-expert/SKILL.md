@@ -5,7 +5,6 @@ description: >-
   
   Українською: Angular, компонент, сервіс, сигнали, RxJS, NgRx, маршрутизатор, standalone компонент, декоратор, inject, Angular форма, HttpClient.
 
-
 triggers:
   - Angular
   - NgModule

@@ -111,7 +111,6 @@ jobs:
         options: >-
           --health-cmd pg_isready --health-interval 10s
 
-
       redis:
         image: redis:7
     steps:

@@ -109,7 +109,6 @@ services:
     options: >-
       --health-cmd="pg_isready" --health-interval=10s --health-timeout=5s --health-retries=3
 
-
   redis:
     image: redis:7
     ports: ['6379:6379']

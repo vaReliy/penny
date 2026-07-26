@@ -1,3 +1,18 @@
 # Vendored third-party skill with its own build/validate process — never
 # reformat its content, per its own README.md.
 .claude/skills/postgres-best-practices/
+
+# CTS-owned payload — reformatting these locally (e.g. via lint-staged)
+# collapses upstream's blank-line/whitespace choices and trips a spurious
+# OWNERSHIP WARNING on every /cts-update, even though nothing meaningful
+# changed. Single ownership means these are byte-for-byte upstream's;
+# formatting them is upstream's call, not this repo's.
+.claude/agents/
+.claude/commands/
+.claude/hooks/
+.claude/scripts/
+.claude/skills/
+rules/cts/
+/AGENTS.md
+/CLAUDE.md
+docs/USAGE.md

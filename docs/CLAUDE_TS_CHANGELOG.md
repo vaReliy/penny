@@ -211,3 +211,14 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 - **Status**: pending-port
 
 ---
+
+## 2026-07-26 — [Fix] `.prettierignore` lacked exclusions for CTS-owned payload paths, causing spurious ownership warnings on every sync
+
+- **Component**: `.prettierignore`
+- **Type**: Fix
+- **What happened**: `/cts-update` flagged 8 `.claude/skills/*/SKILL.md` files as `OWNERSHIP WARNING` — diffing each showed the only change was one collapsed blank line, traced to an earlier repo-wide Prettier reformat (`df08687`, `proseWrap: never`) plus `lint-staged.config.mjs`'s broad `*.{...,md,...}` glob having no exclusion for CTS payload directories. Any future commit touching these files would re-trigger the same cosmetic drift and false ownership warning. Fixed by adding CTS-owned paths (`.claude/agents/`, `.claude/skills/`, `.claude/commands/`, `.claude/hooks/`, `.claude/scripts/`, `rules/cts/`, `/AGENTS.md`, `/CLAUDE.md`, `docs/USAGE.md`) to `.prettierignore`, mirroring the file's existing vendored-skill exclusion pattern. Explicitly rejected using `.ctsignore` instead — that would have permanently cut these files off from real upstream content updates rather than just stopping formatting churn.
+- **Why it matters upstream**: Any claude-ts consumer running Prettier with a broad-glob `lint-staged` config (matching `.md`/`.json`/etc. repo-wide) and no CTS-path exclusion will hit the identical spurious-ownership-warning loop on every sync that touches a CTS skill/agent/rule file, since single-ownership sync treats any local byte difference — including one Prettier reformatted — as a genuine local edit to overwrite and flag.
+- **Suggested upstream change**: Add the same CTS-payload exclusion block to the template's own `.prettierignore` (or document it as a required consumer-side addition in the `cts-setup`/`cts-update` skill docs), so fresh installs don't have to rediscover this via a confusing ownership-warning investigation.
+- **Status**: pending-port
+
+---
