@@ -82,3 +82,4 @@ Each completed task is one row in the table below.
 | 2026-07-27 | penny | budget-data-client-stores                                    | T2   | 1      | 0/1/-/-           | 0       | no       | standard       |
 | 2026-07-27 | penny | fix-budget-module-missing-authmodule-import                  | T1   | 0      | 0/0/0/0           | 0       | no       | standard       |
 | 2026-07-27 | penny | screen-bill-balance-rates                                    | T2   | 1      | 0/1/-/0           | 2       | no       | standard       |
+| 2026-07-27 | penny | merge-account-screen-and-relocate-format-money               | T2   | 0      | 0/0/-/-           | 0       | no       | standard       |

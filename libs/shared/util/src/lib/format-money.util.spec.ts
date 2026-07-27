@@ -1,8 +1,18 @@
 import { describe, it, expect } from 'vitest';
-import { Money } from 'shared-util';
-import { formatMoney } from './format-money.util';
+import { Money } from './money.js';
+import { formatMoney } from './format-money.util.js';
 
 describe('formatMoney', () => {
+  it('formats a UAH amount with a comma decimal separator and 2 decimal digits', () => {
+    const money = Money.fromMinorUnits(500000, 'UAH');
+    expect(formatMoney(money)).toMatch(/5\D000,00/);
+  });
+
+  it('formats a small amount without dropping the minor-unit digits', () => {
+    const money = Money.fromMinorUnits(5, 'UAH');
+    expect(formatMoney(money)).toContain('0,05');
+  });
+
   it('formats UAH minor units as a localized currency string', () => {
     const money = Money.fromMinorUnits(415050n, 'UAH');
     expect(formatMoney(money)).toContain('4');
@@ -39,5 +49,13 @@ describe('formatMoney', () => {
     expect(formatted).toContain('0');
     expect(formatted).toContain('29');
     expect(formatted).not.toContain('28');
+  });
+
+  it('formats a non-UAH currency using its own symbol/code, not a hardcoded UAH one', () => {
+    const money = Money.fromMinorUnits(150099n, 'USD');
+    const formatted = formatMoney(money);
+    expect(formatted).toContain('500');
+    expect(formatted).toContain('99');
+    expect(formatted).not.toContain('₴');
   });
 });

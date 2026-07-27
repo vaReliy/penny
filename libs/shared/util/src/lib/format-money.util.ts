@@ -1,4 +1,4 @@
-import { Money } from 'shared-util';
+import type { Money } from './money.js';
 
 /** Locale used for all budget money formatting — the only locale this app ships (see i18n rules). */
 const DISPLAY_LOCALE = 'uk-UA';

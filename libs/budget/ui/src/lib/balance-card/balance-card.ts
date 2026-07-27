@@ -4,12 +4,12 @@ import {
   computed,
   input,
 } from '@angular/core';
+import { formatMoney } from 'shared-util';
 import type { Money } from 'shared-util';
 import { TranslocoPipe, provideTranslocoScope } from '@jsverse/transloco';
 
 import type { RateEntryDisplay } from '../rate-entry-display';
 import { convertBalanceToCurrency } from '../convert-balance.util';
-import { formatMoney } from '../format-money.util';
 
 /** One row of the balance breakdown: a currency code and its formatted amount. */
 interface BalanceRow {
