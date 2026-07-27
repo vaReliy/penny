@@ -36,6 +36,22 @@ export default [
               sourceTag: 'scope:budget',
               onlyDependOnLibsWithTags: ['scope:budget', 'scope:shared'],
             },
+            // scope:web — the `apps/web` composition root only. It wires
+            // together multiple domain scopes (identity nav, budget
+            // screens, ...), so it needs its own tag rather than reusing an
+            // exclusive domain scope: a project tagged with two exclusive
+            // scopes (e.g. both `scope:identity` and `scope:budget`) would
+            // have to satisfy every matching rule simultaneously, which no
+            // cross-domain import could ever do.
+            {
+              sourceTag: 'scope:web',
+              onlyDependOnLibsWithTags: [
+                'scope:web',
+                'scope:identity',
+                'scope:budget',
+                'scope:shared',
+              ],
+            },
             // platform: web ⊥ server; both may use shared
             {
               sourceTag: 'platform:shared',
