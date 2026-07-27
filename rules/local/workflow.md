@@ -71,3 +71,21 @@ When `reviewer` and `security-scanner` pre-flight, they read:
 3. **Security boundary** (security-scanner only): relevant sections from decision/context docs
 
 A full-repo-scan (reading all source code) should only happen after topology docs exist and a scoped-reading map is in place. Until then, the gap is accepted — `reviewer`/`security-scanner` focus on the touched files + their dependencies, not the whole codebase.
+
+## New section: Phase 4.5 — Acceptance Verification
+
+### After quality gate closes, before `docs-writer`, orchestrator re-reads the task file from disk
+
+**Acceptance verification** is one orchestrator read-and-compare pass, mandatory for every task, positioned after the quality gate (Phase 4) closes and before documentation/knowledge capture (Phase 5 = `docs-writer`).
+
+The orchestrator re-reads the task file's `## Acceptance criteria` and `## Context / Why` blocks **from disk** — not from memory of the Phase 1 dispatch — and checks each criterion against the actual working tree. Each verified criterion must be cited with a specific file path and line number: "Line 42 of `src/x.ts` uses `Money.toJSON()`" is evidence; "the PR looks good" is not. A criterion that cannot be pointed at is not met.
+
+**Why this is structural, not a quality-gate defect**: Every phase of the quality gate (tester, reviewer, qa, lint/tsc) verifies _the code that exists_. A feature that was never written has no diff to review, no code to cover, and no flow to exercise — it is invisible from inside the gate by construction, exactly as the gate is designed to be when correctness-checking built code. A green gate therefore proves conformance of the implementation that shipped, not completion of the original ask. This is especially visible in parity tasks (feature replacement where the legacy code already implements the new behavior) — the absence of currency conversion in a "bill balance card" replacement only surfaced by diffing the legacy `page-bill` screen against the new implementation and finding it rendered three separate currency conversions nowhere present in the replacement.
+
+### Parity tasks carry an extra obligation
+
+When a task file's `## Context / Why` or acceptance criteria name a legacy source for behavior parity, the orchestrator opens that source (`git show <ref>:<path>`) and enumerates the behaviors it implements. A replacement feature is not accepted until it has been checked against the legacy behavior in code, not against a written description of that behavior. This is an exception to the orchestrator's normal read restriction (orchestrator normally reads only `.claude/**`, `rules/**`, `AGENTS.md`, plan files, agent reports) — reading the legacy source file directly is in the same spirit as reading a plan file or an agent report: it is external factual evidence for a claim, not reading the project's own source code inline. A parity claim that does not cite the legacy file is not evidence of parity.
+
+### Failure routes back to Phase 3, outside the restart budget
+
+If acceptance verification fails (a criterion cannot be pointed at a specific file/line, or a parity claim cannot be verified in the legacy code), orchestrator routes back to Phase 3 (implementation). This is **not** a `## Fix Now` fix-retry cycle, and does not consume the 2-cycle restart budget that manages gate `## Fix Now` phases. A missing feature is unbuilt work, not a defect in built work: the implementation phase must extend to deliver what was asked, not iterate on quality of what was partially delivered.
