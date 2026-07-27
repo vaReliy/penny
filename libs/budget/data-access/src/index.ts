@@ -8,6 +8,7 @@ export { CategoryStore } from './lib/category.store';
 export { MonthlyBudgetStore } from './lib/monthly-budget.store';
 export { TransactionStore } from './lib/transaction.store';
 export { DashboardStore } from './lib/dashboard.store';
+export { RatesStore } from './lib/rates.store';
 
 export { BudgetSessionExpiryService } from './lib/budget-session-expiry.service';
 export { toBudgetApiError, BudgetApiErrorKind } from './lib/budget-api-error';

@@ -41,7 +41,9 @@
       "budget-validation": ["./libs/budget/validation/src/index.ts"],
       "budget-application": ["./libs/budget/application/src/index.ts"],
       "budget-infrastructure": ["./libs/budget/infrastructure/src/index.ts"],
-      "budget-data-access": ["./libs/budget/data-access/src/index.ts"]
+      "budget-data-access": ["./libs/budget/data-access/src/index.ts"],
+      "budget-ui": ["./libs/budget/ui/src/index.ts"],
+      "budget-feature-account": ["./libs/budget/feature-account/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

@@ -33,7 +33,7 @@ export const appRoutes: Routes = [
       {
         path: 'account',
         loadComponent: () =>
-          import('shared-web-shell').then((m) => m.PlaceholderPageComponent),
+          import('budget-feature-account').then((m) => m.AccountPageComponent),
       },
       {
         path: 'history',

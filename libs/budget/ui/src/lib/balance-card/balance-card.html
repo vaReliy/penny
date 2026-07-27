@@ -1,0 +1,25 @@
+<section
+  class="rounded-lg border border-border bg-surface p-4 shadow-card"
+  [attr.aria-label]="'budget.account.balanceCard.title' | transloco"
+>
+  <h2 class="mb-3 text-lg font-semibold text-text-primary">
+    {{ 'budget.account.balanceCard.title' | transloco }}
+  </h2>
+
+  <ul class="flex flex-col gap-2">
+    @for (row of rows(); track row.currency) {
+    <li class="flex items-center justify-between gap-2">
+      <span class="text-sm text-text-secondary">{{ row.currency }}</span>
+      <span class="text-lg font-medium text-text-primary"
+        >{{ row.formatted }}</span
+      >
+    </li>
+    }
+  </ul>
+
+  @if (isZero()) {
+  <p class="mt-3 text-sm text-text-secondary">
+    {{ 'budget.account.balanceCard.zeroHint' | transloco }}
+  </p>
+  }
+</section>

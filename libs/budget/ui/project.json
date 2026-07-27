@@ -1,0 +1,13 @@
+{
+  "name": "budget-ui",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/budget/ui/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:budget", "platform:web"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
