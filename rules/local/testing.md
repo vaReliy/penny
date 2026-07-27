@@ -181,3 +181,100 @@ class FakeThrottlerStorage {
 ```
 
 The subpath import resolves fine since the package has no `exports` map restriction.
+
+## Test Doubles & Fixtures
+
+### Unused fake-repo params should be dropped, not underscore-prefixed
+
+In test doubles, implement fewer parameters than the real interface method (e.g. a 0-arg `archive()` against a 2-arg interface) rather than declaring-and-ignoring extra params. This repo's ESLint has no `argsIgnorePattern`, so `_foo`-prefixed unused params still warn. Drop unused fake-repo params entirely instead.
+
+### Hand-built `ApiConfig` fixtures in unrelated specs break on field additions
+
+Adding a field to `ApiConfig` (e.g. `telegramBotUsername: string`) forces edits to every unrelated spec that hand-constructs a full `ApiConfig` object as a test fixture, because TypeScript's excess/missing-property checking (TS2741) fails at every such call site whenever the interface grows. No behavior changes, just mechanical fixture updates across multiple files.
+
+**Solution:** create a shared `makeTestApiConfig(overrides?: Partial<ApiConfig>)` builder helper in a test-utils location, so the next `ApiConfig` field addition touches one file instead of N unrelated ones.
+
+## Shared/Base Helper Test Coverage
+
+### Shared/base state-helper classes get only transitive test coverage from consumer specs
+
+When a shared/base helper class exists without its own dedicated spec file, its critical branches may only be incidentally covered via consumer specs, hiding real gaps. Example: `BudgetRequestState.run()`'s redirect-on-AUTHENTICATION-only branch was never directly tested — each consumer spec (e.g. `category.store.spec.ts`) asserted only its own unrelated behavior and happened to never exercise that branch, so the gap was invisible.
+
+**Pattern:** whenever a shared/base helper class exists without its own spec, check whether its critical branches are actually exercised anywhere, not just assumed-covered via consumers. Add dedicated tests if needed.
+
+## Month Boundaries & Timezone
+
+### Kyiv-DST month-boundary test fixtures must use UTC instants that differ locally from UTC
+
+When testing Kyiv-DST attribution, pick a UTC instant like `2026-06-30T22:00:00.000Z` (= `2026-07-01 01:00` EEST), not a UTC-aligned midnight. This ensures a test can distinguish "correctly attributed via local time" from "accidentally correct because the boundary aligned in UTC too."
+
+Example: `new Date('2026-06-30T22:00:00.000Z')` is unambiguously `2026-07-01` in Kyiv local time, proving the code correctly resolved the month via local time, not UTC.
+
+## Angular HTTP Testing
+
+### `provideAppInitializer` is unit-testable via `TestBed.inject(ApplicationInitStatus).donePromise`
+
+`provideAppInitializer` (Angular 17+, successor to the deprecated `APP_INITIALIZER` multi-provider) has no obvious seam for testing async bootstrap-time work — the initializer callback isn't separately exported. Working pattern: configure `TestBed` with `provideHttpClientTesting()`, flush the expected `HttpTestingController` request, then `await TestBed.inject(ApplicationInitStatus).donePromise` (or `await expect(donePromise).rejects...` for failure-path assertions) to observe DI state after the initializer settles. No need to extract the callback into a standalone function for testability.
+
+### Use `match(url)` instead of `expectOne(url)` for concurrent same-URL requests
+
+When two concurrent in-flight calls hit an identical URL (no differentiating param), `HttpTestingController.expectOne(url)` throws "matches more than one request" — making race/ordering behavior untestable through the usual API.
+
+**Solution:** use `match(url)`, which returns both `TestRequest`s, then `flush()` them individually in a deliberately chosen order to assert last-write-wins vs first-write-wins behavior:
+
+```typescript
+it('last write wins on concurrent refresh', () => {
+  service.load();
+  service.refresh(); // concurrent call to same URL
+
+  const requests = controller.match(url);
+  expect(requests).toHaveLength(2);
+
+  requests[0].flush({
+    /* initial data */
+  });
+  requests[1].flush({
+    /* refreshed data */
+  }); // This response is final
+
+  expect(component.data()).toEqual({
+    /* refreshed */
+  });
+});
+```
+
+## Nx & Playwright E2E
+
+### Nx atomized Playwright targets are named `e2e-ci--src/<file>.spec.ts` — discover them, never guess
+
+Running a single e2e spec through Nx requires the exact atomized target string `e2e-ci--src/<filename>.spec.ts`, discoverable via `nx show project <e2e-app> --json` under `metadata.targetGroups`. Guessing the target name produces "target not found," and worse — `nx affected -t <name>` silently skips projects lacking the named target with no error or warning.
+
+**Related linting gotchas:** `playwright/no-conditional-in-test` and `no-non-null-assertion` both fire on the natural `boundingBox()` null-check idiom. Use `evaluate()` with `getBoundingClientRect()` instead once visibility has already been asserted — this sidesteps both rules while testing the same condition.
+
+## Angular + Playwright Test-Writing Gotchas
+
+### Four confirmed gotchas during web-shell restyle
+
+1. **`[routerLink]` does not persist as a DOM attribute at runtime** — `querySelectorAll('a[routerLink]')` always returns 0 matches. Use a structural/positional selector (`nav > a`, or a container-scoped plain `a`) instead when asserting on router-link elements in component specs.
+
+2. **`RouterTestingHarness.navigateByUrl(url, ComponentType)` returns the component instance, not a ComponentFixture** — `whenStable()`/`detectChanges()` live on `harness.fixture`, not on the returned value. This is easy to typo into `TypeError: fixture.whenStable is not a function`.
+
+3. **Playwright's `devices['...']` presets set `defaultBrowserType` and cannot be applied via `test.use()` inside a `describe` block** — "forces a new worker" error results. Apply presets only at top-level test-file scope or in the config's `projects` array. For a mobile-viewport-only smoke test layered onto existing chromium/firefox/webkit projects, use `test.use({ viewport: {...}, hasTouch: true })` instead.
+
+4. **An e2e logout-flow test that mocks `/auth/me` unconditionally will deadlock** — `loginGuard` on `/login` re-checks `/auth/me` and bounces an apparently-still-active user straight back, so `page.waitForURL('**/login')` times out. The mock must flip to 401 once the logout endpoint is actually hit, simulating real session invalidation.
+
+## Browser-Driving & Network Timing
+
+### Role query can race Tailwind breakpoint reflow right after navigation
+
+`page.getByRole('navigation', ...)` can intermittently return 0 or 2 matches when queried immediately after `waitForURL`, racing Tailwind's `hidden`/`lg:flex` breakpoint-driven reflow before Angular's zone stabilizes.
+
+**Solution:** add `page.waitForLoadState('networkidle')` (or equivalent) after navigation before querying nav roles in the same test step.
+
+## QA Tooling Constraints
+
+### QA browser-driving scripts must run from inside the repo tree
+
+When a QA session has no Playwright MCP tools exposed (only Read/Edit/Write/Bash/SendMessage), it falls back to driving `@playwright/test` directly via a scratch Node ESM script. `node script.mjs` only resolves workspace-installed packages (e.g. `@playwright/test`) if the script file itself lives inside the workspace tree — Node's resolution walks up from the script's own file path, not from `cwd`.
+
+A script placed under a scratchpad directory outside the repo fails module resolution even with `cwd` set correctly. **Workaround:** place/copy the script inside the repo tree, run it, then delete it afterward. Confirmed working across multiple quality-gate runs, not a one-off.

@@ -4,6 +4,14 @@ When scoping CI targets with `nx affected`, remember that `--exclude` applies to
 
 Example: `nx affected -t e2e --exclude smoke-e2e` doesn't stop at smoke-e2e — if `apps/api` also defines an `e2e` target (Jest, needs live Mongo), it will also run. Fix: scope explicitly with `-p web-e2e -t e2e` instead.
 
+### Companion: `nx affected` vs `nx run-many` flags
+
+The `-p`/`--projects` flag exists on `nx run-many`, not on `nx affected`. When passed to `nx affected`, an unrecognized flag is silently forwarded to the underlying task command (e.g., Playwright), which will error with "unknown option '-p'" — making it look like a tool error rather than an nx invocation error.
+
+**Current workaround**: `nx affected -t <target> --exclude=project1,project2` works but is a denylist (will silently fail to exclude the 4th project added later). **Preferred**: use positively-stated scoping — `nx run web-e2e:e2e` when only one project needs to run, or tag-based targeting when available (future: `nx affected -t e2e --tags scope:identity,scope:web`).
+
+Practical diagnostic tip: if an `nx affected` command is failing with a tool error, double-check the flag spelling against `nx affected --help` first.
+
 ## New section: Quality gate stage sequencing
 
 The quality gate is strictly sequential per stage — do NOT dispatch stage N+1 while stage N is still running.
@@ -61,6 +69,30 @@ If a git operation unexpectedly fails or a directory shows suspiciously empty `g
 Running `/cts-update --source ../claude-ts` (or any local/uncommitted CTS checkout) to verify a contribution round-trips cleanly is a dry run, not a release — its diff must stay uncommitted/discarded in this consumer repo. Committing it would make this repo's history claim a template sync that never happened upstream.
 
 **Pattern**: before committing any `/cts-update` output, confirm the CTS source pointed at the GitHub remote (or a local checkout whose HEAD is already pushed there) — not an unpushed local-only state. If in doubt, ask the user.
+
+## New section: ADR-Driven Convention Flips Require Repo-Wide Doc Grep
+
+An ADR/`DECISIONS.md` change that flips a repo-wide convention (styling, module resolution, naming, etc.) must include a repo-wide grep for the OLD convention's keyword across `rules/**` and `docs/SKELETON.md` in the same changeset — not just the files the ADR itself touches. Doc drift from a convention flip is easy to leave half-fixed: left unfixed, the next agent following the stale rule doc will silently revert the new convention, undoing the ADR.
+
+**Concrete example**: converting `apps/web` + `libs/identity/*` from SCSS to plain CSS (ADR-008's Tailwind v4 adoption) initially only touched the renamed files and `DECISIONS.md`. Code review caught that `rules/local/code-style-angular.md`, `rules/nx-generators.md`, and `docs/SKELETON.md` all still hard-mandated SCSS-only (`--style=scss` on every generator invocation, "rename `.css` → `.scss`" as a post-gen step). Even after a first fix pass, two more stale `--style=scss`-shaped references survived in the same files — a partial grep sweep is not sufficient; the sweep must cover every hit of the old convention's keyword, not just the sections obviously about styling.
+
+## New section: Check `DECISIONS.md` Before Assuming a Repo-Interface Extension Is Needed
+
+Before adding a new repo-interface method to support a new read-model/service, check whether `DECISIONS.md` already pre-anticipated the aggregation and exposed it on an existing interface. Implementing `GetBalance`/`GetPlannerSummary`/`GetHistoryChart` found `ITransactionRepository.sumAmountsByType`/`sumExpenseByCategory`, `IAccountRepository.findByIdInWorkspace`, and `IMonthlyBudgetRepository.findByWorkspaceAndMonth` already exposed every aggregation these read-model services needed — zero repo-interface extensions required, confirming `DECISIONS.md` lines 343-360 had pre-anticipated it.
+
+## New section: CI Diagnostics
+
+### A GitHub Actions run marked "failure" can be mostly green — always read job-level conclusions before concluding the pipeline is broken
+
+Run-level status is the OR of its jobs, so a 2/3-green run and a 0/3-red run are visually identical in the UI and in pasted logs. `gh run view <id> --json jobs` shows the real per-job breakdown. An agent without GitHub API access cannot distinguish these states and will over-report breakage — authenticate `gh` (read scopes suffice) before diagnosing CI.
+
+### An unset GitHub Actions `secrets.*` evaluates to empty string with no error, and masking makes the resulting misconfiguration undebuggable — use `vars.*` for non-sensitive config
+
+An unset secret silently becomes an empty string (no error), secrets can't be used in `if:` conditionals so presence can't be cheaply asserted, and secrets are masked as `***` in logs by design — so when a value is wrong (not missing), the logs can't distinguish the two cases. Use configuration variables (`vars.*`) for non-sensitive per-environment values instead, since they render in plain text and are debuggable. Rule of thumb: masking is a cost paid for confidentiality; paying it for a non-confidential value buys nothing.
+
+### An `actions/cache` key must encode everything that determines the cached CONTENT, not just the lockfile — an exact key hit skips the save step, so a stale cache persists silently forever
+
+A cache key must encode everything that determines cached content, not just a manifest file (e.g. `pnpm-lock.yaml` pins tool version, not which artifacts a step was told to fetch). On an exact key hit, `actions/cache` skips the save step entirely — so if what a step fetches changes without the key changing: restore stale cache → re-download the delta every run → save nothing → repeat forever, silently, with tests still passing. Fix: bump the key prefix (and matching `restore-keys`) whenever the determining inputs change, not just the lockfile hash.
 
 ## New section: Quality Gate Pre-Flight Scope
 

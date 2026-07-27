@@ -21,6 +21,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-27 — [Enhancement] MCP config gotchas: `.mcp.json` `${VAR}` placeholders fail open, and project `.env` is never auto-sourced by Claude Code
+
+- **Component**: `.mcp.json` / MCP server configuration guidance (no specific rules file yet — `rules/cts/mcp-stack.md` documents tool usage but not credential wiring)
+- **Type**: Enhancement
+- **What happened**: Two related gotchas surfaced while diagnosing a broken `context7` MCP server in this repo (since resolved by going plugin-only and deleting `.mcp.json` entirely, so neither is currently live here, but both are stack-agnostic Claude Code behavior worth documenting for future/other consumers). (1) `.mcp.json` `${VAR}` placeholders fail open: if the referenced env var is unset, Claude Code starts the server anyway with the placeholder left unexpanded, so the failure surfaces as a vendor auth error (e.g. "Invalid API key") rather than anything indicating a missing variable — `claude mcp list`'s footer (`Missing environment variables:`, `[Conflicting scopes]`) is the actual diagnostic. (2) A plain project `.env` is a deliberate security boundary and is never sourced by Claude Code — only the `env` block in `.claude/settings.local.json` (or a shell-profile export before launching `claude`) feeds `${VAR}` expansion in `.mcp.json`. If a project-scoped MCP server needs a `.env`-stored secret, the working recipe is wrapping the server command: `bash -c 'set -a; . ./.env; set +a; exec …'` inside `.mcp.json`, keeping the secret out of any committed/settings file.
+- **Why it matters upstream**: Any claude-ts consumer using `.mcp.json` with `${VAR}` placeholders will hit the identical "looks like a vendor auth error, is actually a missing/unsourced env var" failure mode, with no error pointing at the real cause.
+- **Suggested upstream change**: Add a short "MCP secret wiring" subsection to `rules/cts/mcp-stack.md` (or a new `rules/cts/mcp-config.md`) covering: the fail-open placeholder behavior + `claude mcp list` as the diagnostic, the project-`.env`-is-never-sourced boundary, and the `bash -c 'set -a; . ./.env; set +a; exec …'` wrapper recipe for consumers who need a project-scoped secret without committing it.
+- **Status**: pending-port
+
+---
+
 ## 2026-07-27 — [Enhancement] Quality gate has no acceptance-testing phase — a green gate cannot detect an entirely missing feature
 
 - **Component**: `rules/local/workflow.md` (new "Phase 4.5 — Acceptance Verification" section), `CLAUDE.local.md` (pointer under "Orchestrator (Dispatcher) Core")
@@ -29,6 +40,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 - **Why it matters upstream**: Any claude-ts consumer's mandatory quality gate (`tester`/`reviewer`/`security-scanner`/`qa`) has this exact structural blind spot — conformance testing of the diff, with no acceptance testing against the original ask. It's most dangerous on `ba`-planned (T2/T3) tasks, where a detailed `## Acceptance criteria` block is written and then never read back, giving false confidence that the block was enforced. This generalizes well beyond this project's tier system.
 - **Suggested upstream change**: Add an equivalent "Phase 4.5 — Acceptance Verification" step to `rules/cts/workflow.md`, positioned between the quality gate (Phase 4) and documentation (Phase 5), generalized to be tier-system-agnostic: orchestrator re-reads the task/spec's stated acceptance criteria from disk (not memory) after the gate closes, cites concrete evidence per criterion, and — when the task is a behavior-parity replacement — verifies against the actual legacy source rather than a prose description of it. Route failures back to the implementation phase, explicitly outside the existing Fix-Now restart-cycle budget. Also add the same "a green gate is not evidence of a complete feature" caveat next to the existing "a green build is not evidence of correctness" sentence in `rules/cts/workflow.md`.
 - **Status**: pending-port — currently lives only in this project's unsynced `rules/local/workflow.md` + `CLAUDE.local.md` as a stand-in.
+
+---
+
+## 2026-07-27 — [Fix] Post-generator checklist missing dead demo-component cleanup; vitest test target name correction
+
+- **Component**: `rules/cts/nx-generators.md` § 3 "Post-generator corrections by framework"
+- **Type**: Fix (two items)
+- **What happened**: (1) Generator-produced dead code: `@nx/angular:library` scaffolds a demo component matching the lib name (e.g., `identity-feature-access-status.ts/.html/.spec.ts`); once a real feature component is added alongside it, nothing forces deletion of the boilerplate — it silently survives as unrouted dead code that test/lint/typecheck ignore. A post-generator checklist line was missing: "delete the generator's default demo component once a real feature component replaces it; grep for zero external references before deleting." (2) Vitest target name: `rules/cts/nx-generators.md` currently states the registered test target is `vite:test` (with instructions to use `pnpm nx vite:test <project>`), but the actual registered name is simply `test` (use `pnpm nx test <project> --skip-nx-cache`).
+- **Why it matters upstream**: (1) Any claude-ts consumer using `@nx/angular:library` or similar generators will silently ship dead generator boilerplate unless a post-gen checklist reminds them to check for unrouted scaffolding. (2) The stale `vite:test` documentation misdirects any agent following the post-gen checklist, since running `nx vite:test` fails silently when the target doesn't exist (it can still be a valid but unrelated npm script name, so Nx does not error — it just never runs the intended test).
+- **Suggested upstream change**: In `rules/cts/nx-generators.md` § 3: (a) add a new bullet to the post-generator checklist under "Angular Generator Flag Requirements" or create a new subsection "Dead Demo-Component Cleanup": "After adding a real feature component to a generated lib, delete the generator's default demo component (e.g., `<lib-name>.ts/.html/.spec.ts`) — it carries no business logic and is often unrouted. Grep for zero external references before deleting; lint/test/typecheck all pass while dead code silently survives." (b) In the "Vitest Test Target Configuration" subsection, correct the registered target name from `vite:test` to `test` and update the command examples accordingly.
+- **Status**: pending-port
 
 ---
 

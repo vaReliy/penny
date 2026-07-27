@@ -96,6 +96,33 @@ Why: Calling `state().kind` twice in a template means TypeScript cannot narrow t
 
 **Never mix `*ngIf` / `*ngFor` structural directives with `@if` / `@for` block syntax in the same template.** Prefer the block syntax (`@if`, `@for`, `@switch`) in all new code — it is the Angular 17+ standard. Remove `*ngIf`/`*ngFor` when editing existing templates.
 
+## Page-Level State & Error Surfacing
+
+### A binary `loading|error|ready` page `state()` cannot express post-`ready` partial failure
+
+A page-level `state()` computed that resolves to `'loading' | 'error' | 'ready'` models _initial load_ only. Once the page has reached `'ready'` (e.g. `balance() !== null && rates() !== null`), it can never re-enter `'error'` through that same computed — a failed `refresh()` after first success has nowhere to surface, and the template silently renders stale data with no indication anything failed.
+
+Partial/refresh failure after first success is a per-action concern, not a bypass to reinvent per screen. Decide the convention once: each failable action gets its own per-action error signal, surfaced inline next to that action's own affordance (e.g. a `role="alert"` beside the still-visible stale data), and stale data is never discarded on a failed refresh. Read the per-action error signal directly in the `ready` branch rather than folding it back into the page-level `state()`.
+
+## Routing
+
+### `routerLinkActive` must not coexist with a static class on the same CSS property
+
+Tailwind compiles utilities to same-specificity single-class selectors, so when a static class and a conditionally-applied class both target the same CSS property on the same element, whichever rule appears later in the _compiled stylesheet_ wins — not whichever class is later in the element's `class` list or later to be added by a directive. Passing classes as `routerLinkActive`'s string value alongside static classes on the same element leaves this cascade fight to chance:
+
+```html
+<!-- ❌ Wrong — bg-primary vs hover:bg-background, text-primary-contrast vs
+     text-text-secondary: whichever wins in the compiled stylesheet is
+     accidental, not chosen -->
+<a routerLink="/dashboard" routerLinkActive="bg-primary text-primary-contrast" class="text-text-secondary hover:bg-background">Dashboard</a>
+
+<!-- ✓ Correct — bind to isActive via a template ref, exactly one class per
+     property is present at any moment -->
+<a routerLink="/dashboard" routerLinkActive #rla="routerLinkActive" [ngClass]="rla.isActive ? 'bg-primary text-primary-contrast' : 'text-text-secondary hover:bg-background'">Dashboard</a>
+```
+
+This is the canonical `routerLinkActive` pattern — never pass classes as the directive's string value alongside static classes on the same element.
+
 ## Template Type-Checking Workarounds
 
 ### Discriminated-union narrowing in templates
@@ -146,6 +173,20 @@ export class GreetingComponent {}
 - Use typed `HttpClient.get<T>()` responses
 - Avoid `any` — define DTOs for every endpoint response
 - Error handling: pipe errors through `catchError`, never suppress with `|| null`
+
+## Currency Display
+
+### bigint-exact currency conversion for display: parse the decimal rate as an exact fraction, never through `Number`
+
+Any display-value conversion between currencies must stay entirely in `bigint` — never round-trip the decimal-string rate through `Number`/`parseFloat`. Split the rate string into `{numerator, denominator}` by string manipulation, then compute:
+
+```
+foreignMinorUnits = round(baseMinorUnits × 10^k / rateNumerator)
+```
+
+entirely in `bigint`, using round-half-away-from-zero. This precondition only holds when both currencies share a minor-unit decimal count (true for UAH/USD/EUR at 2 decimals) — a currency like JPY (0 decimals) or BHD (3 decimals) would need a scale adjustment.
+
+This is the frontend/display-value counterpart of the backend bigint-percent pattern — see `rules/local/code-style-backend.md` § "Bigint-safe percent pattern (no float touch)" for the equivalent backend idiom (`(numerator*100n + denominator/2n) / denominator`).
 
 ## Subscription Cleanup
 

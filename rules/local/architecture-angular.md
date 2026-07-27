@@ -105,3 +105,32 @@ This proxies all `/api/**` requests in local dev to `http://localhost:3000`. Wit
 Angular 17 introduced a nested `browser/` subdirectory inside the app dist folder (for future SSR/SSG parity). The build output for `nx build web` is at `dist/apps/web/browser/`, not `dist/apps/web/`.
 
 Nginx Dockerfiles that `COPY` from `dist/apps/web` instead of `dist/apps/web/browser` serve an empty or broken site — the HTML/JS/CSS files are one level deeper than expected. Always verify the Angular output path via `npx nx build web --skip-nx-cache` before writing the Dockerfile `COPY` step.
+
+## Nx Module Boundaries and Dependency Constraints
+
+### `type:data` libs cannot import `type:errors` or cross-scope `type:data` — a known, accepted tradeoff
+
+The `eslint.config.mjs` `depConstraints` restrict any `type:data` library to depending only on `type:data`, `type:util`, and `type:contracts` within its own scope, plus `scope:shared` libs globally. Crucially, a `type:data` lib cannot import another scope's `type:data` lib, nor can it import `libs/shared/errors`' canonical `BaseError` or `ErrorCode` enum.
+
+This forces every Angular data-access lib to re-derive error-code literals by hand (e.g., `libs/budget/data-access`'s `budget-api-error.ts` duplicates error codes rather than importing them), and any cross-domain behavior (e.g., a 401→`/login` redirect) must be a local re-implementation rather than a shared call into another scope's code (e.g., `BudgetSessionExpiryService` re-implements logout locally).
+
+This is a known, accepted tradeoff — the boundary prevents implicit coupling between domains at the cost of duplication. Do not attempt to work around it by moving errors to `type:util`; the constraint reflects the intended architecture. Each domain owns its client-side error mapping.
+
+### A composition-root app needs its own `scope:<app>` boundary tag
+
+An Nx project can carry only one `scope:*` tag at a time — every import must satisfy all matching `depConstraints` rules simultaneously, so a project tagged with two exclusive domain scopes can never legally import from either scope.
+
+When an app composes multiple domains (e.g., `apps/web` bringing together `scope:identity` and `scope:budget` features), give the app its own composition-root tag (e.g., `scope:web`) with `onlyDependOnLibsWithTags` listing the app's own tag plus every domain scope it composes:
+
+```javascript
+// In eslint.config.mjs
+{ sourceTag: 'scope:web', onlyDependOnLibsWithTags: ['scope:web', 'scope:identity', 'scope:budget', 'scope:shared'] }
+```
+
+This recurs for every app that composes more than one domain. For apps composing a single domain, no additional tag is needed.
+
+### Relocate shared helpers to `type:util` when dependencies allow
+
+When a `type:ui` lib needs a helper currently living in a `type:data` lib, do not duplicate it automatically — first check whether the helper's entire dependency graph already lives in `type:util` libs. If it does, relocate the helper to `type:util` instead of duplicating it.
+
+Duplicate only when the helper genuinely depends on something scoped to `type:data` (e.g., a view model shape that is structurally typed through from a data-access layer). For example, a helper that transforms a UI-display format for Money should live in `type:util`, not be duplicated across scopes; but a component-specific interface mirroring a `type:data` view model's shape for structural typing can remain duplicated if the real model is intentionally hidden from that layer.

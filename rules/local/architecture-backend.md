@@ -145,6 +145,8 @@ async findOrCreate(filter: Record<string, any>, initialData: Record<string, any>
 
 The retry `findOne()` is guaranteed to succeed because the winner's document is now persisted. Always wrap the retry in error handling too.
 
+**Default reach-for pattern, confirmed a third time**: this is the recipe for any "find or create default" need, not just user onboarding — e.g. `MongoAccountRepository.findOrCreateDefault` (`findOneAndUpdate` + `$setOnInsert` + a unique `{workspaceId,name}` index) on a brand-new collection, not just a retrofit onto an existing one. Reach for this pattern by default rather than re-deriving it per feature.
+
 ### Schema defaults on legacy documents — no migration needed (if not using `.lean()`)
 
 Adding a new field with a `default:` value to an existing Typegoose schema applies that default to any document hydrated via a normal query (`find`, `findOne`, etc.) whose BSON is missing that path — **but only when the query does NOT use `.lean()`**.
@@ -191,6 +193,8 @@ Concurrent losers retrieve the winner's document unchanged — no accidental sta
 When a stale-read-modify-write race is possible on a Mongo entity field (a caller reads a value, computes a new value, then writes it back — racing another writer doing the same), the established fix shape is compare-and-swap via an _optional_ parameter, not a new required API: the repository method gains an optional `expectedCurrentValue` param that, when present, adds `{ field: expectedValue }` to the `findOneAndUpdate` filter (array fields use `{ field: { $eq: expectedArray } }` — equivalent to the bare shorthand, `$eq` just self-documents the intent). `findOneAndUpdate` returns `null` on a filter mismatch, which the caller must surface as an explicit, observable conflict — never a silent retry: `409 DomainError.conflict()` on the HTTP path, `logger.error` + `process.exit(1)` on the CLI path. The optional param keeps old callers byte-identical (no breaking change), so the pattern rolls out incrementally.
 
 In this repo, `mongo-user-repository.ts`'s `updateStatus()` (used by `SetUserStatusService`) and `updateRoles()` (used by `admin-promote.command.ts`) are the two established instances — use this shape for any future TOCTOU finding on a Mongo entity field rather than re-deriving it.
+
+**Checklist for state-transition repo methods**: This pattern is not limited to literal "status" fields. Whenever authoring any new soft-delete/soft-archive/state-transition repository method, grep for this CAS-via-optional-filter shape and apply it if the field represents state that could be modified concurrently — e.g., `archive()` should add `archivedAt: { $exists: false }` to the filter so a second concurrent archive call becomes a no-op instead of a silent timestamp re-write.
 
 ### Repository pattern: domain methods, not repository methods
 
@@ -243,6 +247,38 @@ throw new InfrastructureError(); // Uses default generic message
 
 `BaseErrorFilter` serializes the error message into the HTTP response. Inject the logger into every repository and call `logger.error()` before throwing.
 
+### Mongoose `autoIndex` builds indexes asynchronously; nothing awaits it by default
+
+**Concrete incident**: `createMongoConnection` + `await connection.asPromise()` proves socket readiness only, not index-build completion — Mongoose's default `autoIndex: true` builds indexes as a fire-and-forget background op. Unique-index enforcement (duplicate-`{workspaceId,name}`-insert rejection) becomes racy: two writes can both evaluate "no document exists" before either unique index finishes building and catches the duplicate.
+
+**Why**: MongoDB indexes are background tasks by design. An application relying on a unique index for correctness must not issue any inserts until the index is built.
+
+**Fix**: `createMongoConnection` must await `Model.init()` for every model (`Promise.all()`) before returning the connection — the model-factory functions themselves stay synchronous (so existing `vi.mock`-based unit tests of the sync `getXModel()` shape keep working), and the await lives in the connection-setup seam. Any future repo relying on a unique index for correctness must go through this connection helper, not construct its own.
+
+### MongoDB `partialFilterExpression` rejects `$exists: false` at index-build time, and Typegoose swallows the failure silently
+
+**Concrete incident**: A soft-archive partial unique index was first written as `partialFilterExpression: { archivedAt: { $exists: false } }`, which MongoDB rejects (`Expression not supported in partial index: $not`). Because Typegoose/Mongoose builds indexes in the background, this index-creation failure was never surfaced: the app booted fine, duplicate-insert tests silently passed because the unique constraint had simply never been created.
+
+**Why**: `$exists` is only valid as `true` in a partial index's `partialFilterExpression` — `$exists: false` is not supported by MongoDB at index-definition time. Query filters elsewhere correctly use `{ archivedAt: { $exists: false } }` (a _query_, not an index definition) — the two are not interchangeable syntax.
+
+**Fix**: Use equality-to-null instead — `partialFilterExpression: { archivedAt: null }` — which MongoDB documents as matching "field is null or absent" and is fully supported. This is the standard soft-delete/archive partial-unique-index recipe.
+
+### Mongoose aggregation pipelines bypass schema-level BigInt casting entirely
+
+**Concrete incident**: Implementing a Mongo transaction repository's balance/chart aggregations found that `$sum`/`$group` output is plain JavaScript objects Mongoose never casts through the schema's BigInt SchemaType — the result field can surface as `bigint`, a BSON `Long`-like object, or `number` depending on driver/shape, not reliably the schema's declared type.
+
+**Why**: Mongoose does not cast values in aggregation pipelines (per Context7 docs) — only in normal queries.
+
+**Fix**: An explicit `toBigIntAmount` normalizer on any aggregation result touching a BigInt-backed field, unit-tested against a forced non-numeric shape (a `{toString()}`-only stub), since the real local driver only reliably produces one shape and can't force the others in an integration test.
+
+### Typegoose silently downgrades a `@prop` to `Mixed` when `enum` lacks an explicit `type`
+
+**Concrete incident**: A Typegoose model field declared only `enum: [...]` with no `type: () => String`, and Typegoose accepted it but emitted a `[W001]` console warning at runtime and lost schema-level type enforcement (degrading to `Mixed`), without failing typecheck or any test.
+
+**Why**: Typegoose requires both the enum values _and_ their type to be explicit — `enum` alone is insufficient and triggers a fallback to `Mixed`.
+
+**Fix**: Always pair `enum` with an explicit `type: () => String`/`Number`. This is easy to miss since nothing red flags it besides stderr noise during test runs.
+
 ## NestJS Guards and Dependency Injection
 
 ### Global guards that use `Reflector`: must use `APP_GUARD`, not `app.useGlobalGuards()`
@@ -294,3 +330,33 @@ Override only the I/O-boundary providers so it needs no live DB/network:
 Verify the spec actually catches the regression it targets by temporarily reverting the fix locally and confirming the test fails with the real `UnknownDependenciesException` — a passing-by-coincidence smoke test is worse than none.
 
 _(Pending upstream: this recipe belongs in `rules/cts/testing.md` § "Guard decorator chains" too — see `docs/KNOWLEDGE_INBOX.md` 2026-07-27 entry, route via `/cts-contribute`.)_
+
+## NestJS Controller Route Prefixes
+
+### Route prefix is controller-decorator-driven, not directory-inferred
+
+NestJS route prefixes come from the `@Controller('prefix')` decorator on the controller class, not from the controller's file location or module placement. A controller at `apps/api/src/budget/rates.controller.ts` wired via `BudgetModule` with `@Controller('rates')` produces routes at `/api/rates`, **not** `/api/budget/rates`.
+
+**Why**: The decorator is the single source of truth. Directory structure and module nesting have no semantic meaning for routing.
+
+**Gotcha**: When implementing a client that must consume an endpoint from this repo, do not infer the route path from file structure — read the controller source and check the decorator value instead.
+
+## CSRF and Authentication Guards
+
+### `CsrfGuard` already safe-lists GET/HEAD/OPTIONS globally — no guard/decorator needed for a new unauthenticated GET endpoint
+
+`apps/api/src/auth/csrf.guard.ts` is registered as the only global `APP_GUARD` in `AppModule` and unconditionally safe-lists GET/HEAD/OPTIONS before any CSRF check runs. `SessionGuard` and `ActiveUserGuard` are opt-in per-route via `@UseGuards(...)`, never global. So any new unauthenticated GET handler needs zero guard changes or bypass decorators — simply omitting `@UseGuards(SessionGuard, ActiveUserGuard)` is the entire exemption, exactly as `HealthController` and `HelloController` already do.
+
+## Configuration Layering
+
+### Config values should live at the layer that consumes them
+
+A configuration value that only one layer ever reads should live at that layer, not be threaded through every intermediate hop (e.g., env → compose build-arg → Dockerfile ARG → generated file). Each hop is a place it can silently break, and gitignored generated files force every execution context to independently regenerate them before anything can build.
+
+**Concrete example**: A config value needed only by the web frontend should be a frontend config value (`environment.ts` or similar), not a backend env variable threaded through the container build.
+
+## Known Issues
+
+### `apps/api-e2e`'s `e2e` Nx target is broken and unrunnable
+
+`apps/api-e2e` has no `package.json` and `jest` is not installed anywhere in the workspace, so the `nx run api-e2e:e2e` target fails with "Cannot find module 'jest'" — this predates any budget work and affects even the pre-existing `api.spec.ts` (hello endpoint). Any future task whose acceptance criteria cite "api e2e green" is citing an unsatisfiable gate until this is fixed. Current workaround: write contract tests as controller specs (real guard + fake `ExecutionContext`, mirroring `user-admin.controller.spec.ts`) instead of true supertest e2e.

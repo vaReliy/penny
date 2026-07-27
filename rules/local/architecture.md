@@ -73,6 +73,8 @@ The folder `<name>` reflects the layer (`core`, `application`, `infrastructure`,
 
 Result: cross-domain code flows only through `scope:shared` contracts.
 
+**New domain ⇒ new depConstraint, or the fuse is open**: `@nx/enforce-module-boundaries`'s `depConstraints` in `eslint.config.mjs` only fence a `scope:*` tag that has a matching `onlyDependOnLibsWithTags` rule. A source tag with no matching rule is NOT fenced by default — it can import anything. So standing up a new `libs/<domain>/*` scope has a hard prerequisite: add `{ sourceTag: 'scope:<domain>', onlyDependOnLibsWithTags: ['scope:<domain>','scope:shared'] }` to `eslint.config.mjs` BEFORE the first lib in that scope lands, else the onion/scope fuse silently doesn't apply to it. This is an executable-config edit (never trivial-tier). Separately: `type:validation` libs may depend ONLY on `type:util` (not `type:contracts`) — LIVR schemas are self-contained runtime rule objects and must not import DTO/contract TS types.
+
 ### Platform Rules
 
 - `platform:web` → may only depend on `platform:web`, `platform:shared`

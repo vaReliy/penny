@@ -40,6 +40,20 @@ Repo standard is the opposite of the CTS default: all style files use plain CSS 
 
 **When you generate a new Angular lib that will be imported by `apps/web`** (a `feature-*` lib, `shared/*` lib, or any lib whose templates use Tailwind utility classes), add a matching `@source` line to `apps/web/src/styles.css` in the same changeset. Skipping this does not error anywhere — the lib compiles and lints clean, but any Tailwind class used only in that lib's templates silently never makes it into the compiled stylesheet, producing unstyled elements with no build failure to point at the cause.
 
+## New section: Dead Demo Component Cleanup After Adding Real Features
+
+When you add a real feature component to a generator-scaffolded Angular lib, the generator's default demo component (e.g. `<lib-name>.ts/.html/.spec.ts` containing the raw "...works!" boilerplate) remains in the filesystem and is not automatically deleted. If you rename or shadow this default component with the real implementation, the dead component becomes unrouted and unexported from `src/index.ts` — but lint, typecheck, and tests all pass silently since nothing forces its removal.
+
+**Pattern**: After adding a real feature component (e.g. `access-status-page.ts`), delete the generator-default component file (`<lib-name>.ts`, `<lib-name>.html`, `<lib-name>.spec.ts`). Grep the entire workspace for any references to the old component name before deleting:
+
+```bash
+grep -r "<old-component-name>" libs/ apps/
+```
+
+Zero results indicate it is safe to delete; typecheck and tests should remain green.
+
+**Concrete incident**: `libs/identity/feature-access-status` and `libs/identity/feature-greeting` each carried their generator-default components (`identity-feature-access-status.ts/.html/.spec.ts` and similar for greeting) alongside real page components (`access-status-page.ts`, `greeting-page.ts`) that replaced them. The default components were unrouted, unexported from `src/index.ts`, and invisible to CI — confirmed zero references anywhere in libs or apps before deleting; lint/typecheck/test all remained green after cleanup.
+
 ## Extends rules/cts/nx-generators.md § hand-scaffolded lib missing lint target
 
 Concrete incident in this repo: `libs/shared/testing` was hand-scaffolded (`project.json`/`tsconfig*.json` written by hand, `tsconfig.base.json` path alias added manually) and was missing `eslint.config.mjs`, `package.json`, and `README.md` compared to a generator-created sibling — caught only by diffing the new lib's file listing against a known-generated one.

@@ -62,6 +62,29 @@ fi
 
 This exact pattern lives in `.claude/hooks/knowledge-capture-nudge.sh` (stdin parsing + normalization step). The mismatch arises when a script has a jq branch and a grep/sed fallback branch chosen by `command -v jq`; never assume the two branches handle malformed input identically. Normalize once, branch-independently, after both branches execute — that single empty-check ensures consistent behavior regardless of which path was taken.
 
+## Floating-Point Arithmetic
+
+### Decimal string fields require explicit rounding before serialization
+
+Averaging two floats then calling `.toString()` reintroduces float-precision loss that a "decimal string" field was designed to avoid. Example: `((entry.rateBuy + entry.rateSell) / 2).toString()` can emit `"27.200000000000003"` for real inputs like `27.1`/`27.3`, even though the DTO field is explicitly typed and documented as a decimal string specifically to avoid float precision loss in transport.
+
+**Fix pattern:** any derived (not passthrough) decimal value bound for a documented precision-preserving string field must be explicitly rounded (`.toFixed(n)`) before serialization — raw float arithmetic output is never safe to hand to `.toString()`.
+
+**Test fixture pattern:** include at least one operand pair known to trigger binary-float rounding (e.g. `27.1 + 27.3`, `0.1 + 0.2`), not just round numbers like `41.5 + 42.1` that mask the defect.
+
+### Bigint-safe percent pattern (no float touch)
+
+Derive a UI-hint ratio (e.g. a `percent` field) from two `Money` values entirely in `bigint`, never touching a float:
+
+```typescript
+// Round-to-nearest in bigint: (numerator*100n + denominator/2n) / denominator
+const percent = denominator === 0n ? 0n : (numerator * 100n + denominator / 2n) / denominator;
+// Only now call Number() on the already-integral result
+return Number(percent);
+```
+
+Short-circuit when denominator is `0n` to avoid throwing on division by zero.
+
 ## Validation
 
 ### LIVR validation at app boundary
@@ -165,6 +188,14 @@ function nestLogLevelsToPino(levels: LogLevel[]): pino.Level {
 ```
 
 Example: `setLogLevels(['error', 'warn'])` → minimum of (50, 40) = 40 → pino level `'warn'`.
+
+## Null Assertions & Provenances
+
+### Redundant narrowing guards in `execute` despite prior `authorize` guarantees
+
+ESLint's `no-non-null-assertion` still fires when a prior pipeline step provably guarantees non-null. Example: `execute` runs after `authorize` has already asserted an active caller, so `context.caller` is provably non-null by the time `execute` reads it, but `context.caller!.userId` still trips the lint rule.
+
+**Fix pattern:** add a redundant `if (!context.caller) throw new AuthenticationError()` narrowing guard in `execute` itself, not a suppression comment — even when `authorize` already guarantees non-null. This is cheap and keeps the zero-suppression lint posture consistent.
 
 ## Authentication & Cookies
 

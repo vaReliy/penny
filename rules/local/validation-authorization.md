@@ -210,6 +210,24 @@ export class HelloController {
 
 The guard sequence ensures that `pending` users can call `GET /auth/me` (protected by SessionGuard alone) to check their approval status, but cannot access data endpoints (protected by both guards).
 
+### Cross-aggregate referential checks belong in `authorize`, not `execute`
+
+`authorize(context, params)` already accepts `params` (bivariant override) and is the correct home for cross-aggregate referential checks like category existence + workspace ownership + archived-state. Throw a dedicated error type (e.g. `CategoryNotEligibleError`) distinct from `ServiceValidationError`, so schema-validation failures and referential failures stay distinguishable:
+
+```typescript
+export class RecordTransactionService extends BaseService<RecordTransactionParams> {
+  public async authorize(context: ServiceContext, params: RecordTransactionParams): Promise<void> {
+    if (!context.caller) throw new AuthenticationError();
+
+    // Cross-aggregate check: category exists, is owned by this workspace, and is not archived
+    const category = await this.categoryRepository.findById(params.categoryId);
+    if (!category || category.workspaceId !== context.caller.workspaceId || category.archivedAt !== null) {
+      throw new CategoryNotEligibleError('Category not found or archived');
+    }
+  }
+}
+```
+
 ### Timing side-channels: XS-Leak vs. direct attack
 
 A timing difference in an auth guard (e.g., missing-cookie short-circuits before JWT verify/DB lookup) is sometimes justified with "the attacker already knows whether they sent a cookie." This argument only holds for a _direct_ attacker calling the API with their own headers, **not** for the XS-Leak scenario:
@@ -264,3 +282,15 @@ Two properties verified directly in LIVR v2.10.2 source (`node_modules/.pnpm/liv
 2. Unknown keys are dropped per the stripping behavior above — arbitrary input fields never reach downstream code.
 
 Both properties hold for every LIVR schema in this repo without per-field enforcement. **Not yet verified**: array-typed filter fields (none exist yet) — an array of operator-objects needs its own array-of-scalar rule verification when the first such field is added.
+
+### `{ like: ID_PATTERN }` is the actual NoSQL-injection fuse for id-shaped fields
+
+LIVR's `{ like: ID_PATTERN }` rule rejects non-primitive input before regex matching, which is what actually closes Mongo-operator-injection (`{$gt:''}`-style) on `categoryId`, `accountId`, `id` fields and similar. This holds for all id-shaped string fields where the schema declares `{ like: ID_PATTERN }` — the LIVR rule gates on `util.isPrimitiveValue()` before any regex, so operator objects never reach the regex matcher.
+
+**Enforcement note:** prose-only claims that a request shape is "period-scoped" or "bounded" aren't enforced at the schema level. When a task/ADR claims a request shape is bounded/scoped/filtered, verify the LIVR validation schema **or** the `authorize()` method actually enforces it, not just the prose. Example: a filter schema that left every filter optional despite "period-scoped queries" prose allowed an empty-params call to return unbounded data — fixed by adding an explicit period-scope guard in `authorize()` (month required OR both from+to required).
+
+### Asymmetric id-validation is easy to miss when sibling id params get different treatment
+
+When one id-shaped param in a params object gets an existence/ownership check, verify every sibling id-shaped param in the same object needs the same treatment. Both can pass identical LIVR shape-only validation while only one gets the real referential check, which isn't visible from the schema and is easy to miss in review.
+
+Checklist line: whenever one id-shaped param in a params object gets an `authorize()`-level existence/ownership check, audit every other id-shaped param in the same object to confirm it receives the same treatment.

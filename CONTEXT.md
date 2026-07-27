@@ -74,3 +74,12 @@ The `identity` context is the first vertical slice and the template every future
 - `car` — vehicle history, repairs, expenses.
 
 Each new context will follow the same shape: `libs/<domain>/{core,application,infrastructure,feature-*,data-access}`.
+
+---
+
+## Bounded Context: `workspace` (parked)
+
+Not implemented. Today's flat single-role model is already behaviorally equivalent to "one implicit workspace, superadmin as its admin," so the entity below has no functional gap to fill yet — it's recorded so the naming and shape are settled before anyone builds it.
+
+- **Workspace** — the entity name for a scoped-admin grouping (deliberately not "tenant," "group," or "organization"). Membership lives inside the `Workspace` aggregate itself, under a hard ≥1-admin invariant.
+- Would live in its own `libs/workspace/*` scope, not folded into `identity`.
