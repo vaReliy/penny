@@ -21,6 +21,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-27 — [Fix] `.claude/settings.json` deny list had dead `Write(path)` rules alongside the working `Edit(path)` ones
+
+- **Component**: `.claude/settings.json` (`permissions.deny`)
+- **Type**: Fix
+- **What happened**: The deny list carried both `Edit(./.cts/**)`/`Edit(./rules/cts/**)` and `Write(./.cts/**)`/`Write(./rules/cts/**)`, intending to block edits to CTS-owned payload. Claude Code's file-permission matcher only recognizes `Edit(path)` as the rule form for file-mutating operations — that single rule already covers every tool that writes to a file (`Edit`, `Write`, `NotebookEdit`). The `Write(path)` entries are never evaluated by the path checker and are silently inert; Claude Code itself surfaces a startup warning naming the exact dead rules. Removed the two redundant `Write(...)` deny entries; protection is unchanged since `Edit(...)` already covered `Write`.
+- **Why it matters upstream**: Any claude-ts consumer or the template itself that writes a deny rule as `Write(path)` expecting it to gate the `Write` tool gets silent no-op protection — the rule parses fine and shows no error until Claude Code's own startup diagnostic flags it. Worth a template-level lint/audit note (e.g. in `cts-rule-auditor`) to catch `Write(...)`/`Read(...)`-style path rules that aren't `Edit(...)` and flag them as likely-dead.
+- **Suggested upstream change**: Add a `cts-rule-auditor` check that scans `.claude/settings.json` permission rules for `Write(<path-glob>)` or similar path-style entries outside the `Edit(...)` form and flags them as probably-inert, pointing at the `Edit(path)`-covers-all-file-tools behavior.
+- **Status**: pending-port
+
+---
+
 ## 2026-07-22 — [Fix] `docs/METRICS.md` append instruction didn't specify anchoring, so an Edit landed a new row mid-table instead of at the true tail
 
 - **Component**: `docs/METRICS.md` (Entries section header comment)

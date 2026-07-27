@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en-1.1.0/),
 
 ## [Unreleased]
 
+### Fixed (`.claude/settings.json` — dead permission rules)
+
+- Removed two dead `Write(./.cts/**)`/`Write(./rules/cts/**)` deny entries: Claude Code's permission matcher only gates file-mutating tools via `Edit(path)` rules (which already cover `Write`/`Edit`/`NotebookEdit`), so the `Write(...)` forms were silently never enforced. The paired `Edit(...)` rules already provide the intended protection against hand-editing CTS-owned payload; no behavior change, just removal of no-op config. Logged upstream in `docs/CLAUDE_TS_CHANGELOG.md` (2026-07-27 entry) since the same dead-rule shape can affect any claude-ts consumer.
+
 ### Added (`libs/budget/core` — entities, invariants, repository interfaces)
 
 - **`libs/budget/core`** (new Nx lib, tags `scope:budget`/`type:core`/`platform:server`) — first code of the budget vertical slice. Framework-free `Account`, `Category`, `Transaction`, `MonthlyBudget` entities (factory `create()`, `DomainError` invariants, immutable-on-mutation, mirroring `identity`'s `User` pattern) plus `TransactionType` as an `as const` object, field shapes/invariants taken verbatim from ADR-007 (`DECISIONS.md`). Repository interfaces (`IAccountRepository`, `ICategoryRepository`, `ITransactionRepository`, `IMonthlyBudgetRepository`) extend `shared-kernel`'s `IRepository<T,string>`, every finder scoped by `workspaceId`; `ITransactionRepository` includes the `sumAmountsByType`/`sumExpenseByCategory` aggregation signatures the future analytics services need (`bigint` return, per ADR — `Money` construction stays above infrastructure). `eslint.config.mjs` gained the ADR-007-mandated `scope:budget → [scope:budget, scope:shared]` depConstraint (prerequisite before any budget lib could land) and `tsconfig.base.json` gained the `budget-core` path alias.

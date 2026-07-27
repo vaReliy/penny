@@ -68,9 +68,7 @@
       "Edit(./.cts/**)",
       "Edit(./rules/cts/**)",
       "Read(./.env)",
-      "Read(./.env.*)",
-      "Write(./.cts/**)",
-      "Write(./rules/cts/**)"
+      "Read(./.env.*)"
     ]
   }
 }
