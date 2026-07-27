@@ -79,3 +79,4 @@ Each completed task is one row in the table below.
 | 2026-07-27 | penny | monobank-fx-integration                                      | T2   | 1      | 0/1/0/-           | 3       | no       | standard       |
 | 2026-07-27 | penny | api-endpoints-categories-budgets                             | T2   | 0      | 0/0/-/-           | 0       | no       | standard       |
 | 2026-07-27 | penny | api-endpoints-transactions-analytics-rates                   | T2   | 0      | 0/0/0/-           | 1       | no       | standard       |
+| 2026-07-27 | penny | budget-data-client-stores                                    | T2   | 1      | 0/1/-/-           | 0       | no       | standard       |
