@@ -76,3 +76,4 @@ Each completed task is one row in the table below.
 | 2026-07-22 | penny | budget-infrastructure-category-budget-repos                  | T2   | 1      | 2/1/-/-           | 0       | no       | standard       |
 | 2026-07-22 | penny | header-navlink-active-hover-mobile-fix                       | T1   | 0      | -/-/-/-           | 0       | no       | standard       |
 | 2026-07-22 | penny | budget-infrastructure-transactions-aggregations              | T2   | 0      | 0/0/-/-           | 0       | no       | standard       |
+| 2026-07-27 | penny | monobank-fx-integration                                      | T2   | 1      | 0/1/0/-           | 3       | no       | standard       |
