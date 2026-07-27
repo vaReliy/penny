@@ -10,6 +10,7 @@ Node.js 22+ · TypeScript 5 (strict) · NestJS (API + CLI) · Angular 17+ (stand
 
 Project-only rule splits (not CTS payload — never synced, never overwritten):
 
+- `rules/local/task-authoring.md` — atomic/pointable acceptance criteria, parity-task obligations, legacy-source verification
 - `rules/local/architecture-backend.md` — NestJS dependency injection, MongoDB patterns, error handling
 - `rules/local/architecture-angular.md` — Angular injection tokens, lazy-load boundaries, dev-server proxy
 - `rules/local/code-style-backend.md` — backend config, validation, logging, auth/cookies, error handling

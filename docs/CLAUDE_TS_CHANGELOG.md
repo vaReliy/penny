@@ -32,6 +32,28 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-27 — [Enhancement] Orchestration tuning: atomic/pointable AC authoring, tier-based orchestrator model, bounded subagent reports, ledger verify-before-transcribe
+
+- **Component**: `rules/local/task-authoring.md` (new), `rules/local/workflow.md`, `CLAUDE.local.md`, `AGENTS.local.md`
+- **Type**: Enhancement
+- **What happened**: Follow-up to the Phase 4.5 acceptance-verification gate (previous entry, `2026-07-27`): that entry closed the _read-back_ hole, this one closes the _authoring_ and _cost_ holes it exposed. Added (a) atomic/pointable acceptance-criteria authoring rules with a worked counter-example — a screen-parity task's ambiguous `Parity: balance + 3-currency display + refresh` compound criterion — and its correct decomposition; (b) a parity-task obligation that legacy sources be named as resolvable ref+path and their behaviors enumerated as individual AC lines, cross-linked bidirectionally with the Phase 4.5 orchestrator-side obligation; (c) tier-based orchestrator model selection (T0–T2 → Sonnet, T3 → Opus) based on a measured ~2× session-budget difference between two orchestrator runs of the identical task with no measurable quality gain from the stronger model on a T2-shaped task; (d) a 200-line cap on subagent report narration/detail (with on-demand scratch-file overflow), explicitly exempting `## Fix Now`/`## Emit as Task` sections and finding-supporting evidence from truncation; (e) a ledger-honesty rule requiring `file:line` or command+result verification before a subagent-reported learning is transcribed into `docs/KNOWLEDGE_INBOX.md`, with a real counter-example (a subagent's unverified `AuthModule` DI-crash claim that contradicted the branch's own merge-base). All items landed only in project-local files per this project's two-layer sync model; `rules/cts/**` untouched.
+- **Why it matters upstream**: (a)–(b) and (d)–(e) are project-agnostic — any claude-ts consumer's `ba`/orchestrator can write compound or unpointable acceptance criteria, re-send unbounded subagent output on every turn, or transcribe an unverified subagent claim into a permanent knowledge ledger. (c), the tier→model mapping, is more Penny-specific (its exact tier definitions) but the _principle_ — measure whether a stronger orchestrator model actually earns its cost multiplier per tier, rather than assuming it does — generalizes.
+- **Suggested upstream change**: Port (a), (b), (d), (e) into `rules/cts/task-authoring.md` and `rules/cts/workflow.md` largely as-is, generalized away from this project's specific counter-example (keep a generalized version of it, it's concrete and clarifying). For (c), add a tier-system-agnostic version of the guidance ("measure whether your strongest-tier orchestrator model is earning its multiplier on your other tiers before defaulting to it everywhere") rather than porting the specific T0–T3 mapping.
+- **Status**: pending-port — currently lives only in this project's unsynced `rules/local/task-authoring.md`, `rules/local/workflow.md`, `CLAUDE.local.md`, `AGENTS.local.md`.
+
+---
+
+## 2026-07-27 — [Enhancement] Rule/doc prose has no self-check against embedded task-ID leakage
+
+- **Component**: `rules/local/workflow.md` (new "Task-ID Leakage Self-Check" section)
+- **Type**: Enhancement
+- **What happened**: In the same session that added the orchestration-tuning rules above, two separate task-ID references (`task 16`, an explicit task-file ID) leaked into newly-authored durable rule/doc prose (`rules/local/task-authoring.md`, `docs/KNOWLEDGE_INBOX.md`) and survived an initial review pass before being caught by the operator. `AGENTS.md`'s existing rule against this ("never reference task IDs, decision IDs, or task file paths in comments — these go stale") is scoped to code comments only; nothing extended it to rule/doc prose, which is exactly where an agent authoring rules out of a task-driven session is most likely to leak one. Added a mechanical self-check: before finishing an edit to `rules/**`/`CLAUDE.md`/`AGENTS.md`/non-ledger `docs/*.md`, grep the diff for task-ID/decision-number-shaped patterns, with the three intentionally-dated ledgers (`docs/METRICS.md`, `docs/KNOWLEDGE_INBOX.md`, `docs/CLAUDE_TS_CHANGELOG.md`) as explicit exceptions.
+- **Why it matters upstream**: Any claude-ts consumer whose orchestrator authors or edits rule/doc files while working a specific task (the common case) risks the same leakage — a task ID embedded in prose reads as authoritative today and as meaningless noise once the task file is archived or deleted (`tasks/**` is typically gitignored). A mechanical grep is more reliable than "remember not to," since the existing comment-scoped rule already existed and still didn't prevent this.
+- **Suggested upstream change**: Extend the existing "no task IDs in comments" guidance in `rules/cts/code-style.md` to explicitly cover rule/doc prose, not just code comments, and add the grep-based self-check to `rules/cts/workflow.md`'s write-time checklist. Also worth a `cts-rule-auditor` structural check (a 12th check) that scans `rules/**`, `CLAUDE.md`, `AGENTS.md` for task-ID/decision-number-shaped patterns outside declared ledger exceptions, as a periodic backstop for when the write-time check is skipped.
+- **Status**: pending-port — currently lives only in this project's unsynced `rules/local/workflow.md`.
+
+---
+
 ## 2026-07-27 — [Enhancement] `testing.md` "Guard decorator chains" names the coverage gap but not the mechanism or a fix recipe
 
 - **Component**: `rules/cts/testing.md` § "NestJS-Specific Testing" › "Guard decorator chains: established convention vs. coverage gap"

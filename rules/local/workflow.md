@@ -86,6 +86,59 @@ The orchestrator re-reads the task file's `## Acceptance criteria` and `## Conte
 
 When a task file's `## Context / Why` or acceptance criteria name a legacy source for behavior parity, the orchestrator opens that source (`git show <ref>:<path>`) and enumerates the behaviors it implements. A replacement feature is not accepted until it has been checked against the legacy behavior in code, not against a written description of that behavior. This is an exception to the orchestrator's normal read restriction (orchestrator normally reads only `.claude/**`, `rules/**`, `AGENTS.md`, plan files, agent reports) — reading the legacy source file directly is in the same spirit as reading a plan file or an agent report: it is external factual evidence for a claim, not reading the project's own source code inline. A parity claim that does not cite the legacy file is not evidence of parity.
 
+**Paired authoring-side obligation**: This orchestrator obligation is paired with a task-authoring rule documented in `rules/local/task-authoring.md` § "Parity-task authoring obligation". That section requires task authors to enumerate legacy behaviors as individually checkable AC lines, each citing the legacy source. The orchestrator's Phase 4.5 verification reads those AC lines and checks each against the legacy source. Neither the authoring rule nor this Phase 4.5 parity-obligation rule should be distilled or deleted without re-evaluating both together — they are interdependent.
+
 ### Failure routes back to Phase 3, outside the restart budget
 
 If acceptance verification fails (a criterion cannot be pointed at a specific file/line, or a parity claim cannot be verified in the legacy code), orchestrator routes back to Phase 3 (implementation). This is **not** a `## Fix Now` fix-retry cycle, and does not consume the 2-cycle restart budget that manages gate `## Fix Now` phases. A missing feature is unbuilt work, not a defect in built work: the implementation phase must extend to deliver what was asked, not iterate on quality of what was partially delivered.
+
+## New section: Bounded Subagent Reports
+
+Full subagent reports currently enter orchestrator context and are re-sent on every subsequent turn, which is the fastest-growing cost term in a pipeline. Subagent reports must return **findings plus evidence, bounded to 200 lines** — with any long detail (full diffs, complete test output, file dumps) written to a file under the session's scratchpad directory that the orchestrator reads **on demand** (referenced by path, not carried inline).
+
+**Constraints on bounding (preserve gate fidelity):**
+
+- `## Fix Now` and `## Emit as Task` sections are never truncated — the cap applies to narration and supporting detail only.
+- Evidence a finding depends on (failing assertion, offending line, name of rule that fired) stays inline. A bounded report must remain independently actionable — the orchestrator must not need to fetch auxiliary files just to understand what failed.
+
+**Pattern**: a subagent report reads:
+
+```
+## Fix Now
+- line 42 of src/x.ts uses `Money.toJSON()` but the serializer does not exist (line 18–22 of `src/x.spec.ts` fails).
+
+## Supporting detail (long)
+(written to /tmp/claude-<hash>/scratchpad/report-detail.txt)
+Full diff between old and new coverage output, complete stdout from failed test run, etc.
+```
+
+The orchestrator reads the detail file only if investigating the finding, not by default; the inline evidence is sufficient to act on the finding.
+
+## New section: Ledger Honesty — Verify Before Transcribing
+
+`docs/KNOWLEDGE_INBOX.md` is pre-flight-read by every technical agent, so a wrong entry is a per-dispatch tax and a permanent wrong rule once distilled. Before transcribing a subagent-reported learning into the inbox, the orchestrator must confirm the claim against the working tree and include the `file:line` (or command + result) that establishes it. Claims that cannot be pointed at are dropped, not softened.
+
+**Worked counter-example**: A branch's inbox entry claimed `nx serve api` crashed on a missing `AuthModule` import. However, that branch's merge-base is commit `d432095 fix(api): import AuthModule into BudgetModule`, and the file `apps/api/src/budget/budget.module.ts` already reads `imports: [LoggerModule, AuthModule]`. The claim was transcribed into the permanent ledger unverified, alongside a duplicate entry already present on `develop` and a task-reference that already existed. When the branch was later rejected and reviewed, these unverified entries had already been absorbed into the active knowledge base.
+
+The related existing rules — _"verify working-tree side effects before dispatching tester"_ and _"a plain-English claim that a lint rule will fire is not proof"_ (both in `rules/cts/workflow.md`) — are load-bearing and were both unhonored on that branch. This section extends the same principle to the permanent ledger: a claim with no working-tree evidence does not get transcribed, and a subagent-reported learning that lacks a file/line pointer is incomplete, not ready for ledger.
+
+## New section: Task-ID Leakage Self-Check (durable docs)
+
+Rule/doc prose is meant to outlive any specific task file (`tasks/**` is gitignored and its files are routinely archived or deleted). A task-ID or decision-number reference embedded in such prose reads as authoritative today and as meaningless noise once that task file is gone. This mirrors the existing code-comment rule in `AGENTS.md` § Code Style Essentials ("never reference task IDs, decision IDs, or task file paths in comments — these go stale"), extended explicitly to durable docs and rules, which the comment-scoped wording didn't cover — and which slipped through review twice in the same session before being caught.
+
+**Before finishing any edit to `rules/**`, `CLAUDE.md`, `AGENTS.md`, or a non-ledger `docs/\*.md` file\*\*, grep the diff for task-ID/decision-number-shaped patterns and rewrite any hit as a content description instead:
+
+```
+git diff HEAD -- <changed files> | grep -E '^\+' | grep -vE '^\+\+\+' | grep -E 'task [0-9]+\b|[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]+\b|ADR-[0-9]+'
+```
+
+**Exceptions** — these are append-only, dated ledgers where task/decision references are the intended format, not a leak: `docs/METRICS.md`, `docs/KNOWLEDGE_INBOX.md`, `docs/CLAUDE_TS_CHANGELOG.md`.
+
+## Items marked for /cts-contribute (upstream candidates)
+
+The following are project-agnostic and worth pushing to the CTS template:
+
+- **Atomic/pointable acceptance criteria rule** — `rules/local/task-authoring.md` §§ Atomic criteria, Pointable criteria. Rationale: prevents ambiguous criteria, makes executor work auditable, catches missing behavior in read-back.
+- **Bounded subagent reports with on-demand detail files** — this section. Rationale: largest cost reduction without quality tradeoff; compound effect with lower orchestrator model tier.
+- **Verify-before-transcribe ledger rule** — Ledger Honesty section above. Rationale: prevents unverified claims from permanently distorting future dispatches; extends existing "verify before tester" principle to the durable ledger.
+- **Task-ID Leakage Self-Check** — this section. Rationale: any claude-ts consumer writing rule/doc prose out of a task-driven session risks embedding a task ID that outlives the task file; also worth a `cts-rule-auditor` structural check (a 12th check alongside the existing 11) that scans `rules/**`, `CLAUDE.md`, `AGENTS.md` for task-ID/decision-number-shaped patterns outside declared ledger exceptions, catching drift even when the write-time self-check is skipped.
