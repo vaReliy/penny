@@ -32,12 +32,10 @@ describe('DashboardStore', () => {
 
   it('loadBalance() populates the balance signal', () => {
     store.loadBalance();
-    httpController
-      .expectOne('/api/budget/balance')
-      .flush({
-        accountId: 'a1',
-        balance: { amount: '100000', currency: 'UAH' },
-      });
+    httpController.expectOne('/api/budget/balance').flush({
+      accountId: 'a1',
+      balance: { amount: '100000', currency: 'UAH' },
+    });
 
     expect(store.balance()?.accountId).toBe('a1');
   });
@@ -94,5 +92,74 @@ describe('DashboardStore', () => {
     summaryReq.flush({ month: '2026-07', categories: [] });
 
     expect(store.balance()?.balance.amount).toBe(150000n);
+  });
+
+  it('balanceLoading stays true while a summary request resolves first', () => {
+    store.loadBalance();
+    store.loadSummary('2026-07');
+
+    expect(store.balanceLoading()).toBe(true);
+    expect(store.summaryLoading()).toBe(true);
+
+    httpController
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/budget/summary' &&
+          candidate.params.get('month') === '2026-07',
+      )
+      .flush({ month: '2026-07', categories: [] });
+
+    expect(store.summaryLoading()).toBe(false);
+    expect(store.balanceLoading()).toBe(true);
+
+    httpController.expectOne('/api/budget/balance').flush({
+      accountId: 'a1',
+      balance: { amount: '100000', currency: 'UAH' },
+    });
+
+    expect(store.balanceLoading()).toBe(false);
+  });
+
+  it('an error on one concern leaves another concern error signal null', () => {
+    store.loadSummary('2026-07');
+    store.loadBalance();
+
+    httpController
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/budget/summary' &&
+          candidate.params.get('month') === '2026-07',
+      )
+      .flush('summary failed', { status: 500, statusText: 'Server Error' });
+
+    expect(store.summaryError()).not.toBeNull();
+    expect(store.balanceError()).toBeNull();
+
+    httpController.expectOne('/api/budget/balance').flush({
+      accountId: 'a1',
+      balance: { amount: '100000', currency: 'UAH' },
+    });
+
+    expect(store.balanceError()).toBeNull();
+  });
+
+  it('chartLoading and chartError stay isolated from a concurrent balance failure', () => {
+    store.loadChart();
+    store.loadBalance();
+
+    expect(store.chartLoading()).toBe(true);
+
+    httpController
+      .expectOne('/api/budget/balance')
+      .flush('balance failed', { status: 500, statusText: 'Server Error' });
+
+    expect(store.balanceError()).not.toBeNull();
+    expect(store.chartError()).toBeNull();
+    expect(store.chartLoading()).toBe(true);
+
+    httpController.expectOne('/api/budget/chart').flush([]);
+
+    expect(store.chartLoading()).toBe(false);
+    expect(store.chartError()).toBeNull();
   });
 });

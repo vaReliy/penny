@@ -38,7 +38,7 @@ export class AccountPageComponent implements OnInit {
       return 'ready';
     }
     if (
-      this.dashboardStore.error() !== null ||
+      this.dashboardStore.balanceError() !== null ||
       this.ratesStore.error() !== null
     ) {
       return 'error';
