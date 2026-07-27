@@ -264,3 +264,33 @@ export class SecurityModule {}
 ```
 
 This applies to any global guard that reads decorator metadata. Stateless middleware-style guards (no Reflector dependency) can use either pattern.
+
+### Per-controller `@UseGuards(X)`: `X`'s dependencies must be resolvable in the _host_ module, not the module that declares `X`
+
+`@UseGuards(SessionGuard, ActiveUserGuard)` on a controller instantiates the guard in the injector of the **module that hosts the controller**, not the module that exports the guard. If the hosting module doesn't import the module providing the guard's own dependencies, Nest throws `UnknownDependenciesException` at boot — a silent trap because nothing at the `@UseGuards` call site hints at the missing import.
+
+```typescript
+// apps/api/src/budget/budget.module.ts
+@Module({
+  imports: [LoggerModule, AuthModule], // ✓ AuthModule exports SessionGuard + its ITokenIssuer/IUserRepository deps
+  controllers: [CategoriesController /* @UseGuards(SessionGuard, ActiveUserGuard) */],
+})
+export class BudgetModule {}
+```
+
+Every new feature module whose controllers use `SessionGuard`/`ActiveUserGuard` (or any other DI-dependent guard) must import `AuthModule` directly — importing it once in `AppModule` does not make its exports reachable from a sibling feature module's own injector.
+
+**Test coverage**: unit specs that hand-construct guards against a fake `ExecutionContext` (see `rules/cts/testing.md` § "Guard decorator chains") never exercise the real module graph and cannot catch this — the module compiles and passes every such spec, then crashes the whole app at startup. Add a module-compile smoke test per feature module instead:
+
+```typescript
+Test.createTestingModule({ imports: [TheFeatureModule] }).compile(); // throws if any provider/guard dep is unresolvable
+```
+
+Override only the I/O-boundary providers so it needs no live DB/network:
+
+- A local `@Global()` stub module supplying `API_CONFIG` (bypasses `loadApiConfig()`'s `process.env` reads) — use a real ≥32-char value for `jwtSecret`; `JwtTokenIssuer` validates length at construction and a short stub fails compile with an unrelated-looking error.
+- `mongoose.createConnection()` called with **no URI**, overriding `TOKENS.MongoConnection` — registers Typegoose models via `getXModel(connection)` without opening a socket.
+
+Verify the spec actually catches the regression it targets by temporarily reverting the fix locally and confirming the test fails with the real `UnknownDependenciesException` — a passing-by-coincidence smoke test is worse than none.
+
+_(Pending upstream: this recipe belongs in `rules/cts/testing.md` § "Guard decorator chains" too — see `docs/KNOWLEDGE_INBOX.md` 2026-07-27 entry, route via `/cts-contribute`.)_

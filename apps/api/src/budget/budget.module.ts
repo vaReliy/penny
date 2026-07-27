@@ -34,6 +34,7 @@ import type {
   ITransactionRepository,
 } from 'budget-core';
 
+import { AuthModule } from '../auth/auth.module.js';
 import { API_CONFIG } from '../config/api-config.js';
 import type { ApiConfig } from '../config/api-config.js';
 import { LoggerModule } from '../logger/logger.module.js';
@@ -66,7 +67,7 @@ class BudgetMongoShutdownHook implements OnApplicationShutdown {
  * reuse `IdentityModule`'s connection.
  */
 @Module({
-  imports: [LoggerModule],
+  imports: [LoggerModule, AuthModule],
   controllers: [
     CategoriesController,
     MonthlyBudgetsController,

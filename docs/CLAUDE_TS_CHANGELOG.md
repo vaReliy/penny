@@ -21,6 +21,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-27 — [Enhancement] `testing.md` "Guard decorator chains" names the coverage gap but not the mechanism or a fix recipe
+
+- **Component**: `rules/cts/testing.md` § "NestJS-Specific Testing" › "Guard decorator chains: established convention vs. coverage gap"
+- **Type**: Enhancement
+- **What happened**: A production bug (`BudgetModule` applied `@UseGuards(SessionGuard, ActiveUserGuard)` without importing `AuthModule`, which exports the guards' own DI dependencies) crashed the API at boot with `UnknownDependenciesException`. The existing section already correctly flags that hand-built-`ExecutionContext` guard specs leave "a decorator regression... invisible to the test suite," but doesn't name the specific NestJS mechanism at fault (`@UseGuards(X)` resolves `X`'s dependencies in the _controller's hosting module_, not the module exporting `X`) or give a concrete recipe — it only suggests "a thin e2e-style smoke test... is an option," with no example. This project's fix added a module-compile smoke test instead (`Test.createTestingModule({ imports: [TheModule] }).compile()`), using a local `@Global()` config-stub module for `API_CONFIG` and a URI-less `mongoose.createConnection()` override for the Mongo connection token — cheap (no live DB/network), and confirmed by reverting the fix locally to prove the spec fails with the real error.
+- **Why it matters upstream**: Any claude-ts consumer using NestJS with per-controller `@UseGuards` chains and DI-dependent guards can hit this exact class of boot-time bug, and the current section's "smoke test is an option" phrasing under-specifies the fix enough that most agents/devs won't reach for it. A concrete recipe turns a vague suggestion into an actionable pattern.
+- **Suggested upstream change**: Extend the "Guard decorator chains" section with (a) a short explanation of the host-module DI resolution mechanism, and (b) the module-compile-spec recipe as a code block (config-stub `@Global()` module + URI-less `mongoose.createConnection()` override), plus the "revert the fix and confirm the spec fails" verification tip. This project's local (non-portable) copy of the full recipe currently lives in `rules/local/architecture-backend.md` § "Per-controller `@UseGuards(X)`" as a stand-in until this lands upstream.
+- **Status**: pending-port
+
+---
+
 ## 2026-07-27 — [Fix] `.claude/settings.json` deny list had dead `Write(path)` rules alongside the working `Edit(path)` ones
 
 - **Component**: `.claude/settings.json` (`permissions.deny`)
