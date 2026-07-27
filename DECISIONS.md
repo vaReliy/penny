@@ -472,7 +472,7 @@ classDiagram
 **Revisit triggers:**
 
 - Component-library needs grow past what CDK primitives + Tailwind utilities comfortably cover (e.g., a data-grid, a rich date-picker, or a design system with many themed variants) — reconsider a headless component library (e.g., Angular CDK + a dedicated library) or a Tailwind-based component kit before reaching for ng-bootstrap.
-- Dark theme (parked UX backlog item, see Design Tokens below) turns out to need per-component theming beyond CSS custom-property swaps.
+- Light theme (parked after dark-first launch, see ADR-009) — when a light theme is built, this ADR updates with a theme-switcher implementation plan and `prefers-color-scheme` fallback logic.
 
 ### Tailwind v4 Integration Approach (verified 2026-07-19)
 
@@ -499,6 +499,8 @@ Verified via web search against Tailwind's official docs, the Nx blog's Tailwind
 
 ### Design Tokens (consumed by task 04 and all screen tasks 16–19)
 
+**Note:** The color-role and radius token values below were specified at Tailwind adoption and are now superseded by **ADR-009**, which established the dark-first visual design system and updated `apps/web/src/styles.css` with final values. See ADR-009 for the implemented token palette, type scale, radius scale, and contrast rules.
+
 Expressed the Tailwind-v4 way — paste directly into an `@theme` block:
 
 ```css
@@ -511,7 +513,7 @@ Expressed the Tailwind-v4 way — paste directly into an `@theme` block:
   /* Spacing scale — Tailwind's default 0.25rem (4px) step is kept as-is; only the semantic touch-target token is added */
   --spacing-touch: 2.75rem; /* 44px — minimum touch target (iOS HIG); use min-h-touch min-w-touch on tappable controls */
 
-  /* Type scale — mobile-first base sizes */
+  /* Type scale — mobile-first base sizes (unchanged in ADR-009) */
   --text-xs: 0.75rem; /* 12px — helper text, captions */
   --text-sm: 0.875rem; /* 14px — secondary body */
   --text-base: 1rem; /* 16px — body default (never smaller, avoids iOS input zoom) */
@@ -519,23 +521,10 @@ Expressed the Tailwind-v4 way — paste directly into an `@theme` block:
   --text-xl: 1.25rem; /* 20px — section headings */
   --text-2xl: 1.5rem; /* 24px — screen titles */
 
-  /* Color roles — light theme only; dark is parked UX backlog (see revisit triggers) */
-  --color-background: #ffffff;
-  --color-surface: #f8fafc;
-  --color-border: #e2e8f0;
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #64748b;
-  --color-primary: #2563eb; /* brand/action */
-  --color-primary-contrast: #ffffff;
-  --color-income: #16a34a; /* income/positive amounts */
-  --color-expense: #dc2626; /* expense/negative amounts */
-  --color-warning: #d97706;
+  /* Color roles — THIS EXAMPLE IS SUPERSEDED BY ADR-009's dark-first palette; see ADR-009 for implemented values */
+  /* --color-background, --color-surface, --color-border, --color-text-*, --color-primary*, --color-income, --color-expense, --color-warning definitions moved to ADR-009 */
 
-  /* Border radius / elevation basics */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.08);
+  /* Border radius / elevation — THIS EXAMPLE IS SUPERSEDED BY ADR-009; see ADR-009 for --radius-card/btn/tile and elevation rules */
 }
 ```
 

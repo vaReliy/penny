@@ -90,3 +90,4 @@ Each completed task is one row in the table below.
 | 2026-07-27 | penny | acceptance-verification-gate-stage                           | T2   | 0      | -/0/-/-           | 0       | no       | standard       |                    |
 | 2026-07-28 | penny | dashboard-store-per-concern-request-state                    | T2   | 0      | 0/0/-/-           | 1       | no       | standard       |                    |
 | 2026-07-28 | penny | sibling-stores-per-concern-request-state                     | T2   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |
+| 2026-07-28 | penny | dark-design-system-tokens                                    | T1   | 1      | 1/0/-/0           | 1       | no       | standard       | standard           |

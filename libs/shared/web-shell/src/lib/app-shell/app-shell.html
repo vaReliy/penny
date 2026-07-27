@@ -2,7 +2,7 @@
   <header
     class="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-4 py-3"
   >
-    <span class="select-none text-xl font-semibold text-primary"
+    <span class="select-none text-xl font-semibold text-primary-from"
       >{{ 'shell.brand' | transloco }}</span
     >
 
@@ -16,10 +16,10 @@
         [routerLink]="item.path"
         routerLinkActive
         ariaCurrentWhenActive="page"
-        class="rounded-md px-3 py-2 text-sm font-medium"
+        class="rounded-btn px-3 py-2 text-sm font-medium"
         [ngClass]="
           desktopRla.isActive
-            ? 'bg-primary text-primary-contrast'
+            ? 'bg-gradient-to-r from-primary-from to-primary-to text-on-primary'
             : 'text-text-secondary hover:bg-background'
         "
       >
@@ -53,7 +53,7 @@
     <ng-template #profileMenu>
       <div
         cdkMenu
-        class="min-w-40 rounded-md border border-border bg-background py-1 shadow-card"
+        class="min-w-40 rounded-card border border-border bg-background py-1"
       >
         <button
           cdkMenuItem
@@ -81,10 +81,10 @@
       [routerLink]="item.path"
       routerLinkActive
       ariaCurrentWhenActive="page"
-      class="mx-1 my-1 flex min-h-touch flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-xs"
+      class="mx-1 my-1 flex min-h-touch flex-1 flex-col items-center justify-center gap-0.5 rounded-btn text-xs"
       [ngClass]="
         mobileRla.isActive
-          ? 'bg-primary/10 text-primary'
+          ? 'bg-gradient-to-r from-primary-from to-primary-to text-on-primary'
           : 'text-text-secondary'
       "
     >

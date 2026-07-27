@@ -20,22 +20,30 @@
   --text-lg: 1.125rem; /* 18px — emphasized body */
   --text-xl: 1.25rem; /* 20px — section headings */
   --text-2xl: 1.5rem; /* 24px — screen titles */
+  --text-3xl: 1.875rem; /* 30px — secondary totals */
+  --text-display: 2.75rem; /* 44px, font-weight 700 — hero balance figures only, one per screen */
 
-  /* Color roles — light theme only; dark is parked UX backlog (see revisit triggers) */
-  --color-background: #ffffff;
-  --color-surface: #f8fafc;
-  --color-border: #e2e8f0;
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #64748b;
-  --color-primary: #2563eb; /* brand/action */
-  --color-primary-contrast: #ffffff;
-  --color-income: #16a34a; /* income/positive amounts */
-  --color-expense: #dc2626; /* expense/negative amounts */
-  --color-warning: #d97706;
+  /* Color roles — dark-first (ADR-009); no light theme built yet, default is unconditionally dark */
+  --color-background: #0a1020;
+  --color-surface: #131c33;
+  --color-surface-2: #1a2540; /* nested tracks/tiles inside a surface, e.g. progress-bar troughs */
+  --color-border: #182543;
+  --color-text-primary: #f4f6fb;
+  --color-text-secondary: #93a2c9;
+  --color-text-tertiary: #5f6a91; /* e.g. date-group labels in list views */
+
+  --color-primary-from: #3b82f6; /* blue-500 */
+  --color-primary-to: #60a5fa; /* sky-400 */
+  --color-primary-light: #bfdbfe; /* single accent tone for category icon bubbles; per-category color coding stays parked-backlog */
+  --color-on-primary: #0a1020; /* text color on ANY primary-gradient-filled control — see ADR-009 contrast rule */
+
+  --color-income: #6ee7b7; /* mint-300 */
+  --color-expense: #fca5a5; /* coral-300 */
+  --color-warning: #fbbf24; /* amber-400 — reserved for non-progress-bar warning states (e.g. form validation) */
 
   /* Border radius / elevation basics */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.08);
+  --radius-card: 1rem; /* 16px */
+  --radius-btn: 0.75rem; /* 12px — one step down from card radius */
+  --radius-tile: 0.625rem; /* 10px — inner stat tiles */
+  /* Elevation: flat surface + 1px border, no box-shadow (dropped --shadow-card per ADR-009) */
 }

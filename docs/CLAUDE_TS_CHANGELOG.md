@@ -32,6 +32,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-28 — [Enhancement] Tailwind v4 `@theme` token removal/rename fails silently — no build/type error
+
+- **Component**: `rules/local/code-style-angular.md` (new "Tailwind v4 @theme token migration" subsection under Styling) — no equivalent section exists yet in `rules/cts/code-style.md` or an Angular-specific CTS rule
+- **Type**: Enhancement
+- **What happened**: During an ADR-009 dark-token migration (renaming `--radius-sm/md/lg` → `--radius-card/btn/tile`, dropping `--shadow-card`), one template (`balance-card.html`) was missed by the implementing agent and still referenced the old utility classes (`rounded-lg`, `shadow-card`). Neither `nx build` nor typecheck caught it: Tailwind v4 does not error when a utility class's backing `@theme` custom property is removed or renamed — it silently falls back to Tailwind's own built-in default value for that utility (e.g. `rounded-lg` reverts to Tailwind's stock 0.5rem instead of failing). The gap was only caught by the `tester` quality-gate stage doing an explicit workspace-wide grep for old utility class names, not the old CSS custom-property names (which have zero remaining references once removed) — this required an ad hoc guard test to be added (`design-tokens.guard.spec.ts`) rather than existing gate tooling catching it automatically.
+- **Why it matters upstream**: Any claude-ts consumer using Tailwind v4 `@theme` tokens will hit this identical silent-fallback failure mode on any token rename/removal migration — the risk is generic to Tailwind v4's CSS-variable-driven theming, not specific to this project's dark-mode work. Without documented guidance, an implementing agent has no reason to grep for old utility class names specifically (as opposed to old custom-property names, which is the intuitive but insufficient check).
+- **Suggested upstream change**: Add a "Tailwind v4 @theme token migration" subsection to a CTS-level styling rule (`rules/cts/code-style.md` or a new Tailwind-specific rule if one of the frontend framework rules already covers Tailwind setup) documenting: (1) the silent-fallback behavior when a `@theme` custom property is removed/renamed, (2) the mitigation — grep the whole workspace for the _old utility class names_, not just the old `--custom-property` names, since the class names are the only remaining trace once the property is gone, and (3) a reminder that this is especially important when a token migration is split across multiple feature/screen tasks, since templates added in parallel or subsequent tasks may still reference the old class names.
+- **Status**: pending-port
+
+---
+
 ## 2026-07-27 — [Enhancement] Quality gate has no acceptance-testing phase — a green gate cannot detect an entirely missing feature
 
 - **Component**: `rules/local/workflow.md` (new "Phase 4.5 — Acceptance Verification" section), `CLAUDE.local.md` (pointer under "Orchestrator (Dispatcher) Core")

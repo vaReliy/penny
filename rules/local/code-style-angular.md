@@ -162,6 +162,20 @@ Example:
 export class GreetingComponent {}
 ```
 
+### Tailwind v4 @theme token migration
+
+When renaming or removing `@theme` custom properties (e.g., `--radius-sm` → `--radius-card`, dropping `--shadow-card`), Tailwind v4 does **not** error when a utility class corresponding to the removed property is still present in a template — it silently falls back to Tailwind's built-in default value instead (e.g., `rounded-sm` reverts to Tailwind's stock 0.25rem). Neither `nx build` nor typecheck catches this.
+
+**Mitigation:** when renaming/removing `@theme` tokens, grep the entire workspace not just for the old CSS custom-property names (e.g., `--radius-sm`), but for the **old utility class names** themselves (e.g., `rounded-sm`, `rounded-md`, `rounded-lg`, `shadow-card`, etc.). The utility class names are the only remaining trace once the property is gone. Example grep patterns:
+
+```bash
+# After removing --radius-sm/md/lg in favor of --radius-card/btn/tile
+grep -r "rounded-sm\|rounded-md\|rounded-lg" apps/web libs/ --include="*.html" --include="*.ts"
+grep -r "shadow-card" apps/web libs/ --include="*.html" --include="*.ts"
+```
+
+This is especially important if a token-migration task was split across multiple feature/screen tasks — the first task may complete the token replacement in templates it touched, but templates added later (in parallel or subsequent tasks) may still reference the old class names, producing silent visual regressions.
+
 ## Forms
 
 - Use Reactive Forms for forms with validation

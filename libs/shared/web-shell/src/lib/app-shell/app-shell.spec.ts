@@ -91,6 +91,23 @@ describe('AppShellComponent', () => {
     expect(activeLink?.textContent).toContain('Рахунок');
   });
 
+  it('applies the primary-gradient fill with dark on-primary text to the active nav link (ADR-009 contrast rule)', async () => {
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/account', AppShellComponent);
+    harness.detectChanges();
+
+    const activeLinks = harness.routeNativeElement?.querySelectorAll(
+      'a[aria-current="page"]',
+    ) as NodeListOf<HTMLAnchorElement> | undefined;
+
+    expect(activeLinks?.length).toBe(2);
+    for (const link of Array.from(activeLinks ?? [])) {
+      expect(link.className).toContain('from-primary-from');
+      expect(link.className).toContain('to-primary-to');
+      expect(link.className).toContain('text-on-primary');
+    }
+  });
+
   it('calls the session logout and navigates to /login', async () => {
     const harness = await RouterTestingHarness.create();
     const component = await harness.navigateByUrl('/', AppShellComponent);

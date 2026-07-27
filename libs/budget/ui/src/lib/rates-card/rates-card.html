@@ -1,5 +1,5 @@
 <section
-  class="rounded-lg border border-border bg-surface p-4 shadow-card"
+  class="rounded-card border border-border bg-surface p-4"
   [attr.aria-label]="'budget.account.ratesCard.title' | transloco"
 >
   <div class="mb-3 flex items-center justify-between gap-2">
@@ -8,7 +8,7 @@
     </h2>
     <button
       type="button"
-      class="flex min-h-touch min-w-touch items-center justify-center rounded-md border border-border px-3 py-1.5 text-sm font-medium text-text-primary hover:bg-background disabled:cursor-not-allowed disabled:opacity-50"
+      class="flex min-h-touch min-w-touch items-center justify-center rounded-btn border border-border px-3 py-1.5 text-sm font-medium text-text-primary hover:bg-background disabled:cursor-not-allowed disabled:opacity-50"
       [disabled]="refreshing()"
       [attr.aria-label]="'budget.account.ratesCard.refresh' | transloco"
       (click)="onRefreshClick()"
