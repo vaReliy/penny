@@ -546,3 +546,83 @@ Expressed the Tailwind-v4 way — paste directly into an `@theme` block:
 - Task 04 installs the exact-pinned packages above, wires the two config files, and pastes the `@theme` block — no re-research needed.
 - Every screen task (16–19) styles exclusively with Tailwind utilities driven by these tokens; ad hoc hex colors or magic spacing values in templates are a review finding.
 - New UI-bearing libs must add their `@source` directive in `apps/web/src/styles.css` or their classes silently get purged from the production build (see Integration Approach, step 3).
+
+---
+
+## ADR-009 — Visual Design System: Dark-First Palette, Type Scale, Radius
+
+**Status:** Accepted
+
+**Date:** 2026-07-28
+
+**Decision:** Amend ADR-008's design tokens. Replace the light-only color-role block with a **dark-first** palette (no light theme built yet), and add a display-type tier, a raised radius scale, and a codified button-contrast rule. Grounded in a design-review session against reference dark-fintech-dashboard mockups the owner supplied (blue/indigo gradients, large digit displays, card-based layout), validated with rendered HTML/PNG comparisons at each branch (palette, type scale, radius, contrast, category chips, over-budget progress bars) before locking.
+
+**Context:** The live app (`apps/web` at `localhost:4200`) read as visually unfinished — ADR-008 shipped functional light-theme tokens capped at 24px type and 12px radius, deliberately deferring polish until after parity (owner, 2026-07-16: "fast achieve the same result on the skeleton project… after that the project can be improved"). The owner judged that point reached and requested a dedicated design pass, separate from the broader parked post-parity IA/UX rework backlog (navigation restructuring, PWA, transaction editing — those stay parked).
+
+**Theme scope:** Dark theme only, for now. Default = dark, unconditionally (not `prefers-color-scheme`). Light theme and a theme switcher (planned location: user menu dropdown, where logout lives) are explicitly deferred to a separate future task — building a switcher with one option today is dead UI. When the light-theme task lands, the default logic changes to respect `prefers-color-scheme`; that is this ADR's one committed revisit trigger.
+
+**Color roles (dark):**
+
+```css
+@theme {
+  --color-background: #0a1020;
+  --color-surface: #131c33;
+  --color-surface-2: #1a2540; /* nested tracks/tiles inside a surface, e.g. progress-bar troughs */
+  --color-border: #182543;
+  --color-text-primary: #f4f6fb;
+  --color-text-secondary: #93a2c9;
+  --color-text-tertiary: #5f6a91; /* e.g. date-group labels in list views */
+
+  --color-primary-from: #3b82f6; /* blue-500 */
+  --color-primary-to: #60a5fa; /* sky-400 */
+  --color-primary-light: #bfdbfe; /* single accent tone for category icon bubbles; per-category color coding stays parked-backlog */
+  --color-on-primary: #0a1020; /* text color on ANY primary-gradient-filled control — see contrast rule below */
+
+  --color-income: #6ee7b7; /* mint-300 */
+  --color-expense: #fca5a5; /* coral-300 */
+  --color-warning: #fbbf24; /* amber-400 — reserved for non-progress-bar warning states (e.g. form validation); the planner over-budget pattern below does not use a 3-state color ramp */
+
+  --text-3xl: 1.875rem; /* 30px — secondary totals */
+  --text-display: 2.75rem; /* 44px, font-weight 700 — hero balance figures only, one per screen */
+
+  --radius-card: 1rem; /* 16px */
+  --radius-btn: 0.75rem; /* 12px — one step down from card radius; buttons read as nested inside their card, not a separate shape language */
+  --radius-tile: 0.625rem; /* 10px — inner stat tiles */
+  /* tags/filter chips/segmented-toggle options use a full pill (999px/rounded-full), unchanged from prior practice */
+}
+```
+
+Typography stays on the **system-font stack** (no webfont) — `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif` — zero font-loading cost, and the references' identity comes from color/gradient/digit-size, not a signature typeface. `--text-xs` through `--text-2xl` (task 03) are unchanged.
+
+Elevation: flat surface + 1px border, no box-shadow. Drop light-theme `--shadow-card` — shadows don't read against a near-black background; depth comes from `--color-surface` sitting one step lighter than `--color-background`, not from a cast shadow. None of the three references use a glow/shadow either.
+
+**Contrast rule (verified, not eyeballed):** every control filled with the primary gradient (buttons, active toggle option, active filter chip, active category chip) uses `--color-on-primary` (dark navy) as its text color, never light/white text. Measured WCAG contrast:
+
+| Text / background                                        | Ratio                                           |
+| -------------------------------------------------------- | ----------------------------------------------- |
+| `--color-on-primary` on `--color-primary-from` (#3b82f6) | 5.15:1 ✅                                       |
+| `--color-on-primary` on `--color-primary-to` (#60a5fa)   | 7.46:1 ✅                                       |
+| white on `--color-primary-from`                          | 3.68:1 ❌ (fails AA 4.5:1 at button-label size) |
+| white on `--color-primary-to`                            | 2.54:1 ❌                                       |
+
+This is a real constraint, not a stylistic pick: light text only clears AA on this hue family if the button background is darkened to blue-600/700, which would split the app into two blue shades (bright gradient for accents, deep blue for buttons). The owner chose to keep one blue family and dark text everywhere instead.
+
+**Progress-bar pattern (planner budgets):** no 3-state (under/near/over) color ramp on the bar itself. Track is always full-width (0–100%). Under budget: `--color-primary-from` fill proportional to `spent/limit`, remainder empty. Over budget: bar fills entirely (100%), split into `--color-primary-from` (proportion `limit/spent` — the share that was within budget) and `--color-expense` (proportion `(spent-limit)/spent` — the share that was over), so the color split itself communicates how far over, without any element exceeding the card width. A small `+$N over` badge (expense-colored) next to the numbers carries the exact overage amount. `--color-warning` is not used in this pattern.
+
+**Alternatives rejected:**
+
+- **Indigo/violet-dominant hue** (closer to reference image 3). Rejected: purple is heavily used across current web design generally; owner leaned blue (image 2) specifically, closer to a "traditional fintech" feel while still reading as more distinctive than plain gray/black.
+- **Strict single-hue "monochromatic" palette** (no red/green at all, income/expense distinguished only by sign/icon). Considered per the owner's initial framing, then dropped once clarified — the owner's actual objection was to gray/black-and-rainbow palettes, not to semantic color; all three references also break strict monochrome for exactly the same reason (chart deltas, income/expense).
+- **Marker-dot boundary indicator** on the progress bar (a fixed dot at the budget-limit position, blue before/coral after). Rejected after visual review — read as visual clutter without adding information the badge didn't already carry; the full-width proportional-fill version communicates "how far over" more directly.
+- **Deferred/inert theme switcher** built ahead of the light theme existing. Rejected as wasted work — the switcher is scoped into the future light-theme task instead.
+
+**Consequences:**
+
+- `apps/web/src/styles.css`'s `@theme` block needs the color-role section replaced (not merged) and the new type/radius tokens added — implementation task to follow this ADR.
+- The in-flight budget screen tasks (records/history/planner) should build against these tokens, not the light-theme ones task 03 originally defined.
+- Existing shell + identity pages (login, access-status, greeting), styled light-theme in task 04, need a retheme pass alongside the token update so the app doesn't end up half dark/half light.
+- Per-category icon color coding, dark/light theme switcher, and the rest of the parked post-parity IA/UX rework backlog remain parked — this ADR does not unpark that backlog.
+
+**Revisit triggers:**
+
+- Light theme built (separate future task) → default theme logic changes from hardcoded dark to `prefers-color-scheme`, and the switcher gets built at that point, not before.
