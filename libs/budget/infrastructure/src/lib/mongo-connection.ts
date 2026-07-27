@@ -1,6 +1,7 @@
 import type { Connection } from 'mongoose';
 import mongoose from 'mongoose';
 
+import { getAccountModel } from './account.model.js';
 import { getCategoryModel } from './category.model.js';
 import { getMonthlyBudgetModel } from './monthly-budget.model.js';
 import { getTransactionModel } from './transaction.model.js';
@@ -52,19 +53,21 @@ export async function createMongoConnection(
   // Mongoose's `autoIndex: true` (default) builds indexes asynchronously in
   // the background as soon as a model is registered on the connection —
   // `connection.asPromise()` above only proves the socket is ready, not that
-  // index builds have completed. Two of the three models this library
+  // index builds have completed. Three of the four models this library
   // defines rely on a unique index for correctness (category name
-  // uniqueness, monthly budget's compound key), so without an explicit wait
-  // here, the first writes issued by a freshly-connected caller can race the
+  // uniqueness, monthly budget's compound key, account's
+  // `{workspaceId, name}` upsert key), so without an explicit wait here, the
+  // first writes issued by a freshly-connected caller can race the
   // background `createIndexes()` call and silently succeed on what should be
   // a duplicate-key rejection. `TransactionModel` has no unique index, but
   // is included here anyway for consistency and so its query-serving
   // (non-unique) indexes are ready before the first read. `Model.init()`
   // resolves once the model's index build has completed (a no-op if it
-  // already has), so eagerly building all three models here — once, per
+  // already has), so eagerly building all four models here — once, per
   // connection — makes every repository constructed afterwards on this
   // connection index-ready.
   await Promise.all([
+    getAccountModel(connection).init(),
     getCategoryModel(connection).init(),
     getMonthlyBudgetModel(connection).init(),
     getTransactionModel(connection).init(),

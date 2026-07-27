@@ -216,6 +216,23 @@ describe('GetHistoryChartService', () => {
     expect(outcome.data[0]?.name).toBe('Unknown category');
   });
 
+  it('reorders ascending-supplied totals into descending output (proves the sort actually reorders, not just preserves input order)', async () => {
+    transactionRepository.setCategoryTotals([
+      { categoryId: GROCERIES_ID, total: 3_000n },
+      { categoryId: RENT_ID, total: 12_000n },
+    ]);
+
+    const outcome = await service.run(
+      { month: '2026-07' },
+      buildContext(ACTIVE_CALLER),
+    );
+
+    expect(outcome.data).toEqual([
+      expect.objectContaining({ categoryId: RENT_ID }),
+      expect.objectContaining({ categoryId: GROCERIES_ID }),
+    ]);
+  });
+
   it('keeps a defined (non-throwing) order when two categories tie on value', async () => {
     transactionRepository.setCategoryTotals([
       { categoryId: RENT_ID, total: 5_000n },

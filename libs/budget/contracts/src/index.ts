@@ -6,3 +6,4 @@ export * from './lib/transaction.dto.js';
 export * from './lib/balance.dto.js';
 export * from './lib/planner-summary.dto.js';
 export * from './lib/exchange-rate.dto.js';
+export * from './lib/history-chart.dto.js';

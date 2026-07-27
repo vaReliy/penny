@@ -49,6 +49,27 @@ class FakeAccountRepository implements IAccountRepository {
   public async delete(id: string): Promise<void> {
     this.accountsById.delete(id);
   }
+
+  public async findOrCreateDefault(
+    workspaceId: string,
+    name: string,
+    currency: string,
+  ): Promise<Account> {
+    const existing = (await this.findByWorkspace(workspaceId)).find(
+      (account) => account.name === name,
+    );
+    if (existing) {
+      return existing;
+    }
+    const created = Account.create(
+      String(this.accountsById.size + 1),
+      workspaceId,
+      name,
+      currency,
+    );
+    this.accountsById.set(created.id, created);
+    return created;
+  }
 }
 
 /** In-memory `ITransactionRepository` fake exposing only the aggregation methods this suite needs. */

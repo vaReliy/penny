@@ -1,12 +1,21 @@
 /** DI injection tokens for the budget domain. */
 export const TOKENS = {
   MongoConnection: Symbol('BudgetMongoConnection'),
+  AccountRepository: Symbol('IAccountRepository'),
   CategoryRepository: Symbol('ICategoryRepository'),
   MonthlyBudgetRepository: Symbol('IMonthlyBudgetRepository'),
+  TransactionRepository: Symbol('ITransactionRepository'),
   CreateCategory: Symbol('CreateCategoryService'),
   UpdateCategory: Symbol('UpdateCategoryService'),
   ArchiveCategory: Symbol('ArchiveCategoryService'),
   ListCategories: Symbol('ListCategoriesService'),
   UpsertMonthlyBudget: Symbol('UpsertMonthlyBudgetService'),
   ListMonthlyBudgets: Symbol('ListMonthlyBudgetsService'),
+  RecordTransaction: Symbol('RecordTransactionService'),
+  ListTransactions: Symbol('ListTransactionsService'),
+  GetTransaction: Symbol('GetTransactionService'),
+  GetBalance: Symbol('GetBalanceService'),
+  GetPlannerSummary: Symbol('GetPlannerSummaryService'),
+  GetHistoryChart: Symbol('GetHistoryChartService'),
+  GetExchangeRates: Symbol('GetExchangeRatesService'),
 } as const;
