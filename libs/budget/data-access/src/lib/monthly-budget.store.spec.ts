@@ -97,4 +97,72 @@ describe('MonthlyBudgetStore', () => {
     expect(store.data()).toHaveLength(1);
     expect(store.data()[0]?.amount.amount).toBe(600000n);
   });
+
+  it('listByMonthLoading stays true while a concurrent upsert() request resolves first', () => {
+    store.loadByMonth('2026-07');
+    store.upsert({
+      categoryId: 'c1',
+      month: '2026-07',
+      amountMinorUnits: 500000,
+    });
+
+    expect(store.listByMonthLoading()).toBe(true);
+    expect(store.upsertLoading()).toBe(true);
+
+    httpController
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/budget/monthly-budgets' &&
+          candidate.method === 'PUT',
+      )
+      .flush({
+        id: 'b1',
+        categoryId: 'c1',
+        month: '2026-07',
+        amount: { amount: '500000', currency: 'UAH' },
+      });
+
+    expect(store.upsertLoading()).toBe(false);
+    expect(store.listByMonthLoading()).toBe(true);
+
+    httpController
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/budget/monthly-budgets' &&
+          candidate.params.get('month') === '2026-07',
+      )
+      .flush([]);
+
+    expect(store.listByMonthLoading()).toBe(false);
+  });
+
+  it('an error on upsert() leaves listByMonthError null', () => {
+    store.upsert({
+      categoryId: 'c1',
+      month: '2026-07',
+      amountMinorUnits: 500000,
+    });
+    store.loadByMonth('2026-07');
+
+    httpController
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/budget/monthly-budgets' &&
+          candidate.method === 'PUT',
+      )
+      .flush('upsert failed', { status: 500, statusText: 'Server Error' });
+
+    expect(store.upsertError()).not.toBeNull();
+    expect(store.listByMonthError()).toBeNull();
+
+    httpController
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/budget/monthly-budgets' &&
+          candidate.params.get('month') === '2026-07',
+      )
+      .flush([]);
+
+    expect(store.listByMonthError()).toBeNull();
+  });
 });

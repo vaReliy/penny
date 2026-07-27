@@ -116,4 +116,84 @@ describe('TransactionStore', () => {
 
     expect(dashboardStore.balance()?.balance.amount).toBe(85000n);
   });
+
+  it('listLoading stays true while a concurrent record() request resolves first', () => {
+    store.load({ month: '2026-07' });
+    store.record({
+      accountId: 'a1',
+      categoryId: 'c1',
+      type: TransactionType.EXPENSE,
+      amountMinorUnits: 15000,
+      date: new Date('2026-07-27T00:00:00.000Z'),
+    });
+
+    expect(store.listLoading()).toBe(true);
+    expect(store.recordLoading()).toBe(true);
+
+    httpController
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/budget/transactions' &&
+          candidate.method === 'POST',
+      )
+      .flush({
+        id: 't1',
+        accountId: 'a1',
+        categoryId: 'c1',
+        type: TransactionType.EXPENSE,
+        amount: { amount: '15000', currency: 'UAH' },
+        date: '2026-07-27',
+        createdBy: 'u1',
+        createdAt: '2026-07-27T00:00:00.000Z',
+      });
+    httpController.expectOne('/api/budget/balance').flush({
+      accountId: 'a1',
+      balance: { amount: '85000', currency: 'UAH' },
+    });
+
+    expect(store.recordLoading()).toBe(false);
+    expect(store.listLoading()).toBe(true);
+
+    httpController
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/budget/transactions' &&
+          candidate.params.get('month') === '2026-07',
+      )
+      .flush([]);
+
+    expect(store.listLoading()).toBe(false);
+  });
+
+  it('an error on record() leaves listError null', () => {
+    store.record({
+      accountId: 'a1',
+      categoryId: 'c1',
+      type: TransactionType.EXPENSE,
+      amountMinorUnits: 15000,
+      date: new Date('2026-07-27T00:00:00.000Z'),
+    });
+    store.load({ month: '2026-07' });
+
+    httpController
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/budget/transactions' &&
+          candidate.method === 'POST',
+      )
+      .flush('record failed', { status: 500, statusText: 'Server Error' });
+
+    expect(store.recordError()).not.toBeNull();
+    expect(store.listError()).toBeNull();
+
+    httpController
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/budget/transactions' &&
+          candidate.params.get('month') === '2026-07',
+      )
+      .flush([]);
+
+    expect(store.listError()).toBeNull();
+  });
 });

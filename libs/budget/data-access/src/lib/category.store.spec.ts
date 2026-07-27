@@ -33,19 +33,19 @@ describe('CategoryStore', () => {
 
   it('starts with empty data, not loading, no error', () => {
     expect(store.data()).toEqual([]);
-    expect(store.loading()).toBe(false);
-    expect(store.error()).toBeNull();
+    expect(store.listLoading()).toBe(false);
+    expect(store.listError()).toBeNull();
   });
 
-  it('load() sets loading, then populates data and clears loading', () => {
+  it('load() sets listLoading, then populates data and clears listLoading', () => {
     store.load();
-    expect(store.loading()).toBe(true);
+    expect(store.listLoading()).toBe(true);
 
     httpController
       .expectOne('/api/budget/categories')
       .flush([{ id: 'c1', name: 'Groceries' }]);
 
-    expect(store.loading()).toBe(false);
+    expect(store.listLoading()).toBe(false);
     expect(store.data()).toEqual([{ id: 'c1', name: 'Groceries' }]);
   });
 
@@ -82,18 +82,16 @@ describe('CategoryStore', () => {
       .flush([{ id: 'c1', name: 'Groceries' }]);
 
     store.archive('c1');
-    httpController
-      .expectOne('/api/budget/categories/c1/archive')
-      .flush({
-        id: 'c1',
-        name: 'Groceries',
-        archivedAt: '2026-07-27T00:00:00.000Z',
-      });
+    httpController.expectOne('/api/budget/categories/c1/archive').flush({
+      id: 'c1',
+      name: 'Groceries',
+      archivedAt: '2026-07-27T00:00:00.000Z',
+    });
 
     expect(store.data()[0]?.archivedAt).toBeInstanceOf(Date);
   });
 
-  it('maps a failed load() into the error signal without throwing', () => {
+  it('maps a failed load() into the listError signal without throwing', () => {
     store.load();
     httpController
       .expectOne('/api/budget/categories')
@@ -102,8 +100,56 @@ describe('CategoryStore', () => {
         { status: 400, statusText: 'Bad Request' },
       );
 
-    expect(store.loading()).toBe(false);
-    expect(store.error()?.kind).toBe(BudgetApiErrorKind.VALIDATION);
+    expect(store.listLoading()).toBe(false);
+    expect(store.listError()?.kind).toBe(BudgetApiErrorKind.VALIDATION);
     expect(store.data()).toEqual([]);
+  });
+
+  it('createLoading stays true while a concurrent list() request resolves first', () => {
+    store.create({ name: 'Utilities' });
+    store.load();
+
+    expect(store.createLoading()).toBe(true);
+    expect(store.listLoading()).toBe(true);
+
+    httpController
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/budget/categories' &&
+          candidate.method === 'GET',
+      )
+      .flush([]);
+
+    expect(store.listLoading()).toBe(false);
+    expect(store.createLoading()).toBe(true);
+
+    httpController
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/budget/categories' &&
+          candidate.method === 'POST',
+      )
+      .flush({ id: 'c1', name: 'Utilities' });
+
+    expect(store.createLoading()).toBe(false);
+  });
+
+  it('an error on create() leaves update()/archive() error signals null', () => {
+    store.create({ name: 'Utilities' });
+    store.update('c1', { name: 'Groceries & Household' });
+
+    httpController
+      .expectOne('/api/budget/categories')
+      .flush('create failed', { status: 500, statusText: 'Server Error' });
+
+    expect(store.createError()).not.toBeNull();
+    expect(store.updateError()).toBeNull();
+    expect(store.archiveError()).toBeNull();
+
+    httpController
+      .expectOne('/api/budget/categories/c1')
+      .flush({ id: 'c1', name: 'Groceries & Household' });
+
+    expect(store.updateError()).toBeNull();
   });
 });
