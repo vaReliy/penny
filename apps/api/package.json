@@ -20,6 +20,10 @@
     "identity-infrastructure": "0.0.1",
     "shared-kernel": "0.0.1",
     "shared-infrastructure": "0.0.1",
+    "budget-application": "0.0.1",
+    "budget-contracts": "0.0.1",
+    "budget-core": "0.0.1",
+    "budget-infrastructure": "0.0.1",
     "helmet": "8.2.0"
   }
 }
