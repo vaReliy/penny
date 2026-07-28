@@ -93,3 +93,4 @@ Each completed task is one row in the table below.
 | 2026-07-28 | penny | dark-design-system-tokens                                    | T1   | 1      | 1/0/-/0           | 1       | no       | standard       | standard           |
 | 2026-07-28 | penny | tailwind-source-globs-missing-budget-libs                    | T0   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |
 | 2026-07-28 | penny | monobank-client-response-size-limit                          | T0   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |
+| 2026-07-28 | penny | exchange-rates-inflight-dedup                                | T1   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |

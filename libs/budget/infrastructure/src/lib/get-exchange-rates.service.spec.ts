@@ -117,5 +117,82 @@ describe('GetExchangeRatesService', () => {
 
       await expect(service.execute()).resolves.toEqual(RESPONSE_A);
     });
+
+    it('de-duplicates N concurrent calls during a cold cache into exactly one upstream request, all callers resolving to the same result', async () => {
+      const CONCURRENT_CALL_COUNT = 5;
+      let resolveUpstream!: (value: ExchangeRatesResponse) => void;
+      const upstreamPromise = new Promise<ExchangeRatesResponse>((resolve) => {
+        resolveUpstream = resolve;
+      });
+      const fetchRates = vi.fn().mockReturnValue(upstreamPromise);
+      const service = new GetExchangeRatesService(fakeClient(fetchRates));
+
+      // Fire N concurrent calls before the upstream promise settles, so
+      // every call observes a cold cache and no prior in-flight resolution
+      // — this is what proves true overlap rather than sequential awaits.
+      const calls = Array.from({ length: CONCURRENT_CALL_COUNT }, () =>
+        service.execute(),
+      );
+      expect(fetchRates).toHaveBeenCalledOnce();
+
+      resolveUpstream(RESPONSE_A);
+      const results = await Promise.all(calls);
+
+      expect(fetchRates).toHaveBeenCalledOnce();
+      for (const result of results) {
+        expect(result).toEqual(RESPONSE_A);
+      }
+    });
+
+    it('de-duplicates N concurrent calls during a cold cache into exactly one upstream request, all callers rejecting with the same error', async () => {
+      const CONCURRENT_CALL_COUNT = 5;
+      let rejectUpstream!: (error: Error) => void;
+      const upstreamPromise = new Promise<ExchangeRatesResponse>(
+        (_resolve, reject) => {
+          rejectUpstream = reject;
+        },
+      );
+      const upstreamError = new Error('network timeout');
+      const fetchRates = vi.fn().mockReturnValue(upstreamPromise);
+      const service = new GetExchangeRatesService(fakeClient(fetchRates));
+
+      const calls = Array.from({ length: CONCURRENT_CALL_COUNT }, () =>
+        service.execute(),
+      );
+      expect(fetchRates).toHaveBeenCalledOnce();
+
+      rejectUpstream(upstreamError);
+
+      for (const call of calls) {
+        await expect(call).rejects.toThrow('network timeout');
+      }
+      expect(fetchRates).toHaveBeenCalledOnce();
+    });
+
+    it('starts a fresh upstream request for the next cache-miss window after an in-flight request has settled', async () => {
+      const fetchRates = vi
+        .fn()
+        .mockResolvedValueOnce(RESPONSE_A)
+        .mockResolvedValueOnce(RESPONSE_B);
+      let currentMs = 1_000_000;
+      const service = new GetExchangeRatesService(
+        fakeClient(fetchRates),
+        () => currentMs,
+      );
+
+      await Promise.all([service.execute(), service.execute()]);
+      expect(fetchRates).toHaveBeenCalledOnce();
+
+      currentMs += EXCHANGE_RATE_CACHE_TTL_MS + 1;
+      const afterExpiry = await Promise.all([
+        service.execute(),
+        service.execute(),
+      ]);
+
+      expect(fetchRates).toHaveBeenCalledTimes(2);
+      for (const result of afterExpiry) {
+        expect(result).toEqual(RESPONSE_B);
+      }
+    });
   });
 });

@@ -31,12 +31,22 @@ export const EXCHANGE_RATE_CACHE_TTL_MS = 5 * 60 * 1000 + 5_000;
  * as much as one failed-refresh interval whenever upstream is down or
  * rate-limited. Only a cold cache (no successful fetch has ever completed)
  * lets the upstream failure propagate to the caller.
+ *
+ * Concurrent `execute()` calls that land during the same cache-miss window
+ * share a single in-flight `fetchRates()` promise instead of each firing
+ * its own upstream request — otherwise N concurrent callers would hammer
+ * Monobank's ~1-request-per-5-minutes rate limit. The in-flight slot
+ * tracks only "is a fetch currently running", independent of the TTL
+ * cache's own read/write lifecycle: it is populated right before the
+ * upstream call starts and cleared once that call settles — resolved or
+ * rejected — so a later cache-miss window always starts a fresh request.
  */
 export class GetExchangeRatesService {
   private readonly client: IExchangeRateClient;
   private readonly now: () => number;
   private cachedResponse: ExchangeRatesResponse | undefined;
   private cachedAtMs: number | undefined;
+  private inFlightFetch: Promise<ExchangeRatesResponse> | undefined;
 
   public constructor(
     client: IExchangeRateClient,
@@ -52,7 +62,7 @@ export class GetExchangeRatesService {
     }
 
     try {
-      const fresh = await this.client.fetchRates();
+      const fresh = await this.fetchRatesDeduped();
       this.cachedResponse = fresh;
       this.cachedAtMs = this.now();
       return fresh;
@@ -62,6 +72,15 @@ export class GetExchangeRatesService {
       }
       throw error;
     }
+  }
+
+  private fetchRatesDeduped(): Promise<ExchangeRatesResponse> {
+    if (!this.inFlightFetch) {
+      this.inFlightFetch = this.client.fetchRates().finally(() => {
+        this.inFlightFetch = undefined;
+      });
+    }
+    return this.inFlightFetch;
   }
 
   private isCacheFresh(): boolean {
