@@ -33,6 +33,7 @@ import { Money } from 'shared-util';
 import { createFakeUserRepository } from 'identity-testing';
 import type { ICategoryRepository, ITransactionRepository } from 'budget-core';
 import type { SessionUser } from 'shared-contracts';
+import type { TransactionFilterQuery } from 'budget-contracts';
 import type { ITokenIssuer } from 'identity-application';
 import type { IUserRepository } from 'identity-core';
 
@@ -361,6 +362,33 @@ describe('TransactionsController (real SessionGuard/ActiveUserGuard in the chain
 
     expect(result).toHaveLength(1);
     expect(result[0]?.id).toBe(VALID_TRANSACTION_ID);
+  });
+
+  it('lists transactions when the query arrives as a null-prototype object', async () => {
+    const user = await authenticate();
+    const transaction = Transaction.create(
+      VALID_TRANSACTION_ID,
+      DEFAULT_WORKSPACE_ID,
+      VALID_ACCOUNT_ID,
+      VALID_CATEGORY_ID,
+      TransactionType.EXPENSE,
+      Money.fromMinorUnits(2500, 'UAH'),
+      new Date('2026-07-10'),
+      'user-1',
+    );
+    (
+      transactionRepository.findByWorkspace as ReturnType<typeof vi.fn>
+    ).mockResolvedValue([transaction]);
+
+    // Express builds `req.query` with `Object.create(null)`; an object
+    // literal (as every other spec here uses) is not a faithful stand-in.
+    const query = Object.assign(Object.create(null), {
+      month: '2026-07',
+    }) as TransactionFilterQuery;
+
+    const result = await controller.list(query, user);
+
+    expect(result).toHaveLength(1);
   });
 
   it('rejects a list call with neither month nor from/to (unbounded scan guard)', async () => {

@@ -32,10 +32,26 @@ export class TransactionStore {
   private readonly recordRequestState = new BudgetRequestState(
     this.sessionExpiry,
   );
+  private readonly detailRequestState = new BudgetRequestState(
+    this.sessionExpiry,
+  );
   private readonly transactionsSignal = signal<readonly TransactionView[]>([]);
+  private readonly detailSignal = signal<TransactionView | null>(null);
 
   public get data(): Signal<readonly TransactionView[]> {
     return this.transactionsSignal;
+  }
+
+  public get detail(): Signal<TransactionView | null> {
+    return this.detailSignal;
+  }
+
+  public get detailLoading(): Signal<boolean> {
+    return this.detailRequestState.loading;
+  }
+
+  public get detailError(): Signal<BudgetApiError | null> {
+    return this.detailRequestState.error;
   }
 
   public get listLoading(): Signal<boolean> {
@@ -64,6 +80,12 @@ export class TransactionStore {
     this.recordRequestState.run(this.client.record(params), (recorded) => {
       this.transactionsSignal.set([recorded, ...this.transactionsSignal()]);
       this.dashboardStore.refresh();
+    });
+  }
+
+  public loadDetail(id: string): void {
+    this.detailRequestState.run(this.client.get(id), (transaction) => {
+      this.detailSignal.set(transaction);
     });
   }
 }

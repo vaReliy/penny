@@ -38,7 +38,14 @@ export const appRoutes: Routes = [
       {
         path: 'history',
         loadComponent: () =>
-          import('shared-web-shell').then((m) => m.PlaceholderPageComponent),
+          import('budget-feature-history').then((m) => m.HistoryPageComponent),
+      },
+      {
+        path: 'history/:id',
+        loadComponent: () =>
+          import('budget-feature-history').then(
+            (m) => m.HistoryDetailPageComponent,
+          ),
       },
       {
         path: 'planner',

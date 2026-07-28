@@ -1,0 +1,72 @@
+<main
+  class="mx-auto flex max-w-5xl flex-col gap-4 p-4 md:flex-row md:items-start"
+>
+  <div class="flex flex-1 flex-col gap-4">
+    <div class="flex items-center justify-between gap-2">
+      <h1 class="text-2xl font-semibold text-text-primary">
+        {{ 'budget.history.page.title' | transloco }}
+      </h1>
+      <button
+        type="button"
+        class="min-h-touch rounded-btn border border-border px-3 py-1.5 text-sm text-text-primary hover:bg-background md:hidden"
+        (click)="openFilterSheet()"
+      >
+        {{ 'budget.history.page.openFilter' | transloco }}
+      </button>
+    </div>
+
+    @if (transactionStore.listError(); as listError) {
+    <p class="text-sm text-expense" role="alert">{{ listError.message }}</p>
+    } @if (dashboardStore.chartError(); as chartError) {
+    <p class="text-sm text-expense" role="alert">{{ chartError.message }}</p>
+    }
+
+    <lib-history-chart [data]="chartData()" />
+
+    <lib-transaction-list
+      [transactions]="transactionStore.data()"
+      [categories]="categoryStore.data()"
+      [emptyReason]="emptyReason()"
+      [detailQueryParams]="queryParams()"
+    />
+  </div>
+
+  <!-- Desktop filter rail -->
+  <aside
+    class="hidden rounded-card border border-border bg-surface p-4 md:block md:w-72 md:shrink-0"
+  >
+    <lib-history-filter-panel
+      [value]="filter()"
+      [categories]="categoryStore.data()"
+      (filterChange)="onFilterChange($event)"
+    />
+  </aside>
+
+  <!-- Mobile filter bottom sheet -->
+  @if (isFilterSheetOpen()) {
+  <div class="fixed inset-0 z-20 md:hidden">
+    <button
+      type="button"
+      class="absolute inset-0 h-full w-full cursor-default bg-black/50"
+      [attr.aria-label]="'budget.history.page.closeFilter' | transloco"
+      (click)="closeFilterSheet()"
+    ></button>
+    <div
+      class="absolute inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto rounded-t-card border-t border-border bg-surface p-4"
+    >
+      <lib-history-filter-panel
+        [value]="filter()"
+        [categories]="categoryStore.data()"
+        (filterChange)="onFilterChange($event)"
+      />
+      <button
+        type="button"
+        class="mt-4 min-h-touch w-full rounded-btn bg-gradient-to-r from-primary-from to-primary-to px-4 py-2 text-sm font-medium text-on-primary"
+        (click)="closeFilterSheet()"
+      >
+        {{ 'budget.history.page.closeFilter' | transloco }}
+      </button>
+    </div>
+  </div>
+  }
+</main>

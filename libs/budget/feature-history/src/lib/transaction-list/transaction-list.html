@@ -1,0 +1,119 @@
+<section
+  class="rounded-card border border-border bg-surface p-4"
+  [attr.aria-label]="'budget.history.list.title' | transloco"
+>
+  <div
+    class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+  >
+    <h2 class="text-lg font-semibold text-text-primary">
+      {{ 'budget.history.list.title' | transloco }}
+    </h2>
+    <input
+      type="search"
+      class="min-h-touch w-full rounded-btn border border-border bg-background px-3 py-2 text-text-primary sm:w-auto"
+      [attr.aria-label]="'budget.history.list.searchLabel' | transloco"
+      [placeholder]="'budget.history.list.searchLabel' | transloco"
+      [value]="searchTerm()"
+      (input)="searchTerm.set($any($event.target).value)"
+    />
+  </div>
+
+  @if (emptyReason() === 'noneAtAll') {
+  <p class="text-sm text-text-secondary">
+    {{ 'budget.history.list.emptyNoneAtAll' | transloco }}
+  </p>
+  } @else if (emptyReason() === 'noneForFilter') {
+  <p class="text-sm text-text-secondary">
+    {{ 'budget.history.list.emptyForFilter' | transloco }}
+  </p>
+  } @else if (filteredRows().length === 0) {
+  <p class="text-sm text-text-secondary">
+    {{ 'budget.history.list.emptySearch' | transloco }}
+  </p>
+  } @else {
+  <!-- Mobile cards -->
+  <ul class="flex flex-col gap-2 md:hidden">
+    @for (row of filteredRows(); track row.transaction.id) {
+    <li>
+      <a
+        [routerLink]="['/history', row.transaction.id]"
+        [queryParams]="detailQueryParams()"
+        class="flex flex-col gap-1 rounded-btn border border-border p-3 hover:bg-background"
+      >
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-text-primary">{{ row.categoryName }}</span>
+          <span
+            class="font-medium"
+            [class.text-income]="row.transaction.type === 'income'"
+            [class.text-expense]="row.transaction.type === 'expense'"
+          >
+            {{ row.transaction.type === 'income' ? '+' : '-' }}{{
+            row.formattedAmount }}
+          </span>
+        </div>
+        <span class="text-sm text-text-secondary">{{ row.formattedDate }}</span>
+      </a>
+    </li>
+    }
+  </ul>
+
+  <!-- Desktop table -->
+  <div class="hidden md:block">
+    <table class="w-full text-left">
+      <thead>
+        <tr class="border-b border-border text-sm text-text-secondary">
+          <th scope="col" class="py-2">
+            <button type="button" (click)="setSort('date')">
+              {{ 'budget.history.list.columnDate' | transloco }}
+            </button>
+          </th>
+          <th scope="col" class="py-2">
+            <button type="button" (click)="setSort('amount')">
+              {{ 'budget.history.list.columnAmount' | transloco }}
+            </button>
+          </th>
+          <th scope="col" class="py-2">
+            <button type="button" (click)="setSort('category')">
+              {{ 'budget.history.list.columnCategory' | transloco }}
+            </button>
+          </th>
+          <th scope="col" class="py-2">
+            <button type="button" (click)="setSort('type')">
+              {{ 'budget.history.list.columnType' | transloco }}
+            </button>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of filteredRows(); track row.transaction.id) {
+        <tr class="border-b border-border">
+          <td class="py-2">
+            <a
+              [routerLink]="['/history', row.transaction.id]"
+              [queryParams]="detailQueryParams()"
+              class="block text-text-primary hover:underline"
+            >
+              {{ row.formattedDate }}
+            </a>
+          </td>
+          <td
+            class="py-2 font-medium"
+            [class.text-income]="row.transaction.type === 'income'"
+            [class.text-expense]="row.transaction.type === 'expense'"
+          >
+            {{ row.transaction.type === 'income' ? '+' : '-' }}{{
+            row.formattedAmount }}
+          </td>
+          <td class="py-2 text-text-primary">{{ row.categoryName }}</td>
+          <td class="py-2 text-text-primary">
+            {{ (row.transaction.type === 'income' ?
+            'budget.history.filter.typeIncome' :
+            'budget.history.filter.typeExpense') | transloco }}
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+</section>

@@ -32,6 +32,7 @@ import type { IAccountRepository, ICategoryRepository } from 'budget-core';
 import type { ITransactionRepository } from 'budget-core';
 import type { IMonthlyBudgetRepository } from 'budget-core';
 import type { SessionUser } from 'shared-contracts';
+import type { HistoryChartFilterQuery } from 'budget-contracts';
 import type { ITokenIssuer } from 'identity-application';
 import type { IUserRepository } from 'identity-core';
 
@@ -280,6 +281,18 @@ describe('BudgetAnalyticsController (real SessionGuard/ActiveUserGuard in the ch
     const result = await controller.chart({ month: '2026-07' }, user);
 
     expect(result).toEqual([]);
+  });
+
+  it('returns a chart when the query arrives as a null-prototype object', async () => {
+    const user = await authenticate();
+
+    // Express builds `req.query` with `Object.create(null)`; an object
+    // literal (as every other spec here uses) is not a faithful stand-in.
+    const query = Object.assign(Object.create(null), {
+      month: '2026-07',
+    }) as HistoryChartFilterQuery;
+
+    await expect(controller.chart(query, user)).resolves.toEqual([]);
   });
 
   it('returns chart entries sorted by value, descending', async () => {

@@ -91,4 +91,18 @@ describe('BudgetRequestState', () => {
 
     expect(onSuccess).not.toHaveBeenCalled();
   });
+
+  it('maps a bare 500 to the UNKNOWN error kind and clears loading, without throwing', () => {
+    const sessionExpiry = makeSessionExpiry();
+    const state = new BudgetRequestState(sessionExpiry);
+
+    state.run(
+      throwError(() => new HttpErrorResponse({ status: 500, error: null })),
+      () => undefined,
+    );
+
+    expect(state.error()?.kind).toBe('UNKNOWN');
+    expect(state.loading()).toBe(false);
+    expect(sessionExpiry.redirectToLogin).not.toHaveBeenCalled();
+  });
 });

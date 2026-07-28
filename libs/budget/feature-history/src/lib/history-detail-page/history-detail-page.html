@@ -1,0 +1,65 @@
+<main class="mx-auto flex max-w-2xl flex-col gap-4 p-4">
+  <div class="flex items-center gap-2">
+    <a
+      [routerLink]="['/history']"
+      [queryParams]="backQueryParams"
+      class="text-sm text-text-secondary hover:underline"
+    >
+      {{ 'budget.history.detail.back' | transloco }}
+    </a>
+  </div>
+
+  @if (transactionStore.detailError(); as detailError) {
+  <p class="text-sm text-expense" role="alert">{{ detailError.message }}</p>
+  } @if (transactionStore.detail(); as transaction) {
+  <section
+    class="rounded-card border border-border bg-surface p-4"
+    [attr.aria-label]="'budget.history.detail.title' | transloco"
+  >
+    <h1 class="mb-3 text-2xl font-semibold text-text-primary">
+      {{ 'budget.history.detail.title' | transloco }}
+    </h1>
+
+    <dl class="flex flex-col gap-2">
+      <div class="flex items-center justify-between gap-2">
+        <dt class="text-sm text-text-secondary">
+          {{ 'budget.history.detail.amountLabel' | transloco }}
+        </dt>
+        <dd
+          class="font-medium"
+          [class.text-income]="transaction.type === 'income'"
+          [class.text-expense]="transaction.type === 'expense'"
+        >
+          {{ transaction.type === 'income' ? '+' : '-' }}{{ formattedAmount() }}
+        </dd>
+      </div>
+      <div class="flex items-center justify-between gap-2">
+        <dt class="text-sm text-text-secondary">
+          {{ 'budget.history.detail.categoryLabel' | transloco }}
+        </dt>
+        <dd class="text-text-primary">{{ categoryName() }}</dd>
+      </div>
+      <div class="flex items-center justify-between gap-2">
+        <dt class="text-sm text-text-secondary">
+          {{ 'budget.history.detail.dateLabel' | transloco }}
+        </dt>
+        <dd class="text-text-primary">{{ formattedDate() }}</dd>
+      </div>
+      @if (transaction.description; as description) {
+      <div class="flex items-center justify-between gap-2">
+        <dt class="text-sm text-text-secondary">
+          {{ 'budget.history.detail.descriptionLabel' | transloco }}
+        </dt>
+        <dd class="text-text-primary">{{ description }}</dd>
+      </div>
+      }
+      <div class="flex items-center justify-between gap-2">
+        <dt class="text-sm text-text-secondary">
+          {{ 'budget.history.detail.recordedByLabel' | transloco }}
+        </dt>
+        <dd class="text-text-primary">{{ transaction.createdBy }}</dd>
+      </div>
+    </dl>
+  </section>
+  }
+</main>

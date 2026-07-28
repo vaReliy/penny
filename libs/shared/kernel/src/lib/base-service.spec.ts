@@ -174,6 +174,23 @@ describe('BaseService pipeline', () => {
     expect(outcome).toEqual({ data: {} });
   });
 
+  it('rejects a null-prototype params object instead of passing undefined to execute', async () => {
+    const service = new GreetService();
+
+    // Express hands `@Query()`/`req.query` to callers as a null-prototype
+    // object, for which LIVR's `isObject` (`obj?.constructor === Object`)
+    // is false — `Validator.validate` then returns `undefined` rather than
+    // `false`, so a `=== false` check lets it through and `execute` receives
+    // `undefined` params.
+    const nullProtoParams = Object.assign(Object.create(null), {
+      name: 'Ada',
+    }) as GreetParams;
+
+    await expect(
+      service.run(nullProtoParams, ANONYMOUS_CONTEXT),
+    ).rejects.toBeInstanceOf(ServiceValidationError);
+  });
+
   it('registers LIVR default rules at most once, even across repeated calls', () => {
     // `BaseService` no longer calls `registerLivrRules()` itself — the
     // interface layer (API/CLI/queue worker bootstrap) is responsible for

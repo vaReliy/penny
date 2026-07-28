@@ -1,0 +1,96 @@
+<form
+  [formGroup]="form"
+  class="flex flex-col gap-4"
+  [attr.aria-label]="'budget.history.filter.title' | transloco"
+>
+  <h2 class="text-lg font-semibold text-text-primary">
+    {{ 'budget.history.filter.title' | transloco }}
+  </h2>
+
+  <!--
+    Labels wrap their control (implicit association) instead of using
+    id/for pairs — this component is rendered twice at once (desktop rail +
+    mobile sheet), and duplicate ids would break label association for
+    whichever instance's ids the browser resolves second.
+  -->
+  <label class="flex flex-col gap-1">
+    <span class="text-sm font-medium text-text-primary">
+      {{ 'budget.history.filter.typeLabel' | transloco }}
+    </span>
+    <select
+      formControlName="type"
+      class="min-h-touch rounded-btn border border-border bg-background px-3 py-2 text-text-primary"
+    >
+      <option value="">
+        {{ 'budget.history.filter.typeAll' | transloco }}
+      </option>
+      <option value="income">
+        {{ 'budget.history.filter.typeIncome' | transloco }}
+      </option>
+      <option value="expense">
+        {{ 'budget.history.filter.typeExpense' | transloco }}
+      </option>
+    </select>
+  </label>
+
+  <label class="flex flex-col gap-1">
+    <span class="text-sm font-medium text-text-primary">
+      {{ 'budget.history.filter.categoryLabel' | transloco }}
+    </span>
+    <select
+      formControlName="categoryId"
+      class="min-h-touch rounded-btn border border-border bg-background px-3 py-2 text-text-primary"
+    >
+      <option value="">
+        {{ 'budget.history.filter.categoryAll' | transloco }}
+      </option>
+      @for (category of categories(); track category.id) {
+      <option [value]="category.id">{{ category.name }}</option>
+      }
+    </select>
+  </label>
+
+  <label class="flex flex-col gap-1">
+    <span class="text-sm font-medium text-text-primary">
+      {{ 'budget.history.filter.periodLabel' | transloco }}
+    </span>
+    <select
+      formControlName="period"
+      class="min-h-touch rounded-btn border border-border bg-background px-3 py-2 text-text-primary"
+    >
+      <option value="">
+        {{ 'budget.history.filter.periodAll' | transloco }}
+      </option>
+      <option value="day">
+        {{ 'budget.history.filter.periodDay' | transloco }}
+      </option>
+      <option value="week">
+        {{ 'budget.history.filter.periodWeek' | transloco }}
+      </option>
+      <option value="month">
+        {{ 'budget.history.filter.periodMonth' | transloco }}
+      </option>
+    </select>
+  </label>
+
+  @if (form.controls.period.value === 'month') {
+  <label class="flex flex-col gap-1">
+    <span class="text-sm font-medium text-text-primary">
+      {{ 'budget.history.filter.monthLabel' | transloco }}
+    </span>
+    <input
+      type="month"
+      formControlName="month"
+      class="min-h-touch rounded-btn border border-border bg-background px-3 py-2 text-text-primary"
+    />
+  </label>
+  }
+
+  <button
+    type="button"
+    class="min-h-touch rounded-btn border border-border px-3 py-1.5 text-sm text-text-primary hover:bg-background"
+    (click)="clear()"
+  >
+    {{ 'budget.history.filter.clear' | transloco }}
+  </button>
+</form>

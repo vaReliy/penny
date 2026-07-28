@@ -59,5 +59,52 @@
       "errorRequired": "Поле не може бути пустим.",
       "errorMaxLength": "Довжина поля має бути не більшою за {{max}} символів."
     }
+  },
+  "history": {
+    "page": {
+      "title": "Історія",
+      "openFilter": "Фільтр",
+      "closeFilter": "Готово"
+    },
+    "chart": {
+      "title": "Витрати за категоріями",
+      "empty": "Немає даних для відображення."
+    },
+    "filter": {
+      "title": "Фільтр",
+      "typeLabel": "Тип",
+      "typeAll": "Усі",
+      "typeIncome": "Прибуток",
+      "typeExpense": "Витрата",
+      "categoryLabel": "Категорія",
+      "categoryAll": "Усі категорії",
+      "periodLabel": "Період",
+      "periodAll": "Весь час",
+      "periodDay": "День",
+      "periodWeek": "Тиждень",
+      "periodMonth": "Місяць",
+      "monthLabel": "Оберіть місяць",
+      "clear": "Скинути фільтр"
+    },
+    "list": {
+      "title": "Список операцій",
+      "searchLabel": "Пошук",
+      "emptyNoneAtAll": "Ще немає жодної операції.",
+      "emptyForFilter": "Фільтр не знайшов жодної операції.",
+      "emptySearch": "Нічого не знайдено.",
+      "columnDate": "Дата",
+      "columnAmount": "Сума",
+      "columnCategory": "Категорія",
+      "columnType": "Тип"
+    },
+    "detail": {
+      "back": "← Назад",
+      "title": "Деталі операції",
+      "amountLabel": "Сума",
+      "categoryLabel": "Категорія",
+      "dateLabel": "Дата",
+      "descriptionLabel": "Опис",
+      "recordedByLabel": "Записав(-ла)"
+    }
   }
 }

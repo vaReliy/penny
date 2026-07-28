@@ -99,8 +99,16 @@ export abstract class BaseService<TParams, TResult> {
     const validator = new LIVR.Validator<TParams>(this.getValidationSchema());
     const validParams = validator.validate(params);
 
-    if (validParams === false) {
-      throw new ServiceValidationError(validator.getErrors() ?? {});
+    // LIVR signals a rejected schema with `false`, but a non-plain-object
+    // input (its `isObject` is `obj?.constructor === Object`, so a
+    // null-prototype object fails it) makes `validate` return `undefined`
+    // instead — checking only for `false` lets that through and hands
+    // `undefined` to `authorize`/`execute`.
+    if (!validParams) {
+      const errors = validator.getErrors();
+      throw new ServiceValidationError(
+        typeof errors === 'string' ? { params: errors } : (errors ?? {}),
+      );
     }
 
     return validParams;

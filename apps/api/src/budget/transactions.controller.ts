@@ -101,8 +101,10 @@ export class TransactionsController {
     @Query() query: TransactionFilterQuery,
     @CurrentUser() user: SessionUser,
   ): Promise<TransactionListResponse> {
+    // Express builds `req.query` with a null prototype, which LIVR rejects
+    // as a non-object — spread it into a plain object before validation.
     const { data } = await this.listTransactions.run(
-      query,
+      { ...query },
       buildBudgetContext(user),
     );
     return data.map(toTransactionResponse);

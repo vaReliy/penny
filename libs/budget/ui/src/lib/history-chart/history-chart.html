@@ -1,0 +1,27 @@
+<section
+  class="h-80 w-full overflow-hidden rounded-card border border-border bg-surface p-4"
+  [attr.aria-label]="'budget.history.chart.title' | transloco"
+>
+  <h2 class="mb-3 text-lg font-semibold text-text-primary">
+    {{ 'budget.history.chart.title' | transloco }}
+  </h2>
+
+  @if (data().length > 0) {
+  <ngx-charts-pie-chart
+    class="block h-full w-full"
+    [results]="data()"
+    [scheme]="'aqua'"
+    [legend]="true"
+    [explodeSlices]="false"
+    [labels]="true"
+    [doughnut]="true"
+    [gradient]="false"
+    [tooltipDisabled]="false"
+    [tooltipText]="tooltipText"
+  />
+  } @else {
+  <p class="text-sm text-text-secondary">
+    {{ 'budget.history.chart.empty' | transloco }}
+  </p>
+  }
+</section>

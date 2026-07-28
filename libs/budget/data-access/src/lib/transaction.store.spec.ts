@@ -78,6 +78,36 @@ describe('TransactionStore', () => {
     expect(store.data()[0]?.id).toBe('t1');
   });
 
+  it('loadDetail() populates detail', () => {
+    store.loadDetail('t1');
+
+    httpController.expectOne('/api/budget/transactions/t1').flush({
+      id: 't1',
+      accountId: 'a1',
+      categoryId: 'c1',
+      type: TransactionType.EXPENSE,
+      amount: { amount: '15000', currency: 'UAH' },
+      date: '2026-07-27',
+      createdBy: 'u1',
+      createdAt: '2026-07-27T00:00:00.000Z',
+    });
+
+    expect(store.detail()?.id).toBe('t1');
+    expect(store.detailLoading()).toBe(false);
+    expect(store.detailError()).toBeNull();
+  });
+
+  it('loadDetail() surfaces an error without touching detail', () => {
+    store.loadDetail('missing');
+
+    httpController
+      .expectOne('/api/budget/transactions/missing')
+      .flush('not found', { status: 404, statusText: 'Not Found' });
+
+    expect(store.detail()).toBeNull();
+    expect(store.detailError()).not.toBeNull();
+  });
+
   it('record() triggers DashboardStore.refresh(), refetching balance and the last-loaded summary month', () => {
     dashboardStore.loadSummary('2026-07');
     httpController
