@@ -44,9 +44,13 @@ pnpm install
 pnpm nx report
 ```
 
-Three apps exist: `apps/api` (NestJS HTTP API), `apps/web` (Angular SPA), and `apps/cli` (NestJS CLI for admin/dev commands, run via `nest-commander`). Start them locally with `pnpm nx serve api`, `pnpm nx serve web`, and `pnpm nx build cli && node dist/apps/cli/main.js <command>` respectively, or bring up the full stack with `docker compose up` (see below).
+Three apps exist: `apps/api` (NestJS HTTP API), `apps/web` (Angular SPA), and `apps/cli` (NestJS CLI for admin/dev commands, run via `nest-commander`). Start them locally with `pnpm nx serve api`, `pnpm nx serve web`, and `set -a && source .env && set +a && pnpm nx build cli && node dist/apps/cli/main.js <command>` respectively, or bring up the full stack with `docker compose up` (see below).
 
 **Using this repo as a starter for a new project?** See `docs/SKELETON.md` for what's the reusable chassis versus the `identity`-specific example, and for the checklist to add a new domain vertical.
+
+### CLI environment setup
+
+The `apps/cli` app does not include a dotenv loader (see `apps/cli/src/config/cli-config.ts`). All CLI commands must be prefixed with `set -a && source .env && set +a` to make `MONGO_URI`, `MONGO_DB_NAME`, and other environment variables available to the process — alternatively, run in Docker (see below) to inject env vars into the container. Without env-sourcing, CLI commands fail silently on missing database connection info.
 
 ### Environment configuration
 

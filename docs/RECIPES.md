@@ -1,6 +1,6 @@
 # Recipes — Operator-Facing Workflows
 
-This guide is for human operators running Claude Code sessions. It documents six core workflows that connect planning, task authoring, execution, and feedback cycles. Agents do not read this file — it explains the mechanics humans need to understand to run the template effectively.
+This guide is for human operators running Claude Code sessions. It documents seven core workflows that connect planning, task authoring, execution, feedback cycles, and app operations. Agents do not read this file — it explains the mechanics humans need to understand to run the template effectively.
 
 ## 1. Grill → Tier → Stamps → Tasks
 
@@ -107,6 +107,26 @@ This guide is for human operators running Claude Code sessions. It documents six
 4. **Record:** update `CHANGELOG.md` with a summary of what was distilled and where it went.
 
 **Reference:** `rules/cts/workflow.md` section "Knowledge Capture" and "Knowledge Inbox"; `docs/KNOWLEDGE_INBOX.md` format and litmus test (would another developer or AI tool on this repo benefit?).
+
+---
+
+## 7. Approve a Pending User via CLI
+
+**When:** A new Telegram user logs in and must be approved by an admin before they can access the app.
+
+**What:** Use the CLI `user:approve` command to promote a pending user to approved status.
+
+**Flow:**
+
+1. Obtain the user's `telegramId` (from logs, test output, or database).
+2. Run:
+   ```bash
+   set -a && source .env && set +a && pnpm nx build cli && node dist/apps/cli/main.js user:approve <telegramId>
+   ```
+3. (In Docker: `docker compose exec app <command>` from the root where `docker-compose.yml` resides.)
+4. Verify the output confirms approval; the user can now log in.
+
+**Reference:** `docs/SKELETON.md` § b, step 5 (setup guide); `apps/cli/src/commands/` for other CLI commands (`user-reject`, `admin-promote`, etc.).
 
 ---
 
