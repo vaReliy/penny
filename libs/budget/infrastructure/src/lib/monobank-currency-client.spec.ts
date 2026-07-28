@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   MONOBANK_CURRENCY_URL,
+  MONOBANK_MAX_BODY_BYTES,
   MONOBANK_REQUEST_TIMEOUT_MS,
   MonobankCurrencyClient,
 } from './monobank-currency-client.js';
@@ -53,6 +54,8 @@ describe('MonobankCurrencyClient', () => {
       expect(result.asOf).toBe(new Date(1_752_000_060 * 1000).toISOString());
       expect(get).toHaveBeenCalledWith(MONOBANK_CURRENCY_URL, {
         timeout: MONOBANK_REQUEST_TIMEOUT_MS,
+        maxContentLength: MONOBANK_MAX_BODY_BYTES,
+        maxBodyLength: MONOBANK_MAX_BODY_BYTES,
       });
     });
 

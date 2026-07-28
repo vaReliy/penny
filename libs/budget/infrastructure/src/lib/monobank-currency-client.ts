@@ -20,6 +20,14 @@ export const MONOBANK_CURRENCY_URL = 'https://api.monobank.ua/bank/currency';
  */
 export const MONOBANK_REQUEST_TIMEOUT_MS = 5_000;
 
+/**
+ * Upper bound on the Monobank response/request body size, in bytes. The real
+ * currency-list payload is a few KB; 1 MiB is generous headroom above that
+ * while still rejecting a runaway/malicious response instead of letting
+ * axios buffer it unbounded (CWE-400 uncontrolled resource consumption).
+ */
+export const MONOBANK_MAX_BODY_BYTES = 1_048_576;
+
 /** ISO 4217 numeric currency codes Monobank's payload uses. */
 const ISO_4217_NUMERIC = {
   UAH: 980,
@@ -116,6 +124,8 @@ export class MonobankCurrencyClient {
   public async fetchRates(): Promise<ExchangeRatesResponse> {
     const response = await this.httpClient.get<unknown>(MONOBANK_CURRENCY_URL, {
       timeout: MONOBANK_REQUEST_TIMEOUT_MS,
+      maxContentLength: MONOBANK_MAX_BODY_BYTES,
+      maxBodyLength: MONOBANK_MAX_BODY_BYTES,
     });
 
     if (!Array.isArray(response.data)) {
