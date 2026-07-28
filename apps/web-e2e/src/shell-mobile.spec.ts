@@ -7,7 +7,7 @@ const CONFIG_URL = '**/api/config';
 
 const activeUser = {
   id: '3',
-  firstName: 'Valerii',
+  firstName: 'Petro',
   telegramId: 123456,
   status: 'active',
 };
@@ -34,7 +34,7 @@ test.describe('app shell — mobile viewport (390x844)', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ greeting: 'Hello, Valerii' }),
+        body: JSON.stringify({ greeting: 'Hello, Petro' }),
       }),
     );
   });

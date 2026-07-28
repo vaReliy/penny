@@ -1,0 +1,131 @@
+<section
+  class="rounded-card border border-border bg-surface p-4"
+  [attr.aria-label]="'budget.records.transactionForm.title' | transloco"
+>
+  <h2 class="mb-3 text-lg font-semibold text-text-primary">
+    {{ 'budget.records.transactionForm.title' | transloco }}
+  </h2>
+
+  @if (showSuccess()) {
+  <p class="mb-3 text-sm text-primary-from" role="status">
+    {{ 'budget.records.transactionForm.success' | transloco }}
+  </p>
+  } @if (transactionStore.recordError(); as recordError) {
+  <p class="mb-3 text-sm text-expense" role="alert">
+    {{ recordError.message }}
+  </p>
+  } @if (activeCategories().length === 0) {
+  <p class="text-sm text-text-secondary">
+    {{ 'budget.records.transactionForm.noCategoriesHint' | transloco }}
+  </p>
+  } @else {
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
+    <div class="flex flex-col gap-1">
+      <label
+        class="text-sm font-medium text-text-primary"
+        for="records-category"
+      >
+        {{ 'budget.records.transactionForm.categoryLabel' | transloco }}
+      </label>
+      <select
+        id="records-category"
+        formControlName="categoryId"
+        class="min-h-touch rounded-btn border border-border bg-background px-3 py-2 text-text-primary"
+        [attr.aria-invalid]="hasError('categoryId')"
+      >
+        <option value="" disabled>
+          {{ 'budget.records.transactionForm.categoryPlaceholder' | transloco }}
+        </option>
+        @for (category of activeCategories(); track category.id) {
+        <option [value]="category.id">{{ category.name }}</option>
+        }
+      </select>
+      @if (hasError('categoryId')) {
+      <span class="text-xs text-expense" role="alert">
+        {{ 'budget.records.transactionForm.errorRequired' | transloco }}
+      </span>
+      }
+    </div>
+
+    <fieldset class="flex flex-col gap-1">
+      <legend class="text-sm font-medium text-text-primary">
+        {{ 'budget.records.transactionForm.typeLabel' | transloco }}
+      </legend>
+      <div class="flex gap-4">
+        <label class="flex items-center gap-2 text-sm text-text-primary">
+          <input type="radio" formControlName="type" value="income" />
+          {{ 'budget.records.transactionForm.typeIncome' | transloco }}
+        </label>
+        <label class="flex items-center gap-2 text-sm text-text-primary">
+          <input type="radio" formControlName="type" value="expense" />
+          {{ 'budget.records.transactionForm.typeExpense' | transloco }}
+        </label>
+      </div>
+    </fieldset>
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-text-primary" for="records-amount">
+        {{ 'budget.records.transactionForm.amountLabel' | transloco }}
+      </label>
+      <input
+        id="records-amount"
+        type="text"
+        inputmode="decimal"
+        formControlName="amount"
+        class="min-h-touch rounded-btn border border-border bg-background px-3 py-2 text-text-primary"
+        [attr.aria-invalid]="hasError('amount')"
+        [attr.aria-describedby]="hasError('amount') ? 'records-amount-error' : null"
+      />
+      @if (hasError('amount')) {
+      <span id="records-amount-error" class="text-xs text-expense" role="alert">
+        {{ (form.controls.amount.hasError('required') ?
+        'budget.records.transactionForm.errorRequired' :
+        'budget.records.transactionForm.errorInvalidAmount') | transloco }}
+      </span>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-text-primary" for="records-date">
+        {{ 'budget.records.transactionForm.dateLabel' | transloco }}
+      </label>
+      <input
+        id="records-date"
+        type="date"
+        formControlName="date"
+        class="min-h-touch rounded-btn border border-border bg-background px-3 py-2 text-text-primary"
+      />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label
+        class="text-sm font-medium text-text-primary"
+        for="records-description"
+      >
+        {{ 'budget.records.transactionForm.descriptionLabel' | transloco }}
+      </label>
+      <input
+        id="records-description"
+        type="text"
+        formControlName="description"
+        class="min-h-touch rounded-btn border border-border bg-background px-3 py-2 text-text-primary"
+        [attr.aria-invalid]="hasError('description')"
+      />
+      @if (hasError('description')) {
+      <span class="text-xs text-expense" role="alert">
+        {{ 'budget.records.transactionForm.errorMaxLength' | transloco: { max:
+        maxDescriptionLength } }}
+      </span>
+      }
+    </div>
+
+    <button
+      type="submit"
+      class="min-h-touch rounded-btn bg-gradient-to-r from-primary-from to-primary-to px-4 py-2 text-sm font-medium text-on-primary disabled:cursor-not-allowed disabled:opacity-50"
+      [disabled]="transactionStore.recordLoading()"
+    >
+      {{ 'budget.records.transactionForm.submit' | transloco }}
+    </button>
+  </form>
+  }
+</section>

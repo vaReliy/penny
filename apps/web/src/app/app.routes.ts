@@ -48,7 +48,7 @@ export const appRoutes: Routes = [
       {
         path: 'records',
         loadComponent: () =>
-          import('shared-web-shell').then((m) => m.PlaceholderPageComponent),
+          import('budget-feature-records').then((m) => m.RecordsPageComponent),
       },
     ],
   },

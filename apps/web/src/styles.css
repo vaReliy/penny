@@ -5,6 +5,7 @@
 @source '../../../libs/shared/web-shell/src';
 @source '../../../libs/budget/ui/src';
 @source '../../../libs/budget/feature-account/src';
+@source '../../../libs/budget/feature-records/src';
 
 @theme {
   /* Breakpoints — mobile-first; base (360px) is unprefixed/default, these are the up-breakpoints */

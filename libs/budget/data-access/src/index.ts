@@ -15,6 +15,7 @@ export { toBudgetApiError, BudgetApiErrorKind } from './lib/budget-api-error';
 export type { BudgetApiError } from './lib/budget-api-error';
 export { formatMoney } from 'shared-util';
 export { toIsoDateOnly, fromIsoDate } from './lib/date-boundary.util';
+export { TransactionType } from 'budget-contracts';
 
 export type {
   CategoryView,

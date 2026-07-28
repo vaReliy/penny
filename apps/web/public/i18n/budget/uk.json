@@ -17,5 +17,47 @@
       "fetchedAt": "Оновлено:",
       "refreshError": "Не вдалося оновити курс. Показано останні відомі дані."
     }
+  },
+  "records": {
+    "page": {
+      "title": "Записи"
+    },
+    "transactionForm": {
+      "title": "Додати подію",
+      "typeLabel": "Оберіть тип",
+      "typeIncome": "Прибуток",
+      "typeExpense": "Витрата",
+      "categoryLabel": "Оберіть категорію",
+      "categoryPlaceholder": "Оберіть категорію",
+      "noCategoriesHint": "Немає активних категорій. Спочатку створіть категорію нижче.",
+      "amountLabel": "Введіть суму",
+      "dateLabel": "Дата",
+      "descriptionLabel": "Опис",
+      "submit": "Додати",
+      "success": "Подію успішно додано!",
+      "errorRequired": "Поле не може бути пустим.",
+      "errorMaxLength": "Довжина поля має бути не більшою за {{max}} символів.",
+      "errorInvalidAmount": "Введіть коректну суму, напр. 123,45"
+    },
+    "categoryManager": {
+      "title": "Категорії",
+      "empty": "Категорій ще немає.",
+      "showArchived": "Показати архівні",
+      "archivedBadge": "архівна",
+      "createNameLabel": "Введіть назву",
+      "createSubmit": "Додати категорію",
+      "createSuccess": "Категорію додано!",
+      "renameAction": "Перейменувати",
+      "renameSubmit": "Зберегти",
+      "renameCancel": "Скасувати",
+      "renameSuccess": "Категорію оновлено!",
+      "archiveAction": "Архівувати",
+      "archiveConfirmBody": "Архівувати категорію «{{name}}»? Вона стане недоступною для нових записів.",
+      "archiveConfirm": "Архівувати",
+      "archiveCancel": "Скасувати",
+      "archiveSuccess": "Категорію заархівовано.",
+      "errorRequired": "Поле не може бути пустим.",
+      "errorMaxLength": "Довжина поля має бути не більшою за {{max}} символів."
+    }
   }
 }

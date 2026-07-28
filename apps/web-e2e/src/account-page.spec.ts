@@ -7,7 +7,7 @@ const RATES_URL = '**/api/rates';
 
 const activeUser = {
   id: '3',
-  firstName: 'Valerii',
+  firstName: 'Petro',
   telegramId: 123456,
   status: 'active',
 };

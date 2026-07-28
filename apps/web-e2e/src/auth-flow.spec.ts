@@ -20,7 +20,7 @@ const rejectedUser = {
 
 const activeUser = {
   id: '3',
-  firstName: 'Valerii',
+  firstName: 'Petro',
   telegramId: 123456,
   status: 'active',
 };
@@ -105,7 +105,7 @@ test.describe('auth flow — status routing guard', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          greeting: 'Hello, Valerii — you are user #123456',
+          greeting: 'Hello, Petro — you are user #123456',
         }),
       }),
     );
@@ -114,7 +114,7 @@ test.describe('auth flow — status routing guard', () => {
     await page.waitForURL('**/greeting');
 
     await expect(
-      page.getByText('Hello, Valerii — you are user #123456'),
+      page.getByText('Hello, Petro — you are user #123456'),
     ).toBeVisible();
   });
 
@@ -134,7 +134,7 @@ test.describe('auth flow — status routing guard', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          greeting: 'Hello, Valerii — you are user #123456',
+          greeting: 'Hello, Petro — you are user #123456',
         }),
       }),
     );
@@ -143,7 +143,7 @@ test.describe('auth flow — status routing guard', () => {
     await page.waitForURL('**/greeting');
 
     await expect(
-      page.getByText('Hello, Valerii — you are user #123456'),
+      page.getByText('Hello, Petro — you are user #123456'),
     ).toBeVisible();
   });
 
@@ -163,7 +163,7 @@ test.describe('auth flow — status routing guard', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          greeting: 'Hello, Valerii — you are user #123456',
+          greeting: 'Hello, Petro — you are user #123456',
         }),
       }),
     );
@@ -172,7 +172,7 @@ test.describe('auth flow — status routing guard', () => {
     await page.waitForURL('**/greeting');
 
     await expect(
-      page.getByText('Hello, Valerii — you are user #123456'),
+      page.getByText('Hello, Petro — you are user #123456'),
     ).toBeVisible();
   });
 });

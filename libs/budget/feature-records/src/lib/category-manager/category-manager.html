@@ -1,0 +1,187 @@
+<section
+  class="rounded-card border border-border bg-surface p-4"
+  [attr.aria-label]="'budget.records.categoryManager.title' | transloco"
+>
+  <div class="mb-3 flex items-center justify-between gap-2">
+    <h2 class="text-lg font-semibold text-text-primary">
+      {{ 'budget.records.categoryManager.title' | transloco }}
+    </h2>
+    <label class="flex items-center gap-2 text-sm text-text-secondary">
+      <input
+        type="checkbox"
+        [checked]="showArchived()"
+        (change)="toggleShowArchived()"
+      />
+      {{ 'budget.records.categoryManager.showArchived' | transloco }}
+    </label>
+  </div>
+
+  @if (categoryStore.listError(); as listError) {
+  <p class="mb-3 text-sm text-expense" role="alert">{{ listError.message }}</p>
+  } @if (visibleCategories().length === 0) {
+  <p class="mb-3 text-sm text-text-secondary">
+    {{ 'budget.records.categoryManager.empty' | transloco }}
+  </p>
+  } @else {
+  <ul class="mb-4 flex flex-col gap-2">
+    @for (category of visibleCategories(); track category.id) {
+    <li
+      class="flex flex-col gap-2 border-t border-border pt-2 first:border-t-0 first:pt-0"
+    >
+      @if (editingId() === category.id) {
+      <form
+        [formGroup]="renameForm"
+        (ngSubmit)="onRenameSubmit(category.id)"
+        class="flex flex-col gap-2"
+      >
+        <input
+          type="text"
+          formControlName="name"
+          class="min-h-touch rounded-btn border border-border bg-background px-3 py-2 text-text-primary"
+          [attr.aria-label]="'budget.records.categoryManager.createNameLabel' | transloco"
+        />
+        @if (renameForm.controls.name.touched &&
+        renameForm.controls.name.invalid) {
+        <span class="text-xs text-expense" role="alert">
+          {{ (renameForm.controls.name.hasError('required') ?
+          'budget.records.categoryManager.errorRequired' :
+          'budget.records.categoryManager.errorMaxLength') | transloco: { max:
+          maxNameLength } }}
+        </span>
+        } @if (categoryStore.updateError(); as updateError) {
+        <span class="text-xs text-expense" role="alert"
+          >{{ updateError.message }}</span
+        >
+        }
+        <div class="flex gap-2">
+          <button
+            type="submit"
+            class="min-h-touch rounded-btn bg-gradient-to-r from-primary-from to-primary-to px-3 py-1.5 text-sm font-medium text-on-primary disabled:cursor-not-allowed disabled:opacity-50"
+            [disabled]="categoryStore.updateLoading()"
+          >
+            {{ 'budget.records.categoryManager.renameSubmit' | transloco }}
+          </button>
+          <button
+            type="button"
+            class="min-h-touch rounded-btn border border-border px-3 py-1.5 text-sm text-text-primary hover:bg-background"
+            (click)="cancelRename()"
+          >
+            {{ 'budget.records.categoryManager.renameCancel' | transloco }}
+          </button>
+        </div>
+      </form>
+      } @else {
+      <div class="flex items-center justify-between gap-2">
+        <span class="text-text-primary">
+          {{ category.name }} @if (category.archivedAt !== undefined) {
+          <span class="ml-2 text-xs text-text-secondary">
+            ({{ 'budget.records.categoryManager.archivedBadge' | transloco }})
+          </span>
+          }
+        </span>
+        @if (category.archivedAt === undefined) {
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="min-h-touch rounded-btn border border-border px-3 py-1.5 text-sm text-text-primary hover:bg-background"
+            (click)="startRename(category)"
+          >
+            {{ 'budget.records.categoryManager.renameAction' | transloco }}
+          </button>
+          <button
+            type="button"
+            class="min-h-touch rounded-btn border border-border px-3 py-1.5 text-sm text-expense hover:bg-background"
+            (click)="requestArchive(category.id)"
+          >
+            {{ 'budget.records.categoryManager.archiveAction' | transloco }}
+          </button>
+        </div>
+        }
+      </div>
+
+      @if (pendingArchiveId() === category.id) {
+      <div class="rounded-btn border border-border p-3">
+        <p class="mb-2 text-sm text-text-primary">
+          {{ 'budget.records.categoryManager.archiveConfirmBody' | transloco: {
+          name: category.name } }}
+        </p>
+        @if (categoryStore.archiveError(); as archiveError) {
+        <p class="mb-2 text-xs text-expense" role="alert">
+          {{ archiveError.message }}
+        </p>
+        }
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="min-h-touch rounded-btn bg-expense px-3 py-1.5 text-sm font-medium text-on-primary disabled:cursor-not-allowed disabled:opacity-50"
+            [disabled]="categoryStore.archiveLoading()"
+            (click)="confirmArchive(category.id)"
+          >
+            {{ 'budget.records.categoryManager.archiveConfirm' | transloco }}
+          </button>
+          <button
+            type="button"
+            class="min-h-touch rounded-btn border border-border px-3 py-1.5 text-sm text-text-primary hover:bg-background"
+            (click)="cancelArchive()"
+          >
+            {{ 'budget.records.categoryManager.archiveCancel' | transloco }}
+          </button>
+        </div>
+      </div>
+      } }
+    </li>
+    }
+  </ul>
+  } @if (renameSuccess()) {
+  <p class="mb-3 text-sm text-primary-from" role="status">
+    {{ 'budget.records.categoryManager.renameSuccess' | transloco }}
+  </p>
+  } @if (archiveSuccess()) {
+  <p class="mb-3 text-sm text-primary-from" role="status">
+    {{ 'budget.records.categoryManager.archiveSuccess' | transloco }}
+  </p>
+  }
+
+  <form
+    [formGroup]="createForm"
+    (ngSubmit)="onCreateSubmit()"
+    class="flex flex-col gap-2"
+  >
+    <label
+      class="text-sm font-medium text-text-primary"
+      for="records-new-category"
+    >
+      {{ 'budget.records.categoryManager.createNameLabel' | transloco }}
+    </label>
+    <input
+      id="records-new-category"
+      type="text"
+      formControlName="name"
+      class="min-h-touch rounded-btn border border-border bg-background px-3 py-2 text-text-primary"
+      [attr.aria-invalid]="createForm.controls.name.touched && createForm.controls.name.invalid"
+    />
+    @if (createForm.controls.name.touched && createForm.controls.name.invalid) {
+    <span class="text-xs text-expense" role="alert">
+      {{ (createForm.controls.name.hasError('required') ?
+      'budget.records.categoryManager.errorRequired' :
+      'budget.records.categoryManager.errorMaxLength') | transloco: { max:
+      maxNameLength } }}
+    </span>
+    } @if (categoryStore.createError(); as createError) {
+    <span class="text-xs text-expense" role="alert"
+      >{{ createError.message }}</span
+    >
+    } @if (createSuccess()) {
+    <span class="text-xs text-primary-from" role="status">
+      {{ 'budget.records.categoryManager.createSuccess' | transloco }}
+    </span>
+    }
+    <button
+      type="submit"
+      class="min-h-touch rounded-btn bg-gradient-to-r from-primary-from to-primary-to px-4 py-2 text-sm font-medium text-on-primary disabled:cursor-not-allowed disabled:opacity-50"
+      [disabled]="categoryStore.createLoading()"
+    >
+      {{ 'budget.records.categoryManager.createSubmit' | transloco }}
+    </button>
+  </form>
+</section>
