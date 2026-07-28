@@ -40,10 +40,12 @@ export function convertBalanceToCurrency(
   balance: Money,
   rate: RateEntryDisplay,
 ): Money {
-  const { numerator, denominator } = toFraction(rate.rateToBase);
+  const { numerator: rateNumerator, denominator: rateDenominator } = toFraction(
+    rate.rateToBase,
+  );
   const convertedMinorUnits = roundedDivide(
-    balance.amount * denominator,
-    numerator,
+    balance.amount * rateDenominator,
+    rateNumerator,
   );
   return Money.fromMinorUnits(convertedMinorUnits, rate.currency);
 }
