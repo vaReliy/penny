@@ -95,9 +95,9 @@ test.describe('app shell — mobile viewport (390x844)', () => {
     await nav.getByRole('link', { name: 'Історія' }).click();
     await page.waitForURL('**/history');
 
-    await expect(
-      nav.getByRole('link', { name: 'Історія', current: 'page' }),
-    ).toBeVisible();
+    const activeLink = nav.getByRole('link', { name: 'Історія' });
+    await expect(activeLink).toBeVisible();
+    await expect(activeLink).toHaveAttribute('aria-current', 'page');
   });
 
   test('logout is reachable from the profile menu and no horizontal scroll remains', async ({

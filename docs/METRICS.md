@@ -97,3 +97,4 @@ Each completed task is one row in the table below.
 | 2026-07-28 | penny | reject-negative-monobank-rates                               | T0   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |
 | 2026-07-28 | penny | shell-mobile-e2e-missing-config-mock                         | T1   | 0      | 0/0/-/-           | 1       | no       | standard       |                    |
 | 2026-07-28 | penny | convert-balance-util-readability                             | T0   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |
+| 2026-07-28 | penny | shell-mobile-getbyrole-current-option-invalid                | T0   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |
