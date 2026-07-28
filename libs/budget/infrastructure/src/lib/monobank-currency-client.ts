@@ -66,15 +66,20 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
-function isOptionalFiniteNumber(value: unknown): value is number | undefined {
-  return value === undefined || isFiniteNumber(value);
+function isOptionalPositiveFiniteNumber(
+  value: unknown,
+): value is number | undefined {
+  return value === undefined || (isFiniteNumber(value) && value > 0);
 }
 
 /**
  * Validates one upstream array entry's shape before any field is read off
  * it — Monobank's response is untrusted external input, so nested-property
  * access must never be trusted without a runtime check first. Malformed
- * entries are filtered out by the caller rather than throwing.
+ * entries are filtered out by the caller rather than throwing. Rate fields
+ * must additionally be strictly positive — Monobank never legitimately
+ * publishes a zero or negative rate, so a non-positive value indicates a
+ * malformed/hostile payload rather than a real rate.
  */
 function isRawMonobankRate(value: unknown): value is RawMonobankRate {
   if (typeof value !== 'object' || value === null) {
@@ -85,9 +90,9 @@ function isRawMonobankRate(value: unknown): value is RawMonobankRate {
     isFiniteNumber(candidate['currencyCodeA']) &&
     isFiniteNumber(candidate['currencyCodeB']) &&
     isFiniteNumber(candidate['date']) &&
-    isOptionalFiniteNumber(candidate['rateBuy']) &&
-    isOptionalFiniteNumber(candidate['rateSell']) &&
-    isOptionalFiniteNumber(candidate['rateCross'])
+    isOptionalPositiveFiniteNumber(candidate['rateBuy']) &&
+    isOptionalPositiveFiniteNumber(candidate['rateSell']) &&
+    isOptionalPositiveFiniteNumber(candidate['rateCross'])
   );
 }
 

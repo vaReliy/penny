@@ -129,6 +129,105 @@ describe('MonobankCurrencyClient', () => {
       expect(result.rates).toEqual([]);
     });
 
+    it('filters out entries with a negative rateBuy/rateSell instead of producing a negative rateToBase', async () => {
+      const get = vi.fn().mockResolvedValue({
+        data: [
+          {
+            currencyCodeA: 840,
+            currencyCodeB: 980,
+            date: 1_752_000_000,
+            rateBuy: -41.5,
+            rateSell: 42.1,
+          },
+          {
+            currencyCodeA: 978,
+            currencyCodeB: 980,
+            date: 1_752_000_000,
+            rateBuy: 45.0,
+            rateSell: -45.8,
+          },
+        ],
+      });
+      const client = new MonobankCurrencyClient(fakeHttpClient(get));
+
+      const result = await client.fetchRates();
+
+      expect(result.rates).toEqual([]);
+    });
+
+    it('filters out an entry with a zero rateBuy', async () => {
+      const get = vi.fn().mockResolvedValue({
+        data: [
+          {
+            currencyCodeA: 840,
+            currencyCodeB: 980,
+            date: 1_752_000_000,
+            rateBuy: 0,
+            rateSell: 42.1,
+          },
+        ],
+      });
+      const client = new MonobankCurrencyClient(fakeHttpClient(get));
+
+      const result = await client.fetchRates();
+
+      expect(result.rates).toEqual([]);
+    });
+
+    it('filters out an entry with a negative rateCross instead of producing a negative rateToBase', async () => {
+      const get = vi.fn().mockResolvedValue({
+        data: [
+          {
+            currencyCodeA: 840,
+            currencyCodeB: 980,
+            date: 1_752_000_000,
+            rateCross: -41.9,
+          },
+        ],
+      });
+      const client = new MonobankCurrencyClient(fakeHttpClient(get));
+
+      const result = await client.fetchRates();
+
+      expect(result.rates).toEqual([]);
+    });
+
+    it('filters out an entry with a zero rateCross', async () => {
+      const get = vi.fn().mockResolvedValue({
+        data: [
+          {
+            currencyCodeA: 840,
+            currencyCodeB: 980,
+            date: 1_752_000_000,
+            rateCross: 0,
+          },
+        ],
+      });
+      const client = new MonobankCurrencyClient(fakeHttpClient(get));
+
+      const result = await client.fetchRates();
+
+      expect(result.rates).toEqual([]);
+    });
+
+    it('accepts a very small positive rateCross instead of rejecting it as falsy', async () => {
+      const get = vi.fn().mockResolvedValue({
+        data: [
+          {
+            currencyCodeA: 840,
+            currencyCodeB: 980,
+            date: 1_752_000_000,
+            rateCross: 0.0001,
+          },
+        ],
+      });
+      const client = new MonobankCurrencyClient(fakeHttpClient(get));
+
+      const result = await client.fetchRates();
+
+      expect(result.rates).toEqual([{ currency: 'USD', rateToBase: '0.0001' }]);
+    });
+
     it('propagates an upstream rejection (network failure / timeout / 429) to the caller', async () => {
       const get = vi
         .fn()

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en-1.1.0/),
 
 ## [Unreleased]
 
+### Fixed (`libs/budget/infrastructure` — reject non-positive Monobank rates)
+
+- `monobank-currency-client.ts`'s shape guard (`isOptionalFiniteNumber` → renamed `isOptionalPositiveFiniteNumber`) now requires `rateBuy`/`rateSell`/`rateCross` to be strictly positive, not merely finite. A malformed/hostile payload with a zero or negative rate is filtered out silently by the existing `.filter(isRawMonobankRate)` step, same as any other shape-invalid entry — no throw path added, no `rateToBase` string can go negative.
+- Emitted from `monobank-fx-integration`'s security-scanner gate (correctness, not exploitable — display-only, string output, no injection/crash path).
+- Tests: 2 boundary cases added by `tester` during verify (zero `rateCross`, small-positive-value acceptance) on top of the 4 written with the implementation. Gate: tester → reviewer, 0 cycles, 0 emitted.
+
 ### Added (`libs/budget/feature-account` + `libs/budget/ui` — first migrated budget screen)
 
 - **Screen «Рахунок»** — the first migrated budget screen, replacing the `account` route's placeholder. Shows the derived balance from `GET /api/budget/balance`, that balance converted to UAH/USD/EUR from server-cached `GET /api/rates`, a `fetchedAt` staleness indicator, and a refresh action. Behavior parity with `master:src/app/system/page-bill/` minus the three things deliberately not ported: client-side Monobank calls, float `bill.value * rate` math against seed rates, and the artificial loading delay.
