@@ -3,6 +3,8 @@
 @source '../../../libs/identity/feature-access-status/src';
 @source '../../../libs/identity/feature-greeting/src';
 @source '../../../libs/shared/web-shell/src';
+@source '../../../libs/budget/ui/src';
+@source '../../../libs/budget/feature-account/src';
 
 @theme {
   /* Breakpoints — mobile-first; base (360px) is unprefixed/default, these are the up-breakpoints */
