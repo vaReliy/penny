@@ -1,0 +1,89 @@
+@let currentRow = row();
+<div
+  role="listitem"
+  class="flex flex-col gap-2 rounded-card border border-border bg-surface p-4"
+>
+  <div class="flex items-center justify-between gap-2">
+    <span class="text-text-primary">{{ currentRow.categoryName }}</span>
+    @if (!isEditing()) {
+    <button
+      type="button"
+      class="min-h-touch rounded-btn border border-border px-3 py-1.5 text-sm text-text-primary hover:bg-background"
+      (click)="onStartEdit()"
+    >
+      {{ 'budget.planner.row.editBudget' | transloco: { amount:
+      formattedBudgeted() } }}
+    </button>
+    }
+  </div>
+
+  @if (isEditing()) {
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-2">
+    <label
+      class="text-sm font-medium text-text-primary"
+      [attr.for]="'planner-budget-' + currentRow.categoryId"
+    >
+      {{ 'budget.planner.row.amountLabel' | transloco }}
+    </label>
+    <input
+      [id]="'planner-budget-' + currentRow.categoryId"
+      type="text"
+      inputmode="decimal"
+      formControlName="amount"
+      class="min-h-touch rounded-btn border border-border bg-background px-3 py-2 text-text-primary"
+      [attr.aria-invalid]="validationError()"
+    />
+    @if (validationError()) {
+    <span class="text-xs text-expense" role="alert">
+      {{ 'budget.planner.row.errorInvalidAmount' | transloco }}
+    </span>
+    } @if (errorMessage(); as message) {
+    <span class="text-xs text-expense" role="alert">{{ message }}</span>
+    }
+    <div class="flex gap-2">
+      <button
+        type="submit"
+        class="min-h-touch rounded-btn bg-gradient-to-r from-primary-from to-primary-to px-3 py-1.5 text-sm font-medium text-on-primary disabled:cursor-not-allowed disabled:opacity-50"
+        [disabled]="saving()"
+      >
+        {{ 'budget.planner.row.save' | transloco }}
+      </button>
+      <button
+        type="button"
+        class="min-h-touch rounded-btn border border-border px-3 py-1.5 text-sm text-text-primary hover:bg-background"
+        (click)="onCancel()"
+      >
+        {{ 'budget.planner.row.cancel' | transloco }}
+      </button>
+    </div>
+  </form>
+  }
+
+  <div
+    class="h-2 w-full overflow-hidden rounded-tile bg-surface-2"
+    role="progressbar"
+    [attr.aria-valuenow]="currentRow.percent"
+    aria-valuemin="0"
+    aria-valuemax="100"
+    [attr.aria-label]="'budget.planner.row.progressLabel' | transloco: { name: currentRow.categoryName }"
+  >
+    <div
+      class="h-full"
+      [class.bg-progress-success]="currentRow.status === 'success'"
+      [class.bg-progress-warning]="currentRow.status === 'warning'"
+      [class.bg-progress-danger]="currentRow.status === 'danger'"
+      [style.width.%]="barWidthPercent()"
+    ></div>
+  </div>
+
+  <div class="flex flex-wrap justify-between gap-2 text-sm text-text-secondary">
+    <span
+      >{{ 'budget.planner.row.spent' | transloco }}: {{ formattedSpent()
+      }}</span
+    >
+    <span
+      >{{ 'budget.planner.row.remaining' | transloco }}: {{ formattedRemaining()
+      }}</span
+    >
+  </div>
+</div>

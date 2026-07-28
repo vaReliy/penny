@@ -1,0 +1,74 @@
+<main class="mx-auto flex max-w-3xl flex-col gap-4 p-4">
+  <div class="flex items-center justify-between gap-2">
+    <h1 class="text-2xl font-semibold text-text-primary">
+      {{ 'budget.planner.page.title' | transloco }}
+    </h1>
+  </div>
+
+  <div
+    class="flex items-center justify-between gap-2 rounded-card border border-border bg-surface p-3"
+  >
+    <button
+      type="button"
+      class="min-h-touch min-w-touch rounded-btn border border-border text-text-primary hover:bg-background"
+      [attr.aria-label]="'budget.planner.page.previousMonth' | transloco"
+      (click)="goToPreviousMonth()"
+    >
+      &lsaquo;
+    </button>
+    <span class="text-lg font-medium text-text-primary"
+      >{{ monthLabel() }}</span
+    >
+    <button
+      type="button"
+      class="min-h-touch min-w-touch rounded-btn border border-border text-text-primary hover:bg-background"
+      [attr.aria-label]="'budget.planner.page.nextMonth' | transloco"
+      (click)="goToNextMonth()"
+    >
+      &rsaquo;
+    </button>
+  </div>
+
+  @if (categoryStore.listError(); as listError) {
+  <p class="text-sm text-expense" role="alert">{{ listError.message }}</p>
+  } @if (dashboardStore.summaryError(); as summaryError) {
+  <p class="text-sm text-expense" role="alert">{{ summaryError.message }}</p>
+  } @if (isEmpty()) {
+  <p
+    class="rounded-card border border-border bg-surface p-4 text-sm text-text-secondary"
+  >
+    {{ 'budget.planner.page.emptyMonth' | transloco }}
+  </p>
+  } @if (!isEmpty()) {
+  <div
+    class="flex items-center justify-between gap-2 rounded-card border border-border bg-surface p-3 text-sm font-medium text-text-primary"
+  >
+    <span
+      >{{ 'budget.planner.page.totalBudgeted' | transloco }}: {{
+      formattedTotalBudgeted() }}</span
+    >
+    <span
+      >{{ 'budget.planner.page.totalSpent' | transloco }}: {{
+      formattedTotalSpent() }}</span
+    >
+  </div>
+  }
+
+  <div role="list" class="grid grid-cols-1 gap-3 lg:grid-cols-2">
+    @for (row of rows(); track row.categoryId) {
+    <lib-planner-category-row
+      [row]="row"
+      [isEditing]="editingCategoryId() === row.categoryId"
+      [saving]="monthlyBudgetStore.upsertLoading()"
+      [errorMessage]="
+        editingCategoryId() === row.categoryId
+          ? monthlyBudgetStore.upsertError()?.message ?? null
+          : null
+      "
+      (startEdit)="onStartEdit($event)"
+      (cancelEdit)="onCancelEdit()"
+      (save)="onSave($event)"
+    />
+    }
+  </div>
+</main>

@@ -50,7 +50,7 @@ export const appRoutes: Routes = [
       {
         path: 'planner',
         loadComponent: () =>
-          import('shared-web-shell').then((m) => m.PlaceholderPageComponent),
+          import('budget-feature-planner').then((m) => m.PlannerPageComponent),
       },
       {
         path: 'records',

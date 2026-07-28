@@ -1,0 +1,13 @@
+{
+  "name": "budget-feature-planner",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/budget/feature-planner/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:budget", "platform:web"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

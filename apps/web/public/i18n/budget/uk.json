@@ -107,5 +107,25 @@
       "descriptionLabel": "Опис",
       "recordedByLabel": "Записав(-ла)"
     }
+  },
+  "planner": {
+    "page": {
+      "title": "Планувальник",
+      "previousMonth": "Попередній місяць",
+      "nextMonth": "Наступний місяць",
+      "emptyMonth": "Бюджети на цей місяць ще не встановлено. Встановіть бюджет для категорії нижче.",
+      "totalBudgeted": "Заплановано",
+      "totalSpent": "Витрачено"
+    },
+    "row": {
+      "editBudget": "Бюджет: {{amount}}",
+      "amountLabel": "Сума бюджету",
+      "save": "Зберегти",
+      "cancel": "Скасувати",
+      "errorInvalidAmount": "Введіть коректну суму, напр. 123,45",
+      "progressLabel": "Прогрес витрат для категорії {{name}}",
+      "spent": "Витрачено",
+      "remaining": "Залишок"
+    }
   }
 }

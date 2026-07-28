@@ -7,6 +7,7 @@
 @source '../../../libs/budget/feature-account/src';
 @source '../../../libs/budget/feature-records/src';
 @source '../../../libs/budget/feature-history/src';
+@source '../../../libs/budget/feature-planner/src';
 
 @theme {
   /* Breakpoints — mobile-first; base (360px) is unprefixed/default, these are the up-breakpoints */
@@ -44,6 +45,11 @@
   --color-income: #6ee7b7; /* mint-300 */
   --color-expense: #fca5a5; /* coral-300 */
   --color-warning: #fbbf24; /* amber-400 — reserved for non-progress-bar warning states (e.g. form validation) */
+
+  /* Planner progress-bar fill states — distinct tokens from --color-warning (reserved above for non-progress-bar use); success/danger intentionally reuse the income/expense hues */
+  --color-progress-success: #6ee7b7; /* mint-300, matches --color-income */
+  --color-progress-warning: #fbbf24; /* amber-400 */
+  --color-progress-danger: #fca5a5; /* coral-300, matches --color-expense */
 
   /* Border radius / elevation basics */
   --radius-card: 1rem; /* 16px */

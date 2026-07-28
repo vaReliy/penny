@@ -45,7 +45,8 @@
       "budget-ui": ["./libs/budget/ui/src/index.ts"],
       "budget-feature-account": ["./libs/budget/feature-account/src/index.ts"],
       "budget-feature-records": ["./libs/budget/feature-records/src/index.ts"],
-      "budget-feature-history": ["./libs/budget/feature-history/src/index.ts"]
+      "budget-feature-history": ["./libs/budget/feature-history/src/index.ts"],
+      "budget-feature-planner": ["./libs/budget/feature-planner/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
