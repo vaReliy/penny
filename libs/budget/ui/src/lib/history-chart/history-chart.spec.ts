@@ -9,6 +9,7 @@ const BUDGET_UK_TRANSLATIONS = {
     chart: {
       title: 'Витрати за категоріями',
       empty: 'Немає даних для відображення.',
+      legendLabel: 'Категорії',
     },
   },
 };
@@ -34,7 +35,7 @@ describe('HistoryChartComponent', () => {
     fixture.detectChanges();
   }
 
-  it('renders the pie chart with legend when data is present', async () => {
+  it('renders the pie chart with a legend item per category when data is present', async () => {
     fixture = TestBed.createComponent(HistoryChartComponent);
     fixture.componentRef.setInput('data', [
       { name: 'Food', value: 15000 },
@@ -45,6 +46,11 @@ describe('HistoryChartComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('ngx-charts-pie-chart')).not.toBeNull();
     expect(el.querySelector('svg')).not.toBeNull();
+
+    const legendItems = el.querySelectorAll('ul li');
+    expect(legendItems).toHaveLength(2);
+    expect(el.textContent).toContain('Food');
+    expect(el.textContent).toContain('Transport');
   });
 
   it('shows the empty-state message when data is empty', async () => {
@@ -55,6 +61,57 @@ describe('HistoryChartComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent).toContain('Немає даних для відображення.');
     expect(el.querySelector('ngx-charts-pie-chart')).toBeNull();
+  });
+
+  it('does not render the untranslated "Legend" heading', async () => {
+    fixture = TestBed.createComponent(HistoryChartComponent);
+    fixture.componentRef.setInput('data', [
+      { name: 'Food', value: 15000 },
+      { name: 'Transport', value: 5000 },
+    ]);
+    await detectAndStabilize();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).not.toContain('Legend');
+  });
+
+  it('assigns a distinguishable color per category, cycling the palette', () => {
+    fixture = TestBed.createComponent(HistoryChartComponent);
+    fixture.componentRef.setInput('data', [
+      { name: 'Food', value: 15000 },
+      { name: 'Transport', value: 5000 },
+      { name: 'Subscriptions', value: 3000 },
+      { name: 'Auto', value: 2000 },
+    ]);
+    const component = fixture.componentInstance as unknown as {
+      customColors: () => ReadonlyArray<{ name: string; value: string }>;
+    };
+
+    const colors = component.customColors();
+    const uniqueValues = new Set(colors.map((entry) => entry.value));
+
+    expect(colors).toHaveLength(4);
+    expect(uniqueValues.size).toBe(4);
+  });
+
+  it('renders the legend swatches with the same distinct colors as customColors', async () => {
+    fixture = TestBed.createComponent(HistoryChartComponent);
+    fixture.componentRef.setInput('data', [
+      { name: 'Food', value: 15000 },
+      { name: 'Transport', value: 5000 },
+      { name: 'Subscriptions', value: 3000 },
+      { name: 'Auto', value: 2000 },
+    ]);
+    await detectAndStabilize();
+
+    const el = fixture.nativeElement as HTMLElement;
+    const swatches = Array.from(el.querySelectorAll('ul li span'));
+    const colors = swatches.map(
+      (swatch) => (swatch as HTMLElement).style.backgroundColor,
+    );
+
+    expect(colors).toHaveLength(4);
+    expect(new Set(colors).size).toBe(4);
   });
 
   it('formats the tooltip text with the category name and uk-UA number formatting', () => {

@@ -1,14 +1,14 @@
 <main
-  class="mx-auto flex max-w-5xl flex-col gap-4 p-4 md:flex-row md:items-start"
+  class="mx-auto flex max-w-5xl flex-col gap-4 p-4 lg:flex-row lg:items-start"
 >
-  <div class="flex flex-1 flex-col gap-4">
+  <div class="flex min-w-0 flex-1 flex-col gap-4">
     <div class="flex items-center justify-between gap-2">
       <h1 class="text-2xl font-semibold text-text-primary">
         {{ 'budget.history.page.title' | transloco }}
       </h1>
       <button
         type="button"
-        class="min-h-touch rounded-btn border border-border px-3 py-1.5 text-sm text-text-primary hover:bg-background md:hidden"
+        class="min-h-touch rounded-btn border border-border px-3 py-1.5 text-sm text-text-primary hover:bg-background lg:hidden"
         (click)="openFilterSheet()"
       >
         {{ 'budget.history.page.openFilter' | transloco }}
@@ -33,7 +33,7 @@
 
   <!-- Desktop filter rail -->
   <aside
-    class="hidden rounded-card border border-border bg-surface p-4 md:block md:w-72 md:shrink-0"
+    class="hidden rounded-card border border-border bg-surface p-4 lg:block lg:w-72 lg:shrink-0"
   >
     <lib-history-filter-panel
       [value]="filter()"
@@ -44,7 +44,7 @@
 
   <!-- Mobile filter bottom sheet -->
   @if (isFilterSheetOpen()) {
-  <div class="fixed inset-0 z-20 md:hidden">
+  <div class="fixed inset-0 z-20 lg:hidden">
     <button
       type="button"
       class="absolute inset-0 h-full w-full cursor-default bg-black/50"

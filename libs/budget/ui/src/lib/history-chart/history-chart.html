@@ -1,24 +1,51 @@
 <section
-  class="h-80 w-full overflow-hidden rounded-card border border-border bg-surface p-4"
+  class="flex min-h-80 w-full flex-col overflow-hidden rounded-card border border-border bg-surface p-4"
   [attr.aria-label]="'budget.history.chart.title' | transloco"
 >
-  <h2 class="mb-3 text-lg font-semibold text-text-primary">
+  <h2 class="mb-3 shrink-0 text-lg font-semibold text-text-primary">
     {{ 'budget.history.chart.title' | transloco }}
   </h2>
 
   @if (data().length > 0) {
-  <ngx-charts-pie-chart
-    class="block h-full w-full"
-    [results]="data()"
-    [scheme]="'aqua'"
-    [legend]="true"
-    [explodeSlices]="false"
-    [labels]="true"
-    [doughnut]="true"
-    [gradient]="false"
-    [tooltipDisabled]="false"
-    [tooltipText]="tooltipText"
-  />
+  <!--
+    No `[view]` input: ngx-charts measures this element's own parent
+    (`#chartHost`, see `history-chart.ts`'s class doc comment) via
+    `getBoundingClientRect()`, so giving `#chartHost` an explicit,
+    breakpoint-scaled height is enough for a correct, deterministic ring
+    size at every viewport — no `ResizeObserver` needed. ngx-charts
+    re-measures on the browser's native `resize` event, which also fires
+    when a Tailwind breakpoint's media query flips the height class. The
+    card itself is `min-h-80` (not a fixed height), so it grows to fit the
+    legend below rather than clipping it.
+  -->
+  <div #chartHost class="h-56 w-full sm:h-64 lg:h-72">
+    <ngx-charts-pie-chart
+      [results]="data()"
+      [customColors]="customColors()"
+      [legend]="false"
+      [explodeSlices]="false"
+      [labels]="true"
+      [doughnut]="true"
+      [gradient]="false"
+      [tooltipDisabled]="false"
+      [tooltipText]="tooltipText"
+    />
+  </div>
+
+  <ul
+    class="mt-2 flex shrink-0 flex-wrap gap-x-4 gap-y-1 text-sm text-text-primary"
+    [attr.aria-label]="'budget.history.chart.legendLabel' | transloco"
+  >
+    @for (entry of customColors(); track entry.name) {
+    <li class="flex items-center gap-1.5">
+      <span
+        class="h-2.5 w-2.5 shrink-0 rounded-full"
+        [style.background-color]="entry.value"
+      ></span>
+      {{ entry.name }}
+    </li>
+    }
+  </ul>
   } @else {
   <p class="text-sm text-text-secondary">
     {{ 'budget.history.chart.empty' | transloco }}

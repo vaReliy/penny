@@ -1,3 +1,7 @@
 :host {
   display: block;
 }
+
+::ng-deep .ngx-charts .pie-label {
+  fill: #f4f6fb;
+}

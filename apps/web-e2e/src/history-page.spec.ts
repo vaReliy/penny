@@ -136,7 +136,7 @@ test.describe('history screen («Історія»)', () => {
       name: 'Витрати за категоріями',
     });
     await expect(chartRegion.locator('svg')).toBeVisible();
-    await expect(chartRegion.locator('ngx-charts-legend')).toBeVisible();
+    await expect(chartRegion.getByRole('list')).toBeVisible();
 
     // Apply the "income" type filter — the mocked backend returns none, so
     // the list should show the "filter matched nothing" empty state.
@@ -161,6 +161,119 @@ test.describe('history screen («Історія»)', () => {
     await page.getByRole('link', { name: /Назад/ }).click();
     await page.waitForURL('**/history**');
     expect(page.url()).toContain('type=expense');
+  });
+
+  test.describe('tablet viewport (900px width — previously overlapping range)', () => {
+    test.use({ viewport: { width: 900, height: 800 } });
+
+    test('stays fully in mobile layout (bottom nav + filter sheet button) with no overflow', async ({
+      page,
+    }) => {
+      await mockBudgetBackend(page);
+
+      await page.goto('/history');
+      await page.waitForURL('**/history');
+
+      await expect(page.locator('table').getByText('-150,00')).toBeVisible();
+
+      const noHorizontalScroll = await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth <=
+          document.documentElement.clientWidth,
+      );
+      expect(noHorizontalScroll).toBe(true);
+
+      // The nav's desktop/mobile switch (`lg`, 1024px) and the filter
+      // rail's own switch must agree at this width — previously the rail
+      // switched at `md` (768px) while the nav stayed mobile until 1024px,
+      // producing a mismatched layout in the 768–1023px range. Both must
+      // now render mobile-consistently: bottom nav visible, desktop rail
+      // hidden, filter reachable only via the sheet-opening button.
+      await expect(page.getByRole('form', { name: 'Фільтр' })).toBeHidden();
+      await expect(page.getByRole('button', { name: 'Фільтр' })).toBeVisible();
+      await expect(page.locator('nav').last()).toBeVisible();
+    });
+  });
+
+  test.describe('desktop viewport just above the breakpoint (1024px width)', () => {
+    test.use({ viewport: { width: 1024, height: 800 } });
+
+    test('switches to the desktop filter rail with no overflow, matching the nav switch', async ({
+      page,
+    }) => {
+      await mockBudgetBackend(page);
+
+      await page.goto('/history');
+      await page.waitForURL('**/history');
+
+      await expect(page.locator('table').getByText('-150,00')).toBeVisible();
+
+      const noHorizontalScroll = await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth <=
+          document.documentElement.clientWidth,
+      );
+      expect(noHorizontalScroll).toBe(true);
+
+      await expect(page.getByRole('form', { name: 'Фільтр' })).toBeVisible();
+      await expect(
+        page.getByRole('button', { name: 'Фільтр', exact: true }),
+      ).toBeHidden();
+      await expect(page.locator('nav').last()).toBeHidden();
+    });
+  });
+
+  test.describe('wide desktop viewport (1440px width — upper bound of the tested range)', () => {
+    test.use({ viewport: { width: 1440, height: 900 } });
+
+    test('has no page overflow and keeps the chart ring/legend inside the card bounds', async ({
+      page,
+    }) => {
+      await mockBudgetBackend(page);
+
+      await page.goto('/history');
+      await page.waitForURL('**/history');
+
+      await expect(page.locator('table').getByText('-150,00')).toBeVisible();
+
+      const noHorizontalScroll = await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth <=
+          document.documentElement.clientWidth,
+      );
+      expect(noHorizontalScroll).toBe(true);
+
+      const chartRegion = page.getByRole('region', {
+        name: 'Витрати за категоріями',
+      });
+      await expect(chartRegion.locator('svg')).toBeVisible();
+      await expect(chartRegion.getByRole('list')).toBeVisible();
+
+      // Already asserted visible above, so all three elements have a layout
+      // box — read rects via evaluate() rather than boundingBox() to avoid a
+      // nullable-box check entirely.
+      const cardRect = await chartRegion.evaluate((el) =>
+        el.getBoundingClientRect().toJSON(),
+      );
+      const svgRect = await chartRegion
+        .locator('svg')
+        .evaluate((el) => el.getBoundingClientRect().toJSON());
+      const legendRect = await chartRegion
+        .getByRole('list')
+        .evaluate((el) => el.getBoundingClientRect().toJSON());
+
+      expect(svgRect.x).toBeGreaterThanOrEqual(cardRect.x - 1);
+      expect(svgRect.x + svgRect.width).toBeLessThanOrEqual(
+        cardRect.x + cardRect.width + 1,
+      );
+      expect(legendRect.x).toBeGreaterThanOrEqual(cardRect.x - 1);
+      expect(legendRect.x + legendRect.width).toBeLessThanOrEqual(
+        cardRect.x + cardRect.width + 1,
+      );
+      expect(legendRect.y + legendRect.height).toBeLessThanOrEqual(
+        cardRect.y + cardRect.height + 1,
+      );
+    });
   });
 
   test.describe('mobile viewport (360px width)', () => {
