@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 const ME_URL = '**/auth/me';
 const HELLO_URL = '**/api/hello';
 const LOGOUT_URL = '**/auth/logout';
+const CONFIG_URL = '**/api/config';
 
 const activeUser = {
   id: '3',
@@ -15,6 +16,13 @@ test.describe('app shell — mobile viewport (390x844)', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 
   test.beforeEach(async ({ page }) => {
+    await page.route(CONFIG_URL, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ telegramBotUsername: 'TEST_BOT' }),
+      }),
+    );
     await page.route(ME_URL, (route) =>
       route.fulfill({
         status: 200,

@@ -21,6 +21,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-28 — [Fix] `rules/cts/nx-generators.md` — vitest target name is `test`, not `vite:test`
+
+- **Component**: `rules/cts/nx-generators.md` § 3 "Post-generator corrections by framework" › "Vitest Test Target Configuration"
+- **Type**: Fix
+- **What happened**: The section states the Nx plugin registers the test target as `vite:test` (with instructions to use `pnpm nx vite:test <project>`), but the actual registered target name is simply `test` (run via `pnpm nx test <project> --skip-nx-cache`). Confirmed via `nx show project budget-data-access --json` showing the actual target name is plainly `test`.
+- **Why it matters upstream**: Any claude-ts consumer reading the post-gen checklist will be misdirected to use `nx vite:test`, which fails silently when the target doesn't exist (Nx does not error — it just never runs the intended test). This causes tests to be skipped in CI/post-gen audits if followed as written.
+- **Suggested upstream change**: In `rules/cts/nx-generators.md` § 3, correct the "Vitest Test Target Configuration" subsection: change the registered target name from `vite:test` to `test` and update the command examples accordingly (`pnpm nx vite:test <project>` → `pnpm nx test <project>`).
+- **Status**: pending-port
+
+---
+
 ## 2026-07-27 — [Enhancement] MCP config gotchas: `.mcp.json` `${VAR}` placeholders fail open, and project `.env` is never auto-sourced by Claude Code
 
 - **Component**: `.mcp.json` / MCP server configuration guidance (no specific rules file yet — `rules/cts/mcp-stack.md` documents tool usage but not credential wiring)
