@@ -57,3 +57,44 @@
   --radius-tile: 0.625rem; /* 10px — inner stat tiles */
   /* Elevation: flat surface + 1px border, no box-shadow (dropped --shadow-card per ADR-009) */
 }
+
+/*
+ * Global pointer-cursor affordance for interactive elements — this app is
+ * mobile-first but also used on desktop with mouse input, and several
+ * native elements (buttons, checkboxes, radios, selects) do NOT get
+ * `cursor: pointer` by default in most browsers (only `<a href>` does).
+ * Centralized here instead of repeating `cursor-pointer` per component so
+ * every future interactive element is covered without ad-hoc CSS.
+ *
+ * `label:has(input[...])` targets the wrap-the-input label pattern used
+ * throughout this codebase (label wraps the input rather than using a
+ * sibling `for`/`id` pair) — see e.g. category-manager's archived-toggle
+ * checkbox and transaction-form's income/expense radios.
+ *
+ * Placed in `@layer base` so component-level Tailwind utilities (e.g. the
+ * intentional `cursor-default` on the mobile filter-sheet backdrop button,
+ * or `disabled:cursor-not-allowed`) — both compiled into later layers —
+ * still win the cascade.
+ */
+@layer base {
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  a[href],
+  select:not(:disabled),
+  input[type='checkbox']:not(:disabled),
+  input[type='radio']:not(:disabled),
+  label:has(input[type='checkbox']:not(:disabled)),
+  label:has(input[type='radio']:not(:disabled)) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [role='button'][aria-disabled='true'],
+  select:disabled,
+  input[type='checkbox']:disabled,
+  input[type='radio']:disabled,
+  label:has(input[type='checkbox']:disabled),
+  label:has(input[type='radio']:disabled) {
+    cursor: not-allowed;
+  }
+}
