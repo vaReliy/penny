@@ -17,6 +17,9 @@ import type { PlannerRowViewModel } from '../planner-rows.util';
 
 const MINOR_UNIT_DECIMALS = 2;
 
+/** Clamp ceiling for `aria-valuenow`, also bound to the template's `aria-valuemax` — so it never exceeds the declared ARIA max, even when `currentRow.percent` is >100 for an overspent category. */
+const ARIA_PROGRESSBAR_MAX_PERCENT = 100;
+
 /** Pre-fills the edit input with the current budgeted amount in major units — display-only, never fed back into money arithmetic (re-parsed exactly on submit via `parseAmountToMinorUnits`). */
 function formatAmountInput(minorUnits: bigint): string {
   return (Number(minorUnits) / 10 ** MINOR_UNIT_DECIMALS).toFixed(
@@ -83,6 +86,12 @@ export class PlannerCategoryRowComponent {
   protected readonly isOverBudget = computed(
     () => this.progressSegments().overBudgetPercent > 0,
   );
+  /** `aria-valuenow` clamped to `aria-valuemax` (100) — the true, uncapped percent is instead conveyed via `aria-valuetext`, since ARIA requires `aria-valuenow` to stay within `[aria-valuemin, aria-valuemax]`. */
+  protected readonly ariaValueNow = computed(() =>
+    Math.min(ARIA_PROGRESSBAR_MAX_PERCENT, this.row().percent),
+  );
+  /** Template-facing mirror of the clamp ceiling, bound to `aria-valuemax` so it can never drift out of sync with `ariaValueNow`'s clamp. */
+  protected readonly ariaProgressbarMax = ARIA_PROGRESSBAR_MAX_PERCENT;
 
   public constructor() {
     effect(() => {

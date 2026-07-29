@@ -18,6 +18,7 @@ const BUDGET_UK_TRANSLATIONS = {
       cancel: 'Скасувати',
       errorInvalidAmount: 'Некоректна сума',
       progressLabel: 'Прогрес для {{name}}',
+      progressValueText: 'Витрачено {{percent}}% бюджету',
       spent: 'Витрачено',
       remaining: 'Залишок',
     },
@@ -150,6 +151,31 @@ describe('PlannerCategoryRowComponent', () => {
     fixture.debugElement.query(By.css('button')).nativeElement.click();
 
     expect(emitted).toHaveBeenCalledWith('c1');
+  });
+
+  it('clamps aria-valuenow to aria-valuemax for an overspent row, conveying the true percent via aria-valuetext', async () => {
+    await setup();
+    fixture.componentRef.setInput('row', makeRow(300));
+    await detectAndStabilize();
+
+    const bar = fixture.debugElement.query(By.css('[role="progressbar"]'))
+      .nativeElement as HTMLElement;
+
+    expect(bar.getAttribute('aria-valuenow')).toBe('100');
+    expect(bar.getAttribute('aria-valuemax')).toBe('100');
+    expect(bar.getAttribute('aria-valuetext')).toContain('300');
+  });
+
+  it('leaves aria-valuenow unclamped and equal to the true percent for a non-overspent row', async () => {
+    await setup();
+    fixture.componentRef.setInput('row', makeRow(60));
+    await detectAndStabilize();
+
+    const bar = fixture.debugElement.query(By.css('[role="progressbar"]'))
+      .nativeElement as HTMLElement;
+
+    expect(bar.getAttribute('aria-valuenow')).toBe('60');
+    expect(bar.getAttribute('aria-valuetext')).toContain('60');
   });
 
   it('renders the amount form pre-filled with the budgeted amount when editing', async () => {

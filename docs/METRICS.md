@@ -104,3 +104,4 @@ Each completed task is one row in the table below.
 | 2026-07-29 | penny | planner-progress-bar-overspend-green-red-split               | T1   | 0      | 0/0/-/-           | 1       | no       | standard       |                    |
 | 2026-07-29 | penny | cursor-pointer-interactive-elements-audit                    | T1   | 1      | 0/1/-/-           | 0       | no       | standard       |                    |
 | 2026-07-29 | penny | record-transaction-account-referential-check                 | T2   | 0      | 0/0/0/-           | 0       | no       | standard       |                    |
+| 2026-07-29 | penny | planner-progress-aria-valuenow-overspend-clamp               | T0   | 1      | 0/1/-/-           | 0       | no       | standard       |                    |

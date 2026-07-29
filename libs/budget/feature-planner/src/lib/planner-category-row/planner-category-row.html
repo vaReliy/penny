@@ -62,9 +62,10 @@
   <div
     class="flex h-2 w-full overflow-hidden rounded-tile bg-surface-2"
     role="progressbar"
-    [attr.aria-valuenow]="currentRow.percent"
+    [attr.aria-valuenow]="ariaValueNow()"
     aria-valuemin="0"
-    aria-valuemax="100"
+    [attr.aria-valuemax]="ariaProgressbarMax"
+    [attr.aria-valuetext]="'budget.planner.row.progressValueText' | transloco: { percent: currentRow.percent }"
     [attr.aria-label]="'budget.planner.row.progressLabel' | transloco: { name: currentRow.categoryName }"
   >
     <div

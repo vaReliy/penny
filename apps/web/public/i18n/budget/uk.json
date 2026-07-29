@@ -124,6 +124,7 @@
       "cancel": "Скасувати",
       "errorInvalidAmount": "Введіть коректну суму, напр. 123,45",
       "progressLabel": "Прогрес витрат для категорії {{name}}",
+      "progressValueText": "Витрачено {{percent}}% бюджету",
       "spent": "Витрачено",
       "remaining": "Залишок"
     }
