@@ -101,3 +101,4 @@ Each completed task is one row in the table below.
 | 2026-07-28 | penny | screen-records-forms                                         | T2   | 0      | 0/0/-/0           | 0       | no       | standard       |                    |
 | 2026-07-28 | penny | screen-history-list-filter-chart                             | T2   | 0      | 0/0/-/0           | 1       | no       | standard       |                    |
 | 2026-07-29 | penny | screen-planner-monthly-budgets                               | T2   | 2      | 0/1/0/1           | 0       | no       | standard       |                    |
+| 2026-07-29 | penny | planner-progress-bar-overspend-green-red-split               | T1   | 0      | 0/0/-/-           | 1       | no       | standard       |                    |

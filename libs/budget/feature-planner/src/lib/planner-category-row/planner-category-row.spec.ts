@@ -86,6 +86,49 @@ describe('PlannerCategoryRowComponent', () => {
     },
   );
 
+  it('splits an over-budget bar into a green within-budget segment and a red over-budget segment', async () => {
+    await setup();
+    fixture.componentRef.setInput('row', makeRow(120));
+    await detectAndStabilize();
+
+    const segments = fixture.debugElement.queryAll(
+      By.css('[role="progressbar"] > div'),
+    );
+    expect(segments).toHaveLength(2);
+
+    const [withinBudget, overBudget] = segments.map(
+      (segment) => segment.nativeElement as HTMLElement,
+    );
+    expect(withinBudget.classList.contains('bg-progress-success')).toBe(true);
+    expect(overBudget.classList.contains('bg-progress-danger')).toBe(true);
+    expect(parseFloat(withinBudget.style.width)).toBeCloseTo(83.333);
+    expect(parseFloat(overBudget.style.width)).toBeCloseTo(16.667);
+  });
+
+  it('renders a single danger-colored segment (no over-budget split) for a high-but-not-overspent row', async () => {
+    await setup();
+    fixture.componentRef.setInput('row', makeRow(95));
+    await detectAndStabilize();
+
+    const segments = fixture.debugElement.queryAll(
+      By.css('[role="progressbar"] > div'),
+    );
+    expect(segments).toHaveLength(1);
+    const bar = segments[0].nativeElement as HTMLElement;
+    expect(bar.classList.contains('bg-progress-danger')).toBe(true);
+    expect(parseFloat(bar.style.width)).toBeCloseTo(95);
+  });
+
+  it('renders a single segment (no over-budget split) at exactly 100%', async () => {
+    await setup();
+    fixture.componentRef.setInput('row', makeRow(100));
+    await detectAndStabilize();
+
+    expect(
+      fixture.debugElement.queryAll(By.css('[role="progressbar"] > div')),
+    ).toHaveLength(1);
+  });
+
   it('shows the edit-budget affordance, not the form, when not editing', async () => {
     await setup();
     fixture.componentRef.setInput('row', makeRow(0));

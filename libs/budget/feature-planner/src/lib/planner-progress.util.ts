@@ -67,3 +67,33 @@ export function resolveProgressDisplay(
   const percent = computeBudgetPercent(spentMinorUnits, budgetedMinorUnits);
   return { percent, status: resolveProgressStatus(percent) };
 }
+
+/** A progress bar split into a "within budget" (green) segment and an "over budget" (red) segment, each a fraction of the bar's total width. */
+export interface PlannerProgressSegments {
+  readonly withinBudgetPercent: number;
+  readonly overBudgetPercent: number;
+}
+
+const FULL_BAR_PERCENT = 100;
+
+/**
+ * Below/at 100% spend, the bar is a single partially-filled segment — no
+ * overspend to show, so `overBudgetPercent` is `0`. Above 100%, the bar is
+ * fully covered and split proportionally: `withinBudgetPercent` shrinks to
+ * `budgeted / spent * 100` (the share of total spend that stayed in
+ * budget) and `overBudgetPercent` takes the rest, so the two always sum to
+ * 100 in the overspend case.
+ */
+export function resolveProgressSegments(
+  percent: number,
+): PlannerProgressSegments {
+  if (percent <= FULL_BAR_PERCENT) {
+    return { withinBudgetPercent: Math.max(0, percent), overBudgetPercent: 0 };
+  }
+
+  const withinBudgetPercent = (FULL_BAR_PERCENT * FULL_BAR_PERCENT) / percent;
+  return {
+    withinBudgetPercent,
+    overBudgetPercent: FULL_BAR_PERCENT - withinBudgetPercent,
+  };
+}

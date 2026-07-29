@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   computeBudgetPercent,
   resolveProgressDisplay,
+  resolveProgressSegments,
   resolveProgressStatus,
 } from './planner-progress.util';
 
@@ -72,5 +73,57 @@ describe('resolveProgressDisplay', () => {
       percent: 0,
       status: 'success',
     });
+  });
+});
+
+describe('resolveProgressSegments', () => {
+  it('renders an empty bar at exactly 0%', () => {
+    expect(resolveProgressSegments(0)).toEqual({
+      withinBudgetPercent: 0,
+      overBudgetPercent: 0,
+    });
+  });
+
+  it('renders a single within-budget segment with no overspend below 100%', () => {
+    expect(resolveProgressSegments(70)).toEqual({
+      withinBudgetPercent: 70,
+      overBudgetPercent: 0,
+    });
+  });
+
+  it('renders a single, fully filled within-budget segment at exactly 100%', () => {
+    expect(resolveProgressSegments(100)).toEqual({
+      withinBudgetPercent: 100,
+      overBudgetPercent: 0,
+    });
+  });
+
+  it('clamps a negative percent to an empty bar rather than a negative width', () => {
+    expect(resolveProgressSegments(-10)).toEqual({
+      withinBudgetPercent: 0,
+      overBudgetPercent: 0,
+    });
+  });
+
+  it('splits proportionally between within-budget and over-budget above 100%', () => {
+    const { withinBudgetPercent, overBudgetPercent } =
+      resolveProgressSegments(120);
+    expect(withinBudgetPercent).toBeCloseTo(83.333);
+    expect(overBudgetPercent).toBeCloseTo(16.667);
+  });
+
+  it('splits a very large overspend (1000%) proportionally', () => {
+    expect(resolveProgressSegments(1000)).toEqual({
+      withinBudgetPercent: 10,
+      overBudgetPercent: 90,
+    });
+  });
+
+  it('always sums the two segments to 100 when overspent', () => {
+    for (const percent of [101, 150, 200, 1000]) {
+      const { withinBudgetPercent, overBudgetPercent } =
+        resolveProgressSegments(percent);
+      expect(withinBudgetPercent + overBudgetPercent).toBeCloseTo(100);
+    }
   });
 });

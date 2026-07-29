@@ -12,6 +12,7 @@ import { TranslocoPipe, provideTranslocoScope } from '@jsverse/transloco';
 import { formatMoney } from 'budget-data-access';
 
 import { parseAmountToMinorUnits } from '../parse-amount.util';
+import { resolveProgressSegments } from '../planner-progress.util';
 import type { PlannerRowViewModel } from '../planner-rows.util';
 
 const MINOR_UNIT_DECIMALS = 2;
@@ -75,8 +76,12 @@ export class PlannerCategoryRowComponent {
   protected readonly formattedRemaining = computed(() =>
     formatMoney(this.row().remaining),
   );
-  protected readonly barWidthPercent = computed(() =>
-    Math.min(100, Math.max(0, this.row().percent)),
+  protected readonly progressSegments = computed(() =>
+    resolveProgressSegments(this.row().percent),
+  );
+  /** Whether the bar is split into a green "within budget" segment plus a red "over budget" one, rather than a single status-colored segment. */
+  protected readonly isOverBudget = computed(
+    () => this.progressSegments().overBudgetPercent > 0,
   );
 
   public constructor() {
