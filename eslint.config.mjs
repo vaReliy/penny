@@ -1,4 +1,5 @@
 import nx from '@nx/eslint-plugin';
+import playwright from 'eslint-plugin-playwright';
 
 export default [
   ...nx.configs['flat/base'],
@@ -191,6 +192,15 @@ export default [
           ],
         },
       ],
+    },
+  },
+  {
+    files: ['apps/*-e2e/**/*.ts', 'apps/*-e2e/**/*.js'],
+    plugins: {
+      playwright,
+    },
+    rules: {
+      ...playwright.configs['flat/recommended'].rules,
     },
   },
   {
