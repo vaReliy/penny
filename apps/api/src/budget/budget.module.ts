@@ -172,12 +172,18 @@ class BudgetMongoShutdownHook implements OnApplicationShutdown {
       useFactory: (
         transactionRepository: ITransactionRepository,
         categoryRepository: ICategoryRepository,
+        accountRepository: IAccountRepository,
       ): RecordTransactionService =>
         new RecordTransactionService({
           transactionRepository,
           categoryRepository,
+          accountRepository,
         }),
-      inject: [TOKENS.TransactionRepository, TOKENS.CategoryRepository],
+      inject: [
+        TOKENS.TransactionRepository,
+        TOKENS.CategoryRepository,
+        TOKENS.AccountRepository,
+      ],
     },
     {
       provide: TOKENS.ListTransactions,

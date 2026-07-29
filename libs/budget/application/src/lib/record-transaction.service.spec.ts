@@ -1,8 +1,9 @@
 import { AuthenticationError } from 'shared-errors';
-import { Category, Transaction } from 'budget-core';
+import { Account, Category, Transaction } from 'budget-core';
 import { UserStatus } from 'shared-contracts';
 import { ServiceValidationError } from 'shared-kernel';
 import type {
+  IAccountRepository,
   ICategoryRepository,
   ITransactionRepository,
   TransactionTypeTotals,
@@ -12,6 +13,7 @@ import type { CallerIdentity, ServiceContext } from 'shared-kernel';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { RecordTransactionService } from './record-transaction.service.js';
+import { AccountNotEligibleError } from './account-not-eligible-error.js';
 import { CategoryNotEligibleError } from './category-not-eligible-error.js';
 import type { BudgetServiceConfig } from './budget-service-config.js';
 
@@ -56,6 +58,46 @@ class FakeCategoryRepository implements ICategoryRepository {
 
   public async delete(id: string): Promise<void> {
     this.categoriesById.delete(id);
+  }
+}
+
+/** In-memory `IAccountRepository` fake, keyed by `id`. */
+class FakeAccountRepository implements IAccountRepository {
+  private readonly accountsById = new Map<string, Account>();
+
+  public seed(account: Account): void {
+    this.accountsById.set(account.id, account);
+  }
+
+  public async findById(id: string): Promise<Account | null> {
+    return this.accountsById.get(id) ?? null;
+  }
+
+  public async findByWorkspace(workspaceId: string): Promise<Account[]> {
+    return [...this.accountsById.values()].filter(
+      (account) => account.workspaceId === workspaceId,
+    );
+  }
+
+  public async findByIdInWorkspace(
+    id: string,
+    workspaceId: string,
+  ): Promise<Account | null> {
+    const account = this.accountsById.get(id);
+    return account && account.workspaceId === workspaceId ? account : null;
+  }
+
+  public async findOrCreateDefault(): Promise<Account> {
+    throw new Error('Unused by this suite.');
+  }
+
+  public async save(entity: Account): Promise<Account> {
+    this.accountsById.set(entity.id, entity);
+    return entity;
+  }
+
+  public async delete(id: string): Promise<void> {
+    this.accountsById.delete(id);
   }
 }
 
@@ -154,6 +196,7 @@ const PENDING_CALLER: CallerIdentity = {
 const CATEGORY_ID = '507f1f77bcf86cd799439011';
 const ACCOUNT_ID = '507f1f77bcf86cd799439022';
 const UNKNOWN_CATEGORY_ID = '507f1f77bcf86cd799439099';
+const UNKNOWN_ACCOUNT_ID = '507f1f77bcf86cd799439088';
 
 const VALID_PARAMS = {
   accountId: ACCOUNT_ID,
@@ -166,17 +209,21 @@ const VALID_PARAMS = {
 
 describe('RecordTransactionService', () => {
   let categoryRepository: FakeCategoryRepository;
+  let accountRepository: FakeAccountRepository;
   let transactionRepository: FakeTransactionRepository;
   let service: RecordTransactionService;
 
   beforeEach(() => {
     categoryRepository = new FakeCategoryRepository();
+    accountRepository = new FakeAccountRepository();
     transactionRepository = new FakeTransactionRepository();
     service = new RecordTransactionService({
       categoryRepository,
+      accountRepository,
       transactionRepository,
     });
     categoryRepository.seed(Category.create(CATEGORY_ID, 'ws-1', 'Groceries'));
+    accountRepository.seed(Account.create(ACCOUNT_ID, 'ws-1', 'Cash', 'UAH'));
   });
 
   it('records an expense transaction in the caller workspace', async () => {
@@ -297,5 +344,37 @@ describe('RecordTransactionService', () => {
       .catch(() => undefined);
 
     expect(transactionRepository.saved).toHaveLength(0);
+  });
+
+  it('throws AccountNotEligibleError when accountId does not exist', async () => {
+    await expect(
+      service.run(
+        { ...VALID_PARAMS, accountId: UNKNOWN_ACCOUNT_ID },
+        buildContext(ACTIVE_CALLER),
+      ),
+    ).rejects.toBeInstanceOf(AccountNotEligibleError);
+  });
+
+  it('throws AccountNotEligibleError when accountId belongs to a different workspace', async () => {
+    const otherWorkspaceAccountId = '507f1f77bcf86cd799439066';
+    accountRepository.seed(
+      Account.create(otherWorkspaceAccountId, 'ws-other', 'Cash', 'UAH'),
+    );
+
+    await expect(
+      service.run(
+        { ...VALID_PARAMS, accountId: otherWorkspaceAccountId },
+        buildContext(ACTIVE_CALLER),
+      ),
+    ).rejects.toBeInstanceOf(AccountNotEligibleError);
+  });
+
+  it('records a transaction when accountId is valid and in the caller workspace', async () => {
+    const outcome = await service.run(
+      VALID_PARAMS,
+      buildContext(ACTIVE_CALLER),
+    );
+
+    expect(outcome.data.accountId).toBe(ACCOUNT_ID);
   });
 });

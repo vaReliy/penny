@@ -7,6 +7,7 @@ export * from './lib/list-categories.service.js';
 export * from './lib/upsert-monthly-budget.service.js';
 export * from './lib/list-monthly-budgets.service.js';
 export * from './lib/category-not-eligible-error.js';
+export * from './lib/account-not-eligible-error.js';
 export * from './lib/resolve-month-range.js';
 export * from './lib/record-transaction.service.js';
 export * from './lib/list-transactions.service.js';

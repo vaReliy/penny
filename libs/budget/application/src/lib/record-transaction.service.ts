@@ -3,11 +3,16 @@ import { AuthenticationError } from 'shared-errors';
 import { Money } from 'shared-util';
 import { Transaction } from 'budget-core';
 import { CREATE_TRANSACTION_SCHEMA } from 'budget-validation';
-import type { ICategoryRepository, ITransactionRepository } from 'budget-core';
+import type {
+  IAccountRepository,
+  ICategoryRepository,
+  ITransactionRepository,
+} from 'budget-core';
 import type { TransactionType } from 'budget-contracts';
 import type { ServiceContext } from 'shared-kernel';
 
 import { assertActiveCaller } from './assert-active-caller.js';
+import { AccountNotEligibleError } from './account-not-eligible-error.js';
 import { CategoryNotEligibleError } from './category-not-eligible-error.js';
 import type { BudgetServiceConfig } from './budget-service-config.js';
 
@@ -27,6 +32,7 @@ export interface RecordTransactionParams {
 export interface RecordTransactionDeps {
   readonly transactionRepository: ITransactionRepository;
   readonly categoryRepository: ICategoryRepository;
+  readonly accountRepository: IAccountRepository;
 }
 
 /**
@@ -50,11 +56,13 @@ export class RecordTransactionService extends BaseService<
 > {
   private readonly transactionRepository: ITransactionRepository;
   private readonly categoryRepository: ICategoryRepository;
+  private readonly accountRepository: IAccountRepository;
 
   public constructor(deps: RecordTransactionDeps) {
     super();
     this.transactionRepository = deps.transactionRepository;
     this.categoryRepository = deps.categoryRepository;
+    this.accountRepository = deps.accountRepository;
   }
 
   protected override getValidationSchema(): Record<string, unknown> {
@@ -74,6 +82,16 @@ export class RecordTransactionService extends BaseService<
     );
     if (!category || category.isArchived()) {
       throw new CategoryNotEligibleError(params.categoryId);
+    }
+
+    // TODO: once Account grows an archive/soft-delete field (mirroring
+    // Category's), reject archived accounts here too.
+    const account = await this.accountRepository.findByIdInWorkspace(
+      params.accountId,
+      workspaceId,
+    );
+    if (!account) {
+      throw new AccountNotEligibleError(params.accountId);
     }
   }
 

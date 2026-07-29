@@ -27,11 +27,15 @@ import {
   ListTransactionsService,
   GetTransactionService,
 } from 'budget-application';
-import { Category, Transaction } from 'budget-core';
+import { Account, Category, Transaction } from 'budget-core';
 import { DEFAULT_WORKSPACE_ID, TransactionType } from 'budget-contracts';
 import { Money } from 'shared-util';
 import { createFakeUserRepository } from 'identity-testing';
-import type { ICategoryRepository, ITransactionRepository } from 'budget-core';
+import type {
+  IAccountRepository,
+  ICategoryRepository,
+  ITransactionRepository,
+} from 'budget-core';
 import type { SessionUser } from 'shared-contracts';
 import type { TransactionFilterQuery } from 'budget-contracts';
 import type { ITokenIssuer } from 'identity-application';
@@ -102,6 +106,26 @@ function makeFakeCategoryRepository(
   };
 }
 
+function makeFakeAccountRepository(
+  overrides: Partial<IAccountRepository> = {},
+): IAccountRepository {
+  const account = Account.create(
+    VALID_ACCOUNT_ID,
+    DEFAULT_WORKSPACE_ID,
+    'Cash',
+    'UAH',
+  );
+  return {
+    findById: vi.fn().mockResolvedValue(null),
+    save: vi.fn(async (a: Account) => a),
+    delete: vi.fn(),
+    findByWorkspace: vi.fn().mockResolvedValue([]),
+    findByIdInWorkspace: vi.fn().mockResolvedValue(account),
+    findOrCreateDefault: vi.fn().mockResolvedValue(account),
+    ...overrides,
+  };
+}
+
 function makeFakeTransactionRepository(
   overrides: Partial<ITransactionRepository> = {},
 ): ITransactionRepository {
@@ -126,6 +150,7 @@ describe('TransactionsController (real SessionGuard/ActiveUserGuard in the chain
   let sessionGuard: SessionGuard;
 
   let categoryRepository: ICategoryRepository;
+  let accountRepository: IAccountRepository;
   let transactionRepository: ITransactionRepository;
   let controller: TransactionsController;
 
@@ -142,12 +167,14 @@ describe('TransactionsController (real SessionGuard/ActiveUserGuard in the chain
     sessionGuard = new SessionGuard(tokenIssuer, sessionUserRepository);
 
     categoryRepository = makeFakeCategoryRepository();
+    accountRepository = makeFakeAccountRepository();
     transactionRepository = makeFakeTransactionRepository();
 
     controller = new TransactionsController(
       new RecordTransactionService({
         transactionRepository,
         categoryRepository,
+        accountRepository,
       }),
       new ListTransactionsService({ transactionRepository }),
       new GetTransactionService({ transactionRepository }),

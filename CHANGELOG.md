@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en-1.1.0/),
 
 ## [Unreleased]
 
+### Fixed (`RecordTransactionService` — account referential integrity)
+
+- `RecordTransactionService.authorize()` now rejects a transaction whose `accountId` doesn't exist or belongs to a different workspace, via a new `AccountNotEligibleError` (422, mirrors the existing `CategoryNotEligibleError` — generic message, no missing-vs-foreign-workspace disclosure). Previously `accountId` was only checked for ID-pattern shape, so a transaction could be recorded against a nonexistent or foreign-workspace account. `RecordTransactionDeps` now requires `accountRepository`; wired into `apps/api/src/budget/budget.module.ts`. No archive/soft-delete check added — `Account` has no archive field yet (left a `// TODO:` for when it lands). Gate: tester → reviewer → security-scanner, 0 restart cycles, 0 emitted findings.
+
 ### Added (`libs/budget/feature-planner` — monthly budgets: view progress + set amounts)
 
 - **Screen «Планувальник»** — per-category budget progress tracking with month navigation, replacing a placeholder route in `apps/web/src/app/app.routes.ts`. Route: `/planner`. Shows for each category: budgeted amount, actual spend, remaining, and a progress bar with legacy-parity threshold colors (60%/90% → success/warning/danger, preserved from `master:src/app/system/page-planner/page-planner.component.ts`). Inline tap-to-edit budget amounts trigger `PUT /api/budget/monthly-budgets` upsert; amount input in hryvnias → minor units conversion. Union semantics (categories with spend-but-no-budget and budget-but-no-spend render distinctly); includes a fix ensuring spend-but-zero-budget categories show a fully-filled danger bar instead of a misleading empty bar. Month navigation (prev/next), empty-month state with prompt to set budgets, total row aggregating budgeted/spent, mobile-first responsive layout (360px+).
