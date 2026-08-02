@@ -1,7 +1,5 @@
 # budget-feature-records
 
-This library was generated with [Nx](https://nx.dev).
+**Tags:** `scope:budget` · `type:feature` · `platform:web`
 
-## Running unit tests
-
-Run `nx test budget-feature-records` to execute the unit tests.
+Angular transaction-recording screen: form-based UI for creating income and expense transactions with category selection and inline amount entry. May import `scope:budget` ui/data-access/contracts and `scope:shared` contracts/util. No server-only imports.

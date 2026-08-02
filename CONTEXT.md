@@ -66,14 +66,44 @@ This invokes `ApproveUserService` / `RejectUserService` from `libs/identity/appl
 
 ---
 
+---
+
+## Bounded Context: `budget`
+
+The `budget` context owns income and expense tracking, monthly spending limits, balance derivation, and foreign currency conversion.
+
+### Ubiquitous Language
+
+| Term                | Meaning                                                                                                                    |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **Account**         | A bank account or wallet scoped to a workspace. Root aggregate. Holds a name and currency code (e.g., UAH).                |
+| **Transaction**     | A single income or expense event: date, amount, category, account, and optional description. Root aggregate.               |
+| **TransactionType** | The polarity of a transaction: exactly `'income' \| 'expense'`. Stored as a const enum in `budget/contracts`.              |
+| **Category**        | A semantic tag for grouping transactions (e.g., "groceries", "transport"). Root aggregate. Supports soft-archive.          |
+| **archived**        | A category marked as no longer accepting new transactions. Historical transactions retain the archived tag.                |
+| **MonthlyBudget**   | A spending ceiling for a specific category in a specific month (e.g., "€ 50 for transport in July"). Root agg.             |
+| **month**           | Represented as an ISO string `'YYYY-MM'`. Boundaries are calendar months in Europe/Kyiv timezone.                          |
+| **balance**         | Derived as `Σ(income) − Σ(expense)` across all transactions for an account, never stored. Recomputed on read.              |
+| **workspaceId**     | Every budget entity carries a workspace identifier (a UUID string) for multi-tenant scoping. Identity-only ref.            |
+| **Money**           | A value object: `{ amount: bigint, currency: 'UAH' \| 'USD' \| 'EUR' }`. Amounts stored as minor units (kopiykas for UAH). |
+
+### Key Invariants
+
+- **Immutable transactions** — Transactions cannot be edited or deleted (additive capability deferred to Q5).
+- **Soft-archive only** — Categories are marked `archivedAt` to hide them from UI selections, but archived tags persist on historical transactions for integrity.
+- **Derived balance** — No stored balance field; balance is always recomputed from transaction aggregations.
+- **Single workspace per session** — MVP uses a single implicit workspace; future multitenancy is backward-compatible (identity-only reference, no schema change needed).
+
+---
+
 ## Future Verticals
 
-The `identity` context is the first vertical slice and the template every future vertical copies. Planned future contexts (not yet implemented):
+The `identity` and `budget` contexts are the first two vertical slices and the templates every future vertical copies. Planned future contexts:
 
-- `budget` — income, outcome, categories, balance (the original Penny domain).
 - `car` — vehicle history, repairs, expenses.
+- `workspace` — (parked) scoped-admin grouping with hard ≥1-admin invariant.
 
-Each new context will follow the same shape: `libs/<domain>/{core,application,infrastructure,feature-*,data-access}`.
+Each new context will follow the same shape: `libs/<domain>/{core,application,infrastructure,feature-*,data-access,ui,testing}` (backend domains omit feature/ui/testing).
 
 ---
 

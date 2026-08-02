@@ -38,11 +38,24 @@ penny/
       feature-greeting/ Angular authed greeting page (platform:web)
       data-access/      Angular API client services (platform:web)
 
+    budget/       scope:budget — second vertical slice (income, expenses, balance, monthly budgets), full stack
+      core/             Account, Category, Transaction, MonthlyBudget entities; repository interfaces (platform:server)
+      application/      Use-case services: RecordTransaction, CreateCategory, ArchiveCategory, GetBalance, GetHistorySummary, GetPlannerSummary, GetExchangeRates (platform:server)
+      infrastructure/   Mongoose schemas, mappers, repo implementations; Monobank FX client (platform:server)
+      contracts/        Budget DTOs, TransactionType enum (platform:shared)
+      validation/       Budget-scoped LIVR schemas (platform:shared)
+      feature-account/  Angular account summary screen (platform:web)
+      feature-records/  Angular transaction-recording screen (platform:web)
+      feature-history/  Angular transaction-history screen with charts (platform:web)
+      feature-planner/  Angular monthly-budgets screen (platform:web)
+      data-access/      Angular API client services, state stores (platform:web)
+      ui/               Dumb presentational components: BalanceCard, RatesCard, CategoryTile, ProgressBar (platform:web)
+
   rules/          Agent-readable governance docs
   .claude/        AI agent configuration (claude-ts)
 ```
 
-Each future vertical (`budget`, `car`, …) replicates the `identity/` shape: `libs/<domain>/{core,application,infrastructure,feature-*,data-access}`.
+Each vertical slice replicates this shape: `libs/<domain>/{core,application,infrastructure,feature-*,data-access,ui}` (frontend-bearing domains add `feature-*` and `ui`; backend/shared layers align per ADR-003).
 
 **Import alias:** `libs/shared/contracts` is imported as the bare `shared-contracts` — not `@penny/shared-contracts`. The `@penny/` prefix is not a real tsconfig path alias and will fail at build time with a module-not-found error.
 
@@ -107,13 +120,46 @@ type:data    → type:util / type:contracts
 
 ---
 
+## Budget Domain
+
+The `scope:budget` vertical implements the core Penny domain: income/expense tracking, monthly budgets, balance derivation, and foreign currency conversion.
+
+### Derived-Balance Read Model
+
+**Balance is never stored; it is computed from transactions.** The balance for an account is always `Σ(income) − Σ(expense)` across all workspace transactions. This design eliminates lost-update races, compare-and-swap complexity, and multi-document transaction requirements.
+
+- `ITransactionRepository.sumAmountsByType(workspaceId, filters)` returns `{ income: bigint, expense: bigint }` aggregated from the authoritative transaction ledger.
+- Application layer constructs `Money(currency)` from the `bigint` minor units returned.
+- For high-transaction-volume accounts, a materialized `AccountBalanceSnapshot` collection can be added later as a read-model optimization behind the same repository interface — no caller changes needed.
+- Three compound indexes ensure efficient aggregations and queries: `{workspaceId:1, date:-1}` (unscoped period queries), `{workspaceId:1, categoryId:1, date:-1}` (category-narrowed listing and expense rollups), and `{workspaceId:1, accountId:1, date:-1}` (derived-balance aggregation and account-narrowed queries).
+
+### Foreign Exchange Integration Topology
+
+Foreign exchange rates are fetched server-side only. The browser never makes direct calls to external APIs.
+
+```
+Browser ─→ apps/web (nginx) ─→ apps/api (NestJS)
+                                    │
+                                    └─→ Monobank /bank/currency
+```
+
+- **Client call:** Angular requests `GET /api/rates` (internal API).
+- **Server-side client:** `libs/budget/infrastructure` contains `MonobankCurrencyClient`, a typed HTTP wrapper for `GET https://api.monobank.ua/bank/currency`.
+- **Caching:** In-memory TTL cache (≥ 5 min) respects Monobank's public rate limit (~1 req/5 min). Cache misses hit the upstream; cache hits or failures serve stale rates with a `fetchedAt` staleness indicator.
+- **Payload validation:** Upstream response is validated for shape and positivity (`rateBuy`, `rateSell`, `rateCross` strictly > 0) before mapping to the contract DTO.
+- **CSP:** `connect-src` policy remains tight — no browser-direct Monobank calls allowed.
+
+The upstream URL is a fixed constant in the codebase (not configurable per-request), closing the SSRF surface.
+
+---
+
 ## Nx Tag Contract
 
 Every lib carries exactly one tag per dimension in its `project.json`:
 
 | Dimension   | Values                                                                                                                                              |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `scope:`    | `shared` (cross-domain), `identity` (extensible: `budget`, `car`, …)                                                                                |
+| `scope:`    | `shared` (cross-domain), `identity`, `budget`, (future: `car`, …); also `web` for app composition roots                                             |
 | `type:`     | Backend: `core`, `application`, `infrastructure`, `kernel`, `contracts`, `errors`, `util`, `validation` / Frontend: `feature`, `ui`, `data`, `util` |
 | `platform:` | `server`, `web`, `shared`                                                                                                                           |
 

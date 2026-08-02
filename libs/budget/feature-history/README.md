@@ -1,7 +1,5 @@
 # budget-feature-history
 
-This library was generated with [Nx](https://nx.dev).
+**Tags:** `scope:budget` · `type:feature` · `platform:web`
 
-## Running unit tests
-
-Run `nx test budget-feature-history` to execute the unit tests.
+Angular transaction history screen: tabular view with period filtering, category filtering, pie-chart expense breakdown, and sum aggregations. May import `scope:budget` ui/data-access/contracts and `scope:shared` contracts/util. No server-only imports.

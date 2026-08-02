@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en-1.1.0/),
 
 ## [Unreleased]
 
+## Result-2 — Budget Vertical: Core Domain & Four Screens (2026-07-29)
+
+**Summary:** Shipped the second vertical slice (budget), comprising the full onion stack for income/expense tracking, balance derivation, and monthly budgets. Four user-facing screens (Account, Records, History, Planner) translate the legacy bill/records/history/planner UI to a workspace-scoped domain model. FX rate caching is server-side only; browser never calls Monobank. Acceptance criteria: exact-pin fuses green, 93+ passing tests, lexicon updated, all five governance docs synced to shipped reality.
+
+**Shipped:**
+
+- **`libs/budget/*` vertical slice** — full onion: `core` entities (Account, Category, Transaction, MonthlyBudget), `application` use-case services, `infrastructure` Typegoose repos + Monobank client, `contracts`/`validation` schemas, four `feature-*` screens, `data-access` stores, `ui` components.
+- **Four screens (routes)** — `/account` (balance + FX conversion), `/records` (transaction form), `/history` (list + charts), `/planner` (monthly budget tracking). Mobile-first (360px+), parity with legacy + improvements (no float math, bigint FX conversion, derived balance).
+- **Database model** — workspace-scoped accounts, categories (soft-archive only), transactions (immutable, income | expense), monthly budgets (upsert). Indexes on workspace/date/type for efficient aggregations. UNIQUE partial indexes for soft-archive semantics.
+- **ADRs verified** — ADR-007 (entities/aggregates), ADR-008 (Tailwind), ADR-009 (dark design tokens). DECISIONS.md verified — ADR-007/008/009 already Accepted from prior tasks, no changes needed.
+
 ### Fixed (`RecordTransactionService` — account referential integrity)
 
 - `RecordTransactionService.authorize()` now rejects a transaction whose `accountId` doesn't exist or belongs to a different workspace, via a new `AccountNotEligibleError` (422, mirrors the existing `CategoryNotEligibleError` — generic message, no missing-vs-foreign-workspace disclosure). Previously `accountId` was only checked for ID-pattern shape, so a transaction could be recorded against a nonexistent or foreign-workspace account. `RecordTransactionDeps` now requires `accountRepository`; wired into `apps/api/src/budget/budget.module.ts`. No archive/soft-delete check added — `Account` has no archive field yet (left a `// TODO:` for when it lands). Gate: tester → reviewer → security-scanner, 0 restart cycles, 0 emitted findings.

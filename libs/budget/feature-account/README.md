@@ -1,7 +1,5 @@
 # budget-feature-account
 
-This library was generated with [Nx](https://nx.dev).
+**Tags:** `scope:budget` · `type:feature` · `platform:web`
 
-## Running unit tests
-
-Run `nx test budget-feature-account` to execute the unit tests.
+Angular account summary screen: displays the derived balance from the default workspace account, converted to UAH/USD/EUR via cached Monobank rates, with a staleness indicator and manual refresh action. May import `scope:budget` ui/data-access/contracts and `scope:shared` contracts/util. No server-only imports.
