@@ -1,5 +1,7 @@
 # Angular Code Style
 
+See also: `docs/guides/frontend-feature.md` for the complete pattern flow from contract → data layer → UI → feature page → route, with worked examples from the four shipped budget screens.
+
 ## Standalone Components
 
 - All new Angular components must be standalone — no NgModules for new code

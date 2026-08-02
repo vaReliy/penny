@@ -82,6 +82,8 @@ Dependency direction: inward only. No layer may import from a layer above it.
 
 ## Frontend Architecture (Angular)
 
+See also: `docs/guides/frontend-feature.md` for the step-by-step pattern of building a feature (contract → data layer → UI → feature page → route), with worked examples from the four shipped budget screens and executable-contract validation.
+
 ```
 apps/web
   └─ routes → feature libs (identity/feature-login, identity/feature-greeting, …)
