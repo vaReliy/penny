@@ -1,131 +1,16 @@
 import { User, UserStatus } from 'identity-core';
-import type { IUserRepository, UserProfileUpdate } from 'identity-core';
 import type { ServiceContext } from 'shared-kernel';
-import type { RoleType, TelegramLoginPayload } from 'shared-contracts';
-import { beforeEach, describe, expect, it } from 'vitest';
+import type { TelegramLoginPayload } from 'shared-contracts';
+import { InfrastructureError } from 'shared-errors';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  createInMemoryUserRepository,
+  type IInMemoryUserRepository,
+} from 'identity-testing';
 
 import { LoginWithTelegramService } from './login-with-telegram.service.js';
 
 const CONTEXT: ServiceContext = { config: {}, caller: null };
-
-/** In-memory `IUserRepository` fake, keyed by `telegramId`. Mirrors the
- * "assign an id on insert" behavior of `MongoUserRepository.save`. */
-class FakeUserRepository implements IUserRepository {
-  private readonly usersById = new Map<string, User>();
-  private nextId = 1;
-
-  public seed(user: User): void {
-    this.usersById.set(user.id, user);
-  }
-
-  public async findById(id: string): Promise<User | null> {
-    return this.usersById.get(id) ?? null;
-  }
-
-  public async findByTelegramId(telegramId: string): Promise<User | null> {
-    for (const user of this.usersById.values()) {
-      if (user.telegramId === telegramId) {
-        return user;
-      }
-    }
-    return null;
-  }
-
-  public async findByUsername(username: string): Promise<User | null> {
-    for (const user of this.usersById.values()) {
-      if (user.username === username) {
-        return user;
-      }
-    }
-    return null;
-  }
-
-  public async save(entity: User): Promise<User> {
-    const id = entity.id === '' ? `generated-${this.nextId++}` : entity.id;
-    const persisted = new User({
-      id,
-      telegramId: entity.telegramId,
-      firstName: entity.firstName,
-      lastName: entity.lastName,
-      username: entity.username,
-      photoUrl: entity.photoUrl,
-      status: entity.status,
-      createdAt: entity.createdAt,
-      updatedAt: entity.updatedAt,
-    });
-    this.usersById.set(id, persisted);
-    return persisted;
-  }
-
-  public async updateProfile(
-    id: string,
-    profile: Partial<UserProfileUpdate>,
-  ): Promise<User | null> {
-    const user = this.usersById.get(id);
-    if (!user) return null;
-    const updated = new User({
-      id: user.id,
-      telegramId: user.telegramId,
-      firstName: profile.firstName,
-      lastName: profile.lastName,
-      username: profile.username,
-      photoUrl: profile.photoUrl,
-      status: user.status, // NEVER touched
-      createdAt: user.createdAt,
-      updatedAt: new Date(),
-    });
-    this.usersById.set(id, updated);
-    return updated;
-  }
-
-  public async updateStatus(
-    id: string,
-    status: UserStatus,
-  ): Promise<User | null> {
-    const user = this.usersById.get(id);
-    if (!user) return null;
-    const updated = new User({
-      id: user.id,
-      telegramId: user.telegramId,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      username: user.username,
-      photoUrl: user.photoUrl,
-      status,
-      roles: user.roles,
-      createdAt: user.createdAt,
-      updatedAt: new Date(),
-    });
-    this.usersById.set(id, updated);
-    return updated;
-  }
-
-  public async updateRoles(
-    id: string,
-    roles: readonly RoleType[],
-  ): Promise<User | null> {
-    const user = this.usersById.get(id);
-    if (!user) return null;
-    const updated = new User({
-      id: user.id,
-      telegramId: user.telegramId,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      username: user.username,
-      photoUrl: user.photoUrl,
-      status: user.status,
-      roles,
-      createdAt: user.createdAt,
-      updatedAt: new Date(),
-    });
-    this.usersById.set(id, updated);
-    return updated;
-  }
-
-  public async delete(id: string): Promise<void> {
-    this.usersById.delete(id);
-  }
-}
 
 function buildPayload(
   overrides: Partial<TelegramLoginPayload> = {},
@@ -143,11 +28,11 @@ function buildPayload(
 }
 
 describe('LoginWithTelegramService', () => {
-  let repository: FakeUserRepository;
+  let repository: IInMemoryUserRepository;
   let service: LoginWithTelegramService;
 
   beforeEach(() => {
-    repository = new FakeUserRepository();
+    repository = createInMemoryUserRepository();
     service = new LoginWithTelegramService({ userRepository: repository });
   });
 
@@ -247,6 +132,33 @@ describe('LoginWithTelegramService', () => {
     expect(outcome.data.user.status).toBe(UserStatus.ACTIVE);
     expect(outcome.data.user.firstName).toBe('NewName');
     expect(outcome.data.status).toBe(UserStatus.ACTIVE);
+  });
+
+  it('throws InfrastructureError when the profile update race-loses (user deleted mid-flight)', async () => {
+    const now = new Date('2026-01-01T00:00:00.000Z');
+    const existing = new User({
+      id: 'existing-1',
+      telegramId: '123456789',
+      firstName: 'OldName',
+      status: UserStatus.ACTIVE,
+      createdAt: now,
+      updatedAt: now,
+    });
+    repository.seed(existing);
+
+    // Simulate a concurrent deletion between this service's
+    // `findByTelegramId` read and its `updateProfile` write, by forcing the
+    // fake repository's `updateProfile` to report "no longer found" for this
+    // one call, mirroring the CAS-spy pattern used for `updateStatus`.
+    vi.spyOn(repository, 'updateProfile').mockImplementationOnce(
+      async () => null,
+    );
+
+    const payload = buildPayload({ id: 123456789 });
+
+    await expect(service.run(payload, CONTEXT)).rejects.toBeInstanceOf(
+      InfrastructureError,
+    );
   });
 
   describe('LIVR max_length boundary validation on profile fields', () => {

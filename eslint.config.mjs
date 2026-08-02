@@ -172,6 +172,180 @@ export default [
       ],
     },
   },
+  // Spec files may depend on `type:testing` libs (shared in-memory fakes) —
+  // production code under `type:application`/`type:core`/etc. still cannot,
+  // since flat-config rule keys don't merge, this override must replicate
+  // the full depConstraints set and only widen the sourceTag it targets.
+  {
+    files: ['**/*.spec.ts'],
+    rules: {
+      '@nx/enforce-module-boundaries': [
+        'error',
+        {
+          enforceBuildableLibDependency: true,
+          allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
+          depConstraints: [
+            {
+              sourceTag: 'scope:shared',
+              onlyDependOnLibsWithTags: ['scope:shared'],
+            },
+            {
+              sourceTag: 'scope:identity',
+              onlyDependOnLibsWithTags: ['scope:identity', 'scope:shared'],
+            },
+            {
+              sourceTag: 'scope:budget',
+              onlyDependOnLibsWithTags: ['scope:budget', 'scope:shared'],
+            },
+            {
+              sourceTag: 'scope:web',
+              onlyDependOnLibsWithTags: [
+                'scope:web',
+                'scope:identity',
+                'scope:budget',
+                'scope:shared',
+              ],
+            },
+            {
+              sourceTag: 'platform:shared',
+              onlyDependOnLibsWithTags: ['platform:shared'],
+            },
+            {
+              sourceTag: 'platform:server',
+              onlyDependOnLibsWithTags: ['platform:server', 'platform:shared'],
+            },
+            {
+              sourceTag: 'platform:web',
+              onlyDependOnLibsWithTags: ['platform:web', 'platform:shared'],
+            },
+            {
+              sourceTag: 'type:infrastructure',
+              onlyDependOnLibsWithTags: [
+                'type:infrastructure',
+                'type:application',
+                'type:core',
+                'type:contracts',
+                'type:kernel',
+                'type:errors',
+                'type:util',
+                'type:testing',
+              ],
+            },
+            {
+              sourceTag: 'type:application',
+              onlyDependOnLibsWithTags: [
+                'type:application',
+                'type:core',
+                'type:contracts',
+                'type:kernel',
+                'type:errors',
+                'type:util',
+                'type:validation',
+                'type:testing',
+              ],
+              bannedExternalImports: [
+                '@nestjs/*',
+                '@angular/*',
+                'mongoose',
+                'mongodb',
+                '@typegoose/*',
+              ],
+            },
+            {
+              sourceTag: 'type:core',
+              onlyDependOnLibsWithTags: [
+                'type:core',
+                'type:contracts',
+                'type:kernel',
+                'type:errors',
+                'type:util',
+                'type:testing',
+              ],
+              bannedExternalImports: [
+                '@nestjs/*',
+                '@angular/*',
+                'mongoose',
+                'mongodb',
+                '@typegoose/*',
+              ],
+            },
+            {
+              sourceTag: 'type:feature',
+              onlyDependOnLibsWithTags: [
+                'type:feature',
+                'type:ui',
+                'type:data',
+                'type:util',
+                'type:testing',
+              ],
+            },
+            {
+              sourceTag: 'type:ui',
+              onlyDependOnLibsWithTags: [
+                'type:ui',
+                'type:util',
+                'type:testing',
+              ],
+            },
+            {
+              sourceTag: 'type:data',
+              onlyDependOnLibsWithTags: [
+                'type:data',
+                'type:util',
+                'type:contracts',
+                'type:testing',
+              ],
+            },
+            {
+              sourceTag: 'type:kernel',
+              onlyDependOnLibsWithTags: [
+                'type:kernel',
+                'type:contracts',
+                'type:errors',
+                'type:util',
+                'type:testing',
+              ],
+              bannedExternalImports: [
+                '@nestjs/*',
+                '@angular/*',
+                'mongoose',
+                'mongodb',
+                '@typegoose/*',
+              ],
+            },
+            {
+              sourceTag: 'type:contracts',
+              onlyDependOnLibsWithTags: [
+                'type:contracts',
+                'type:util',
+                'type:testing',
+              ],
+            },
+            {
+              sourceTag: 'type:errors',
+              onlyDependOnLibsWithTags: [
+                'type:errors',
+                'type:util',
+                'type:testing',
+              ],
+            },
+            {
+              sourceTag: 'type:validation',
+              onlyDependOnLibsWithTags: [
+                'type:validation',
+                'type:util',
+                'type:testing',
+              ],
+            },
+            {
+              sourceTag: 'type:util',
+              onlyDependOnLibsWithTags: ['type:util', 'type:testing'],
+            },
+          ],
+        },
+      ],
+    },
+  },
   {
     files: ['**/vite.config.*', '**/vitest.config.*'],
     rules: {

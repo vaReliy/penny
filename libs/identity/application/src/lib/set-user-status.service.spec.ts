@@ -5,121 +5,19 @@ import {
   NotFoundError,
 } from 'shared-errors';
 import { User, UserStatus } from 'identity-core';
-import type { IUserRepository, UserProfileUpdate } from 'identity-core';
 import type { CallerIdentity, ServiceContext } from 'shared-kernel';
 import { Role } from 'shared-contracts';
-import type { RoleType } from 'shared-contracts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  createInMemoryUserRepository,
+  type IInMemoryUserRepository,
+} from 'identity-testing';
 
 import {
   SUPERADMIN_ROLE,
   ApproveUserService,
   RejectUserService,
 } from './set-user-status.service.js';
-
-/** In-memory `IUserRepository` fake, keyed by `id`. */
-class FakeUserRepository implements IUserRepository {
-  private readonly usersById = new Map<string, User>();
-
-  public seed(user: User): void {
-    this.usersById.set(user.id, user);
-  }
-
-  public async findById(id: string): Promise<User | null> {
-    return this.usersById.get(id) ?? null;
-  }
-
-  public async findByTelegramId(telegramId: string): Promise<User | null> {
-    for (const user of this.usersById.values()) {
-      if (user.telegramId === telegramId) {
-        return user;
-      }
-    }
-    return null;
-  }
-
-  public async findByUsername(username: string): Promise<User | null> {
-    for (const user of this.usersById.values()) {
-      if (user.username === username) {
-        return user;
-      }
-    }
-    return null;
-  }
-
-  public async updateProfile(
-    _id: string,
-    _profile: Partial<UserProfileUpdate>,
-  ): Promise<User | null> {
-    return null;
-  }
-
-  public async updateStatus(
-    id: string,
-    status: UserStatus,
-    expectedCurrentStatus?: UserStatus,
-  ): Promise<User | null> {
-    const existing = this.usersById.get(id);
-    if (!existing) {
-      return null;
-    }
-    if (
-      expectedCurrentStatus !== undefined &&
-      existing.status !== expectedCurrentStatus
-    ) {
-      // CAS failure: persisted status no longer matches what the caller
-      // read, mirroring MongoUserRepository's filter-doesn't-match null.
-      return null;
-    }
-    const updated = new User({
-      id: existing.id,
-      telegramId: existing.telegramId,
-      firstName: existing.firstName,
-      lastName: existing.lastName,
-      username: existing.username,
-      photoUrl: existing.photoUrl,
-      status,
-      roles: existing.roles,
-      createdAt: existing.createdAt,
-      updatedAt: new Date(),
-    });
-    this.usersById.set(id, updated);
-    return updated;
-  }
-
-  public async updateRoles(
-    id: string,
-    roles: readonly RoleType[],
-  ): Promise<User | null> {
-    const existing = this.usersById.get(id);
-    if (!existing) {
-      return null;
-    }
-    const updated = new User({
-      id: existing.id,
-      telegramId: existing.telegramId,
-      firstName: existing.firstName,
-      lastName: existing.lastName,
-      username: existing.username,
-      photoUrl: existing.photoUrl,
-      status: existing.status,
-      roles,
-      createdAt: existing.createdAt,
-      updatedAt: new Date(),
-    });
-    this.usersById.set(id, updated);
-    return updated;
-  }
-
-  public async save(entity: User): Promise<User> {
-    this.usersById.set(entity.id, entity);
-    return entity;
-  }
-
-  public async delete(id: string): Promise<void> {
-    this.usersById.delete(id);
-  }
-}
 
 function buildPendingUser(id = 'user-1'): User {
   const now = new Date('2026-01-01T00:00:00.000Z');
@@ -150,11 +48,11 @@ const NON_ADMIN_CALLER: CallerIdentity = {
 };
 
 describe('ApproveUserService', () => {
-  let repository: FakeUserRepository;
+  let repository: IInMemoryUserRepository;
   let service: ApproveUserService;
 
   beforeEach(() => {
-    repository = new FakeUserRepository();
+    repository = createInMemoryUserRepository();
     service = new ApproveUserService({ userRepository: repository });
   });
 
@@ -245,11 +143,11 @@ describe('ApproveUserService', () => {
 });
 
 describe('RejectUserService', () => {
-  let repository: FakeUserRepository;
+  let repository: IInMemoryUserRepository;
   let service: RejectUserService;
 
   beforeEach(() => {
-    repository = new FakeUserRepository();
+    repository = createInMemoryUserRepository();
     service = new RejectUserService({ userRepository: repository });
   });
 

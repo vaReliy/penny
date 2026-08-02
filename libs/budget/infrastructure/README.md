@@ -1,6 +1,6 @@
 # budget-infrastructure
 
-**Tags**: `scope:budget · type:infrastructure · platform:server`
+**Tags:** `scope:budget` · `type:infrastructure` · `platform:server`
 
 **May import**: `scope:budget/core`, `scope:shared/*` (errors, util)
 

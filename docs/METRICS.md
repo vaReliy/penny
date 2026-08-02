@@ -109,3 +109,7 @@ Each completed task is one row in the table below.
 | 2026-08-02 | penny | governance-docs-result2                                      | T1   | 1      | -/2/-/-           | 1       | no       | standard       |                    |
 | 2026-08-02 | penny | nx-readme-boilerplate-guard                                  | T1   | 2      | 0/3/-/-           | 2       | no       | standard       |                    |
 | 2026-08-02 | penny | update-hardening-follow-ups-section                          | T1   | 0      | -/0/-/-           | 0       | no       | cheap          |                    |
+| 2026-08-02 | penny | normalize-budget-infrastructure-readme-tags-format           | T1   | 1      | -/0/-/-           | 0       | no       | cheap          |                    |
+| 2026-08-02 | penny | extract-shared-stateful-fake-user-repository                 | T1   | 1      | 0/0/-/-           | 0       | no       | standard       |                    |
+| 2026-08-02 | penny | in-memory-user-repository-direct-coverage                    | T1   | 1      | 0/0/-/-           | 1       | no       | standard       |                    |
+| 2026-08-02 | penny | add-typecheck-target-identity-testing                        | T0   | 1      | 0/0/-/-           | 0       | no       | cheap          |                    |
