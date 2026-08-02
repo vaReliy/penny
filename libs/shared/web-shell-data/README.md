@@ -1,7 +1,5 @@
 # shared-web-shell-data
 
-This library was generated with [Nx](https://nx.dev).
+**Tags:** `scope:shared` · `type:data` · `platform:web`
 
-## Running unit tests
-
-Run `nx test shared-web-shell-data` to execute the unit tests.
+Angular `InjectionToken` for session-logout callback, injected by `AppShellComponent` in `shared-web-shell`.

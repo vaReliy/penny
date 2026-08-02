@@ -321,3 +321,14 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 - **Status**: pending-port
 
 ---
+
+## 2026-08-02 — [Enhancement] Nx generator post-gen checklist missing README.md boilerplate-replacement step
+
+- **Component**: `rules/cts/nx-generators.md` § Post-generator corrections (new section after "Dead Demo-Component Cleanup")
+- **Type**: Enhancement
+- **What happened**: 5 of 11 `libs/budget/*` libraries shipped with Nx-generator boilerplate README text (`This library was generated with @nx/angular...`) instead of the repo's one-line convention (`# <lib-name>` + `**Tags:** scope:… · type:… · platform:…` matching `project.json` tags). No gate stage (build, lint, test, review) checks README content, so this drifted silently across several implementation tasks until an explicit governance-docs surface sweep caught it manually. Any generator-scaffolded lib can carry the boilerplate indefinitely without triggering any automated failure. A static guard test now enforces this conformance repo-wide, making incomplete READMEs visible in CI — but the post-generation checklist never named this step, leaving it to be discovered by trial-and-error on the first CI run that checked it.
+- **Why it matters upstream**: Any claude-ts consumer's `nx g` generators produce identical boilerplate README text, and any consumer with a governance-docs initiative or a static readme-guard test will hit the same silent-failure mode on every new lib unless a post-gen checklist step explicitly mandates the replacement.
+- **Suggested upstream change**: Add a new subsection to `rules/cts/nx-generators.md` § Post-generator corrections (after the existing "Dead Demo-Component Cleanup" entry if present, or as a standalone "Replace Generator-Provided README.md" section): document that the generated `README.md` boilerplate must be replaced with a one-line convention (optionally: "matching your repo's existing libs") before the lib's first feature commit. Include a note that no automated gate catches this omission during development, but it is visible under manual review or via a static guard test.
+- **Status**: pending-port
+
+---

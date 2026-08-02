@@ -1,7 +1,5 @@
 # shared-web-shell
 
-This library was generated with [Nx](https://nx.dev).
+**Tags:** `scope:shared` · `type:feature` · `platform:web`
 
-## Running unit tests
-
-Run `nx test shared-web-shell` to execute the unit tests.
+Angular application shell (root layout component) wired at `apps/web`'s root route as the primary container.

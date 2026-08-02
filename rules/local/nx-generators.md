@@ -54,6 +54,24 @@ Zero results indicate it is safe to delete; typecheck and tests should remain gr
 
 **Concrete incident**: `libs/identity/feature-access-status` and `libs/identity/feature-greeting` each carried their generator-default components (`identity-feature-access-status.ts/.html/.spec.ts` and similar for greeting) alongside real page components (`access-status-page.ts`, `greeting-page.ts`) that replaced them. The default components were unrouted, unexported from `src/index.ts`, and invisible to CI — confirmed zero references anywhere in libs or apps before deleting; lint/typecheck/test all remained green after cleanup.
 
+## New section: Replace Generator-Provided README.md Boilerplate Before First Feature Commit
+
+After `nx g` scaffolds a new lib, the generated `README.md` contains Nx-template boilerplate text: `This library was generated with @nx/angular...` (or equivalent for other frameworks). Replace this with a one-line convention matching your repo's existing libs:
+
+```markdown
+# <library-name>
+
+**Tags:** scope:… · type:… · platform:…
+```
+
+The tags line must match the actual tags declared in the lib's `project.json` (the `tags: ["scope:...", "type:...", "platform:..."]` array). Verify by comparing against a known-good sibling lib's `README.md` — e.g., `libs/budget/core/README.md`.
+
+**When**: Replace the boilerplate README in the same commit that adds your first feature to the lib, not before and not later. This is a single-pass step, not a separate task.
+
+**Why**: Generator-provided boilerplate README.md content is invisible to every automated gate — no lint rule, test, or build check catches it. Without this step, the readme drifts silently across implementation tasks and appears unfinished to future contributors. A static guard test now also enforces this conformance across the workspace (`apps/web/src/readme-boilerplate.guard.spec.ts` parses all lib READMEs and confirms no boilerplate survives), so an incomplete README will surface in CI.
+
+**Concrete incident**: 5 of 11 `libs/budget/*` libraries (`feature-account`, `feature-records`, `feature-history`, `feature-planner`, `ui`) shipped with the template boilerplate README past their feature work, invisible to review and lint, until an explicit governance-docs surface sweep caught them manually.
+
 ## Extends rules/cts/nx-generators.md § hand-scaffolded lib missing lint target
 
 Concrete incident in this repo: `libs/shared/testing` was hand-scaffolded (`project.json`/`tsconfig*.json` written by hand, `tsconfig.base.json` path alias added manually) and was missing `eslint.config.mjs`, `package.json`, and `README.md` compared to a generator-created sibling — caught only by diffing the new lib's file listing against a known-generated one.

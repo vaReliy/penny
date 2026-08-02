@@ -1,3 +1,5 @@
 # identity-testing
 
-This library was generated with [Nx](https://nx.dev).
+**Tags:** `scope:identity` · `type:testing` · `platform:server`
+
+Test doubles and fixtures for identity/auth testing, consumed by `apps/api`'s controller and guard specs (auth, identity, budget domains).
