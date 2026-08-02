@@ -332,3 +332,25 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 - **Status**: pending-port
 
 ---
+
+## 2026-08-02 — [Enhancement] ADR-driven repo-wide convention flips must grep scaffolding rules to prevent silent reversion
+
+- **Component**: `rules/cts/workflow.md` (Foresight gate section or a new "ADR-driven convention flips" subsection)
+- **Type**: Enhancement
+- **What happened**: Converting `apps/web` + `libs/identity/*` from SCSS to plain CSS (per ADR-008's Tailwind v4 adoption — Tailwind explicitly isn't designed to run through Sass) initially only touched the renamed files and `DECISIONS.md`. Code review caught that `rules/local/code-style-angular.md`, `rules/cts/nx-generators.md`, and `docs/SKELETON.md` all still hard-mandated SCSS-only (`--style=scss` on every generator invocation, "rename `.css` → `.scss`" as a post-gen step) — left unfixed, the next Angular-dev/reviewer agent following those rules would have silently reverted the new components back to SCSS, undoing the ADR. Even after the first fix pass, two more contradictory references survived in the same files (a stale `--style=scss` left in an example command, a stale "SCSS-not-CSS" mention in a scaffolding summary line) — this class of doc drift needs a full grep sweep for the old convention's keyword across `rules/**`/`docs/SKELETON.md`, not just fixing the sections that were obviously about styling.
+- **Why it matters upstream**: Any claude-ts consumer doing an ADR-driven repo-wide convention flip (styling, module resolution, naming, file locations, etc.) risks the same silent doc-drift/revert problem if scaffolding/generator rule docs aren't grepped in the same changeset. A stale rule means the next agent implementing a new feature blindly follows it, silently undoing the architectural decision with zero errors — the diff looks correct (new component uses the new convention), but the implementation accidentally reverts the ADR.
+- **Suggested upstream change**: Add a checklist item or a new subsection to the orchestrator's triage/ADR-handling section of `rules/cts/workflow.md`: "When an ADR/DECISIONS.md change flips a repo-wide convention (styling, module resolution, naming, etc.), perform a repo-wide grep for the old convention's keyword across `rules/**` and `docs/SKELETON.md` in the same changeset, not just the files the ADR itself touches. Fix any contradictory scaffolding/generator references that would cause the next agent to silently revert the convention flip." Optionally include the concrete example (SCSS→CSS + the three stale rule references) to illustrate the failure mode.
+- **Status**: pending-port
+
+---
+
+## 2026-08-02 — [Enhancement] Nx enforce-module-boundaries silently allows unconstrained `scope:*` tags — new domain prerequisite must be documented
+
+- **Component**: `rules/cts/architecture.md` (Nx tag / depConstraints section)
+- **Type**: Enhancement
+- **What happened**: `eslint.config.mjs`'s `@nx/enforce-module-boundaries` depConstraints currently enumerate only `scope:shared` and `scope:identity`. A source tag with no matching `onlyDependOnLibsWithTags` rule is NOT fenced by default — it can import anything. So standing up `libs/budget/*` has a hard prerequisite: add `{ sourceTag: 'scope:budget', onlyDependOnLibsWithTags: ['scope:budget','scope:shared'] }` to the config BEFORE the first budget lib lands, else the onion/scope fuse silently doesn't apply to budget (no error, no warning). This is an executable-config edit (never trivial-tier). Separately confirmed: `type:validation` libs may depend ONLY on `type:util` (not `type:contracts`) — LIVR schemas are self-contained runtime rule objects and must not import DTO/contract TS types; a budget `type:validation` lib therefore cannot import from a budget `contracts` lib.
+- **Why it matters upstream**: Any claude-ts consumer using Nx's `@nx/enforce-module-boundaries` with per-domain `scope:*` tags will hit the same silent gap — a new domain's source tag isn't fenced until its depConstraint is explicitly added, and there's no error/warning when it's missing. The onion/scope fuse opens silently, allowing architecturally-forbidden imports to succeed until reviewed.
+- **Suggested upstream change**: Add a note to the architecture rules doc's Nx-tagging section: "Adding a new `scope:*` domain requires an explicit `depConstraints` entry before the first lib in that domain lands — an untagged/unconstrained source tag is NOT fenced by default." Also note the `type:validation` → `type:util`-only constraint (validation libs must not import contract/DTO types) as a related, worth-stating-explicitly rule.
+- **Status**: pending-port
+
+---
