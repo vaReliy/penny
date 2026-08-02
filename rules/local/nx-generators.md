@@ -2,7 +2,7 @@
 
 Read this BEFORE creating any new app or lib — and BEFORE handing off to the quality gate, not only after (the CTS default only mandates the post-generator audit). **Always run the actual `nx g` generator for new apps and libs; never hand-author scaffolds by diffing a sibling.**
 
-**Concrete incident**: `libs/budget/application` was hand-authored by diffing `libs/identity/application` rather than running `nx g @nx/js:lib`. The copied `tsconfig.json` (identity-application never imports the BigInt-backed `Money` value object) inherited the base `es2015` target; `budget-application` does import `Money` and failed typecheck with `TS2737: BigInt literals are not available when targeting lower than ES2020`. A generator run wouldn't have regressed this — `libs/budget/core`, a sibling that does import `Money`, carries the `es2020` override as visible precedent — but diffing identity-application made that override invisible. Hand-authored scaffolds can also silently drop out of `lint` targets entirely (see below).
+**Concrete incident (historical — resolved 2026-07-22, base target raised to es2020)**: `libs/budget/application` was hand-authored by diffing `libs/identity/application` rather than running `nx g @nx/js:lib`. The copied `tsconfig.json` (identity-application never imports the BigInt-backed `Money` value object) inherited the base `es2015` target; `budget-application` does import `Money` and failed typecheck with `TS2737: BigInt literals are not available when targeting lower than ES2020`. At the time, the fix was a per-lib `target: "es2020"` override, discoverable only by diffing against a sibling lib that already carried it — `tsconfig.base.json` now targets `es2020` directly, so this specific failure mode no longer applies. The broader lesson stands: hand-authored scaffolds can silently drop config that a generator would have set correctly, and can also drop out of `lint` targets entirely (see below).
 
 ### Nx auto-detecting a hand-written lib is NOT permission to hand-author
 
@@ -10,21 +10,9 @@ The Nx workspace graph does auto-detect a hand-written `project.json` + tsconfig
 
 Any implementation or quality-gate report covering a new app or lib must state the exact `nx g` command that created it. "Hand-authored" is not a reportable creation path — a report that cannot cite the generator command signals the mandate was bypassed and the scaffold must be regenerated or fully audited against a known-generated sibling.
 
-## New section: TypeScript Value Objects Requiring ES2020+ (BigInt)
+## Historical note: TypeScript Value Objects Requiring ES2020+ (BigInt)
 
-Any lib importing `shared-util`'s `Money` value object (or any other BigInt-based utility) must override the repo's base `tsconfig.base.json`'s `target: "es2015"` in its own `tsconfig.json`:
-
-```json
-{
-  "compilerOptions": {
-    "target": "es2020"
-  }
-}
-```
-
-**Why**: `shared-util`'s `Money` (in `libs/shared/util/src/lib/money.ts`) uses BigInt minor units and contains `0n` literals in `Money.zero`, `isZero`, `isNegative`. These literals require `target: "es2020"` per TypeScript's specification. Even if you only import `Money` via a type-only import through a barrel index (`import type { SerializedMoney } from "shared-util"`), tsc must still fully resolve the module graph behind the barrel and will recompile `money.ts` under your lib's own tsconfig settings, failing with `TS2737` if you inherit the base `es2015` target.
-
-**Pattern**: Apply the override preemptively to any new lib that imports from `shared-util` by value or type-only, rather than discovering this at typecheck time.
+`tsconfig.base.json` targeted `es2015` until 2026-07-22, so any lib importing `shared-util`'s BigInt-backed `Money` value object needed a per-lib `target: "es2020"` override to avoid `TS2737`. The base target is now `es2020` workspace-wide, so no per-lib override is needed for this reason — do not add one preemptively to new libs.
 
 ## Overrides rules/cts/nx-generators.md § vitest test target name
 

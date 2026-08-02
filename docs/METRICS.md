@@ -113,3 +113,4 @@ Each completed task is one row in the table below.
 | 2026-08-02 | penny | extract-shared-stateful-fake-user-repository                 | T1   | 1      | 0/0/-/-           | 0       | no       | standard       |                    |
 | 2026-08-02 | penny | in-memory-user-repository-direct-coverage                    | T1   | 1      | 0/0/-/-           | 1       | no       | standard       |                    |
 | 2026-08-02 | penny | add-typecheck-target-identity-testing                        | T0   | 1      | 0/0/-/-           | 0       | no       | cheap          |                    |
+| 2026-08-02 | penny | raise-tsconfig-base-target-es2020                            | T2   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |
