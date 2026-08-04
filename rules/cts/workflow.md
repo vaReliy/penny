@@ -140,7 +140,7 @@ This diagram is the T2/T3 path (`ba` required). **T1 skips Phase 1 entirely**: t
 
 ### Pre-flight obligation for technical agents
 
-When dispatching a technical agent (`backend-developer`, `angular-developer`, `tester`, `qa`, `devops`, `dba`, `debugger`, `refactoring-expert`, `integration-architect`, `queue-specialist`), the agent definition already includes mandatory pre-flight reads (`docs/KNOWLEDGE_INBOX.md` + `rules/architecture.md` + `rules/code-style.md`). Do not pass these as inline context — the agent reads them from disk so they reflect the current state of the repo.
+When dispatching a technical agent (`backend-developer`, `angular-developer`, `tester`, `qa`, `devops`, `dba`, `debugger`, `refactoring-expert`, `integration-architect`, `queue-specialist`), the agent definition already includes mandatory pre-flight reads (`docs/KNOWLEDGE_INBOX.md` + `rules/cts/architecture.md` + `rules/cts/code-style.md`). Do not pass these as inline context — the agent reads them from disk so they reflect the current state of the repo.
 
 ### Routing Mixed Infrastructure + Application Code
 
@@ -163,9 +163,9 @@ Team name: `impl-{feature-slug}` (e.g. `impl-user-registration`)
 
 **Handoff checklist (orchestrator verifies before advancing to Phase 4):**
 
-- [ ] `grep -E '"\^|"~' package.json` returns empty — no ranges introduced. Full audit procedure: `rules/dependencies.md`.
+- [ ] `grep -E '"\^|"~' package.json` returns empty — no ranges introduced. Full audit procedure: `rules/cts/dependencies.md`.
 - [ ] `npx nx build <project> --skip-nx-cache` exits 0
-- [ ] Generated tsconfig explicitly declares the strict block (the repo base omits it): `strict`, `noImplicitOverride`, `noPropertyAccessFromIndexSignature`, `noImplicitReturns`, `noFallthroughCasesInSwitch`, `forceConsistentCasingInFileNames`. For an app, also verify `module`/`moduleResolution` per `rules/nx-generators.md` — apps differ from libs, do NOT blindly copy a lib's `"bundler"` resolution.
+- [ ] Generated tsconfig explicitly declares the strict block (the repo base omits it): `strict`, `noImplicitOverride`, `noPropertyAccessFromIndexSignature`, `noImplicitReturns`, `noFallthroughCasesInSwitch`, `forceConsistentCasingInFileNames`. For an app, also verify `module`/`moduleResolution` per `rules/cts/nx-generators.md` — apps differ from libs, do NOT blindly copy a lib's `"bundler"` resolution.
 
 Passing this checklist authorizes advancing to the quality gate (Phase 4) — it does **not** authorize declaring the task done. The gate still runs.
 
@@ -178,12 +178,6 @@ Passing this checklist authorizes advancing to the quality gate (Phase 4) — it
 | Angular 17+       | `angular-developer` |
 
 The `ba` output must include an **API contract** (endpoint, request/response shape) when both backend and frontend are in scope — this is the interface between the two parallel agents.
-
-### CI scoping: `nx affected -t <target> --exclude <project>` semantics
-
-When scoping CI targets with `nx affected`, remember that `--exclude` applies to project names, not target names. Before using `--exclude` to scope an invocation, enumerate every project that exposes that target name (via `nx show projects` and `grep project.json`). An exclude-list covering only the one project you thought of is silently wrong the moment another project gains the same target.
-
-Example: `nx affected -t e2e --exclude smoke-e2e` doesn't stop at smoke-e2e — if `apps/api` also defines an `e2e` target (Jest, needs live Mongo), it will also run. Fix: scope explicitly with `-p web-e2e -t e2e` instead.
 
 ### Planning Team (T3)
 
@@ -248,8 +242,8 @@ Reviewer and security-scanner emit two sections in every report:
 **Orchestrator actions (deterministic — no judgment calls):**
 
 - `## Fix Now` items present → route to responsible implementation agent → restart quality gate from stage 1. Max 2 full cycles. After 2 cycles with open Fix Now items → **hard stop**: emit a continuation task via the `handoff` skill (open Fix Now items, attempt log, hypotheses) instead of a bare surface-to-user stop, do NOT self-patch.
-- `## Emit as Task` items present → orchestrator creates one task per context cluster: findings that share a module/seam/file-area become ONE task file with a findings checklist inside it; findings unrelated to each other stay as separate task files (following `rules/task-authoring.md`). Then **closes the gate** for the current task. Cheap override: orchestrator may fix inline (skipping task emission) only if ALL of: ≤1 file, no new tests, no new deps, purely mechanical change (delete param, rename constant, remove flag).
-- **Generation damping at G≥2**: At Generation ≥ 2 (a task itself emitted from another emitted task's gate — see `rules/task-authoring.md`'s Generation row), only Correctness/Security findings (per the Severity floor table below) may spawn a new G(n+1) task file. Comprehension and Consistency findings at G≥2 do NOT get their own task file — instead, record them in the sub-floor ledger (`## Deferred / sub-floor` section in `docs/KNOWLEDGE_INBOX.md`) for theme detection, using the existing ≥3-occurrences-promotes-to-a-task rule that applies to sub-floor findings (see below). This overrides the normal Severity floor only at high generation; the floor table and roadmap-prioritization rules remain unchanged.
+- `## Emit as Task` items present → orchestrator creates one task per context cluster: findings that share a module/seam/file-area become ONE task file with a findings checklist inside it; findings unrelated to each other stay as separate task files (following `rules/cts/task-authoring.md`). Then **closes the gate** for the current task. Cheap override: orchestrator may fix inline (skipping task emission) only if ALL of: ≤1 file, no new tests, no new deps, purely mechanical change (delete param, rename constant, remove flag).
+- **Generation damping at G≥2**: At Generation ≥ 2 (a task itself emitted from another emitted task's gate — see `rules/cts/task-authoring.md`'s Generation row), only Correctness/Security findings (per the Severity floor table below) may spawn a new G(n+1) task file. Comprehension and Consistency findings at G≥2 do NOT get their own task file — instead, record them in the sub-floor ledger (`## Deferred / sub-floor` section in `docs/KNOWLEDGE_INBOX.md`) for theme detection, using the existing ≥3-occurrences-promotes-to-a-task rule that applies to sub-floor findings (see below). This overrides the normal Severity floor only at high generation; the floor table and roadmap-prioritization rules remain unchanged.
 - All sections empty (`_none_`) → proceed to phase 5.
 
 **Same-session micro-resolution lane.** After the gate closes for the current task (all `## Fix Now` resolved, `## Emit as Task` list written), the orchestrator MAY resolve emitted findings immediately in the same session when ALL hold per finding:
@@ -262,24 +256,6 @@ Reviewer and security-scanner emit two sections in every report:
 Rationale: a warm-context resume skips session bootstrap and pre-flight re-reads; the lane trades none of the gate's rigor (batch verification still runs) for a large token saving on mechanical follow-ups. Findings that miss any criterion emit as tasks exactly as before.
 
 **Closing checklist — if `.claude/**`or`rules/**` changed this session:** suggest running `/rules-audit` before closing. This is a suggestion to the human, not an auto-dispatch.
-
-### Quality gate stage sequencing
-
-The quality gate is strictly sequential per stage — do NOT dispatch stage N+1 while stage N is still running.
-
-**Pattern to avoid**: dispatching `reviewer` while `tester`'s background async work (e.g., `nx run-many`) is still in progress. Even though the inline result looks complete, a background task finishing after `reviewer` starts violates the sequential contract.
-
-**Correct pattern**: after dispatching each quality-gate agent as a foreground `Agent` call, wait for the tool result to fully appear before making the next `Agent` call — do not infer completion from partial/streamed output.
-
-### Quality gate fix-retry cycles: resume same agent instance
-
-When a fix is needed after the quality gate (`## Fix Now` items in tester/reviewer/security-scanner/qa reports), re-entry point and agent resumption matter:
-
-1. **Trivial change** (comment, doc-only) → orchestrator handles inline, no downstream needed
-2. **Source logic change** → resume `backend-developer` via `SendMessage` to its existing agent ID → run `tester` → `reviewer` + `security-scanner` in parallel
-3. **Test-only change** → resume `tester` via `SendMessage` to its existing agent ID → run `reviewer` + `security-scanner`
-
-Resuming the same agent instance (via `SendMessage` to the original `agentId`) preserves context — the agent doesn't re-derive understanding cold.
 
 ## Severity floor (emit-vs-drop)
 
@@ -301,14 +277,6 @@ Sub-floor findings: do NOT create a task file. Record one line in the rolling su
 Emitted (non-Fix-Now) tasks land in todo/ and are prioritized against the original backlog — never auto-pulled depth-first ahead of it.
 
 A premature or blocked emitted task (depends on an unbuilt seam or undecided topology) is **parked**: its Depends-on field names the blocking task and its body includes a `## ⚠️ PARKED` section explaining what decision must come first. Do not implement a parked task speculatively.
-
-## Roadmap Ordering: Bones Before Muscles
-
-Depth-first security/feature hardening on a skeleton whose foundational architecture is undecided produces half-wired implementations that are worse than both states. Example: removing `'unsafe-inline'` from CSP but Angular never receives the nonce (because serving topology is undecided) breaks styles in production with no clear error.
-
-**Rule**: if an implementation option depends on an upstream architectural decision (who serves HTML, which DB, network topology, transport layer), defer the implementation until that decision is concrete. Record the option analysis in the parked task file, include a `Depends on` reference to the blocking decision task, and pick the option after the decision is locked.
-
-When the blocking seam or topology is _later_ decided, re-open the parked task with the context now known, and unblock the implementation.
 
 ## Bug Fix Pipeline
 
@@ -357,20 +325,6 @@ devops ══╗
 
 No `tester` or `qa` for infra-only changes.
 
-## Milestone Closure & DoD Verification
-
-### Task file in `done/` is not proof of completion
-
-A task file moved to `tasks/<phase>/done/` leaves no git trace (`/tasks` is git-ignored), so a stale or ghost task file can go unnoticed. Before closing a milestone or trusting a `done/` task:
-
-1. Check that `METRICS.md` has a row for the task (METRICS Stop-hook enforces this post-close)
-2. Verify acceptance criteria against `git log` and `git diff`:
-   - Search for commits that reference the task ID or implementation keywords
-   - Grep for config/code changes that should exist (e.g., `grep "sha-256-pinned" .github/` for a Docker fix, `grep "role" src/` for an auth feature)
-   - Cross-check against `git show <commit>` for the actual diff
-
-Written claims of completion (task moves, comments, inbox entries) must be verified against the artifact. Also audit plan-vs-reality against the Definition-of-Done checklist before a milestone close — review cycles catch diffs but miss _omissions_ (config not added, feature flag not wired, test not enabled).
-
 ## Phase 6: Knowledge Capture (Mandatory After Every Session That Touches Code)
 
 **This phase is non-negotiable.** After every feature, bugfix, or CI/CD pipeline completes — and after ANY session where source, config, or template-inherited files were changed — the orchestrator MUST capture learnings before declaring the task done. This applies equally to formal pipeline runs and to direct/trivial edits: the trigger is "did real files change?", not "did we run a pipeline?".
@@ -381,14 +335,14 @@ When any subagent's final report contains a `## Learnings` section, the orchestr
 
 ### What to update
 
-| Artifact                             | When to update                                    | What goes in                                                                                                                               |
-| ------------------------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `CHANGELOG.md`                       | **Always**                                        | Concise summary of what changed and why; one entry per task                                                                                |
-| `PROJECT_CONTEXT.md` (or equivalent) | Architecture/domain changed                       | New modules, domain rule changes, infra changes, historical incidents                                                                      |
-| `docs/KNOWLEDGE_INBOX.md`            | Durable, project-relevant learning (default path) | A 3-line entry (see Knowledge Inbox below)                                                                                                 |
-| `docs/CLAUDE_TS_CHANGELOG.md`        | Template-inherited file changed                   | Divergence/fix log entry (see entry format in that file)                                                                                   |
-| `docs/METRICS.md`                    | **Always**                                        | One append-only table row per completed task (see format in that file); never `@`-referenced, same constraint as `docs/KNOWLEDGE_INBOX.md` |
-| Auto-memory (`feedback` type)        | Personal workflow preference — this user only     | Agent behavior to repeat or avoid for this user's sessions                                                                                 |
+| Artifact                      | When to update                                    | What goes in                                                                                                                               |
+| ----------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `CHANGELOG.md`                | **Always**                                        | Concise summary of what changed and why; one entry per task                                                                                |
+| `CONTEXT.md` (or equivalent)  | Architecture/domain changed                       | New modules, domain rule changes, infra changes, historical incidents                                                                      |
+| `docs/KNOWLEDGE_INBOX.md`     | Durable, project-relevant learning (default path) | A 3-line entry (see Knowledge Inbox below)                                                                                                 |
+| `docs/CLAUDE_TS_CHANGELOG.md` | Template-inherited file changed                   | Divergence/fix log entry (see entry format in that file)                                                                                   |
+| `docs/METRICS.md`             | **Always**                                        | One append-only table row per completed task (see format in that file); never `@`-referenced, same constraint as `docs/KNOWLEDGE_INBOX.md` |
+| Auto-memory (`feedback` type) | Personal workflow preference — this user only     | Agent behavior to repeat or avoid for this user's sessions                                                                                 |
 
 ### Decision rules
 
@@ -397,7 +351,7 @@ When any subagent's final report contains a `## Learnings` section, the orchestr
 - Changed a UseCase, domain rule, or layer boundary → update project context docs
 - Added a module, endpoint, or schema model → update project context docs
 - Discovered a subtle bug, config gotcha, wrong-pattern catch, or library recipe → append to `docs/KNOWLEDGE_INBOX.md` (or directly to its permanent home if clear). **Do NOT route to auto-memory** — these are project-durable, agent-agnostic learnings.
-- Durable, project-relevant learning whose final home (`PROJECT_CONTEXT.md` / `CLAUDE.md` / a rule / a skill) is unclear → append an entry to `docs/KNOWLEDGE_INBOX.md` (see Knowledge Inbox below).
+- Durable, project-relevant learning whose final home (`CONTEXT.md` / `CLAUDE.md` / a rule / a skill) is unclear → append an entry to `docs/KNOWLEDGE_INBOX.md` (see Knowledge Inbox below).
 - Discovered a bug, gap, or improvement in a file inherited from the claude-ts template (`AGENTS.md`, `CLAUDE.md`, `rules/**`, `.claude/agents/**`, `.claude/skills/**`) → write the entry **directly to `docs/CLAUDE_TS_CHANGELOG.md`** (not the inbox) so it survives in the repo until PR'd back upstream. Use the format already established in that file.
 - Everything else → `CHANGELOG.md` only
 - If nothing non-obvious was learned → `CHANGELOG.md` only; state this explicitly so the obligation is acknowledged
@@ -429,21 +383,25 @@ How to apply: any new list endpoint must reuse the constant, not hardcode a valu
 
 An append-only queue for durable, project-relevant learnings whose final home isn't clear yet — the **agent-agnostic memory layer**: any AI tool working in the repo (Claude, Codex, Gemini, Copilot, ...) may append to it, unlike vendor-private auto-memory. It trends toward empty — a queue, not an archive.
 
+Entries are distilled into their permanent homes (`CONTEXT.md` at the repo root for domain/architecture truths, `CLAUDE.md` for Claude-specific workflows, rules, skills, etc.) during Phase 6 distillation or explicit "distill the inbox" requests; a project may legitimately not have a `CONTEXT.md` file yet.
+
 If the file doesn't exist yet, create it with this header + format:
 
 ```markdown
 # Knowledge Inbox
 
-Append-only queue for durable, project-relevant learnings whose final home isn't clear yet. Distilled into PROJECT_CONTEXT.md / CLAUDE.md / a rule / a skill, then deleted from here — this file should trend toward empty.
+Append-only queue for durable, project-relevant learnings whose final home isn't clear yet. Distilled into CONTEXT.md / CLAUDE.md / a rule / a skill, then deleted from here — this file should trend toward empty.
 
 ## YYYY-MM-DD — [area] short fact
 
-Why: … Belongs in (guess): PROJECT_CONTEXT | CLAUDE.md | rule | skill | claude-ts-upstream | discard
+Why: … Belongs in (guess): CONTEXT.md | CLAUDE.md | rule | skill | claude-ts-upstream | discard
 ```
 
 Append new entries using the same 3-line format (header line + `Why:` + `Belongs in (guess):`).
 
-**Automatic distillation:** during every Phase 6, check `docs/KNOWLEDGE_INBOX.md`. If it has more than 10 entries or exceeds ~3 KB, distill it as part of this phase (a `cheap`-tier agent may be dispatched for this): move each entry into its permanent home (`PROJECT_CONTEXT.md`, `CLAUDE.md`, a rule, a skill, or `docs/CLAUDE_TS_CHANGELOG.md` for upstream-bound learnings — or discard if no longer useful), then delete the entry from the inbox. Also distill on explicit request ("distill the knowledge inbox") or at the end of a roadmap phase.
+**Automatic distillation:** during every Phase 6, check `docs/KNOWLEDGE_INBOX.md`. If it has more than 10 entries or exceeds ~3 KB, distill it as part of this phase (a `cheap`-tier agent may be dispatched for this): move each entry into its permanent home (`CONTEXT.md`, `CLAUDE.md`, a rule, a skill, or `docs/CLAUDE_TS_CHANGELOG.md` for upstream-bound learnings — or discard if no longer useful), then delete the entry from the inbox. Also distill on explicit request ("distill the knowledge inbox") or at the end of a roadmap phase.
+
+**Parallel branches:** the inbox stays a single append-only file — conflicts are prevented at the git layer, not by splitting entries into per-entry files. A CTS-managed block in the repo-root `.gitattributes` marks the inbox (and the other three append-only ledgers) `merge=union`, so two branches appending different learnings merge with zero conflicts. One consequence to know: merging a distillation branch (which _deletes_ entries) against a branch that appended can resurrect deleted entries — re-run `/distill-inbox` after such a merge. Full rationale and resolution recipe: `rules/cts/git-operations.md` § Parallel Branches.
 
 **Hard constraint:** never `@`-reference `docs/KNOWLEDGE_INBOX.md` from `CLAUDE.md` or `AGENTS.md` — that would force-load it into every conversation as noise. Reference it only as a plain path in on-demand indexes. The same constraint applies to `docs/METRICS.md`: never `@`-referenced, for the same reason.
 
@@ -451,38 +409,10 @@ Append new entries using the same 3-line format (header line + `Why:` + `Belongs
 
 - `docs/KNOWLEDGE_INBOX.md` — **default target** for project-durable knowledge in transit (agent-agnostic, travels with the repo; any AI tool may append)
 - `docs/CLAUDE_TS_CHANGELOG.md` — permanent ledger of claude-ts template divergences/fixes, ready to port upstream — entries persist until actually ported, unlike the inbox
-- `docs/METRICS.md` — append-only raw-data ledger, one table row per completed task, feeding a future measurement-design session; never `@`-referenced
-- `PROJECT_CONTEXT.md` (or equivalent) — distilled, stable domain truth
+- `docs/METRICS.md` — append-only raw-data ledger, one table row per completed task, feeding a future measurement-design session; never `@`-referenced. Project-local, like `docs/KNOWLEDGE_INBOX.md`: `cts-sync.sh` seeds it once on `init` from the shipped `docs/METRICS.md.example` and never touches it again — your rows are yours, and no `.ctsignore` entry is needed to protect them
+- `CONTEXT.md` (at the repo root, or equivalent) — distilled, stable domain truth
 - `CHANGELOG.md` — what changed and why, per task
 - Auto-memory (`feedback` type only) — **narrow exception**: personal Claude workflow preferences for this user's sessions only. Never use for project-level learnings (bugs, gotchas, library recipes, wrong patterns) — those go in the inbox or their permanent home regardless of vendor.
-
-## Git and Task File Management
-
-### Task files and git-exclude: never use `git mv`/`git add`
-
-Task files under `tasks/**` are excluded via the committed `.gitignore` (`/tasks`). This means:
-
-- Task files **never** appear in `git status`/`git diff` output
-- `git mv`/`git add` fail with "not under version control" on these paths
-- Moving between `todo/`/`done/`/`parked/`, creating new task files, or updating existing ones must use plain `mv` and filesystem writes, never git commands
-
-If a git operation unexpectedly fails or a directory shows suspiciously empty `git status` output, run `git check-ignore -v <path>` to check for exclusion rules.
-
-### CTS update: commit only when source is pushed upstream
-
-Running `/cts-update --source ../claude-ts` (or any local/uncommitted CTS checkout) to verify a contribution round-trips cleanly is a dry run, not a release — its diff must stay uncommitted/discarded in this consumer repo. Committing it would make this repo's history claim a template sync that never happened upstream.
-
-**Pattern**: before committing any `/cts-update` output, confirm the CTS source pointed at the GitHub remote (or a local checkout whose HEAD is already pushed there) — not an unpushed local-only state. If in doubt, ask the user.
-
-## Quality Gate Pre-Flight Scope
-
-When `reviewer` and `security-scanner` pre-flight, they read:
-
-1. **Durable map**: `PROJECT_CONTEXT.md` / `DECISIONS.md` / `docs/ARCHITECTURE.md` (once topology docs exist)
-2. **Seam-touched files**: if the changeset touches a seam (shared contract/registry/cross-layer field), read the full touched files plus their bidirectional consumers/dependencies
-3. **Security boundary** (security-scanner only): relevant sections from decision/context docs
-
-A full-repo-scan (reading all source code) should only happen after topology docs exist and a scoped-reading map is in place. Until then, the gap is accepted — `reviewer`/`security-scanner` focus on the touched files + their dependencies, not the whole codebase.
 
 ## Team Conventions
 
@@ -524,6 +454,47 @@ Also update any references in `AGENTS.md` skill tables and, in consumer projects
 | Challenge requirements                  | `devil`                 |
 | External docs / API / README            | `docs-writer`           |
 
+## Override-rot detector
+
+The override-rot detector protects against stale consumer overrides when CTS-owned files change. It runs automatically during each `/cts-update` sync run and flags overrides that cite a target path that was changed by the upstream sync.
+
+**How it works:**
+
+An override file declares a lex specialis (narrow, cited replacement) via a `## Overrides <path>` line in its frontmatter. This line names the specific CTS file or section the override displaces. If that cited path's content changes during a sync run, the detector flags the override file as potentially stale ("override rot") so a human or agent can review whether the override still applies. Detection is grep-level (substring matching on changed filenames), not semantic merging — the override file itself is never touched.
+
+**Paths covered:**
+
+Override directories (all `.md` files inside them):
+
+- `rules/local/**`
+- `.claude/agents-local/**`
+- `.claude/skills-local/**`
+
+Override extra files (checked individually):
+
+- `AGENTS.local.md`
+- `CLAUDE.local.md`
+
+**When it fires:**
+
+During a `cts-update` sync run, for each override file found, the detector:
+
+1. Extracts all `## Overrides <path>` citations.
+2. For each citation, checks if the target path is in the set of files whose content changed this sync run (built from git diff between old and new upstream HEAD).
+3. Emits a warning if a cited path changed: `OVERRIDE ROT: <override_file> cites "<target>", which changed content in this sync — review whether the override still applies.`
+
+A changed path means the upstream file's content diffed; a pure rename or metadata-only change (permissions, gitattributes) does not trigger rot.
+
+**Resolution:**
+
+When override rot is detected, the consumering agent or human should:
+
+1. Compare the override file's content against the target path's new version.
+2. Adjust the override if the upstream change affects its applicability (e.g., context shifted, a cited function renamed).
+3. Remove the `## Overrides <path>` line if the override is no longer needed.
+
+Override files are never auto-merged or reverted by the detector — rot is a flag, not an action.
+
 ## Tool API Reference
 
 **Team scoping is name-based, not object-based.** The `Agent` tool's `team_name` parameter is deprecated and ignored — the session has a single implicit team. There is no `TeamCreate`/`TeamDelete` call to make and nothing to explicitly tear down; a "team" is simply a set of agents spawned via plain `Agent` calls that address each other by name via `SendMessage`. If earlier revisions of this file (or a consumer project's copy) reference `TeamCreate`/`TeamDelete`/`team_name` as live tools, that documentation has drifted from the tool's actual behavior — update it to match this section rather than the reverse.
@@ -552,6 +523,8 @@ Agent({
 ```
 
 Use this when a specific dispatch needs to force `deep` tier regardless of the dispatching session's own model or the target agent's default frontmatter tier — e.g. a judgment-layer review step that must always run on opus. Prefer pinning `model:` in the target agent/skill's own frontmatter when the tier requirement is permanent; reserve the per-call override for cases where the same agent type is dispatched at different tiers depending on context.
+
+**Built-in agents inherit the session model — always pass `model` explicitly.** `Explore`, `Plan`, and `general-purpose` have no frontmatter pin, so a deep-tier (opus/fable) session silently runs them at that tier too. Every dispatch of a built-in agent must pass an explicit `model`: `haiku` for mechanical file-location sweeps, `sonnet` otherwise — exploration reads and concludes, it doesn't design, so `standard` tier suffices even for wide sweeps.
 
 ### SendMessage (challenge / respond)
 

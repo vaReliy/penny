@@ -23,25 +23,22 @@ Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated projec
 
 Before scanning, always read (security focuses on backend: auth, validation, API endpoints):
 
-- `rules/code-style.md` (shared TypeScript strict mode)
-- `rules/architecture.md` (platform separation, framework bans in core domain)
-- `rules/code-style-backend.md` (backend auth/cookies, error handling, validation)
-- `rules/architecture-backend.md` (MongoDB patterns, error handling, cookie security)
-- `rules/validation-authorization.md` (input validation, JWT guards, authorization)
+- `rules/cts/code-style.md` (shared TypeScript strict mode)
+- `rules/cts/architecture.md` (platform separation, framework bans in core domain)
+- `rules/cts/validation-authorization.md` (input validation, JWT guards, authorization)
+- If your project splits rules by platform (e.g. `rules/local/code-style-backend.md`, `rules/local/architecture-backend.md`), also read those.
 
-Then, **if the changeset contains Angular/frontend files** (e.g., `.ts` in `libs/*/feature*/`, `libs/*/ui*/`, `apps/web/`), also read:
+Then, **if the changeset contains frontend files** (e.g., `.ts`/`.vue`/`.tsx` in `libs/*/feature*/`, `libs/*/ui*/`, `apps/web/`), also read the frontend-specific rules file if your project has one (e.g. `rules/local/code-style-angular.md`) — frontend security issues (XSS, insecure token storage) need assessment alongside backend security.
 
-- `rules/code-style-angular.md` (frontend XSS risks, localStorage ban, template security)
-
-This handles exceptions where frontend security issues (XSS, insecure token storage) need assessment alongside backend security.
+For any `rules/cts/<name>.md` file this agent reads or references anywhere in this document (Pre-flight list or later `> Conventions` / `> See` notes), also check for a same-named `rules/local/<name>.md`. If it exists, read it too — it is a lex-specialis override and supersedes the shared file on any conflict.
 
 ### Project-scope pre-flight (read before every scan)
 
 1. `ARCHITECTURE.md` — layers, serving topology, vertical-slice structure.
-2. `DECISIONS.md` — locked architecture decisions (auth, Mongo, onion, topology, CSP).
-3. `CONTEXT.md` — domain language for the identity context.
+2. `DECISIONS.md` — locked architecture decisions (auth, DB choice, onion, topology, CSP).
+3. `CONTEXT.md` — domain language for the project's bounded context(s).
 
-These are the "project map." Read them before reading the changeset so you can evaluate the diff against the actual system design, not just the changed lines.
+These are the "project map." Read them before reading the changeset so you can evaluate the diff against the actual system design, not just the changed lines. These files are project-authored — consumers without them can skip this subsection.
 
 ### Trust-boundary / threat-model pre-flight
 
@@ -68,13 +65,12 @@ Guided by the dependency maps in ARCHITECTURE.md and DECISIONS.md. The goal: det
 
 ## Skills to Activate
 
-| Skill                                        | When to Activate                         |
-| -------------------------------------------- | ---------------------------------------- |
-| `security-reviewer`                          | **Always** — security review methodology |
-| `typescript-pro`                             | Node.js security patterns, type safety   |
-| `superpowers:verification-before-completion` | Verify all findings are actionable       |
+| Skill               | When to Activate                         |
+| ------------------- | ---------------------------------------- |
+| `security-reviewer` | **Always** — security review methodology |
+| `typescript-pro`    | Node.js security patterns, type safety   |
 
-> See `rules/mcp-stack.md` for MCP tool reference.
+> See `rules/cts/mcp-stack.md` for MCP tool reference.
 
 ## Project Security Architecture
 
@@ -95,6 +91,10 @@ Guided by the dependency maps in ARCHITECTURE.md and DECISIONS.md. The goal: det
 | **Data**          | PII not logged; parameterized ORM queries; API responses don't leak internal entity IDs or stack traces       |
 | **Dependencies**  | `npm audit` clean; no `node_modules` committed; lockfile (`package-lock.json`) committed                      |
 
+## Verification Before Reporting
+
+Before reporting, verify every finding is concrete and actionable: exact file/line, demonstrated exploit path or failure scenario, suggested fix. Drop anything you cannot confirm.
+
 ## Reporting Format (for standalone security audits)
 
 Sections: Critical Findings → High Priority → Medium → Low/Recommendations → Summary (counts + posture).
@@ -103,7 +103,7 @@ For each finding: **Location** (file:line) · **Severity** · **Description** ·
 
 > For pipeline reports to orchestrator, use `## Finding Classification` below instead.
 
-> See `rules/docker-commands.md` for all commands.
+> See `rules/cts/docker-commands.md` for all commands.
 
 - **Never expose actual secrets in reports** — use placeholders
 - **Guards for authorization** — not inline checks in UseCase bodies
@@ -120,8 +120,8 @@ Reports back to orchestrator: terse fragments, bullets, no prose, ≤300 words.
 - Exact file paths, identifiers, error text — verbatim, never paraphrased.
 - Lead with verdict/result; details after.
 - Status markers: 🔴 critical / 🟡 important / 🟢 ok (quality-gate agents).
-- If you discovered something durable and non-obvious (config recipe, wrong-pattern gotcha, test anti-pattern, library constraint), add a `## Learnings` section at the end of your report — the orchestrator records it in `docs/KNOWLEDGE_INBOX.md`.
 - EXEMPT from compression: code, migrations, API contracts, user stories consumed by next phase, PR descriptions — these stay complete and precise.
+- If you discovered something durable and non-obvious (config recipe, wrong-pattern gotcha, test anti-pattern, library constraint), add a `## Learnings` section at the end of your report — the orchestrator records it in `docs/KNOWLEDGE_INBOX.md`.
 
 ## Finding Classification (mandatory — always two sections)
 
@@ -144,8 +144,12 @@ Rules:
 
 ### Severity floor
 
-Before emitting a task for a pre-existing finding, apply the severity floor (defined in rules/workflow.md). Polish/preference findings below the floor are NOT emitted as tasks. Record them as one line in docs/KNOWLEDGE_INBOX.md under `## Deferred / sub-floor`.
+Before emitting a task for a pre-existing finding, apply the severity floor (defined in rules/cts/workflow.md). Polish/preference findings below the floor are NOT emitted as tasks. Record them as one line in docs/KNOWLEDGE_INBOX.md under `## Deferred / sub-floor`.
 
 ## Commit policy
 
 Never commit directly. Stage changes, then suggest a one-line commit message scoped to the current work iteration. The owner reviews git diff and commits.
+
+## Local Override
+
+If `.claude/agents-local/security-scanner.md` exists, Read it first; its instructions override conflicting ones above.

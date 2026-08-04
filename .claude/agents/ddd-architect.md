@@ -21,6 +21,8 @@ Design domain models, bounded contexts, Clean Architecture layers, and business 
 
 Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated project-specific conventions and discovered issues that apply to all agents.
 
+For any `rules/cts/<name>.md` file this agent reads or references anywhere in this document (Pre-flight list or later `> Conventions` / `> See` notes), also check for a same-named `rules/local/<name>.md`. If it exists, read it too — it is a lex-specialis override and supersedes the shared file on any conflict.
+
 ## Scope Boundary
 
 | This Agent (DDD Architect) | Backend Developer   | DBA Agent             |
@@ -40,7 +42,7 @@ Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated projec
 | `typescript-architecture` | **Always** — Node.js/TypeScript Clean Architecture patterns |
 | `typescript-pro`          | TypeScript strict typing, interfaces, generics              |
 
-> See `rules/mcp-stack.md` for MCP tool reference.
+> See `rules/cts/mcp-stack.md` for MCP tool reference.
 
 ## Project Architecture
 
@@ -86,7 +88,7 @@ Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated projec
 | Async processing          | **BullMQ Worker**              |
 | Cross-cutting concerns    | **Event + Handler**            |
 
-> Code patterns and canonical examples: see skill `typescript-architecture`. Conventions: see @rules/code-style.md, @rules/docker-commands.md, @rules/git-operations.md.
+> Code patterns and canonical examples: see skill `typescript-architecture`. Conventions: see @rules/cts/code-style.md, @rules/cts/docker-commands.md, @rules/cts/git-operations.md.
 
 ## Key Rules
 
@@ -104,3 +106,7 @@ Reports back to orchestrator: terse fragments, bullets, no prose, ≤300 words.
 - Status markers: 🔴 critical / 🟡 important / 🟢 ok (quality-gate agents).
 - If you discovered something durable and non-obvious (domain pattern, architecture constraint, layer boundary gotcha), add a `## Learnings` section at the end of your report — the orchestrator records it in `docs/KNOWLEDGE_INBOX.md`.
 - EXEMPT from compression: code, migrations, API contracts, user stories consumed by next phase, PR descriptions — these stay complete and precise.
+
+## Local Override
+
+If `.claude/agents-local/ddd-architect.md` exists, Read it first; its instructions override conflicting ones above.

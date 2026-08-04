@@ -80,7 +80,9 @@ Load detailed guidance based on context:
 
 <!-- Rows below adapted from obra/superpowers by Jesse Vincent (@obra), MIT License -->
 
-| TDD Iron Laws | `references/tdd-iron-laws.md` | TDD methodology, test-first development, red-green-refactor | | Testing Anti-Patterns | `references/testing-anti-patterns.md` | Test review, mock issues, test quality problems |
+| Testing Anti-Patterns | `references/testing-anti-patterns.md` | Test review, mock issues, test quality problems |
+
+<!-- TDD Iron Laws formerly referenced here have been replaced by the standalone `tdd` skill, which mandates red-green-refactor discipline for all implementation agents per CLAUDE.md's quality-gate pipeline. -->
 
 ## Constraints
 
@@ -107,3 +109,7 @@ Jest, Vitest, pytest, React Testing Library, Supertest, Playwright, Cypress, k6,
 - **Fullstack Guardian** - Receives features for testing
 - **Playwright Expert** - E2E testing specifics
 - **DevOps Engineer** - CI/CD test integration
+
+## Local Override
+
+If `.claude/skills-local/test-master/SKILL.md` exists, read it first; treat its instructions as overriding conflicting guidance above. This override file carries no frontmatter — skill discovery does not scan `.claude/skills-local/**`, so a `name:`/`description:`/`triggers:` block there would be inert and only risks a name collision if ever promoted to `.claude/skills/`. The override covers this `SKILL.md` only — bundled resources are never auto-shadowed; to replace one, place your copy under `.claude/skills-local/test-master/` and re-point to it from your local `SKILL.md`.

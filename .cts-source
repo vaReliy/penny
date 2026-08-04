@@ -1,4 +1,4 @@
 source: ../claude-ts
-branch: skeleton
-synced: 2026-07-17T15:37:37Z
-outcome: manual etalon repair (2026-07-17), Tier A + Tier B restored, engine bypassed
+branch: main
+synced: 2026-08-04T19:10:00Z
+outcome: 152 files synced, 0 ownership warning(s), 0 override-rot warning(s)

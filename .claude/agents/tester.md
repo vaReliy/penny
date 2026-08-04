@@ -31,10 +31,12 @@ Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated projec
 
 Before writing or modifying any code, additionally read:
 
-- `rules/architecture.md` (shared onion patterns)
-- `rules/code-style.md` (shared TypeScript)
+- `rules/cts/architecture.md` (shared onion patterns)
+- `rules/cts/code-style.md` (shared TypeScript)
 
-If your project splits rules by platform, also read the applicable platform-specific files (e.g. `rules/architecture-backend.md` + `rules/code-style-backend.md` for backend tests; `rules/architecture-angular.md` + `rules/code-style-angular.md` for frontend component tests).
+If your project splits rules by platform, also read the applicable platform-specific files (e.g. `rules/local/architecture-backend.md` + `rules/local/code-style-backend.md` for backend tests; `rules/local/architecture-angular.md` + `rules/local/code-style-angular.md` for frontend component tests).
+
+For any `rules/cts/<name>.md` file this agent reads or references anywhere in this document (Pre-flight list or later `> Conventions` / `> See` notes), also check for a same-named `rules/local/<name>.md`. If it exists, read it too — it is a lex-specialis override and supersedes the shared file on any conflict.
 
 ## Scope Boundary
 
@@ -47,18 +49,18 @@ If your project splits rules by platform, also read the applicable platform-spec
 
 ## Skills to Activate
 
-| Skill                                 | When to Activate                                               |
-| ------------------------------------- | -------------------------------------------------------------- |
-| `vitest-testing`                      | **Always** — mandatory for all testing tasks                   |
-| `test-master`                         | When planning test strategy or reviewing coverage              |
-| `debugging-wizard`                    | When tests fail or debugging complex issues                    |
-| `superpowers:test-driven-development` | TDD workflow — red/green/refactor                              |
-| `typescript-pro`                      | Strict TypeScript 5+ in test code                              |
-| `vue-expert`                          | When writing Vue component tests (Vue Test Utils)              |
-| `react-expert`                        | When writing React component tests (React Testing Library)     |
-| `angular-expert`                      | When writing Angular component tests (Angular Testing Library) |
+| Skill              | When to Activate                                               |
+| ------------------ | -------------------------------------------------------------- |
+| `vitest-testing`   | **Always** — mandatory for all testing tasks                   |
+| `test-master`      | When planning test strategy or reviewing coverage              |
+| `debugging-wizard` | When tests fail or debugging complex issues                    |
+| `tdd`              | TDD workflow — red/green/refactor                              |
+| `typescript-pro`   | Strict TypeScript 5+ in test code                              |
+| `vue-expert`       | When writing Vue component tests (Vue Test Utils)              |
+| `react-expert`     | When writing React component tests (React Testing Library)     |
+| `angular-expert`   | When writing Angular component tests (Angular Testing Library) |
 
-> See `rules/testing.md` for project testing policy. See `rules/docker-commands.md` for all commands. See `rules/mcp-stack.md` for MCP tool reference.
+> See `rules/cts/testing.md` for project testing policy. See `rules/cts/docker-commands.md` for all commands. See `rules/cts/mcp-stack.md` for MCP tool reference.
 
 ## TDD Workflow (for gap-filling tests only)
 
@@ -72,7 +74,7 @@ The implementation agent already ran red/green/refactor for the code under test.
 
 ## Testing Standards
 
-> See `rules/testing.md` for full policy on what to test and what to skip.
+> See `rules/cts/testing.md` for full policy on what to test and what to skip.
 
 - **Structure**: AAA (Arrange/Act/Assert) with `describe()` + `it()` + `expect()`
 - **Database**: Wrap each test in a transaction and rollback in `afterEach`; or use test containers
@@ -99,7 +101,7 @@ docker compose exec app npx stryker run
 - Fix surviving mutants by improving test assertions
 - Focus on testing behavior, not implementation
 
-> Conventions: see @rules/code-style.md, @rules/docker-commands.md, @rules/git-operations.md.
+> Conventions: see @rules/cts/code-style.md, @rules/cts/docker-commands.md, @rules/cts/git-operations.md.
 
 ## Report Format (mandatory)
 
@@ -110,3 +112,7 @@ Reports back to orchestrator: terse fragments, bullets, no prose, ≤300 words.
 - Status markers: 🔴 critical / 🟡 important / 🟢 ok (quality-gate agents).
 - If you discovered something durable and non-obvious (config recipe, wrong-pattern gotcha, test anti-pattern, library constraint), add a `## Learnings` section at the end of your report — the orchestrator records it in `docs/KNOWLEDGE_INBOX.md`.
 - EXEMPT from compression: code, migrations, API contracts, user stories consumed by next phase, PR descriptions — these stay complete and precise.
+
+## Local Override
+
+If `.claude/agents-local/tester.md` exists, Read it first; its instructions override conflicting ones above.

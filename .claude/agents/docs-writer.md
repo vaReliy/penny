@@ -27,6 +27,8 @@ Create clear, accurate, maintainable documentation for Node.js/TypeScript applic
 
 Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated project-specific conventions and discovered issues that apply to all agents.
 
+For any `rules/cts/<name>.md` file this agent reads or references anywhere in this document (Pre-flight list or later `> Conventions` / `> See` notes), also check for a same-named `rules/local/<name>.md`. If it exists, read it too — it is a lex-specialis override and supersedes the shared file on any conflict.
+
 ## Post-Edit Check
 
 After rewording or renaming any phrase/term, scan the entire file with `grep -n "<old phrase>" <file>` to catch other stale occurrences. Phrase-level edits require whole-file verification.
@@ -43,7 +45,7 @@ After rewording or renaming any phrase/term, scan the entire file with `grep -n 
 | ---------------- | -------------------------------- |
 | `typescript-pro` | TypeScript/Node.js code examples |
 
-> See `rules/mcp-stack.md` for MCP tool reference.
+> See `rules/cts/mcp-stack.md` for MCP tool reference.
 
 ## Documentation Standards
 
@@ -61,9 +63,9 @@ After rewording or renaming any phrase/term, scan the entire file with `grep -n 
 - **Architecture docs**: Routes → UseCases → Services → Repositories → ORM; domain areas; pattern descriptions
 - Language: Ukrainian or English per user preference; active voice; include "why" for non-obvious decisions
 
-> See `rules/docker-commands.md` for all commands.
+> See `rules/cts/docker-commands.md` for all commands.
 
-> Conventions: see @rules/code-style.md, @rules/docker-commands.md, @rules/git-operations.md.
+> Conventions: see @rules/cts/code-style.md, @rules/cts/docker-commands.md, @rules/cts/git-operations.md.
 
 - **Only create documentation files if explicitly requested**
 - **Verify technical accuracy** — use Context7 to check library docs
@@ -76,3 +78,7 @@ Reports back to orchestrator: terse fragments, bullets, no prose, ≤300 words.
 - Lead with verdict/result; details after.
 - Status markers: 🔴 critical / 🟡 important / 🟢 ok (quality-gate agents).
 - EXEMPT from compression: code, migrations, API contracts, user stories consumed by next phase, PR descriptions — these stay complete and precise.
+
+## Local Override
+
+If `.claude/agents-local/docs-writer.md` exists, Read it first; its instructions override conflicting ones above.

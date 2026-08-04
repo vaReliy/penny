@@ -4,7 +4,7 @@ Read this AFTER running any `nx g …` generator (apps, libs, configs) and BEFOR
 
 ## 1. Audit injected dependencies
 
-Generators write caret ranges (`^`) into `package.json` (webpack, webpack-cli, axios, …). Run the audit + exact-pin procedure in `rules/dependencies.md` before handoff. Short form: `grep -E '"\^|"~' package.json` must return empty.
+Generators write caret ranges (`^`) into `package.json` (webpack, webpack-cli, axios, …). Run the audit + exact-pin procedure in `rules/cts/dependencies.md` before handoff. Short form: `grep -E '"\^|"~' package.json` must return empty.
 
 ## 2. Fix the generated tsconfig
 
@@ -28,13 +28,13 @@ The repo base (`tsconfig.base.json`) is intentionally minimal: no `strict` block
 - `tsconfig.base.json` sets `"moduleResolution": "bundler"` + `"module": "esnext"` for the whole workspace. All projects inherit this.
 - A webpack-bundled **Nest app** must **not** override `module`/`moduleResolution`. Do **not** add `"module": "commonjs"`, `"moduleResolution": "node10"` (or `"node"`/`"node16"`), or `"ignoreDeprecations"`. Webpack already emits a CommonJS Node bundle at runtime — the TypeScript resolver setting does not change the runtime format.
 - **Libs** are ESM (`"type": "module"` in `package.json`) and inherit `bundler`; they are consumed from source via tsconfig `paths` and bundled into apps — never published standalone, so `nodenext` is not needed.
-- `.js` extensions on relative imports are enforced **backend-only** via ESLint (see ADR-005 in `DECISIONS.md`). Angular/Nx paths use barrel `index.ts` exports and do not need the extension.
+- `.js` extensions on relative imports are enforced **backend-only** via ESLint (D26/D29). Angular/Nx paths use barrel `index.ts` exports and do not need the extension.
 
 ## 3. Post-generator corrections by framework
 
 ### Vitest Test Target Configuration
 
-The `@nx/vitest` plugin registers the inferred test target as `test` (the `testTargetName` option in `nx.json`, kept at Nx's conventional default). Use `pnpm nx test <project> --skip-nx-cache` for unit test runs. Gotcha that motivated this note: `nx <target> <project>` for a target name the project doesn't have silently resolves to nothing — after running any generator, confirm the registered target names in `nx.json` match what CI and the rules table invoke.
+The Nx plugin registers the test target as `vite:test` (configured via `testTargetName: "vite:test"` in `nx.json`). Running `pnpm nx test <project>` silently resolves to nothing. Always use `pnpm nx vite:test <project> --skip-nx-cache` for unit test runs in this repo.
 
 ### Angular Style Files — SCSS Only
 
@@ -65,7 +65,7 @@ A new process entrypoint (`main.ts`, CLI, queue worker) must call `registerLivrR
 
 **Omitting it passes build and tsc but throws at the first validation call at runtime.**
 
-See `rules/validation-authorization.md` → _LIVR bootstrap_ section for the call site.
+See `rules/cts/validation-authorization.md` → _LIVR bootstrap_ section for the call site.
 
 ## 5. Audit companion projects
 
@@ -76,15 +76,9 @@ Generators scaffold sibling projects (e.g. `apps/<name>-e2e`). Audit them too:
 
 ## 6. Generator-Hygiene Gotchas
 
-### Manually created JS/TS libs (non-Angular) are auto-detected
-
-When `nx g @nx/js:lib` is skipped in favour of hand-crafting `project.json` + tsconfigs, the NX workspace graph still auto-detects the project (e.g., `shared-kernel`, `shared-contracts`, `shared-infrastructure`). Unlike Angular libs (which require the generator), plain TypeScript libs that follow the existing monorepo structure can be safely created manually without breaking `nx affected` or graph inference.
-
-However, Angular libs must always use the `@nx/angular:lib` generator — never create them manually.
-
 ### Skipping the generator: silently dropped out of `lint` forever
 
-A hand-scaffolded lib missing `eslint.config.mjs` gets no inferred `lint` target from `@nx/eslint/plugin` (which infers the target from that file's presence) — `nx show projects --with-target lint` silently excludes it, and `nx affected -t lint` never touches it, with no error or warning. In this repo: `libs/shared/testing` was hand-scaffolded (`project.json`/`tsconfig*.json` written by hand, `tsconfig.base.json` path alias added manually) and was missing `eslint.config.mjs`, `package.json`, and `README.md` compared to a generator-created sibling — caught only by diffing the new lib's file listing against a known-generated one. Periodic audit: compare `nx show projects` against `nx show projects --with-target lint` (see `rules/workflow.md`'s Command Execution Policy section). If a hand-scaffolded lib is found missing config files, diff its file listing against a known-generated sibling to find the gaps.
+A hand-scaffolded lib missing `eslint.config.mjs` gets no inferred `lint` target from `@nx/eslint/plugin` (which infers the target from that file's presence) — `nx show projects --with-target lint` silently excludes it, and `nx affected -t lint` never touches it, with no error or warning. Periodic audit: compare `nx show projects` against `nx show projects --with-target lint` (see `rules/cts/workflow.md`'s Command Execution Policy section). If a hand-scaffolded lib is found missing config files, diff its file listing against a known-generated sibling to find the gaps.
 
 ### `@nx/vitest`-based projects need a manually-added `typecheck` target
 
@@ -97,8 +91,8 @@ Two gotchas when wiring this by hand:
 
 ### `includedScripts` (hiding npm scripts from Nx/NX Console) belongs in `package.json`, not `project.json`
 
-Any per-project Nx option must validate against `project-schema.json` — if it doesn't, grep for it in `node_modules/nx/dist` before assuming it works rather than being silently ignored. In this repo: a top-level `"includedScripts": []` in root `project.json` silently did nothing (the key doesn't exist in `project-schema.json` at all); Nx core's actual reader (`readTargetsFromPackageJson`) only checks `packageJson.nx?.includedScripts`, falling back to all `Object.keys(scripts)` when absent. Fix: move the key into `package.json`'s own `"nx"` block. `nx.json` is workspace-global (target defaults, input globs, inference-plugin registration) and never carries per-project data like which scripts to expose.
+Any per-project Nx option must validate against `project-schema.json` — if it doesn't, grep for it in `node_modules/nx/dist` before assuming it works rather than being silently ignored. A top-level `"includedScripts": []` in `project.json` silently does nothing if that key doesn't exist in `project-schema.json`; Nx core's actual reader (`readTargetsFromPackageJson`) only checks `packageJson.nx?.includedScripts`, falling back to all `Object.keys(scripts)` when absent. Fix: move the key into `package.json`'s own `"nx"` block. `nx.json` is workspace-global (target defaults, input globs, inference-plugin registration) and never carries per-project data like which scripts to expose.
 
 ## 7. A green build does not close the task
 
-`nx build` exiting 0 proves compilation, not correctness. The quality gate (`tester` + `reviewer`, see `rules/workflow.md`) still runs. Advance to Phase 4 — do not declare the task done.
+`nx build` exiting 0 proves compilation, not correctness. The quality gate (`tester` + `reviewer`, see `rules/cts/workflow.md`) still runs. Advance to Phase 4 — do not declare the task done.

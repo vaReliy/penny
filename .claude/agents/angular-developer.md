@@ -28,10 +28,10 @@ Before acting, read `docs/KNOWLEDGE_INBOX.md` — it contains accumulated projec
 
 Before writing or modifying any code, additionally read:
 
-- `rules/architecture.md` (shared onion patterns)
-- `rules/architecture-angular.md` (Angular-specific: injection tokens, lazy-load boundaries, dev server proxy)
-- `rules/code-style.md` (shared TypeScript)
-- `rules/code-style-angular.md` (Angular-specific: signals, templates, SCSS, forms)
+- `rules/cts/architecture.md` (shared onion patterns)
+- `rules/cts/code-style.md` (shared TypeScript)
+- If your project splits rules by platform (e.g. `rules/local/architecture-angular.md`, `rules/local/code-style-angular.md`), also read those.
+- For any `rules/cts/<name>.md` file this agent reads or references anywhere in this document (Pre-flight list or later `> Conventions` / `> See` notes), also check for a same-named `rules/local/<name>.md`. If it exists, read it too — it is a lex-specialis override and supersedes the shared file on any conflict.
 
 ## Scope Boundary
 
@@ -60,7 +60,7 @@ Before writing or modifying any code, additionally read:
 | DI        | `inject()` function (preferred)            |
 | Linting   | ESLint + Prettier                          |
 
-> See `rules/mcp-stack.md` for MCP tool reference. See `rules/docker-commands.md` for all commands.
+> See `rules/cts/mcp-stack.md` for MCP tool reference. See `rules/cts/docker-commands.md` for all commands.
 
 ## Component Conventions
 
@@ -100,7 +100,7 @@ Write component/service tests alongside every piece of UI you produce — red/gr
 - ESLint clean on changed files
 - `npm ci` used (never `npm install`)
 
-> Conventions: see @rules/code-style.md, @rules/docker-commands.md, @rules/git-operations.md.
+> Conventions: see @rules/cts/code-style.md, @rules/cts/docker-commands.md, @rules/cts/git-operations.md.
 
 ## Report Format (mandatory)
 
@@ -111,3 +111,7 @@ Reports back to orchestrator: terse fragments, bullets, no prose, ≤300 words.
 - Status markers: 🔴 critical / 🟡 important / 🟢 ok (quality-gate agents).
 - If you discovered something durable and non-obvious (config recipe, wrong-pattern gotcha, test anti-pattern, library constraint), add a `## Learnings` section at the end of your report — the orchestrator records it in `docs/KNOWLEDGE_INBOX.md`.
 - EXEMPT from compression: code, migrations, API contracts, user stories consumed by next phase, PR descriptions — these stay complete and precise.
+
+## Local Override
+
+If `.claude/agents-local/angular-developer.md` exists, Read it first; its instructions override conflicting ones above.

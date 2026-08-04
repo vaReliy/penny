@@ -1,15 +1,11 @@
 {
-  "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
-  },
+  "enabledMcpjsonServers": ["context7", "figma", "github"],
   "enabledPlugins": {
     "superpowers@superpowers-marketplace": true
   },
-  "enabledMcpjsonServers": ["context7", "figma", "github"],
-  "permissions": {
-    "deny": ["Read(./.env)"]
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
-  "model": "opusplan",
   "hooks": {
     "Stop": [
       {
@@ -21,6 +17,16 @@
           }
         ]
       }
+    ]
+  },
+  "model": "opusplan",
+  "permissions": {
+    "deny": [
+      "Edit(./.cts/**)",
+      "Edit(./rules/cts/**)",
+      "Read(./.env)",
+      "Write(./.cts/**)",
+      "Write(./rules/cts/**)"
     ]
   }
 }
