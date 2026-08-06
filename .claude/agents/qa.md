@@ -63,6 +63,8 @@ Before writing or modifying any code, additionally read (QA runs E2E tests again
 
 > Note: primary test authorship (unit/feature/integration) now belongs to the implementation agent per the `tdd` skill — `tester` verifies and audits, no longer authors from scratch.
 
+**Rule**: Don't touch production/application code to make an E2E test pass — a failing test that exposes a real bug is a `## Fix Now` finding for the implementation agent, not something you patch yourself. Your `Edit`/`Write` access is for test/fixture files only.
+
 ## Skills to Activate
 
 | Skill               | When to Activate                                  |
@@ -93,8 +95,10 @@ Navigate → Snapshot → Interact → Wait → Snapshot → Debug (console/netw
 
 ### What to Test
 
-- **DO**: Complete user journeys, critical business flows, third-party integrations (payment, OAuth), form validation from UI, cross-browser
-- **DON'T**: Unit tests, model tests, Action/Service tests in isolation (use `tester`)
+**Test-pyramid boundary**: unit tests verify each component/util in isolation as a "black box"; integration tests (owned by `tester`/implementation agents, at module/component level) verify the relations *between* already-tested black boxes, trusting each one works as its own tests prove; you sit at the top of the pyramid and exist only for what those lower levels can't prove.
+
+- **DO**: Critical/business-critical journeys only (money- or state-mutating flows, auth), third-party integrations (payment, OAuth) that need a real redirect/round-trip, and interactions genuinely impractical to cover at unit/integration level (true cross-page navigation, real backend state)
+- **DON'T**: Unit tests, model tests, Action/Service tests in isolation (use `tester`); the internal behavior of a self-contained component that already has its own unit tests (e.g. a custom dropdown's open/close/keyboard nav) — treat it as a pre-tested black box and assert only the value/output it produces within the flow under test, never its internals; cosmetic-only details (colors, labels, spacing, non-critical copy)
 
 > Conventions: see @rules/cts/code-style.md, @rules/cts/docker-commands.md, @rules/cts/git-operations.md.
 

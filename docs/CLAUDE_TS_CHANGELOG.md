@@ -21,6 +21,35 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-08-06 — [Enhancement] `qa` agent — explicit "don't touch production code" rule
+
+- **Component**: `.claude/agents/qa.md` § "Scope Boundary"
+- **Type**: Enhancement
+- **What happened**: `qa` holds `Edit`/`Write` tool access (for E2E test/fixture authoring) but had no explicit rule against patching production/application code to make a failing E2E test pass — the same structural gap `tester` had before its own "don't touch production code" rule was added. Fixed by adding the equivalent rule to `qa.md`, adjacent to the existing note that primary test authorship belongs to implementation agents.
+- **Why it matters upstream**: Any quality-gate agent with write access that also grades pass/fail (`tester`, `qa`) can silently legitimize a broken implementation by patching it until its own tests pass, rather than surfacing the bug — independence requires an explicit boundary, not just tool-scoped trust.
+- **Suggested upstream change**: In `.claude/agents/qa.md`, add after the "Scope Boundary" note: "**Rule**: Don't touch production/application code to make an E2E test pass — a failing test that exposes a real bug is a `## Fix Now` finding for the implementation agent, not something you patch yourself. Your `Edit`/`Write` access is for test/fixture files only."
+- **Status**: pending-port
+
+## 2026-08-06 — [Enhancement] `rules/cts/workflow.md` — mechanical backstop for tester/qa scope violations
+
+- **Component**: `rules/cts/workflow.md` § "Quality Gate (Mandatory — Sequential)"
+- **Type**: Enhancement
+- **What happened**: `tester`/`qa`'s "don't touch production code" rules are prompt-level instructions with no mechanical check that they held — the same class of gap the rule-retrieval-enforcement-gaps fix (2026-08-06, `ac6e37c`) addressed for other rules: a correctly-worded instruction alone has a known failure mode in this repo. Landed locally in `CLAUDE.local.md` (not `workflow.md` itself, which is deny-listed for local `Edit` as synced CTS payload) as a stopgap: after `tester`/`qa` report back, the orchestrator runs `git diff --stat` scoped to that dispatch and flags any non-test file touched, treating a hit as a `## Fix Now`-equivalent finding.
+- **Why it matters upstream**: Same reasoning as the `qa.md` entry above — applies to every claude-ts consumer's quality gate, not just this project's.
+- **Suggested upstream change**: In `rules/cts/workflow.md` § "Quality Gate", add a check alongside the existing "Verify working-tree side effects before dispatching `tester`" note: after `tester(verify)`/`qa` return, run `git diff --stat` scoped to the dispatch and flag any non-test file touched as a `## Fix Now`-equivalent finding requiring re-verification from stage 1. `security-scanner` is exempt (no `Edit`/`Write` tools).
+- **Status**: pending-port
+
+## 2026-08-06 — [Enhancement] `qa` agent — narrow "What to Test" to a test-pyramid boundary, not "any user-visible flow"
+
+- **Component**: `.claude/agents/qa.md` § "What to Test"; `rules/cts/workflow.md` § "Quality Gate" Stage 3 `qa` trigger
+- **Type**: Enhancement
+- **What happened**: The Stage 3 trigger for `qa` was "a user-visible flow changed," and `qa.md`'s own "DO" list ("Complete user journeys," "form validation from UI") had no boundary against re-testing what unit/integration tests already cover. In a component-heavy frontend, nearly every change is user-visible, and Playwright/MCP browser sessions (navigate → snapshot → interact → wait → snapshot per step) are token-expensive relative to what they verify — a color/label tweak or a self-contained component's internal behavior (already unit-tested) doesn't need a live browser to confirm. Landed locally: `CLAUDE.local.md` narrows the trigger to money-/state-mutating flows and auth (Penny-specific list, not upstreamed as-is), and `qa.md` itself gained a generic, stack-agnostic "test-pyramid boundary" paragraph — unit tests cover each component/util as a black box, integration tests (owned by `tester`/implementation agents) cover the relations between already-tested black boxes, and `qa` exists only for the critical flow itself plus what's genuinely impractical to prove at a lower level.
+- **Why it matters upstream**: This is a generic cost/scope problem for any claude-ts consumer with an E2E agent that has a broad "user-visible flow" trigger — the fix (test-pyramid boundary + "don't re-verify a black box's internals") is framework-agnostic even though the specific critical-flow list (transactions, budgets, auth) is Penny-specific and stays local.
+- **Suggested upstream change**: In `.claude/agents/qa.md` § "What to Test", add the test-pyramid boundary paragraph and the "DON'T re-test a pre-tested black box's internals / cosmetic-only changes" bullet (see this project's `qa.md` for exact wording). In `rules/cts/workflow.md` § "Quality Gate" Stage 3, reword the `qa` trigger from "a user-visible flow changed" to something like "a critical/business-critical user journey changed — not any UI-visible change" and let each consumer define "critical" for their domain in their local override.
+- **Status**: pending-port
+
+---
+
 ## 2026-07-28 — [Fix] `rules/cts/nx-generators.md` — vitest target name is `test`, not `vite:test`
 
 - **Component**: `rules/cts/nx-generators.md` § 3 "Post-generator corrections by framework" › "Vitest Test Target Configuration"
