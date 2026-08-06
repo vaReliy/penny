@@ -17,6 +17,7 @@ export default defineConfig(() => ({
     reporters: ['default'],
     testTimeout: 30000,
     globalSetup: [join(__dirname, 'src/support/global-setup.ts')],
+    setupFiles: ['src/support/test-setup.ts'],
     coverage: {
       reportsDirectory: '../../coverage/apps/api-e2e',
       provider: 'v8' as const,
