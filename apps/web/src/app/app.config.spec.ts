@@ -24,22 +24,36 @@ function getCspNonceFactory(): (() => string | null) | undefined {
 
 describe('appConfig', () => {
   describe('transloco configuration', () => {
+    let httpController: HttpTestingController;
+
+    beforeEach(async () => {
+      TestBed.configureTestingModule({
+        providers: [...appConfig.providers, provideHttpClientTesting()],
+      });
+      httpController = TestBed.inject(HttpTestingController);
+      httpController.expectOne('/api/config').flush({
+        telegramBotUsername: 'TEST_BOT',
+      });
+      await TestBed.inject(ApplicationInitStatus).donePromise;
+    });
+
+    afterEach(() => {
+      httpController.verify();
+    });
+
     it('resolves uk as both defaultLang and fallbackLang', () => {
-      TestBed.configureTestingModule({ providers: appConfig.providers });
       const config = TestBed.inject(TRANSLOCO_CONFIG);
       expect(config.defaultLang).toBe('uk');
       expect(config.availableLangs).toEqual(['uk']);
     });
 
     it('logs missing keys in dev (non-production) and echoes the key in prod', () => {
-      TestBed.configureTestingModule({ providers: appConfig.providers });
       const config = TestBed.inject(TRANSLOCO_CONFIG);
       expect(config.missingHandler.logMissingKey).toBe(isDevMode());
       expect(config.missingHandler.useFallbackTranslation).toBe(false);
     });
 
     it('wires TranslocoHttpLoader as the loader', () => {
-      TestBed.configureTestingModule({ providers: appConfig.providers });
       const loader = TestBed.inject(TRANSLOCO_LOADER);
       expect(loader).toBeInstanceOf(TranslocoHttpLoader);
     });

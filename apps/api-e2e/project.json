@@ -9,16 +9,7 @@
       "outputs": ["{workspaceRoot}/coverage/{e2eProjectRoot}"],
       "options": {
         "cwd": "apps/api-e2e",
-        "command": "vitest"
-      },
-      "dependsOn": ["api:build", "api:serve"]
-    },
-    "test": {
-      "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/coverage/{e2eProjectRoot}"],
-      "options": {
-        "cwd": "apps/api-e2e",
-        "command": "vitest"
+        "command": "vitest --config vitest.e2e.config.mts"
       },
       "dependsOn": ["api:build", "api:serve"]
     }
