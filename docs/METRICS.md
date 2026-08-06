@@ -116,3 +116,4 @@ Each completed task is one row in the table below.
 | 2026-08-02 | penny | raise-tsconfig-base-target-es2020                            | T2   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |
 | 2026-08-06 | penny | rule-retrieval-enforcement-gaps                              | T2   | 1      | 0/1/-/-           | 0       | no       | standard       |                    |
 | 2026-08-06 | penny | tester-agent-no-source-edits                                 | T1   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |
+| 2026-08-06 | penny | fix-planner-page-upsert-test                                 | T1   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |

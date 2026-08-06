@@ -5,7 +5,7 @@ import {
   HttpTestingController,
 } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 
 import { PlannerPageComponent } from './planner-page';
@@ -36,6 +36,17 @@ const BUDGET_UK_TRANSLATIONS = {
 
 describe('PlannerPageComponent', () => {
   let httpController: HttpTestingController;
+
+  beforeEach(() => {
+    // Pin the system clock so `currentMonth(new Date())` (used by the
+    // component to derive `this.month()`) resolves deterministically,
+    // regardless of the real wall-clock date the suite runs on.
+    vi.setSystemTime(new Date('2026-07-15T12:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -205,6 +216,9 @@ describe('PlannerPageComponent', () => {
         candidate.url === '/api/budget/monthly-budgets' &&
         candidate.method === 'PUT',
     );
+    // '2026-07' matches the clock pinned in the outer `beforeEach`
+    // (`vi.setSystemTime`), not the real "current" month — do not remove
+    // the pin and assume this literal stays correct on its own.
     expect(putRequest.request.body).toEqual({
       categoryId: 'c1',
       month: '2026-07',
