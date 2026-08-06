@@ -5,6 +5,7 @@ on:
     branches: [main, skeleton, develop]
   push:
     branches: [main, skeleton, develop]
+  workflow_dispatch:
 
 permissions:
   contents: read
