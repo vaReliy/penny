@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en-1.1.0/),
 
 ## [Unreleased]
 
+### Fixed (rule-retrieval enforcement gaps)
+
+Two governance rules (`tasks/` filesystem ops must use plain `mv`/`cp`/`rm`; committed docs must never cite gitignored task filenames or decision IDs) kept being silently violated despite correct wording, because on-demand rule retrieval failed to fire. Went through a full design discussion before landing: an initial approach that forked `cts-rule-auditor` (CTS-managed payload) via `.ctsignore` was reverted after review — it created an undetected, permanently-drifting fork with no rot-detection coverage, the same failure class this task exists to fix. Final design: broadened two `AGENTS.local.md` on-demand index bullets (vendor-agnostic, single source of truth — trigger phrasing only, no rule-text duplication) covering `task-authoring.md` and `docs-style.md`; added a new standalone, wholly project-local `docs-citation-audit` skill (not derived from any CTS file) as the mechanical audit-time backstop, since write-time checks alone can't cover the orchestrator's own direct writes or non-Claude AI tools appending to `docs/KNOWLEDGE_INBOX.md`; retroactively fixed ~20 live citation violations already in that file; filed a follow-up task auditing whether other on-demand rules have the same narrow-trigger-phrase gap.
+
 ## Result-2 — Budget Vertical: Core Domain & Four Screens (2026-07-29)
 
 **Summary:** Shipped the second vertical slice (budget), comprising the full onion stack for income/expense tracking, balance derivation, and monthly budgets. Four user-facing screens (Account, Records, History, Planner) translate the legacy bill/records/history/planner UI to a workspace-scoped domain model. FX rate caching is server-side only; browser never calls Monobank. Acceptance criteria: exact-pin fuses green, 93+ passing tests, lexicon updated, all five governance docs synced to shipped reality.
