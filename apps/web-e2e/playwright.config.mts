@@ -2,8 +2,20 @@ import { defineConfig, devices } from '@playwright/test';
 import { nxE2EPreset } from '@nx/playwright/preset';
 import { workspaceRoot } from '@nx/devkit';
 
+// Port for the web server (e.g., serve or serve-static). Can be overridden via E2E_PORT env var.
+const e2ePort = (() => {
+  const value = process.env['E2E_PORT'];
+  if (value !== undefined) {
+    const parsed = parseInt(value, 10);
+    if (isNaN(parsed)) throw new Error(`Invalid E2E_PORT: "${value}" is not a number`);
+    return parsed;
+  }
+  return 4200;
+})();
+
 // For CI, you may want to set BASE_URL to the deployed application.
-const baseURL = process.env['BASE_URL'] || 'http://localhost:4200';
+// When unset, uses localhost with the E2E_PORT.
+const baseURL = process.env['BASE_URL'] || `http://localhost:${e2ePort}`;
 
 /**
  * Read environment variables from file.
@@ -32,9 +44,9 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: process.env['CI']
-      ? 'pnpm exec nx run web:serve-static'
-      : 'pnpm exec nx run web:serve',
-    url: 'http://localhost:4200',
+      ? `pnpm exec nx run web:serve-static --port=${e2ePort}`
+      : `pnpm exec nx run web:serve --port=${e2ePort}`,
+    url: `http://localhost:${e2ePort}`,
     reuseExistingServer: !process.env['CI'],
     cwd: workspaceRoot,
   },
