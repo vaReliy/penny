@@ -5,11 +5,20 @@
   "projectType": "application",
   "targets": {
     "e2e": {
-      "executor": "@nx/jest:jest",
+      "executor": "nx:run-commands",
       "outputs": ["{workspaceRoot}/coverage/{e2eProjectRoot}"],
       "options": {
-        "jestConfig": "apps/api-e2e/jest.config.cts",
-        "passWithNoTests": true
+        "cwd": "apps/api-e2e",
+        "command": "vitest"
+      },
+      "dependsOn": ["api:build", "api:serve"]
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/coverage/{e2eProjectRoot}"],
+      "options": {
+        "cwd": "apps/api-e2e",
+        "command": "vitest"
       },
       "dependsOn": ["api:build", "api:serve"]
     }

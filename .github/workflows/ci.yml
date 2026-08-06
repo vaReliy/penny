@@ -97,7 +97,7 @@ jobs:
   #   stack itself works, but wiring a CI job to build/boot/tear down the multi-container
   #   stack is separate, unstarted work — can be picked up when a CI-friendly compose
   #   invocation is designed.
-  # - api-e2e is OUT: Jest-based tests requiring live MongoDB + running API server
+  # - api-e2e is OUT: Vitest-based tests requiring live MongoDB + running API server
   #   (different infra requirements; not appropriate for this hermetic CI job)
   # Runs after main lint/test/build passes; uses built web app for testing
   e2e:

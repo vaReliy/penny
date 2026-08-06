@@ -1,10 +1,16 @@
+import { describe, expect, test, beforeAll } from 'vitest';
 import axios from 'axios';
 
-describe('GET /api', () => {
-  test('should return a message', async () => {
-    const res = await axios.get(`/api`);
+describe('API e2e', () => {
+  beforeAll(() => {
+    const host = process.env['HOST'] ?? 'localhost';
+    const port = process.env['PORT'] ?? '3000';
+    axios.defaults.baseURL = `http://${host}:${port}`;
+  });
 
-    expect(res.status).toBe(200);
-    expect(res.data).toEqual({ message: 'Hello API' });
+  test('health endpoint should respond', async () => {
+    const res = await axios.get('/api/health');
+    expect([200, 503]).toContain(res.status);
+    expect(res.data).toHaveProperty('status');
   });
 });

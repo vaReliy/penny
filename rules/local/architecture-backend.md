@@ -354,9 +354,3 @@ NestJS route prefixes come from the `@Controller('prefix')` decorator on the con
 A configuration value that only one layer ever reads should live at that layer, not be threaded through every intermediate hop (e.g., env → compose build-arg → Dockerfile ARG → generated file). Each hop is a place it can silently break, and gitignored generated files force every execution context to independently regenerate them before anything can build.
 
 **Concrete example**: A config value needed only by the web frontend should be a frontend config value (`environment.ts` or similar), not a backend env variable threaded through the container build.
-
-## Known Issues
-
-### `apps/api-e2e`'s `e2e` Nx target is broken and unrunnable
-
-`apps/api-e2e` has no `package.json` and `jest` is not installed anywhere in the workspace, so the `nx run api-e2e:e2e` target fails with "Cannot find module 'jest'" — this predates any budget work and affects even the pre-existing `api.spec.ts` (hello endpoint). Any future task whose acceptance criteria cite "api e2e green" is citing an unsatisfiable gate until this is fixed. Current workaround: write contract tests as controller specs (real guard + fake `ExecutionContext`, mirroring `user-admin.controller.spec.ts`) instead of true supertest e2e.

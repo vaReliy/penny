@@ -2,8 +2,10 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
-    "module": "commonjs",
-    "types": ["node"]
+    "types": ["node", "vitest/globals"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "target": "es2021"
   },
-  "include": ["jest.config.ts", "src/**/*.ts"]
+  "include": ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.ts"]
 }

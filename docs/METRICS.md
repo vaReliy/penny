@@ -117,3 +117,5 @@ Each completed task is one row in the table below.
 | 2026-08-06 | penny | rule-retrieval-enforcement-gaps                              | T2   | 1      | 0/1/-/-           | 0       | no       | standard       |                    |
 | 2026-08-06 | penny | tester-agent-no-source-edits                                 | T1   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |
 | 2026-08-06 | penny | fix-planner-page-upsert-test                                 | T1   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |
+| 2026-08-06 | penny | fix-web-app-config-test-error (unreproducible, no fix)       | T1   | 0      | 0/-/-/-           | 0       | no       | standard       |                    |
+| 2026-08-06 | penny | fix-api-e2e-jest-toolchain                                   | T1   | 3      | 2/3/-/-           | 1       | yes      | standard       |                    |
