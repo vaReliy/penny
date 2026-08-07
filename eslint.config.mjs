@@ -212,6 +212,17 @@ export default [
               onlyDependOnLibsWithTags: ['type:validation', 'type:util'],
             },
             { sourceTag: 'type:util', onlyDependOnLibsWithTags: ['type:util'] },
+            {
+              sourceTag: 'type:testing',
+              onlyDependOnLibsWithTags: [
+                'type:testing',
+                'type:core',
+                'type:contracts',
+                'type:kernel',
+                'type:errors',
+                'type:util',
+              ],
+            },
           ],
         },
       ],
@@ -391,6 +402,17 @@ export default [
             {
               sourceTag: 'type:util',
               onlyDependOnLibsWithTags: ['type:util', 'type:testing'],
+            },
+            {
+              sourceTag: 'type:testing',
+              onlyDependOnLibsWithTags: [
+                'type:testing',
+                'type:core',
+                'type:contracts',
+                'type:kernel',
+                'type:errors',
+                'type:util',
+              ],
             },
           ],
         },
