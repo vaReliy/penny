@@ -21,6 +21,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-08-07 — [Fix] `.claude/skills/docs-citation-audit/SKILL.md` scope carve-out incorrectly exempted real work-item sequence numbers
+
+- **Component**: `.claude/skills/docs-citation-audit/SKILL.md` § "Do NOT flag"
+- **Type**: Fix
+- **What happened**: Line 77 of the skill declared bare mentions like "task 16" or "task-05" (no full date-NN identifier) to be out of scope for citation auditing, citing `rules/cts/docs-style.md` line 68 as the exception. However, that exception (line 58 in the actual rule file) covers only "generic illustrative filenames in documentation that teaches the task workflow itself" — it does NOT exempt real work-item sequence numbers that refer to actual completed tasks in an architecture-decision record or other durable doc. Real sequence-number citations like "task 04" appearing in DECISIONS.md (referencing an actual implementation task) should be flagged as violations and rewritten to content-level descriptions, per the rule's own prohibition. The skill's carve-out was backwards — it marked real violations as out of scope, causing the audit to report false clean while seven citation violations (five sequence numbers + one bare decision ID + one task-addendum reference) sat unreported. Fixed the skill's "Do NOT flag" section to correctly describe the exception: only generic illustrative examples in workflow-teaching docs are exempt, not real sequence-number citations in ADRs or project history.
+- **Why it matters upstream**: Any claude-ts consumer relying on `docs-citation-audit` for compliance checking against the ban-real-sequence-numbers rule gets a false-negative audit result when real violations exist, which is worse than having no tooling at all — the clean report creates a false confidence that the rule has been followed. The root cause is a narrower-than-intended carve-out phrase ("task 16" and "task-05" look like generic examples but matched the actual sequence-number formats appearing in real ADRs and decision docs).
+- **Suggested upstream change**: In `.claude/skills/docs-citation-audit/SKILL.md` § "Check A — Task-file and decision-ID citations" › "Do NOT flag", replace the existing bullet about "bare short mentions like 'task 16' or 'task-05'" with text that precisely defines the exception: "Generic illustrative filenames or task-workflow examples in documentation teaching the task process itself (e.g., `rules/cts/task-authoring.md`'s naming examples, `docs/USAGE.md`'s recipe commands) — per rules/cts/docs-style.md line 58, these are placeholders demonstrating a format, not citations of real work items." This makes the scope match the rule and ensures the skill flags real sequence-number citations in ADRs and durable docs.
+- **Status**: pending-port — fix has been applied to this project's `.claude/skills/docs-citation-audit/SKILL.md`; it also uncovered seven previously-undetected citation violations in the same session (DECISIONS.md, README.md) that are being rewritten as part of the same delivery.
+
+---
+
 ## 2026-08-07 — [Enhancement] Phase 2.5 — plan-back checkpoint before implementation (T2/T3)
 
 - **Component**: `rules/local/workflow.md` (new "Phase 2.5 — Plan-back checkpoint" section), `CLAUDE.local.md` (pointer under "Orchestrator (Dispatcher) Core")

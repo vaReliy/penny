@@ -71,10 +71,11 @@ For each file in scope, search for:
 2. **Backticked task-ID citations**: pattern `` `\d{4}-\d{2}-\d{2}-\d{2}(-[a-z0-9-]+)?` `` (backticked date-NN identifiers with optional slug suffix; matches both `2026-07-22-01` and `2026-07-22-01-slug-text`)
 3. **Unquoted task-ID citations**: same date-NN pattern `\d{4}-\d{2}-\d{2}-\d{2}(-[a-z0-9-]+)?` appearing in prose without backticks (rules/cts/docs-style.md § rule is not backtick-conditional)
 4. **Decision IDs**: pattern `` `\bD\d+\b` `` (backticked, e.g. `` `D7` ``)
+5. **Bare task-number citations**: pattern `\b[Tt]ask\s+\d{1,3}(\s*[-–]\s*\d{1,3})?\b` (unquoted task sequence numbers in prose, e.g., "task 04", "task 16–19", "task 03", "Task 04"; matches both lowercase and capitalized forms; violation of rules/cts/docs-style.md § "Committed files never cite task files or decision IDs" rule, which applies equally to bare number formats)
 
 **Do NOT flag**:
 
-- Bare short mentions like "task 16" or "task-05" (no full date-NN identifier) — out of scope per docs-style.md's own exception line 68
+- Generic illustrative filenames or task-workflow examples in documentation that teaches the task process itself (e.g., `rules/cts/task-authoring.md`'s naming examples, `docs/USAGE.md`'s recipe commands) — per docs-style.md line 58, these are placeholders demonstrating a format, not citations of real work items
 - Task filenames that appear in code examples inside fenced blocks (triple-backtick markdown code) — those are illustrative, not prose citations
 - `ADR-007` / `DECISIONS.md` references when they refer to the actual committed files (legitimate cross-references, not task-file citations)
 

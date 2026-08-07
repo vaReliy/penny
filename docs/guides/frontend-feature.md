@@ -17,7 +17,7 @@ Backend serves the feature via a corresponding **`application`** layer in the sa
 Nx tags make these boundaries mechanical lint rules, not conventions. Every library is tagged with:
 
 - `type:` layer (feature, ui, data, contracts, util, core, application, infrastructure, kernel, errors, validation)
-- `scope:` domain (budget, identity, shared)
+- `scope:` domain (budget, identity, shared, web)
 - `platform:` target (web, server, shared)
 
 The ESLint rule `@nx/enforce-module-boundaries` (in `eslint.config.mjs` lines 21–172) encodes two constraints: a frontend **onion** (feature → ui/data, ui → ui, data → contracts) and **scope isolation** (budget→budget, identity→identity, both→shared). For the exact tag dependency arrays, see `eslint.config.mjs` lines 119–139 (frontend onion) and lines 28–55 (scope isolation). ARCHITECTURE.md also documents this pattern.
@@ -112,7 +112,7 @@ Stores are app-singletons (`providedIn: 'root'`) and expose signals + methods. M
 
 ### 2.4 UI Components (Dumb, Input-Driven)
 
-UI components take their inputs as Angular signals (`@input()`) and never speak to stores or the HTTP layer. They render based on inputs and emit events for actions.
+UI components take their inputs as Angular signals (via `input.required<T>()` and `input<T>(defaultValue)`) and never speak to stores or the HTTP layer. They render based on inputs and emit events for actions.
 
 Example from account screen:
 
@@ -629,8 +629,8 @@ Use this as a template for new feature screen tasks.
 
 - [ ] **Contract DTO** — new types in `libs/<domain>/contracts/src/lib/` with all request/response shapes, exported from `index.ts`. Shared by backend and frontend.
 - [ ] **Validation schema** (backend only) — LIVR rules in `libs/<domain>/validation/` mirror the contract's constraints.
-- [ ] **Data layer** — API clients in `libs/<domain>/data-access/` for each endpoint family (one client per endpoint family: GET /api/.../balance → BalanceClient, POST /api/.../transactions → TransactionClient). Store class (app-singleton, `providedIn: 'root'`) exposes signals + methods. Error handling via `toBudgetApiError()` maps backend errors to UI kinds.
-- [ ] **UI components** — pure dumb components in `libs/<domain>/ui/` taking `@input()` signals, no store/HTTP access, all strings via Transloco scope. Component tests verify rendering, validators, form states.
+- [ ] **Data layer** — API clients in `libs/<domain>/data-access/` for each endpoint family (one client per endpoint family: GET /api/.../balance → AnalyticsClient, POST /api/.../transactions → TransactionClient). Store class (app-singleton, `providedIn: 'root'`) exposes signals + methods. Error handling via `toBudgetApiError()` maps backend errors to UI kinds.
+- [ ] **UI components** — pure dumb components in `libs/<domain>/ui/` taking signal inputs (via `input.required<T>()` and `input<T>(defaultValue)`), no store/HTTP access, all strings via Transloco scope. Component tests verify rendering, validators, form states.
 - [ ] **Feature page** — one component in `libs/<domain>/feature-<name>/` that wires stores + UI together, calls store methods on `ngOnInit`/user action, passes signals to UI. Computed states for loading/error/ready. Feature page gets its own Transloco scope provider.
 - [ ] **Routing** — lazy-loaded route in `apps/web/src/app/app.routes.ts`, loadComponent import from the feature lib's `index.ts` barrel. Route guard (if needed) checks auth status.
 - [ ] **Mobile-first Tailwind** — Utility classes in templates. Test at 360 px (mobile) and ≥ breakpoint (desktop). No hardcoded colors/spacing — use token names. WCAG AA contrast.
@@ -641,7 +641,7 @@ Use this as a template for new feature screen tasks.
 - [ ] **Journey e2e** (cross-screen only) — Add cases to `full-journey.spec.ts` if this screen's mutations affect other screens (e.g., recording a transaction affects account balance and history). Verify state flows from one screen to the next.
 - [ ] **Lint green** — `nx lint <lib>` passes. No circular dependencies, boundary violations, or unused imports.
 - [ ] **TypeScript green** — `nx typecheck` passes. No `any` types. Signals and forms properly typed.
-- [ ] **Build green** — `nx build` succeeds. App minifies, no bundle warnings.
+- [ ] **Build green** — `nx build web` succeeds. App minifies, no bundle warnings.
 - [ ] **No exact-pins violations** — every `package.json` dep exact-pinned (no `^`, `~`). Audit after any `pnpm add`.
 - [ ] **Accessibility** — semantic HTML, ARIA labels on interactive elements, keyboard navigation, 4.5:1 contrast ratio on text.
 - [ ] **Error UX** — per-action error signals, never page-level state reset. Stale data visible while error is displayed. User can retry failed action.
@@ -652,7 +652,7 @@ Use this as a template for new feature screen tasks.
 
 All four screens are in production in `develop`. Reference them when building new features:
 
-- **Account (bill/balance/rates)**: `libs/budget/feature-account/`, `libs/budget/ui/lib/balance-card/`, `libs/budget/ui/lib/rates-card/`. Simple two-store load, independent-refresh pattern.
+- **Account (bill/balance/rates)**: `libs/budget/feature-account/`, `libs/budget/ui/src/lib/balance-card/`, `libs/budget/ui/src/lib/rates-card/`. Simple two-store load, independent-refresh pattern.
 - **Records (transaction entry, category management)**: `libs/budget/feature-records/`. Forms with typed validators, two stores (CategoryStore + TransactionStore), form reset on success.
 - **History (list, filter, chart, detail)**: `libs/budget/feature-history/`. Multi-filter state in URL params, ngx-charts integration, side-by-side routes (list + detail).
 - **Planner (monthly budgets, progress)**: `libs/budget/feature-planner/`. Month selection, inline edit, threshold-based color rendering, union rendering (budget ∪ spend).

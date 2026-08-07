@@ -460,7 +460,7 @@ classDiagram
 
 **Rationale:**
 
-- **Framework-decoupled upgrades.** ng-bootstrap has historically lagged Angular majors, creating friction with the Renovate/`nx migrate` discipline (see ADR-004; the D22 pattern from the legacy app). Tailwind ships CSS utilities with no Angular-version coupling.
+- **Framework-decoupled upgrades.** ng-bootstrap has historically lagged Angular majors, creating friction with the Renovate/`nx migrate` discipline (see ADR-004; this repo's exact-pin and `nx migrate` discipline for major-version upgrades). Tailwind ships CSS utilities with no Angular-version coupling.
 - **Agent-codegen-friendly.** Most UI implementation in this migration is agent-written. Utility classes are self-contained per template (no cross-file theme/SCSS coordination needed to style a single component correctly), which suits AI-generated markup better than a component-class-based framework.
 - **Low mockup reuse.** The mobile-first redesign reuses little of the Bootstrap-era `master:design/` mockups, so there is no meaningful sunk cost in staying on Bootstrap for continuity.
 
@@ -493,10 +493,10 @@ Verified via web search against Tailwind's official docs, the Nx blog's Tailwind
    @import 'tailwindcss' source('./app');
    ```
    The `source('./app')` modifier restricts Tailwind v4's automatic content scanning to `apps/web/src/app` — v4 otherwise scans from the workspace root by default, which would pull unrelated workspace files into the class scan.
-3. Any `libs/budget/ui`, `libs/budget/feature-*`, etc. that contribute templates must be added as explicit `@source` directives in `styles.css` (e.g. `@source "../../../libs/budget/ui/src";`) so their utility classes aren't purged. Add each new UI-bearing lib's `@source` line when that lib is created; there is no sync-generator dependency in this repo, so this stays a manual step task 04 and later screen tasks must remember.
+3. Any `libs/budget/ui`, `libs/budget/feature-*`, etc. that contribute templates must be added as explicit `@source` directives in `styles.css` (e.g. `@source "../../../libs/budget/ui/src";`) so their utility classes aren't purged. Add each new UI-bearing lib's `@source` line when that lib is created; there is no sync-generator dependency in this repo, so this remains a manual step when wiring the web shell and building new screens.
 4. `@theme { … }` in `styles.css` (or an imported partial) declares the design tokens below as CSS custom properties, making them available as Tailwind utility values (e.g. a `--spacing-touch: 2.75rem;` token backs `min-h-touch`).
 
-### Design Tokens (consumed by task 04 and all screen tasks 16–19)
+### Design Tokens (consumed by web-shell and budget-screen implementations)
 
 **Note:** The color-role and radius token values below were specified at Tailwind adoption and are now superseded by **ADR-009**, which established the dark-first visual design system and updated `apps/web/src/styles.css` with final values. See ADR-009 for the implemented token palette, type scale, radius scale, and contrast rules.
 
@@ -531,8 +531,8 @@ Expressed the Tailwind-v4 way — paste directly into an `@theme` block:
 
 **Consequences:**
 
-- Task 04 installs the exact-pinned packages above, wires the two config files, and pastes the `@theme` block — no re-research needed.
-- Every screen task (16–19) styles exclusively with Tailwind utilities driven by these tokens; ad hoc hex colors or magic spacing values in templates are a review finding.
+- The web-shell setup installs the exact-pinned packages above, wires the two config files, and pastes the `@theme` block — no re-research needed.
+- All budget screens style exclusively with Tailwind utilities driven by these tokens; ad hoc hex colors or magic spacing values in templates are a review finding.
 - New UI-bearing libs must add their `@source` directive in `apps/web/src/styles.css` or their classes silently get purged from the production build (see Integration Approach, step 3).
 
 ---
@@ -580,7 +580,7 @@ Expressed the Tailwind-v4 way — paste directly into an `@theme` block:
 }
 ```
 
-Typography stays on the **system-font stack** (no webfont) — `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif` — zero font-loading cost, and the references' identity comes from color/gradient/digit-size, not a signature typeface. `--text-xs` through `--text-2xl` (task 03) are unchanged.
+Typography stays on the **system-font stack** (no webfont) — `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif` — zero font-loading cost, and the references' identity comes from color/gradient/digit-size, not a signature typeface. `--text-xs` through `--text-2xl` (the base type scale from the Tailwind integration) are unchanged.
 
 Elevation: flat surface + 1px border, no box-shadow. Drop light-theme `--shadow-card` — shadows don't read against a near-black background; depth comes from `--color-surface` sitting one step lighter than `--color-background`, not from a cast shadow. None of the three references use a glow/shadow either.
 
@@ -607,8 +607,8 @@ This is a real constraint, not a stylistic pick: light text only clears AA on th
 **Consequences:**
 
 - `apps/web/src/styles.css`'s `@theme` block needs the color-role section replaced (not merged) and the new type/radius tokens added — implementation task to follow this ADR.
-- The in-flight budget screen tasks (records/history/planner) should build against these tokens, not the light-theme ones task 03 originally defined.
-- Existing shell + identity pages (login, access-status, greeting), styled light-theme in task 04, need a retheme pass alongside the token update so the app doesn't end up half dark/half light.
+- The budget screen implementations (records, history, planner) should build against these tokens, not the light-theme tokens from the initial integration.
+- Existing shell and identity pages (login, access-status, greeting), which were styled with light-theme tokens during initial setup, need a retheme pass alongside this token update so the app doesn't end up half dark/half light.
 - Per-category icon color coding, dark/light theme switcher, and the rest of the parked post-parity IA/UX rework backlog remain parked — this ADR does not unpark that backlog.
 
 **Revisit triggers:**
