@@ -130,3 +130,6 @@ Each completed task is one row in the table below.
 | 2026-07-22 | penny | budget-application-categories-monthly-budgets                | T2   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |
 | 2026-08-06 | penny | full-journey-e2e-ci-verification                             | T1   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |
 | 2026-08-08 | penny | guide-defects-and-banned-citations                           | T1   | 2      | 0/2/-/-           | 1       | no       | standard       |                    |
+| 2026-08-06 | penny | path-anchored-eslint-fuses-per-project                       | T2   | 0      | -/-/-/-           | 0       | no       | standard       |                    |
+| 2026-08-06 | penny | architecture-md-contradictions                               | T1   | 0      | -/-/-/-           | 0       | no       | standard       |                    |
+| 2026-08-08 | penny | result2-rereview-round2                                      | T1   | 0      | -/-/-/-           | 2       | no       | deep           |                    |
