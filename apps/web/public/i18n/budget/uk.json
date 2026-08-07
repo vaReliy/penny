@@ -97,6 +97,7 @@
     "list": {
       "title": "Список операцій",
       "searchLabel": "Пошук",
+      "sortLabel": "Сортувати за",
       "emptyNoneAtAll": "Ще немає жодної операції.",
       "emptyForFilter": "Фільтр не знайшов жодної операції.",
       "emptySearch": "Нічого не знайдено.",

@@ -70,6 +70,20 @@ export class TransactionListComponent {
   protected readonly sortColumn = signal<SortColumn>('date');
   protected readonly sortDirection = signal<SortDirection>('desc');
 
+  protected readonly sortColumns: readonly SortColumn[] = [
+    'date',
+    'amount',
+    'category',
+    'type',
+  ];
+
+  protected readonly columnLabelKeys: Readonly<Record<SortColumn, string>> = {
+    date: 'budget.history.list.columnDate',
+    amount: 'budget.history.list.columnAmount',
+    category: 'budget.history.list.columnCategory',
+    type: 'budget.history.list.columnType',
+  };
+
   private readonly categoryNameById = computed(() => {
     const map = new Map<string, string>();
     for (const category of this.categories()) {
@@ -118,5 +132,14 @@ export class TransactionListComponent {
       this.sortColumn.set(column);
       this.sortDirection.set('asc');
     }
+  }
+
+  protected ariaSortFor(
+    column: SortColumn,
+  ): 'ascending' | 'descending' | 'none' {
+    if (this.sortColumn() !== column) {
+      return 'none';
+    }
+    return this.sortDirection() === 'asc' ? 'ascending' : 'descending';
   }
 }

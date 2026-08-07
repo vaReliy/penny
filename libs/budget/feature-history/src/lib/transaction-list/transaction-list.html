@@ -31,6 +31,28 @@
     {{ 'budget.history.list.emptySearch' | transloco }}
   </p>
   } @else {
+  <!-- Mobile sort control -->
+  <div
+    class="mb-2 flex flex-wrap gap-2 md:hidden"
+    role="group"
+    [attr.aria-label]="'budget.history.list.sortLabel' | transloco"
+  >
+    @for (column of sortColumns; track column) {
+    <button
+      type="button"
+      class="min-h-touch rounded-btn border border-border px-3 py-2 text-sm text-text-primary"
+      [attr.aria-pressed]="sortColumn() === column"
+      (click)="setSort(column)"
+    >
+      {{ columnLabelKeys[column] | transloco }} @if (sortColumn() === column) {
+      <span aria-hidden="true"
+        >{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span
+      >
+      }
+    </button>
+    }
+  </div>
+
   <!-- Mobile cards -->
   <ul class="flex flex-col gap-2 md:hidden">
     @for (row of filteredRows(); track row.transaction.id) {
@@ -62,24 +84,48 @@
     <table class="w-full text-left">
       <thead>
         <tr class="border-b border-border text-sm text-text-secondary">
-          <th scope="col" class="py-2">
+          <th scope="col" class="py-2" [attr.aria-sort]="ariaSortFor('date')">
             <button type="button" (click)="setSort('date')">
-              {{ 'budget.history.list.columnDate' | transloco }}
+              {{ 'budget.history.list.columnDate' | transloco }} @if
+              (sortColumn() === 'date') {
+              <span aria-hidden="true"
+                >{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span
+              >
+              }
             </button>
           </th>
-          <th scope="col" class="py-2">
+          <th scope="col" class="py-2" [attr.aria-sort]="ariaSortFor('amount')">
             <button type="button" (click)="setSort('amount')">
-              {{ 'budget.history.list.columnAmount' | transloco }}
+              {{ 'budget.history.list.columnAmount' | transloco }} @if
+              (sortColumn() === 'amount') {
+              <span aria-hidden="true"
+                >{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span
+              >
+              }
             </button>
           </th>
-          <th scope="col" class="py-2">
+          <th
+            scope="col"
+            class="py-2"
+            [attr.aria-sort]="ariaSortFor('category')"
+          >
             <button type="button" (click)="setSort('category')">
-              {{ 'budget.history.list.columnCategory' | transloco }}
+              {{ 'budget.history.list.columnCategory' | transloco }} @if
+              (sortColumn() === 'category') {
+              <span aria-hidden="true"
+                >{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span
+              >
+              }
             </button>
           </th>
-          <th scope="col" class="py-2">
+          <th scope="col" class="py-2" [attr.aria-sort]="ariaSortFor('type')">
             <button type="button" (click)="setSort('type')">
-              {{ 'budget.history.list.columnType' | transloco }}
+              {{ 'budget.history.list.columnType' | transloco }} @if
+              (sortColumn() === 'type') {
+              <span aria-hidden="true"
+                >{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span
+              >
+              }
             </button>
           </th>
         </tr>
