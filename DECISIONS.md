@@ -386,7 +386,6 @@ libs/budget/
   feature-records/ scope:budget type:feature        platform:web
   feature-history/ scope:budget type:feature        platform:web
   feature-planner/ scope:budget type:feature        platform:web
-  testing/         (test fakes — mirror libs/identity/testing)
 ```
 
 **ESLint configuration prerequisite:** add `{ sourceTag: 'scope:budget', onlyDependOnLibsWithTags: ['scope:budget','scope:shared'] }` to `eslint.config.mjs` (currently only `scope:shared`/`scope:identity` are enumerated) — an unfenced source tag can import anything. This configuration change must be made before budget library implementation begins to enforce the scope boundary.

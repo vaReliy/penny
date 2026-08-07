@@ -28,6 +28,8 @@ penny/
       util/       Pure helpers, Money value object
       kernel/     Base onion abstractions: BaseService, base repo interfaces, ServiceContext
       infrastructure/  MongoDB connection factory (platform:server)
+      web-shell/  Angular app root shell component, layout (platform:web)
+      web-shell-data/  Angular shell state: workspace, auth, layout signals (platform:web)
 
     identity/     scope:identity — first vertical slice (auth & users), full stack
       core/             User entity, IUserRepository interface, UserStatus (platform:server)
@@ -37,10 +39,11 @@ penny/
       feature-access-status/  Angular access-status page (pending/rejected) (platform:web)
       feature-greeting/ Angular authed greeting page (platform:web)
       data-access/      Angular API client services (platform:web)
+      testing/          Test doubles: InMemoryUserRepository (platform:server)
 
     budget/       scope:budget — second vertical slice (income, expenses, balance, monthly budgets), full stack
       core/             Account, Category, Transaction, MonthlyBudget entities; repository interfaces (platform:server)
-      application/      Use-case services: RecordTransaction, CreateCategory, ArchiveCategory, GetBalance, GetHistorySummary, GetPlannerSummary, GetExchangeRates (platform:server)
+      application/      Use-case services: RecordTransaction, CreateCategory, ArchiveCategory, GetBalance, GetHistoryChartService, GetPlannerSummary (platform:server)
       infrastructure/   Mongoose schemas, mappers, repo implementations; Monobank FX client (platform:server)
       contracts/        Budget DTOs, TransactionType enum (platform:shared)
       validation/       Budget-scoped LIVR schemas (platform:shared)
@@ -49,7 +52,7 @@ penny/
       feature-history/  Angular transaction-history screen with charts (platform:web)
       feature-planner/  Angular monthly-budgets screen (platform:web)
       data-access/      Angular API client services, state stores (platform:web)
-      ui/               Dumb presentational components: BalanceCard, RatesCard, CategoryTile, ProgressBar (platform:web)
+      ui/               Dumb presentational components: BalanceCardComponent, RatesCardComponent, HistoryChartComponent; utilities: convert-balance.util, rate-entry-display (platform:web)
 
   rules/          Agent-readable governance docs
   .claude/        AI agent configuration (claude-ts)
@@ -145,7 +148,7 @@ Browser ─→ apps/web (nginx) ─→ apps/api (NestJS)
 
 - **Client call:** Angular requests `GET /api/rates` (internal API).
 - **Server-side client:** `libs/budget/infrastructure` contains `MonobankCurrencyClient`, a typed HTTP wrapper for `GET https://api.monobank.ua/bank/currency`.
-- **Caching:** In-memory TTL cache (≥ 5 min) respects Monobank's public rate limit (~1 req/5 min). Cache misses hit the upstream; cache hits or failures serve stale rates with a `fetchedAt` staleness indicator.
+- **Caching:** In-memory TTL cache (≥ 5 min) respects Monobank's public rate limit (~1 req/5 min). Cache misses hit the upstream; cache hits or failures serve stale rates with an `asOf` staleness indicator.
 - **Payload validation:** Upstream response is validated for shape and positivity (`rateBuy`, `rateSell`, `rateCross` strictly > 0) before mapping to the contract DTO.
 - **CSP:** `connect-src` policy remains tight — no browser-direct Monobank calls allowed.
 

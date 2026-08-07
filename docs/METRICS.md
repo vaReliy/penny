@@ -127,3 +127,5 @@ Each completed task is one row in the table below.
 | 2026-08-07 | penny | localize-api-error-messages                                  | T2   | 1      | 0/1/-/-           | 0       | no       | standard       |                    |
 | 2026-08-07 | penny | mobile-sort-affordance-transaction-list                      | T1   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |
 | 2026-08-07 | penny | month-boundary-tests-planner                                 | T1   | 1      | 0/1/-/-           | 0       | no       | standard       |                    |
+| 2026-07-22 | penny | budget-application-categories-monthly-budgets                | T2   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |
+| 2026-08-06 | penny | full-journey-e2e-ci-verification                             | T1   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |
