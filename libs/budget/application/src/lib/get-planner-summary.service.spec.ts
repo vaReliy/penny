@@ -61,9 +61,19 @@ class FakeTransactionRepository implements ITransactionRepository {
     | Pick<TransactionAggregationFilter, 'from' | 'to'>
     | undefined;
   private categoryTotals: CategoryExpenseTotal[] = [];
+  private readonly transactions: {
+    categoryId: string;
+    amount: bigint;
+    date: Date;
+  }[] = [];
 
   public setCategoryTotals(totals: CategoryExpenseTotal[]): void {
     this.categoryTotals = totals;
+  }
+
+  /** Seeds a raw dated expense; {@link sumExpenseByCategory} attributes it to whichever month range it falls within, per the `[from, to)` half-open contract. */
+  public seedTransaction(categoryId: string, amount: bigint, date: Date): void {
+    this.transactions.push({ categoryId, amount, date });
   }
 
   public async findById() {
@@ -99,7 +109,28 @@ class FakeTransactionRepository implements ITransactionRepository {
     filter?: Pick<TransactionAggregationFilter, 'from' | 'to'>,
   ): Promise<CategoryExpenseTotal[]> {
     this.lastCategoryFilter = filter;
-    return this.categoryTotals;
+
+    if (this.transactions.length === 0) {
+      return this.categoryTotals;
+    }
+
+    const totalsByCategory = new Map<string, bigint>();
+    for (const transaction of this.transactions) {
+      const afterFrom = !filter?.from || transaction.date >= filter.from;
+      const beforeTo = !filter?.to || transaction.date < filter.to;
+      if (afterFrom && beforeTo) {
+        totalsByCategory.set(
+          transaction.categoryId,
+          (totalsByCategory.get(transaction.categoryId) ?? 0n) +
+            transaction.amount,
+        );
+      }
+    }
+
+    return [...totalsByCategory.entries()].map(([categoryId, total]) => ({
+      categoryId,
+      total,
+    }));
   }
 
   public async save(entity: never): Promise<never> {
@@ -303,8 +334,78 @@ describe('GetPlannerSummaryService', () => {
   it('resolves the month filter to a Europe/Kyiv instant range passed to the repository', async () => {
     await service.run({ month: '2026-07' }, buildContext(ACTIVE_CALLER));
 
-    expect(transactionRepository.lastCategoryFilter?.from).toBeInstanceOf(Date);
-    expect(transactionRepository.lastCategoryFilter?.to).toBeInstanceOf(Date);
+    expect(transactionRepository.lastCategoryFilter?.from?.toISOString()).toBe(
+      '2026-06-30T21:00:00.000Z',
+    );
+    expect(transactionRepository.lastCategoryFilter?.to?.toISOString()).toBe(
+      '2026-07-31T21:00:00.000Z',
+    );
+  });
+
+  it('attributes an expense at 01:00 Kyiv on 1 July to 2026-07, not 2026-06', async () => {
+    transactionRepository.seedTransaction(
+      CATEGORY_SPEND_NO_BUDGET,
+      1_000n,
+      new Date('2026-06-30T22:00:00.000Z'),
+    );
+
+    const julyOutcome = await service.run(
+      { month: '2026-07' },
+      buildContext(ACTIVE_CALLER),
+    );
+    const juneOutcome = await service.run(
+      { month: '2026-06' },
+      buildContext(ACTIVE_CALLER),
+    );
+
+    expect(julyOutcome.data.categories).toHaveLength(1);
+    expect(julyOutcome.data.categories[0]?.spent.amount).toBe(1_000n);
+    expect(juneOutcome.data.categories).toHaveLength(0);
+  });
+
+  it('attributes an expense at 00:30 Kyiv on 1 August to 2026-08, not 2026-07', async () => {
+    transactionRepository.seedTransaction(
+      CATEGORY_SPEND_NO_BUDGET,
+      1_000n,
+      new Date('2026-07-31T21:30:00.000Z'),
+    );
+
+    const julyOutcome = await service.run(
+      { month: '2026-07' },
+      buildContext(ACTIVE_CALLER),
+    );
+    const augustOutcome = await service.run(
+      { month: '2026-08' },
+      buildContext(ACTIVE_CALLER),
+    );
+
+    expect(julyOutcome.data.categories).toHaveLength(0);
+    expect(augustOutcome.data.categories).toHaveLength(1);
+    expect(augustOutcome.data.categories[0]?.spent.amount).toBe(1_000n);
+  });
+
+  it('half-open range: an expense exactly at the month start instant is included, exactly at the end instant is excluded', async () => {
+    transactionRepository.seedTransaction(
+      CATEGORY_SPEND_NO_BUDGET,
+      1_000n,
+      new Date('2026-06-30T21:00:00.000Z'),
+    );
+    transactionRepository.seedTransaction(
+      CATEGORY_BUDGETED_AND_SPENT,
+      2_000n,
+      new Date('2026-07-31T21:00:00.000Z'),
+    );
+
+    const outcome = await service.run(
+      { month: '2026-07' },
+      buildContext(ACTIVE_CALLER),
+    );
+
+    const categoryIds = outcome.data.categories.map(
+      (category) => category.categoryId,
+    );
+    expect(categoryIds).toContain(CATEGORY_SPEND_NO_BUDGET);
+    expect(categoryIds).not.toContain(CATEGORY_BUDGETED_AND_SPENT);
   });
 
   it('throws ServiceValidationError for a malformed month', async () => {
