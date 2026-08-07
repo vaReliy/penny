@@ -420,7 +420,12 @@ export default [
     },
   },
   {
-    files: ['apps/*-e2e/**/*.ts', 'apps/*-e2e/**/*.js'],
+    files: [
+      'apps/web-e2e/**/*.ts',
+      'apps/web-e2e/**/*.js',
+      'apps/smoke-e2e/**/*.ts',
+      'apps/smoke-e2e/**/*.js',
+    ],
     plugins: {
       playwright,
     },
