@@ -24,7 +24,16 @@ Each push runs `nx-set-shas` to cache SHA bounds for the next run. On a broken b
 
 ### Path-anchored ESLint rules are inert under per-project `nx lint`
 
-Root-config `files: ['libs/*/application/**/*.ts']` globs never match when `cwd` IS `libs/identity/application` — the path segment is stripped from every relative path. Use `cd <project> && npx eslint --print-config <file>` to verify. Fix: export rules from root config, apply via `files: ['**/*.ts']` from each project's local config. (2026-08-06)
+Root-config `files: ['libs/*/application/**/*.ts']` globs never match when `cwd` IS `libs/identity/application` — the path segment is stripped from every relative path. Use `cd <project> && npx eslint --print-config <file>` to verify. (2026-08-06)
+
+Do NOT try to fix this by adding a leading globstar to the glob. A globstar-prefixed `application/**/*.ts` pattern fails identically, because basePath stripping removes the `application/` segment itself, not just the `libs/` prefix — from inside the project the path is merely `src/lib/x.ts`. Any glob keyed on a directory-name segment is structurally unable to match per-project. (Verified 2026-08-07; two fix rounds were spent on this dead end.)
+
+Verified working shape (2026-08-07): keep the original repo-root-anchored globs — they are correct and precise for `lint:root` — and add **one** of the following for per-project resolution, depending on whether the rule needs to distinguish project type:
+
+- Applies to nearly every project → add a project-anchored fallback entry (`src/**/*.ts`) to the same block, and have the minority of projects that must be excluded apply an opt-out export in their own config.
+- Must distinguish project type (e.g. `application`/`core` vs `infrastructure`, or NestJS vs Angular) → **no glob can do this**; once anchored at a project root the two are indistinguishable by path shape. Export the rule content as a named export from the root config and have each qualifying project opt in from its own `eslint.config.mjs`.
+
+Because flat config replaces rather than merges `no-restricted-syntax`, any such per-project block must re-bundle **every** selector that file should be checked against, not just the one being added. Verify both directions with planted violations — that the fuse fires on projects it should cover, and that it stays silent on projects it must not. (2026-08-06/07)
 
 ### Stale Nx daemon plugin workers — `nx reset` clears the daemon cache
 
@@ -51,6 +60,52 @@ When a fix is needed after the quality gate (`## Fix Now` items in tester/review
 3. **Test-only change** → resume `tester` via `SendMessage` to its existing agent ID → run `reviewer` + `security-scanner`
 
 Resuming the same agent instance (via `SendMessage` to the original `agentId`) preserves context — the agent doesn't re-derive understanding cold.
+
+## New section: Routing workspace tooling config — route by knowledge, not by file type
+
+The `Agent Quick Routing` table has no row for workspace lint/build tooling (`eslint.config.mjs`, `tsconfig*.json`, Nx target config). The nearest row, "DevOps / Docker / CI → `devops`", is about deployment infrastructure and is **not** the right default: `devops` is scoped to Docker, CI pipelines, and environment config, and its pre-flight does not route it to the architecture rules.
+
+**Rule**: route a tooling-config task by the knowledge required to get it _semantically_ right, not by the file's extension.
+
+| Tooling-config task encodes…                                                                 | Route to                                                                                                                              |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Architectural constraints (layer purity, import boundaries, banned framework APIs per layer) | `backend-developer` / `angular-developer` (whichever layer it governs); consult `ddd-architect` if the boundary itself is in question |
+| Build/test/CI execution (pipeline steps, Docker, caching, target wiring)                     | `devops`                                                                                                                              |
+| Formatting/style with no architectural content                                               | `cheap` tier, any implementation agent                                                                                                |
+
+Rationale: an ESLint `no-restricted-syntax` ban encoding layer purity is executable architecture policy — the `.mjs` extension is incidental. Getting the _mechanism_ right (glob anchoring, config resolution) is discoverable on the spot via a resolved-state dump (see the opaque-resolution-tooling section below); getting the _policy_ right requires knowing which layers may use which framework APIs, which is only knowable from `rules/local/architecture-backend.md` / `rules/local/architecture-angular.md`. Route by the knowledge that cannot be discovered on the spot.
+
+**Dispatch-prompt obligation**: any tooling-config task whose rules mention a layer name (`application`, `core`, `infrastructure`, `kernel`, `feature`, `ui`) must cite the corresponding architecture rule file in the dispatch prompt, whichever agent is chosen. This is the `CLAUDE.local.md` Dispatch-Prompt Cross-Reference applied to a surface where the file path gives no hint that architecture knowledge is needed.
+
+## New section: Gate relevance — the gate must verify the thing that changed
+
+`tester(verify)` runs the Vitest suite. For a changeset that touches **only executable config** (`eslint.config.mjs`, `tsconfig*.json`, `nx.json`/`project.json` targets, Dockerfiles, CI workflows), the unit-test suite is structurally incapable of detecting whether the change did what it claims — it will pass identically before and after a completely broken edit. Dispatching it, then restarting from it on every fix-retry cycle, spends real tokens on a signal that carries no information about the change.
+
+**Rule**: when the changeset is config-only, Stage 1 of the quality gate is the task's own verification commands (the acceptance-criteria probes), not `tester(verify)`. Run them directly, paste the results, then proceed to `reviewer`. Dispatch `tester(verify)` only if the changeset also touches source. State in the completion summary which Stage 1 was used and why.
+
+Corollary for the task author: a config task's acceptance criteria **are** its test suite, so they must be executable as written — a literal command plus its expected exit code, both for the fuse firing and for every case it must not fire on. Criteria that only assert the positive case let an over-broad fix pass.
+
+## New section: Fix-retry cycles — delete the superseded mechanism, don't layer on it
+
+When a fix round supersedes an earlier round's mechanism, **remove the earlier mechanism in the same round** and re-run the probes. Do not leave it in place on the theory that it is harmless.
+
+Layered-but-dead mechanisms are not free: they widen match/precedence surfaces silently (a glob that matches nothing today matches the wrong thing after the next directory is added), they multiply the copies a future edit must keep in sync, and they make the final diff unreviewable because a reader cannot tell which parts are load-bearing. A changeset that went through N corrective rounds should read as if it were written correctly the first time.
+
+**Self-check before closing any multi-round fix**: for each mechanism in the final diff, name the specific scenario where it is the _only_ thing producing the correct result. Any mechanism with no such scenario is residue — delete it, re-verify, and confirm the probes still pass.
+
+## New section: Opaque-resolution tooling — dump resolved state before writing a fix
+
+Some tooling computes effective behavior through a resolution model that is not visible in its source: ESLint flat-config `files:` glob anchoring, `tsconfig` `extends` chains, Nx target/`namedInputs` inheritance, Docker layer cache keys, CI matrix expansion. For these, reading the config and reasoning about it is unreliable — the model is the thing you don't know yet, and each wrong guess costs a full fix-verify round.
+
+**Rule**: before writing any fix, dump the tool's own resolved state and diff it across the axis in question. It is one command, needs no agent dispatch, and usually reveals the entire model at once:
+
+| Tooling            | Resolved-state command                                                                             |
+| ------------------ | -------------------------------------------------------------------------------------------------- |
+| ESLint flat config | `npx eslint --print-config <file>` — run from repo root AND from inside the project dir, then diff |
+| TypeScript         | `npx tsc --showConfig -p <tsconfig>`                                                               |
+| Nx targets/graph   | `npx nx show project <name> --json`                                                                |
+
+**Escalation trigger**: two failed fix rounds on one changeset means the mental model is wrong, not that the fix needs another patch. Stop patching. Dump resolved state, re-derive the model, and state it explicitly before the third attempt — continuing to iterate at the same tier is the expensive failure mode. If resolved state does not explain the behavior, escalate that dispatch to `deep` tier via an explicit `model` override rather than spending more rounds at `standard`.
 
 ## New section: Roadmap Ordering — Bones Before Muscles
 
