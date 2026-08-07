@@ -11,7 +11,11 @@ import { TranslocoTestingModule } from '@jsverse/transloco';
 import { HistoryPageComponent } from './history-page';
 
 const UK_TRANSLATIONS = {};
+const UNKNOWN_ERROR_TEXT = 'Щось пішло не так. Спробуйте ще раз.';
 const BUDGET_UK_TRANSLATIONS = {
+  errors: {
+    unknown: UNKNOWN_ERROR_TEXT,
+  },
   history: {
     page: { title: 'Історія', openFilter: 'Фільтр', closeFilter: 'Готово' },
     chart: { title: 'Витрати за категоріями', empty: 'Немає даних.' },
@@ -214,7 +218,10 @@ describe('HistoryPageComponent', () => {
     const alert = (fixture.nativeElement as HTMLElement).querySelector(
       '[role="alert"]',
     );
-    expect(alert?.textContent?.length).toBeGreaterThan(0);
+    expect(alert?.textContent?.trim()).toBe(UNKNOWN_ERROR_TEXT);
+    expect(alert?.textContent).not.toContain(
+      'Something went wrong. Please try again.',
+    );
     expect(fixture.componentInstance['dashboardStore'].chartError()).toBeNull();
   });
 

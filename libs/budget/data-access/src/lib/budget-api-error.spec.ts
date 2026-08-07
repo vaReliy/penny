@@ -1,6 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { describe, it, expect } from 'vitest';
-import { BudgetApiErrorKind, toBudgetApiError } from './budget-api-error.js';
+import {
+  BudgetApiErrorKind,
+  errorMessageKey,
+  toBudgetApiError,
+} from './budget-api-error.js';
 
 function makeError(status: number, error: unknown): HttpErrorResponse {
   return new HttpErrorResponse({ status, error });
@@ -104,5 +108,17 @@ describe('toBudgetApiError', () => {
       }),
     );
     expect(result.kind).toBe(BudgetApiErrorKind.UNKNOWN);
+  });
+});
+
+describe('errorMessageKey', () => {
+  it('maps every kind to a distinct, non-empty translation key', () => {
+    const kinds = Object.values(BudgetApiErrorKind);
+    const keys = kinds.map(errorMessageKey);
+
+    for (const key of keys) {
+      expect(key.length).toBeGreaterThan(0);
+    }
+    expect(new Set(keys).size).toBe(kinds.length);
   });
 });

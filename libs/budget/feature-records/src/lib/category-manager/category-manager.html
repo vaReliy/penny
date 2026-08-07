@@ -17,7 +17,9 @@
   </div>
 
   @if (categoryStore.listError(); as listError) {
-  <p class="mb-3 text-sm text-expense" role="alert">{{ listError.message }}</p>
+  <p class="mb-3 text-sm text-expense" role="alert">
+    {{ errorMessageKey(listError.kind) | transloco }}
+  </p>
   } @if (visibleCategories().length === 0) {
   <p class="mb-3 text-sm text-text-secondary">
     {{ 'budget.records.categoryManager.empty' | transloco }}
@@ -50,7 +52,7 @@
         </span>
         } @if (categoryStore.updateError(); as updateError) {
         <span class="text-xs text-expense" role="alert"
-          >{{ updateError.message }}</span
+          >{{ errorMessageKey(updateError.kind) | transloco }}</span
         >
         }
         <div class="flex gap-2">
@@ -107,7 +109,7 @@
         </p>
         @if (categoryStore.archiveError(); as archiveError) {
         <p class="mb-2 text-xs text-expense" role="alert">
-          {{ archiveError.message }}
+          {{ errorMessageKey(archiveError.kind) | transloco }}
         </p>
         }
         <div class="flex gap-2">
@@ -169,7 +171,7 @@
     </span>
     } @if (categoryStore.createError(); as createError) {
     <span class="text-xs text-expense" role="alert"
-      >{{ createError.message }}</span
+      >{{ errorMessageKey(createError.kind) | transloco }}</span
     >
     } @if (createSuccess()) {
     <span class="text-xs text-primary-from" role="status">

@@ -18,6 +18,7 @@ import {
   CategoryStore,
   DashboardStore,
   TransactionStore,
+  errorMessageKey,
 } from 'budget-data-access';
 import type { TransactionType } from 'budget-data-access';
 
@@ -92,6 +93,7 @@ export class TransactionFormComponent {
   private readonly dashboardStore = inject(DashboardStore);
   protected readonly transactionStore = inject(TransactionStore);
 
+  protected readonly errorMessageKey = errorMessageKey;
   protected readonly maxDescriptionLength = MAX_DESCRIPTION_LENGTH;
   protected readonly form = buildForm();
   private readonly submitted = signal(false);

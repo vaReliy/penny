@@ -11,7 +11,11 @@ import { CategoryStore, DashboardStore } from 'budget-data-access';
 import { TransactionFormComponent } from './transaction-form';
 
 const UK_TRANSLATIONS = { common: { loading: 'Завантаження...' } };
+const VALIDATION_ERROR_TEXT = 'Перевірте правильність введених даних.';
 const BUDGET_UK_TRANSLATIONS = {
+  errors: {
+    validation: VALIDATION_ERROR_TEXT,
+  },
   records: {
     transactionForm: {
       title: 'Додати подію',
@@ -245,7 +249,8 @@ describe('TransactionFormComponent', () => {
     const alert = fixture.nativeElement.querySelector(
       '[role="alert"]',
     ) as HTMLElement;
-    expect(alert.textContent).toContain('categoryId is not eligible');
+    expect(alert.textContent).toContain(VALIDATION_ERROR_TEXT);
+    expect(alert.textContent).not.toContain('categoryId is not eligible');
     // The category select must still be populated — a record failure never
     // discards already-loaded sibling data.
     expect(

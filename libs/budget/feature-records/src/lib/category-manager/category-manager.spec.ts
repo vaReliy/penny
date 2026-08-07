@@ -11,7 +11,13 @@ import { CategoryStore } from 'budget-data-access';
 import { CategoryManagerComponent } from './category-manager';
 
 const UK_TRANSLATIONS = { common: { loading: 'Завантаження...' } };
+const VALIDATION_ERROR_TEXT = 'Перевірте правильність введених даних.';
+const DOMAIN_ERROR_TEXT = 'Цю дію не можна виконати.';
 const BUDGET_UK_TRANSLATIONS = {
+  errors: {
+    validation: VALIDATION_ERROR_TEXT,
+    domain: DOMAIN_ERROR_TEXT,
+  },
   records: {
     categoryManager: {
       title: 'Категорії',
@@ -191,7 +197,8 @@ describe('CategoryManagerComponent', () => {
     const alert = fixture.nativeElement.querySelector(
       '[role="alert"]',
     ) as HTMLElement;
-    expect(alert.textContent).toContain('name already in use');
+    expect(alert.textContent).toContain(VALIDATION_ERROR_TEXT);
+    expect(alert.textContent).not.toContain('name already in use');
     // The already-loaded category list must stay visible — a create failure
     // never blanks/resets sibling data.
     expect(fixture.nativeElement.textContent).toContain('Продукти');
@@ -211,15 +218,13 @@ describe('CategoryManagerComponent', () => {
     httpController.expectNone('/api/budget/categories/c1/archive');
 
     component.confirmArchive('c1');
-    httpController
-      .expectOne('/api/budget/categories/c1/archive')
-      .flush(
-        {
-          code: 'DOMAIN_CONFLICT_ERROR',
-          message: 'Category is already archived.',
-        },
-        { status: 409, statusText: 'Conflict' },
-      );
+    httpController.expectOne('/api/budget/categories/c1/archive').flush(
+      {
+        code: 'DOMAIN_CONFLICT_ERROR',
+        message: 'Category is already archived.',
+      },
+      { status: 409, statusText: 'Conflict' },
+    );
 
     await fixture.whenStable();
     fixture.detectChanges();
@@ -227,7 +232,8 @@ describe('CategoryManagerComponent', () => {
     const alert = fixture.nativeElement.querySelector(
       '[role="alert"]',
     ) as HTMLElement;
-    expect(alert.textContent).toContain('Category is already archived.');
+    expect(alert.textContent).toContain(DOMAIN_ERROR_TEXT);
+    expect(alert.textContent).not.toContain('Category is already archived.');
     // The confirm dialog and the category itself stay visible after a
     // failed archive — sibling data is never discarded.
     expect(component.pendingArchiveId()).toBe('c1');

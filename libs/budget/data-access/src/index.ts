@@ -11,7 +11,11 @@ export { DashboardStore } from './lib/dashboard.store';
 export { RatesStore } from './lib/rates.store';
 
 export { BudgetSessionExpiryService } from './lib/budget-session-expiry.service';
-export { toBudgetApiError, BudgetApiErrorKind } from './lib/budget-api-error';
+export {
+  toBudgetApiError,
+  errorMessageKey,
+  BudgetApiErrorKind,
+} from './lib/budget-api-error';
 export type { BudgetApiError } from './lib/budget-api-error';
 export { formatMoney } from 'shared-util';
 export { toIsoDateOnly, fromIsoDate } from './lib/date-boundary.util';

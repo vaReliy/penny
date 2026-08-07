@@ -43,7 +43,7 @@ function buildAmountForm(initialMinorUnits: bigint): FormGroup<{
  * an inline tap-to-edit affordance for the budgeted amount. Save/cancel are
  * plain outputs — the page owns `MonthlyBudgetStore` and which row is
  * currently being edited, per the per-action error-surfacing convention
- * (`code-style-angular.md`): `errorMessage`/`saving` are passed in so this
+ * (`code-style-angular.md`): `errorMessageKey`/`saving` are passed in so this
  * row can render its own operation's state next to its own affordance.
  */
 @Component({
@@ -58,7 +58,7 @@ export class PlannerCategoryRowComponent {
   public readonly row = input.required<PlannerRowViewModel>();
   public readonly isEditing = input<boolean>(false);
   public readonly saving = input<boolean>(false);
-  public readonly errorMessage = input<string | null>(null);
+  public readonly errorMessageKey = input<string | null>(null);
 
   public readonly startEdit = output<string>();
   public readonly cancelEdit = output<void>();

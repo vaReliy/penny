@@ -11,6 +11,7 @@ import {
   CategoryStore,
   DashboardStore,
   MonthlyBudgetStore,
+  errorMessageKey,
   formatMoney,
 } from 'budget-data-access';
 
@@ -46,6 +47,8 @@ export class PlannerPageComponent {
   protected readonly categoryStore = inject(CategoryStore);
   protected readonly dashboardStore = inject(DashboardStore);
   protected readonly monthlyBudgetStore = inject(MonthlyBudgetStore);
+
+  protected readonly errorMessageKey = errorMessageKey;
 
   protected readonly month = signal(currentMonth(new Date()));
   protected readonly monthLabel = computed(() =>

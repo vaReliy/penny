@@ -10,6 +10,9 @@ import { resolveProgressStatus } from '../planner-progress.util';
 
 const UK_TRANSLATIONS = {};
 const BUDGET_UK_TRANSLATIONS = {
+  errors: {
+    unknown: 'Щось пішло не так. Спробуйте ще раз.',
+  },
   planner: {
     row: {
       editBudget: 'Бюджет: {{amount}}',
@@ -246,13 +249,15 @@ describe('PlannerCategoryRowComponent', () => {
     expect(emitted).toHaveBeenCalled();
   });
 
-  it('surfaces a server errorMessage next to the save affordance', async () => {
+  it('surfaces a server error next to the save affordance, translated via errorMessageKey', async () => {
     await setup();
     fixture.componentRef.setInput('row', makeRow(0));
     fixture.componentRef.setInput('isEditing', true);
-    fixture.componentRef.setInput('errorMessage', 'Не вдалося зберегти');
+    fixture.componentRef.setInput('errorMessageKey', 'budget.errors.unknown');
     await detectAndStabilize();
 
-    expect(fixture.nativeElement.textContent).toContain('Не вдалося зберегти');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Щось пішло не так. Спробуйте ще раз.',
+    );
   });
 });

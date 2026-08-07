@@ -24,8 +24,28 @@ export interface BudgetApiError {
   readonly message: string;
 }
 
-/** Default message shown when the response body carries nothing usable. */
+/**
+ * Default message shown when the response body carries nothing usable. Kept
+ * for logging only — `error.message` (server-supplied or this constant) must
+ * never reach a template. Both are English and outside the Transloco
+ * pipeline; the UI displays `errorMessageKey(error.kind) | transloco`
+ * instead.
+ */
 const DEFAULT_MESSAGE = 'Something went wrong. Please try again.';
+
+/** Transloco key for each `BudgetApiErrorKind`, under the `budget.errors` namespace. */
+const KIND_TO_TRANSLATION_KEY: Readonly<Record<BudgetApiErrorKind, string>> = {
+  [BudgetApiErrorKind.VALIDATION]: 'budget.errors.validation',
+  [BudgetApiErrorKind.AUTHENTICATION]: 'budget.errors.authentication',
+  [BudgetApiErrorKind.NOT_FOUND]: 'budget.errors.notFound',
+  [BudgetApiErrorKind.DOMAIN]: 'budget.errors.domain',
+  [BudgetApiErrorKind.UNKNOWN]: 'budget.errors.unknown',
+};
+
+/** Maps a `BudgetApiError.kind` to the Transloco key for its user-facing text. */
+export function errorMessageKey(kind: BudgetApiErrorKind): string {
+  return KIND_TO_TRANSLATION_KEY[kind];
+}
 
 /** Codes emitted by `shared-errors`' `BaseError` hierarchy, restated as literals. */
 const CODE_TO_KIND: Readonly<Record<string, BudgetApiErrorKind>> = {

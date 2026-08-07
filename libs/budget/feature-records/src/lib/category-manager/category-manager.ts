@@ -13,7 +13,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { TranslocoPipe, provideTranslocoScope } from '@jsverse/transloco';
-import { CategoryStore } from 'budget-data-access';
+import { CategoryStore, errorMessageKey } from 'budget-data-access';
 import type { CategoryView } from 'budget-data-access';
 
 /**
@@ -55,6 +55,7 @@ function buildNameForm(initialName = '') {
 export class CategoryManagerComponent {
   protected readonly categoryStore = inject(CategoryStore);
 
+  protected readonly errorMessageKey = errorMessageKey;
   protected readonly maxNameLength = MAX_NAME_LENGTH;
   protected readonly showArchived = signal(false);
   protected readonly createForm = buildNameForm();

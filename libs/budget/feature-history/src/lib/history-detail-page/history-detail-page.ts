@@ -11,6 +11,7 @@ import { TranslocoPipe, provideTranslocoScope } from '@jsverse/transloco';
 import {
   CategoryStore,
   TransactionStore,
+  errorMessageKey,
   formatMoney,
 } from 'budget-data-access';
 
@@ -45,6 +46,8 @@ export class HistoryDetailPageComponent {
 
   protected readonly categoryStore = inject(CategoryStore);
   protected readonly transactionStore = inject(TransactionStore);
+
+  protected readonly errorMessageKey = errorMessageKey;
 
   protected readonly backQueryParams = this.route.snapshot.queryParams;
 

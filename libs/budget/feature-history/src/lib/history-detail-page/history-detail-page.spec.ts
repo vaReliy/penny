@@ -13,7 +13,11 @@ import { TranslocoTestingModule } from '@jsverse/transloco';
 import { HistoryDetailPageComponent } from './history-detail-page';
 
 const UK_TRANSLATIONS = {};
+const NOT_FOUND_ERROR_TEXT = 'Не знайдено.';
 const BUDGET_UK_TRANSLATIONS = {
+  errors: {
+    notFound: NOT_FOUND_ERROR_TEXT,
+  },
   history: {
     detail: {
       back: 'Назад',
@@ -130,7 +134,7 @@ describe('HistoryDetailPageComponent', () => {
     await detectAndStabilize(fixture);
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text.length).toBeGreaterThan(0);
+    expect(text).toContain(NOT_FOUND_ERROR_TEXT);
   });
 
   it('surfaces a 500 from the detail endpoint without throwing', async () => {

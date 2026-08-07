@@ -11,7 +11,11 @@ import { TranslocoTestingModule } from '@jsverse/transloco';
 import { PlannerPageComponent } from './planner-page';
 
 const UK_TRANSLATIONS = {};
+const DOMAIN_ERROR_TEXT = 'Цю дію не можна виконати.';
 const BUDGET_UK_TRANSLATIONS = {
+  errors: {
+    domain: DOMAIN_ERROR_TEXT,
+  },
   planner: {
     page: {
       title: 'Планувальник',
@@ -284,7 +288,8 @@ describe('PlannerPageComponent', () => {
     // Row must stay in edit mode with the error surfaced, and must NOT
     // trigger a summary re-fetch (the success-only refetch branch).
     expect(fixture.componentInstance['editingCategoryId']()).toBe('c1');
-    expect(fixture.nativeElement.textContent).toContain(
+    expect(fixture.nativeElement.textContent).toContain(DOMAIN_ERROR_TEXT);
+    expect(fixture.nativeElement.textContent).not.toContain(
       'Не вдалося зберегти бюджет',
     );
     httpController.expectNone(

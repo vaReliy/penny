@@ -12,7 +12,7 @@
   </p>
   } @if (transactionStore.recordError(); as recordError) {
   <p class="mb-3 text-sm text-expense" role="alert">
-    {{ recordError.message }}
+    {{ errorMessageKey(recordError.kind) | transloco }}
   </p>
   } @if (activeCategories().length === 0) {
   <p class="text-sm text-text-secondary">

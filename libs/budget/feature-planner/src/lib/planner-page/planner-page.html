@@ -30,9 +30,13 @@
   </div>
 
   @if (categoryStore.listError(); as listError) {
-  <p class="text-sm text-expense" role="alert">{{ listError.message }}</p>
+  <p class="text-sm text-expense" role="alert">
+    {{ errorMessageKey(listError.kind) | transloco }}
+  </p>
   } @if (dashboardStore.summaryError(); as summaryError) {
-  <p class="text-sm text-expense" role="alert">{{ summaryError.message }}</p>
+  <p class="text-sm text-expense" role="alert">
+    {{ errorMessageKey(summaryError.kind) | transloco }}
+  </p>
   } @if (isEmpty()) {
   <p
     class="rounded-card border border-border bg-surface p-4 text-sm text-text-secondary"
@@ -60,9 +64,10 @@
       [row]="row"
       [isEditing]="editingCategoryId() === row.categoryId"
       [saving]="monthlyBudgetStore.upsertLoading()"
-      [errorMessage]="
-        editingCategoryId() === row.categoryId
-          ? monthlyBudgetStore.upsertError()?.message ?? null
+      [errorMessageKey]="
+        editingCategoryId() === row.categoryId &&
+        monthlyBudgetStore.upsertError() !== null
+          ? errorMessageKey(monthlyBudgetStore.upsertError()!.kind)
           : null
       "
       (startEdit)="onStartEdit($event)"

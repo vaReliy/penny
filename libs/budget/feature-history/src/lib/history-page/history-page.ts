@@ -14,6 +14,7 @@ import {
   CategoryStore,
   DashboardStore,
   TransactionStore,
+  errorMessageKey,
 } from 'budget-data-access';
 import type { HistoryChartEntry } from 'budget-ui';
 import { HistoryChartComponent } from 'budget-ui';
@@ -61,6 +62,8 @@ export class HistoryPageComponent {
   protected readonly categoryStore = inject(CategoryStore);
   protected readonly transactionStore = inject(TransactionStore);
   protected readonly dashboardStore = inject(DashboardStore);
+
+  protected readonly errorMessageKey = errorMessageKey;
 
   protected readonly isFilterSheetOpen = signal(false);
   protected readonly filter = signal<HistoryFilterState>({});

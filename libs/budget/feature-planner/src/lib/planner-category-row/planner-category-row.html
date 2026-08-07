@@ -37,8 +37,10 @@
     <span class="text-xs text-expense" role="alert">
       {{ 'budget.planner.row.errorInvalidAmount' | transloco }}
     </span>
-    } @if (errorMessage(); as message) {
-    <span class="text-xs text-expense" role="alert">{{ message }}</span>
+    } @if (errorMessageKey(); as messageKey) {
+    <span class="text-xs text-expense" role="alert"
+      >{{ messageKey | transloco }}</span
+    >
     }
     <div class="flex gap-2">
       <button

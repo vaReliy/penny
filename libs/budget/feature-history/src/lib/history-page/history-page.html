@@ -16,9 +16,13 @@
     </div>
 
     @if (transactionStore.listError(); as listError) {
-    <p class="text-sm text-expense" role="alert">{{ listError.message }}</p>
+    <p class="text-sm text-expense" role="alert">
+      {{ errorMessageKey(listError.kind) | transloco }}
+    </p>
     } @if (dashboardStore.chartError(); as chartError) {
-    <p class="text-sm text-expense" role="alert">{{ chartError.message }}</p>
+    <p class="text-sm text-expense" role="alert">
+      {{ errorMessageKey(chartError.kind) | transloco }}
+    </p>
     }
 
     <lib-history-chart [data]="chartData()" />
