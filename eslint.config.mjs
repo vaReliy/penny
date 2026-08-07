@@ -1,6 +1,45 @@
 import nx from '@nx/eslint-plugin';
 import playwright from 'eslint-plugin-playwright';
 
+// Selector definitions live here once and are referenced everywhere below.
+// ESLint flat config does NOT merge `no-restricted-syntax` across matching config
+// objects — the last matching object replaces the whole array. Every block that can
+// match a file must therefore re-list every selector that file should be checked
+// against, which makes duplicated literals a silent-rule-loss hazard. Keep them here.
+const JS_EXTENSION_SELECTORS = [
+  {
+    selector:
+      'ImportDeclaration[source.value=/^\\.\\.?\\//]:not([source.value=/\\.js$/])',
+    message:
+      'Relative imports must use the .js extension (NodeNext idiom). Add .js to the specifier.',
+  },
+  {
+    selector:
+      'ExportNamedDeclaration[source.value=/^\\.\\.?\\//]:not([source.value=/\\.js$/])',
+    message:
+      'Relative re-exports must use the .js extension (NodeNext idiom). Add .js to the specifier.',
+  },
+  {
+    selector:
+      'ExportAllDeclaration[source.value=/^\\.\\.?\\//]:not([source.value=/\\.js$/])',
+    message:
+      'Relative re-exports must use the .js extension (NodeNext idiom). Add .js to the specifier.',
+  },
+];
+
+const INJECTABLE_SELECTOR = {
+  selector: "Decorator > CallExpression[callee.name='Injectable']",
+  message:
+    'application/core layers are framework-free — no NestJS DI decorators. Wire DI in apps/* via Symbol-token factory providers.',
+};
+
+const LOCAL_STORAGE_SELECTOR = {
+  selector:
+    "MemberExpression[object.name='localStorage'], MemberExpression[object.object.name='window'][object.property.name='localStorage']",
+  message:
+    'Do not read/write auth tokens via localStorage in web libs — use the in-memory/secure token store.',
+};
+
 export default [
   ...nx.configs['flat/base'],
   ...nx.configs['flat/typescript'],
@@ -387,20 +426,18 @@ export default [
       'libs/*/data-*/**/*.ts',
     ],
     rules: {
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector:
-            "MemberExpression[object.name='localStorage'], MemberExpression[object.object.name='window'][object.property.name='localStorage']",
-          message:
-            'Do not read/write auth tokens via localStorage in web libs — use the in-memory/secure token store.',
-        },
-      ],
+      'no-restricted-syntax': ['error', LOCAL_STORAGE_SELECTOR],
     },
   },
   // .js extension gate — backend only (NestJS apps + server/shared libs).
   // Angular's moduleResolution:bundler resolves extensionless imports silently,
   // so this rule is intentionally excluded from apps/web and platform:web libs.
+  // The repo-root-anchored globs below only match under `nx lint:root` (basePath = repo
+  // root). Under per-project `nx lint <project>` the project's own directory segments are
+  // stripped from the path, so the trailing `src/**/*.ts` entry is what actually matches
+  // there. It is deliberately layer-agnostic — once anchored at a project root, a NestJS
+  // lib and an Angular lib are indistinguishable by path shape — so platform:web projects
+  // opt back out via `webOnlyRestrictedSyntax` in their own eslint.config.mjs.
   {
     files: [
       'apps/api/**/*.ts',
@@ -413,29 +450,10 @@ export default [
       'libs/**/contracts/**/*.ts',
       'libs/**/validation/**/*.ts',
       'libs/**/util/**/*.ts',
+      'src/**/*.ts', // Per-project fallback (see comment above)
     ],
     rules: {
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector:
-            'ImportDeclaration[source.value=/^\\.\\.?\\//]:not([source.value=/\\.js$/])',
-          message:
-            'Relative imports must use the .js extension (NodeNext idiom). Add .js to the specifier.',
-        },
-        {
-          selector:
-            'ExportNamedDeclaration[source.value=/^\\.\\.?\\//]:not([source.value=/\\.js$/])',
-          message:
-            'Relative re-exports must use the .js extension (NodeNext idiom). Add .js to the specifier.',
-        },
-        {
-          selector:
-            'ExportAllDeclaration[source.value=/^\\.\\.?\\//]:not([source.value=/\\.js$/])',
-          message:
-            'Relative re-exports must use the .js extension (NodeNext idiom). Add .js to the specifier.',
-        },
-      ],
+      'no-restricted-syntax': ['error', ...JS_EXTENSION_SELECTORS],
     },
   },
   // @Injectable ban — application/core/kernel layers are framework-free.
@@ -444,6 +462,11 @@ export default [
   // This config object comes after the .js extension rules, so for files matching both globs,
   // this rule completely replaces the .js extension rules above. To avoid losing the .js extension rules
   // for these files, they are intentionally duplicated below.
+  // These globs, like the ones above, only match under `nx lint:root`. Under per-project
+  // lint the `injectableBanRules` export below is applied by each application/core/kernel
+  // project's own eslint.config.mjs — a path-shape fallback cannot work here, because once
+  // the project's directory segments are stripped an `infrastructure` lib (which legitimately
+  // uses @Injectable for repository adapters) is indistinguishable from an `application` one.
   {
     files: [
       'libs/**/application/**/*.ts',
@@ -453,41 +476,32 @@ export default [
     rules: {
       'no-restricted-syntax': [
         'error',
-        {
-          selector:
-            'ImportDeclaration[source.value=/^\\.\\.?\\//]:not([source.value=/\\.js$/])',
-          message:
-            'Relative imports must use the .js extension (NodeNext idiom). Add .js to the specifier.',
-        },
-        {
-          selector:
-            'ExportNamedDeclaration[source.value=/^\\.\\.?\\//]:not([source.value=/\\.js$/])',
-          message:
-            'Relative re-exports must use the .js extension (NodeNext idiom). Add .js to the specifier.',
-        },
-        {
-          selector:
-            'ExportAllDeclaration[source.value=/^\\.\\.?\\//]:not([source.value=/\\.js$/])',
-          message:
-            'Relative re-exports must use the .js extension (NodeNext idiom). Add .js to the specifier.',
-        },
-        {
-          selector: "Decorator > CallExpression[callee.name='Injectable']",
-          message:
-            'application/core layers are framework-free — no NestJS DI decorators. Wire DI in apps/* via Symbol-token factory providers.',
-        },
+        ...JS_EXTENSION_SELECTORS,
+        INJECTABLE_SELECTOR,
       ],
     },
   },
 ];
 
+/**
+ * Opt-in for application/core/kernel projects under per-project `nx lint`.
+ * Bundles the .js-extension selectors alongside the @Injectable ban because this block
+ * matches last for those files and would otherwise replace them (see the note at the top).
+ */
 export const injectableBanRules = {
   'no-restricted-syntax': [
     'error',
-    {
-      selector: "Decorator > CallExpression[callee.name='Injectable']",
-      message:
-        'application/core layers are framework-free — no NestJS DI decorators. Wire DI in apps/* via Symbol-token factory providers.',
-    },
+    ...JS_EXTENSION_SELECTORS,
+    INJECTABLE_SELECTOR,
   ],
+};
+
+/**
+ * Opt-out for platform:web projects under per-project `nx lint`.
+ * The root config's `src/**` fallback cannot tell an Angular project from a NestJS one, so
+ * the backend-only .js-extension gate reaches web projects; applying this last replaces it
+ * with the localStorage ban alone, which is the only fuse that belongs on web code.
+ */
+export const webOnlyRestrictedSyntax = {
+  'no-restricted-syntax': ['error', LOCAL_STORAGE_SELECTOR],
 };

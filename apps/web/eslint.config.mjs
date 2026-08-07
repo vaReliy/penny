@@ -1,5 +1,5 @@
 import nx from '@nx/eslint-plugin';
-import baseConfig from '../../eslint.config.mjs';
+import baseConfig, { webOnlyRestrictedSyntax } from '../../eslint.config.mjs';
 
 export default [
   ...nx.configs['flat/angular'],
@@ -30,5 +30,9 @@ export default [
     files: ['**/*.html'],
     // Override or add rules here
     rules: {},
+  },
+  {
+    files: ['src/**/*.ts'],
+    rules: webOnlyRestrictedSyntax,
   },
 ];

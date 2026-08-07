@@ -1,7 +1,11 @@
-import baseConfig from '../../../eslint.config.mjs';
+import baseConfig, { injectableBanRules } from '../../../eslint.config.mjs';
 
 export default [
   ...baseConfig,
+  {
+    files: ['src/lib/**/*.ts'],
+    rules: injectableBanRules,
+  },
   {
     files: ['**/*.json'],
     rules: {
