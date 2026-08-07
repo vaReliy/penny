@@ -132,6 +132,8 @@ export default [
               bannedExternalImports: [
                 '@nestjs/*',
                 '@angular/*',
+                'bson',
+                'express',
                 'mongoose',
                 'mongodb',
                 '@typegoose/*',
@@ -149,6 +151,8 @@ export default [
               bannedExternalImports: [
                 '@nestjs/*',
                 '@angular/*',
+                'bson',
+                'express',
                 'mongoose',
                 'mongodb',
                 '@typegoose/*',
@@ -188,6 +192,8 @@ export default [
               bannedExternalImports: [
                 '@nestjs/*',
                 '@angular/*',
+                'bson',
+                'express',
                 'mongoose',
                 'mongodb',
                 '@typegoose/*',
@@ -285,6 +291,8 @@ export default [
               bannedExternalImports: [
                 '@nestjs/*',
                 '@angular/*',
+                'bson',
+                'express',
                 'mongoose',
                 'mongodb',
                 '@typegoose/*',
@@ -303,6 +311,8 @@ export default [
               bannedExternalImports: [
                 '@nestjs/*',
                 '@angular/*',
+                'bson',
+                'express',
                 'mongoose',
                 'mongodb',
                 '@typegoose/*',
@@ -347,6 +357,8 @@ export default [
               bannedExternalImports: [
                 '@nestjs/*',
                 '@angular/*',
+                'bson',
+                'express',
                 'mongoose',
                 'mongodb',
                 '@typegoose/*',
