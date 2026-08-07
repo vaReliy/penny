@@ -6,11 +6,33 @@ Example: `nx affected -t e2e --exclude smoke-e2e` doesn't stop at smoke-e2e — 
 
 ### Companion: `nx affected` vs `nx run-many` flags
 
-The `-p`/`--projects` flag exists on `nx run-many`, not on `nx affected`. When passed to `nx affected`, an unrecognized flag is silently forwarded to the underlying task command (e.g., Playwright), which will error with "unknown option '-p'" — making it look like a tool error rather than an nx invocation error.
+The `-p`/`--projects` flag exists on `nx run-many`, not on `nx affected`. When passed to `nx affected`, an unrecognized flag is silently forwarded to the underlying task command (e.g., Playwright), which will error with "unknown option '-p'" — making it look like a tool error rather than an nx invocation error. (2026-07-21)
 
 **Current workaround**: `nx affected -t <target> --exclude=project1,project2` works but is a denylist (will silently fail to exclude the 4th project added later). **Preferred**: use positively-stated scoping — `nx run web-e2e:e2e` when only one project needs to run, or tag-based targeting when available (future: `nx affected -t e2e --tags scope:identity,scope:web`).
 
 Practical diagnostic tip: if an `nx affected` command is failing with a tool error, double-check the flag spelling against `nx affected --help` first.
+
+## Nx CI Reliability Gotchas
+
+### Nx success banner counts projects, not tasks — scoped runs report incomplete coverage as success
+
+Nx `--affected` filtering works, but the final banner message "✓ Running target test for X projects" is true regardless of whether you intended Y projects. Scoped runs mask the omission. (2026-08-06)
+
+### `nx-set-shas` makes `--affected` inversely proportional to CI health
+
+Each push runs `nx-set-shas` to cache SHA bounds for the next run. On a broken branch where CI never completes, the cached SHAs are never updated — all subsequent runs use stale bounds and report the wrong affected set. (2026-08-06)
+
+### Path-anchored ESLint rules are inert under per-project `nx lint`
+
+Root-config `files: ['libs/*/application/**/*.ts']` globs never match when `cwd` IS `libs/identity/application` — the path segment is stripped from every relative path. Use `cd <project> && npx eslint --print-config <file>` to verify. Fix: export rules from root config, apply via `files: ['**/*.ts']` from each project's local config. (2026-08-06)
+
+### Stale Nx daemon plugin workers — `nx reset` clears the daemon cache
+
+An `@nx/vitest` plugin can infer stale targets if the daemon worker is out of sync. Running `nx reset` clears the daemon and forces fresh re-inference. (2026-08-06)
+
+### Killing an `nx serve` process leaves an orphaned lock; resolve PID from port, not path
+
+`pkill -f "dist/apps/api/main.js"` also kills `nx serve api`'s child process while the parent still holds the target lock. Future `nx serve` attempts silently no-op. Resolution: use `ss -tlnp | grep :3000` to find PID from port, then `kill` that specific process. (2026-07-28)
 
 ## New section: Quality gate stage sequencing
 
@@ -112,13 +134,37 @@ A full-repo-scan (reading all source code) should only happen after topology doc
 
 The orchestrator re-reads the task file's `## Acceptance criteria` and `## Context / Why` blocks **from disk** — not from memory of the Phase 1 dispatch — and checks each criterion against the actual working tree. Each verified criterion must be cited with a specific file path and line number: "Line 42 of `src/x.ts` uses `Money.toJSON()`" is evidence; "the PR looks good" is not. A criterion that cannot be pointed at is not met.
 
-**Why this is structural, not a quality-gate defect**: Every phase of the quality gate (tester, reviewer, qa, lint/tsc) verifies _the code that exists_. A feature that was never written has no diff to review, no code to cover, and no flow to exercise — it is invisible from inside the gate by construction, exactly as the gate is designed to be when correctness-checking built code. A green gate therefore proves conformance of the implementation that shipped, not completion of the original ask. This is especially visible in parity tasks (feature replacement where the legacy code already implements the new behavior) — the absence of currency conversion in a "bill balance card" replacement only surfaced by diffing the legacy `page-bill` screen against the new implementation and finding it rendered three separate currency conversions nowhere present in the replacement.
+**Why this is structural, not a quality-gate defect**: Every phase of the quality gate (tester, reviewer, qa, lint/tsc) verifies _the code that exists_. A feature that was never written has no diff to review, no code to cover, and no flow to exercise — it is invisible from inside the gate by construction, exactly as the gate is designed to be when correctness-checking built code. A green gate therefore proves conformance of the implementation that shipped, not completion of the original ask. This is especially visible in parity tasks (feature replacement where the legacy code already implements the new behavior) — the absence of currency conversion in a "bill balance card" replacement only surfaced by diffing the legacy `page-bill` screen against the new implementation and finding it rendered three separate currency conversions nowhere present in the replacement. (2026-07-27)
+
+### Quality gate scoped to Nx-affected projects can green-light a task while the live system is broken [CRITICAL]
+
+A task scoped frontend-only (e.g., `angular-developer` on feature libs) with a verify pass building/testing only affected frontend projects can still gate-pass while `apps/api` is broken. Nx `--affected` practice is necessary but not sufficient. (2026-07-28) A system smoke check (hit running app pages/endpoints, not just `nx run-many --target=build`) must run before task close, not just Nx-affected subset.
 
 ### Parity tasks carry an extra obligation
 
 When a task file's `## Context / Why` or acceptance criteria name a legacy source for behavior parity, the orchestrator opens that source (`git show <ref>:<path>`) and enumerates the behaviors it implements. A replacement feature is not accepted until it has been checked against the legacy behavior in code, not against a written description of that behavior. This is an exception to the orchestrator's normal read restriction (orchestrator normally reads only `.claude/**`, `rules/**`, `AGENTS.md`, plan files, agent reports) — reading the legacy source file directly is in the same spirit as reading a plan file or an agent report: it is external factual evidence for a claim, not reading the project's own source code inline. A parity claim that does not cite the legacy file is not evidence of parity.
 
 **Paired authoring-side obligation**: This orchestrator obligation is paired with a task-authoring rule documented in `rules/local/task-authoring.md` § "Parity-task authoring obligation". That section requires task authors to enumerate legacy behaviors as individually checkable AC lines, each citing the legacy source. The orchestrator's Phase 4.5 verification reads those AC lines and checks each against the legacy source. Neither the authoring rule nor this Phase 4.5 parity-obligation rule should be distilled or deleted without re-evaluating both together — they are interdependent.
+
+### Green gate + passing tests cannot detect a missing core feature
+
+A gate-passing implementation can still omit a feature never written. Concrete: a screen-parity task shipped without the core behavior (balance converted to three currencies), passing 93 tests, lint, typecheck, `tester`, `reviewer`, `qa`. No gate stage flags an absent feature because every stage verifies only code that exists. Discovery required diffing two independent implementations against legacy code. (2026-07-27) This incident justified Phase 4.5 — the gap is structural to the gate.
+
+### Purely visual/rendering bugs can pass unit tests, e2e, and two code reviews
+
+A visual-only defect (wrong text color, misaligned spacing, missing icon) has no code path to test, no coverage gap to find, and looks correct in text-form review. Caught only during real visual inspection. (2026-07-29)
+
+### A gate finding tagged "no action needed" still requires an explicit accept-or-fix decision
+
+A finding reported as "no action needed" still needs orchestrator acknowledgment before task close — do not skip it, do not default-accept it. (2026-08-02)
+
+### Verify a dispatched agent's claimed diff against `git status`/`git diff` — reported completion is not proof
+
+An agent reported a CI fix as complete while making zero file changes (re-described pre-existing commits as its own work). Caught by running `git status`/`git diff` independently and re-running verification. This practice already applies to `tester`/`qa`; extend it to all dispatched agents with `Edit`/`Write` tools. (2026-08-06)
+
+### Agent idle is not agent passed; background subagents deliver nothing until asked
+
+An agent returning "work complete" while running background async tasks that finish later is not a passing state. Verify completion against `git log` + the agent's explicit task status before crediting completion. (2026-08-06)
 
 ### Failure routes back to Phase 3, outside the restart budget
 
@@ -158,7 +204,7 @@ The related existing rules — _"verify working-tree side effects before dispatc
 
 Rule/doc prose is meant to outlive any specific task file (`tasks/**` is gitignored and its files are routinely archived or deleted). A task-ID or decision-number reference embedded in such prose reads as authoritative today and as meaningless noise once that task file is gone. This mirrors the existing code-comment rule in `AGENTS.md` § Code Style Essentials ("never reference task IDs, decision IDs, or task file paths in comments — these go stale"), extended explicitly to durable docs and rules, which the comment-scoped wording didn't cover — and which slipped through review twice in the same session before being caught.
 
-**Before finishing any edit to `rules/**`, `CLAUDE.md`, `AGENTS.md`, or a non-ledger `docs/\*.md` file\*\*, grep the diff for task-ID/decision-number-shaped patterns and rewrite any hit as a content description instead:
+**Before finishing any edit to a rules file, `CLAUDE.md`, `AGENTS.md`, or a non-ledger doc under `docs/`**, grep the diff for task-ID/decision-number-shaped patterns and rewrite any hit as a content description instead:
 
 ```
 git diff HEAD -- <changed files> | grep -E '^\+' | grep -vE '^\+\+\+' | grep -E 'task [0-9]+\b|[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]+\b|ADR-[0-9]+'

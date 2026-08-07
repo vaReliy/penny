@@ -102,24 +102,18 @@ Why: Calling `state().kind` twice in a template means TypeScript cannot narrow t
 
 ### A binary `loading|error|ready` page `state()` cannot express post-`ready` partial failure
 
-A page-level `state()` computed that resolves to `'loading' | 'error' | 'ready'` models _initial load_ only. Once the page has reached `'ready'` (e.g. `balance() !== null && rates() !== null`), it can never re-enter `'error'` through that same computed — a failed `refresh()` after first success has nowhere to surface, and the template silently renders stale data with no indication anything failed.
+A page-level `state()` computed that resolves to `'loading' | 'error' | 'ready'` models _initial load_ only. Once the page has reached `'ready'`, a failed action (refresh, form submit, etc.) has nowhere to surface, and the template silently renders stale data with no indication anything failed.
 
-Partial/refresh failure after first success is a per-action concern, not a bypass to reinvent per screen. Decide the convention once: each failable action gets its own per-action error signal, surfaced inline next to that action's own affordance (e.g. a `role="alert"` beside the still-visible stale data), and stale data is never discarded on a failed refresh. Read the per-action error signal directly in the `ready` branch rather than folding it back into the page-level `state()`.
+Partial/refresh failure after first success is a per-action concern: each store operation (`CategoryStore.create/update/archive`, `TransactionStore.record`) already exposes its own `loading`/`error` signal pair (one `BudgetRequestState` instance per operation). Bind directly to the operation's own error signal at the component that owns that affordance (submit button, form, dialog), surfacing it as a `role="alert"` inline next to that action without blanking any other part of the page. Never fold per-action errors back into a page-level `state()` computed.
 
 ## Routing
 
 ### `routerLinkActive` must not coexist with a static class on the same CSS property
 
-Tailwind compiles utilities to same-specificity single-class selectors, so when a static class and a conditionally-applied class both target the same CSS property on the same element, whichever rule appears later in the _compiled stylesheet_ wins — not whichever class is later in the element's `class` list or later to be added by a directive. Passing classes as `routerLinkActive`'s string value alongside static classes on the same element leaves this cascade fight to chance:
+Tailwind compiles utilities to same-specificity single-class selectors, so when a static class and a conditionally-applied class both target the same CSS property on the same element, whichever rule appears later in the _compiled stylesheet_ wins — not whichever class is later in the element's `class` list. Binding to `isActive` via template ref + `[ngClass]` ensures exactly one class per property is present at any moment, removing cascade-order ambiguity.
 
 ```html
-<!-- ❌ Wrong — bg-primary vs hover:bg-background, text-primary-contrast vs
-     text-text-secondary: whichever wins in the compiled stylesheet is
-     accidental, not chosen -->
-<a routerLink="/dashboard" routerLinkActive="bg-primary text-primary-contrast" class="text-text-secondary hover:bg-background">Dashboard</a>
-
-<!-- ✓ Correct — bind to isActive via a template ref, exactly one class per
-     property is present at any moment -->
+<!-- ✓ Correct — bind to isActive via template ref, one class per property present at a time -->
 <a routerLink="/dashboard" routerLinkActive #rla="routerLinkActive" [ngClass]="rla.isActive ? 'bg-primary text-primary-contrast' : 'text-text-secondary hover:bg-background'">Dashboard</a>
 ```
 
@@ -152,6 +146,14 @@ Use a computed signal instead of `$any()` casts to preserve strict mode.
 - When generating components via `nx g @nx/angular:component`, do not pass `--style=scss` (let the generator default to CSS)
 - After generation, verify `styleUrl` / `styles` references use `.css`
 
+### Flex `min-w-0` for content-heavy children
+
+A flex item's default `min-width: auto` prevents it from shrinking below its content's intrinsic width. In a `flex-row` layout with content-heavy children (text lists, charts, tables), add an explicit `min-w-0` on the child to permit shrinking within the remaining space — otherwise overflow can occur even when the flex container has space available.
+
+### Breakpoint consistency with web-shell
+
+Any screen that renders separate mobile/desktop branches (bottom-sheet vs. rail, list vs. table) must reuse the exact same Tailwind breakpoint token as `libs/shared/web-shell`'s nav toggle. Mismatched breakpoints create an overlap window where the screen and nav are out of sync, producing real interaction defects (pointer events still intercepted, overflow undetected).
+
 Example:
 
 ```typescript
@@ -163,6 +165,10 @@ Example:
 })
 export class GreetingComponent {}
 ```
+
+### Tailwind v4 color token names in this repo
+
+This repo's `@theme` block defines color tokens as `from-primary-from`, `to-primary-to`, and `text-on-primary` — NOT the pattern `bg-primary`/`text-primary-contrast` common in other codebases. Bare intuitive guessing of these names produces unstyled components with no build error (Tailwind simply does not emit a utility class for a non-existent token). Always grep the actual token names in `apps/web/src/styles.css` when styling a new component.
 
 ### Tailwind v4 @theme token migration
 
@@ -190,19 +196,40 @@ This is especially important if a token-migration task was split across multiple
 - Avoid `any` — define DTOs for every endpoint response
 - Error handling: pipe errors through `catchError`, never suppress with `|| null`
 
+## Global Interactive Element Styling
+
+Add one rule to `apps/web/src/styles.css`'s `@layer base` covering all interactive elements (never use `--apply` or component-level classes):
+
+```css
+button:not(:disabled),
+[role='button']:not([aria-disabled='true']),
+a[href],
+select:not(:disabled),
+input[type='checkbox']:not(:disabled),
+input[type='radio']:not(:disabled),
+label:has(input[type='checkbox']:not(:disabled)),
+label:has(input[type='radio']:not(:disabled)) {
+  cursor: pointer;
+}
+
+button:disabled,
+[role='button'][aria-disabled='true'],
+select:disabled,
+input[type='checkbox']:disabled,
+input[type='radio']:disabled {
+  cursor: not-allowed;
+}
+```
+
+This covers all existing screens with a single global rule. Note: native checkboxes and radios have no pointer cursor by default in any browser and require explicit styling. Use `label:has(input)` because this codebase wraps inputs inside labels (implicit association) rather than pairing by id.
+
 ## Currency Display
 
 ### bigint-exact currency conversion for display: parse the decimal rate as an exact fraction, never through `Number`
 
-Any display-value conversion between currencies must stay entirely in `bigint` — never round-trip the decimal-string rate through `Number`/`parseFloat`. Split the rate string into `{numerator, denominator}` by string manipulation, then compute:
+Any display-value conversion between currencies must stay entirely in `bigint` — never round-trip the decimal-string rate through `Number`/`parseFloat`. Split the rate string into `{numerator, denominator}` by string manipulation, then compute the foreign value entirely in `bigint`, using round-half-away-from-zero. This pattern only holds when both currencies share a minor-unit decimal count (true for UAH/USD/EUR at 2 decimals).
 
-```
-foreignMinorUnits = round(baseMinorUnits × 10^k / rateNumerator)
-```
-
-entirely in `bigint`, using round-half-away-from-zero. This precondition only holds when both currencies share a minor-unit decimal count (true for UAH/USD/EUR at 2 decimals) — a currency like JPY (0 decimals) or BHD (3 decimals) would need a scale adjustment.
-
-This is the frontend/display-value counterpart of the backend bigint-percent pattern — see `rules/local/code-style-backend.md` § "Bigint-safe percent pattern (no float touch)" for the equivalent backend idiom (`(numerator*100n + denominator/2n) / denominator`).
+This is the frontend/display-value counterpart of the backend bigint-percent pattern — see `rules/local/code-style-backend.md` for the backend equivalent.
 
 ## Subscription Cleanup
 
@@ -250,6 +277,32 @@ Use `useFactory` (lazy-evaluated during DI resolution) rather than `useValue` (e
 - Keyboard navigation on all interactive elements
 - WCAG AA contrast ratios
 - Angular CDK `a11y` utilities for focus management
+
+### Form labels and simultaneous component instances
+
+When a component may render more than once in the same DOM tree simultaneously (mobile bottom-sheet + desktop rail, repeated list-item forms), use implicit label wrapping (`<label><span>text</span><select>...</select></label>`) instead of explicit `id`/`for` pairs. Duplicate DOM ids are invalid HTML; browsers silently resolve them, so whichever instance's id resolves second loses its label association.
+
+### ARIA attribute pairing when clamping
+
+When clamping one ARIA progress attribute (e.g., `aria-valuenow` when it could exceed 100), bind the paired attribute (e.g., `aria-valuemax`) to the same constant instead of leaving it as a static literal. This prevents independent drift — both ends of the ARIA min/max pair must be synchronized.
+
+### ngx-charts constraints
+
+**Legend overshoot**: ngx-charts' legend can overshoot its computed container width by a few pixels, triggering page-level horizontal scroll at narrow viewports. Contain it by applying `overflow-hidden` on the chart's outer container.
+
+**PieChart sizing**: Never bind `[view]` for a `PieChartComponent` or leave it unset without explicit CSS sizing on its immediate parent. The chart measures its host parent's `getBoundingClientRect()` when `[view]` is unbound, so wrap it in a sized container (e.g. `h-56 w-full`). Do not use ngx-charts' built-in `legendPosition: 'below'` (it does not reduce the ring's height) — hand-roll a legend as a flex sibling instead. Use explicit `[customColors]` on dark backgrounds; the default color schemes produce near-identical pale shades.
+
+## Budget Contracts Naming Convention
+
+The budget contracts library (`libs/budget/contracts`) exports types as `*Request`/`*Response`/`*Query`/`*Entry`, NOT the pattern `*Dto` despite files being named `*.dto.ts`. When citing or using budget contract types, grep the actual export names from the source file — do not infer from the filename.
+
+## Error Object Translations
+
+Error objects returned from API/service layers must carry a translation key, never a display string. Bare interpolations like `{{ error.message }}` are invisible to i18n audits (no string literal in the template, no audit signal), so untranslated English errors reach users despite a 100%-passing i18n check. Define error objects with a `kind` or `code` enum that maps to Transloco keys rather than storing display text in the object.
+
+## Responsive Breakpoint Functionality
+
+When a component renders separate mobile and desktop markup branches (via `md:hidden` and `hidden md:block` Tailwind classes), diff the set of interactive affordances between branches, not just the styling. A critical interaction wired only to the desktop branch becomes unreachable on mobile, despite existing tests and code review — only a comparison of the actual interactive elements between the two branches catches this.
 
 ## Internationalization (Transloco)
 

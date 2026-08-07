@@ -212,7 +212,7 @@ The guard sequence ensures that `pending` users can call `GET /auth/me` (protect
 
 ### Cross-aggregate referential checks belong in `authorize`, not `execute`
 
-`authorize(context, params)` already accepts `params` (bivariant override) and is the correct home for cross-aggregate referential checks like category existence + workspace ownership + archived-state. Throw a dedicated error type (e.g. `CategoryNotEligibleError`) distinct from `ServiceValidationError`, so schema-validation failures and referential failures stay distinguishable:
+`authorize(context, params)` already accepts `params` (bivariant override) and is the correct home for cross-aggregate referential checks like category existence + workspace ownership + archived-state. This is the first concrete example (2026-07-22, `RecordTransactionService`) where async, params-dependent `authorize` was actually used — prior services only checked caller/workspace state. Throw a dedicated error type (e.g. `CategoryNotEligibleError`) distinct from `ServiceValidationError`, so schema-validation failures and referential failures stay distinguishable:
 
 ```typescript
 export class RecordTransactionService extends BaseService<RecordTransactionParams> {
@@ -285,12 +285,24 @@ Both properties hold for every LIVR schema in this repo without per-field enforc
 
 ### `{ like: ID_PATTERN }` is the actual NoSQL-injection fuse for id-shaped fields
 
-LIVR's `{ like: ID_PATTERN }` rule rejects non-primitive input before regex matching, which is what actually closes Mongo-operator-injection (`{$gt:''}`-style) on `categoryId`, `accountId`, `id` fields and similar. This holds for all id-shaped string fields where the schema declares `{ like: ID_PATTERN }` — the LIVR rule gates on `util.isPrimitiveValue()` before any regex, so operator objects never reach the regex matcher.
+LIVR's `{ like: ID_PATTERN }` rule rejects non-primitive input before regex matching, which is what actually closes Mongo-operator-injection (`{$gt:''}`-style) on `categoryId`, `accountId`, `id` fields and similar. This holds for all id-shaped string fields where the schema declares `{ like: ID_PATTERN }` — the LIVR rule gates on `util.isPrimitiveValue()` before any regex, so operator objects never reach the regex matcher. Currently only documented in code comments — add to a visible rule.
 
 **Enforcement note:** prose-only claims that a request shape is "period-scoped" or "bounded" aren't enforced at the schema level. When a task/ADR claims a request shape is bounded/scoped/filtered, verify the LIVR validation schema **or** the `authorize()` method actually enforces it, not just the prose. Example: a filter schema that left every filter optional despite "period-scoped queries" prose allowed an empty-params call to return unbounded data — fixed by adding an explicit period-scope guard in `authorize()` (month required OR both from+to required).
+
+### [CRITICAL] `@Query()` passed straight into a LIVR-validated service silently defeats validation
+
+**Express null-prototype object fails LIVR's `isObject` check**: Express builds `req.query` via `Object.create(null)`. LIVR's `isObject(obj)` is `obj?.constructor === Object`, which is `false` for null-prototype, so validation returns the string `'FORMAT_ERROR'` instead of a validated object or boolean. If `base-service` only checks `if (validParams === false)`, the string passes through as "valid," reaches `authorize()`, and throws a `TypeError` on first property access — surfacing as a raw 500 instead of a 4xx.
+
+**Concrete incident** (2026-07-28): `GET /api/budget/transactions?month=2026-07` hitting a null-prototype query object. This is a systemic footgun, not a one-off.
+
+**Fix**: Controllers must spread `{ ...query }` before passing to the service, converting null-prototype → plain object. Also update `base-service.ts` to check `if (!validParams)` so any non-object/non-array LIVR return maps to `ServiceValidationError` (4xx).
+
+**Checklist**: Wherever a NestJS `@Query()`/`@Body()` object is handed to a LIVR-validated service, verify it has been spread into a plain object first.
 
 ### Asymmetric id-validation is easy to miss when sibling id params get different treatment
 
 When one id-shaped param in a params object gets an existence/ownership check, verify every sibling id-shaped param in the same object needs the same treatment. Both can pass identical LIVR shape-only validation while only one gets the real referential check, which isn't visible from the schema and is easy to miss in review.
 
-Checklist line: whenever one id-shaped param in a params object gets an `authorize()`-level existence/ownership check, audit every other id-shaped param in the same object to confirm it receives the same treatment.
+**Concrete incident** (2026-07-27): `RecordTransactionService` checked `categoryId` for existence/workspace-ownership but never checked `accountId` the same way — both pass identical LIVR shape-only validation, so the asymmetry is invisible from the schema.
+
+**Checklist**: whenever one id-shaped param in a params object gets an `authorize()`-level existence/ownership check, audit every other id-shaped param in the same object to confirm it receives the same treatment.

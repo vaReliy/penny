@@ -68,3 +68,19 @@ This authoring-side obligation is paired with an orchestrator-side verification 
 The orchestrator's Phase 4.5 reads the task file's AC lines and verifies each against the legacy source you cite here. If your AC lines are ambiguous or miss behaviors, the orchestrator's read-back will catch it and route the work back to implementation. Write atomic, pointable, legacy-linked criteria so the orchestrator's verification step can complete without re-opening the task.
 
 Neither the authoring rule nor the Phase 4.5 orchestrator rule should be distilled or deleted without re-evaluating both together — they are interdependent.
+
+## Pre-Dispatch Checklist
+
+### Task file's pinned branch can go stale between authoring and execution
+
+A branch can be merged, superseded, or abandoned after a task file cites it. Before dispatching any agent against a task-file-pinned branch, run `git log --oneline <branch>..develop` and `develop..<branch>` to confirm freshness — zero unique commits = fully merged and stale. (2026-07-28) This check must happen at triage before the first agent spawn, not after a subagent stalls partway through.
+
+### Task file's cited `rules/cts/*` path can be stale when content lives in a local override
+
+When authoring a task that references a `rules/cts/X.md` file path, verify that the file hasn't been superseded by `rules/local/X.md` in this repo. If it has, cite the local file instead. (2026-08-02)
+
+### Task-file identifier names can drift from what actually shipped
+
+A hardening task described a constant as `MAX_RESPONSE`, but the actual shipped code named it `MONOBANK_MAX_BODY_BYTES` and placed it in a different file. (2026-08-02) Any task describing code implementation should say "verify actual identifier via grep" rather than naming a specific symbol that may have changed during impl.
+
+Concrete pattern: README/doc-sync tasks referencing prior implementation should cite git refs and use grep to confirm identifiers before trusting the task's prose.

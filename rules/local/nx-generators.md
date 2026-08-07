@@ -18,15 +18,21 @@ Any implementation or quality-gate report covering a new app or lib must state t
 
 The `@nx/vitest` plugin registers the inferred test target as `test` (the `testTargetName` option in `nx.json`, kept at Nx's conventional default) — NOT `vite:test`. Use `pnpm nx test <project> --skip-nx-cache` for unit test runs. Gotcha that motivated this note: `nx <target> <project>` for a target name the project doesn't have silently resolves to nothing — after running any generator, confirm the registered target names in `nx.json` match what CI and the rules table invoke.
 
-## Overrides rules/cts/nx-generators.md § Angular Style Files (SCSS Only)
+## Overrides rules/cts/nx-generators.md § Angular Style Files (CSS Only, not SCSS)
 
-Repo standard is the opposite of the CTS default: all style files use plain CSS (not SCSS) — Tailwind v4 does not work with CSS preprocessors. The `@nx/angular:app` and `@nx/angular:lib` generators default to CSS, which is correct here; no post-gen renaming is needed. Do not pass `--style=scss` to generators (contra the CTS default command, which does).
+Repo standard is the opposite of the CTS default: all style files use plain CSS (not SCSS) — Tailwind v4 does not work with CSS preprocessors. The `@nx/angular:app` and `@nx/angular:lib` generators default to CSS, which is correct here; no post-gen renaming is needed. Do not pass `--style=scss` to generators (contra the CTS default command, which does). The CTS SCSS-only post-gen step is superseded for this repo's Angular libs. (2026-07-28)
 
 ## New section: Tailwind `@source` Registration for New Consuming Angular Libs
 
 `apps/web/src/styles.css` uses Tailwind v4's CSS-first config (`@import 'tailwindcss' source('./app')`) and explicitly registers every consuming lib with its own `@source '../../../libs/<path>/src'` line, since `source('./app')` scopes automatic detection to the app's own `src/app` tree and does not reach sibling Nx libs.
 
 **When you generate a new Angular lib that will be imported by `apps/web`** (a `feature-*` lib, `shared/*` lib, or any lib whose templates use Tailwind utility classes), add a matching `@source` line to `apps/web/src/styles.css` in the same changeset. Skipping this does not error anywhere — the lib compiles and lints clean, but any Tailwind class used only in that lib's templates silently never makes it into the compiled stylesheet, producing unstyled elements with no build failure to point at the cause.
+
+## Post-Generation Vitest Config Fixes
+
+### `nx g @nx/angular:lib` scaffolds `vite.config.mts` with deprecated plugin imports
+
+The generator creates a config file with outdated plugin references that fail lint immediately, requiring manual fixup before first commit. (2026-07-29) After `nx g`, run `nx lint <lib>` and update plugin imports to current version before committing.
 
 ## New section: Dead Demo Component Cleanup After Adding Real Features
 

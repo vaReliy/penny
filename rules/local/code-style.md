@@ -20,6 +20,16 @@ When an interface is moved from being declared inline in module A to being `impo
 
 Checklist for type-lift refactors: after replacing an inline declaration with `import type`, grep every file that imported the symbol from the original module and update them to the authoritative source.
 
+## Extends rules/cts/code-style.md — Floating-Point Arithmetic
+
+### Averaging two floats then `.toString()` reintroduces float-precision loss in a decimal-string field
+
+A "decimal string" field was designed to avoid float precision loss in transport, but averaging two floats then calling `.toString()` defeats that. Example: `((27.1 + 27.3) / 2).toString()` emits `"27.200000000000003"` even though both inputs are precise. (2026-07-27)
+
+**Fix**: any derived decimal value bound for a documented precision-preserving string field must use `.toFixed(n)` before serialization — raw float arithmetic output is never safe.
+
+**Test fixtures**: include at least one operand pair triggering binary-float rounding (e.g., `27.1 + 27.3`, `0.1 + 0.2`), not just round numbers like `41.5 + 42.1` that mask the defect.
+
 ### Re-exporting merged declarations
 
 A bare re-export (`export { X }`) covers both value and type namespaces when the source has a declaration merge (const object + same-name type alias):
@@ -48,3 +58,7 @@ Nx runs `eslint .` per project with `cwd` set to that project's own root. Every 
 **Critical issue**: a root-config rule scoped via e.g. `files: ['libs/*/application/**/*.ts']` can never match when `cwd` IS `libs/identity/application` — that path segment is stripped from every relative path ESLint evaluates (`src/lib/foo.ts`, never `libs/identity/application/src/lib/foo.ts`). The only reliable check is `cd <project-dir> && npx eslint --print-config <file>` and confirming the rule key isn't `null`.
 
 **Fix pattern**: export the rule object as a named export from root config, then apply it via `files: ['**/*.ts']` (no path-segment dependency) from inside each affected project's own local `eslint.config.mjs`. Same-named rule keys (e.g. two `no-restricted-syntax` blocks) do NOT merge across config objects — the last one wins silently, so any fix must merge selector arrays into the same key per project rather than adding a competing block.
+
+### ESLint flat config REPLACES `no-restricted-syntax` wholesale
+
+When a project-local flat config includes a `no-restricted-syntax` rule alongside a root-config one with the same key, the project-local rule fully replaces it — no merging of selector arrays. (2026-08-06) Fix any multi-rule application by merging all selectors into a single `no-restricted-syntax` block per project.

@@ -26,7 +26,21 @@ An e2e logout-flow test that mocks `/auth/me` unconditionally will deadlock: the
 
 ### Role query races Tailwind breakpoint reflow after navigation
 
-During live browser QA, `page.getByRole('navigation', {name: ...})` can intermittently return 0 or 2 matches (instead of the correct 1) when queried immediately after `page.waitForURL()` — the query races Tailwind's `hidden`/`lg:flex` breakpoint-driven reflow before Angular's zone has stabilized. Adding `page.waitForLoadState('networkidle')` (or an equivalent explicit wait) after navigation and before role-querying nav elements fixes the race. This is especially pronounced in Tailwind-breakpoint-driven layouts where the visibility changes along with other layout reflow.
+`page.getByRole('navigation', ...)` can intermittently return 0 or 2 matches when queried immediately after `page.waitForURL()` — the query races Tailwind's `hidden`/`lg:flex` breakpoint-driven reflow before Angular's zone has stabilized.
+
+**Fix:** use retrying assertions (e.g. `expect(desktopLocator.or(mobileLocator)).toBeVisible()`) to wait for the reflow to settle; **do not** use `page.waitForLoadState('networkidle')` or bare `locator.isVisible()` (no-arg, non-retrying snapshot). The `no-networkidle` lint rule exists for a reason — `networkidle` is fragile and expensive. Once the retrying assertion has resolved the race, subsequent `isVisible()` calls are safe, since the reflow is settled.
+
+### Playwright API compatibility gotchas
+
+`getByRole` options type has no `current` filter; use `toHaveAttribute('aria-current', ...)` instead. Playwright's glob route patterns anchor at the end — a bare path never matches a URL with query string (use `'**/api/path*'` to cover `?query` variants).
+
+### Avoid `getByLabel` in favor of `getByRole` for selects
+
+`getByLabel(text, {exact:true})` can hang indefinitely on an implicit-wrap `<label><span>…</span><select>…</select></label>` structure, even with a confirmed-present accessible name. Use `getByRole('combobox', {name, exact:true})` instead — same accessible-name matching, no hang, and a more precise locator for `<select>` anyway.
+
+### Bottom-sheet overlay requires explicit dismiss before list interaction
+
+The history screen's mobile filter bottom-sheet (`div.fixed.inset-0.z-20` overlay) does not auto-close on filter selection. The underlying transaction list stays present but non-interactive (pointer events intercepted by the still-open overlay) until the user dismisses the sheet via backdrop or button. A test selecting a filter then clicking a list row must dismiss the sheet first — since "Готово" appears as both the backdrop's `aria-label` and an in-sheet button, locators must be scoped (e.g. `.last()` or a more specific selector) to avoid strict-mode ambiguity.
 
 ### QA agent Playwright fallback requires file-tree placement
 
@@ -38,9 +52,21 @@ The `qa` agent sessions have no Playwright MCP tools exposed; the confirmed fall
 
 Running a single e2e spec through Nx requires discovering the exact atomized target string. Run `nx show project <e2e-app> --json` and look under `metadata.targetGroups` for the entry named like `e2e-ci--src/<file>.spec.ts`. Do not guess the target name — guessing produces a "target not found" error, and worse, `nx affected -t <name>` silently skips projects lacking the named target with no warning. A wrong guess in CI can read as a pass when the test was never run.
 
+### CLI dev-auth for real authenticated Playwright sessions
+
+To verify a fix against the real API (not route-mocked), the README's "Local dev auth" section documents `dev:create-user` and `dev:token` CLI commands. These produce a `token` + `XSRF-TOKEN` pair injectable via `context.addCookies([{name:'token',...,httpOnly:true},{name:'XSRF-TOKEN',...}])` before first navigation, giving a fully real, authenticated, non-mocked browser session. This is the correct pattern for any unmocked e2e/QA regression pass in this repo and a good candidate for permanent real-backend regression specs alongside existing mocked specs.
+
 ### ESLint rules make natural null-check patterns conflict with lint
 
 Both `playwright/no-conditional-in-test` and `no-non-null-assertion` fire on the natural `boundingBox()` null-check idiom (the property can be null if the element is not visible). Once visibility has already been asserted via `isVisible()` or similar, use `evaluate()` with `getBoundingClientRect()` instead of the direct `boundingBox()` call — this sidesteps both rules while still checking the property you need.
+
+### OnPush component's signal effect()-driven form reset races in fast multi-submit
+
+A component that resets its form via a signal `effect()` after successful submit can have the next submission's field selection clobbered by the reset race window in scripted tests. Fast Playwright specs executing back-to-back submits can cross a window far below human reaction time. Fix: add an explicit wait (retrying `expect`) for the form field to return to its reset state before starting the next submission — never a bare `sleep()`.
+
+### Route mocks must match actual DTO types
+
+E2E route mocks must be checked against the actual DTO/response type consumed by the component, not just visible assertion text. A field-name typo in a mock silently produces a runtime `undefined` with no compile-time signal (Playwright mocks aren't type-checked against the real API response type). Verify mock object shape against source-of-truth interface.
 
 ### E2E projects lack `typecheck` targets
 

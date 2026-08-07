@@ -113,3 +113,17 @@ Not implemented. Today's flat single-role model is already behaviorally equivale
 
 - **Workspace** — the entity name for a scoped-admin grouping (deliberately not "tenant," "group," or "organization"). Membership lives inside the `Workspace` aggregate itself, under a hard ≥1-admin invariant.
 - Would live in its own `libs/workspace/*` scope, not folded into `identity`.
+
+---
+
+## Frontend Configuration
+
+### `TELEGRAM_BOT_USERNAME` is frontend config, not API config
+
+`TELEGRAM_BOT_USERNAME` is read only by the Angular `login-page.component.ts` (passed to Telegram Login Widget's `data-telegram-login` attribute) and never by the API. Previously threaded through env → docker-compose build-arg → Dockerfile ARG → generated `.env` file, it was backend config wearing the wrong clothes. (2026-07-21)
+
+**Current state**: the build-arg chain is gone and the migration is **done**, not pending. The value is served at runtime by `GET /api/config` and provided via `provideAppInitializer` in `app.config.ts` — the `useValue: environment.telegramBotUsername` provider it replaced no longer exists. Consumers inject the `TELEGRAM_BOT_USERNAME` token (`libs/identity/data-access/src/lib/telegram-bot-username.token.ts`) and have no knowledge of its origin, which is why swapping the provider was the only frontend change required. One image now serves every environment.
+
+**Testing note**: any spec that spreads the production `ApplicationConfig.providers` into `TestBed.configureTestingModule` implicitly runs this initializer on first `inject()`, firing a real `GET /api/config` even when the test touches an unrelated token — pair it with `provideHttpClientTesting()` and settle `ApplicationInitStatus.donePromise`.
+
+**Why**: Configuration should live at the layer that consumes it. Every hop in the chain is a place it can break, and gitignored generated files force every execution context (CI job, e2e, fresh clone) to independently regenerate before building.

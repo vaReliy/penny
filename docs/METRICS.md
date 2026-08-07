@@ -120,3 +120,4 @@ Each completed task is one row in the table below.
 | 2026-08-06 | penny | fix-web-app-config-test-error (unreproducible, no fix)       | T1   | 0      | 0/-/-/-           | 0       | no       | standard       |                    |
 | 2026-08-06 | penny | fix-api-e2e-jest-toolchain                                   | T1   | 3      | 2/3/-/-           | 1       | yes      | standard       |                    |
 | 2026-08-06 | penny | fix-api-e2e-setupfiles-baseurl                               | T0   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |
+| 2026-08-06 | penny | result2-milestone-review                                     | T1   | 0      | -/-/-/-           | 8       | no       | deep           | Opus               |

@@ -247,6 +247,22 @@ throw new InfrastructureError(); // Uses default generic message
 
 `BaseErrorFilter` serializes the error message into the HTTP response. Inject the logger into every repository and call `logger.error()` before throwing.
 
+## Budget-Specific Patterns
+
+### ArchiveCategoryService has no history-guard despite ADR-007 reading as if it might
+
+Per DECISIONS.md ADR-007 §6, archived categories stay in aggregation and archiving only hides categories from UI selection. The service enforces only "already archived" conflict (`libs/budget/application/src/lib/archive-category.service.ts:30-42`), not a backend history-block preventing archive when historical transactions exist. If such a guard is needed, it must be implemented separately — do not assume it exists.
+
+## Request Handling and Validation
+
+### [CRITICAL] `@Query()` passed straight into a LIVR-validated service silently defeats validation
+
+Express builds `req.query` via `Object.create(null)`. LIVR's `isObject(obj)` checks `obj?.constructor === Object`, which is `false` for a null-prototype object. **Result**: `Validator.validate(queryObject)` returns the string `'FORMAT_ERROR'` instead of a validated object or `false`. Critically, `base-service.ts` checking only `if (validParams === false)` treats the string as "valid," reaches `authorize()`, and throws a `TypeError` on first property access — surfacing as a raw 500 instead of a 4xx.
+
+**Concrete incident** (2026-07-28): `apps/api/src/budget/transactions.controller.ts` and `budget-analytics.controller.ts` passed `req.query` directly to LIVR-validated services.
+
+**Fix**: Controllers must spread `{ ...query }` before passing to the service; `base-service.ts` must check `if (!validParams)` so any non-object LIVR return maps to `ServiceValidationError` (4xx). Any `@Query()`/`@Body()` object handed to a LIVR-validated service must first be spread into a plain object to prevent null-prototype bypass.
+
 ### Mongoose `autoIndex` builds indexes asynchronously; nothing awaits it by default
 
 **Concrete incident**: `createMongoConnection` + `await connection.asPromise()` proves socket readiness only, not index-build completion — Mongoose's default `autoIndex: true` builds indexes as a fire-and-forget background op. Unique-index enforcement (duplicate-`{workspaceId,name}`-insert rejection) becomes racy: two writes can both evaluate "no document exists" before either unique index finishes building and catches the duplicate.
@@ -254,6 +270,8 @@ throw new InfrastructureError(); // Uses default generic message
 **Why**: MongoDB indexes are background tasks by design. An application relying on a unique index for correctness must not issue any inserts until the index is built.
 
 **Fix**: `createMongoConnection` must await `Model.init()` for every model (`Promise.all()`) before returning the connection — the model-factory functions themselves stay synchronous (so existing `vi.mock`-based unit tests of the sync `getXModel()` shape keep working), and the await lives in the connection-setup seam. Any future repo relying on a unique index for correctness must go through this connection helper, not construct its own.
+
+**Confirmation (2026-07-27)**: `findOrCreateDefault` upsert-race recipe confirmed on a brand-new collection (`MongoAccountRepository`), not just a retrofit onto an existing one — this is the default reach-for pattern for any "find or create default" need.
 
 ### MongoDB `partialFilterExpression` rejects `$exists: false` at index-build time, and Typegoose swallows the failure silently
 
@@ -278,6 +296,14 @@ throw new InfrastructureError(); // Uses default generic message
 **Why**: Typegoose requires both the enum values _and_ their type to be explicit — `enum` alone is insufficient and triggers a fallback to `Mixed`.
 
 **Fix**: Always pair `enum` with an explicit `type: () => String`/`Number`. This is easy to miss since nothing red flags it besides stderr noise during test runs.
+
+### Mongoose aggregation pipelines bypass schema-level BigInt casting entirely
+
+**Concrete incident**: A transaction repository's `$sum`/`$group` aggregation pipeline output is plain JavaScript objects Mongoose never casts through the schema's BigInt SchemaType — the result field can surface as `bigint`, BSON `Long`-like object, or `number` depending on driver/shape, not reliably the schema's declared type.
+
+**Why**: Mongoose does not cast values in aggregation pipelines (only in normal queries).
+
+**Fix**: Apply an explicit `toBigIntAmount` normalizer on any aggregation result touching a BigInt-backed field, unit-tested against a forced non-numeric shape since the real local driver only produces one shape reliably.
 
 ## NestJS Guards and Dependency Injection
 
@@ -316,7 +342,9 @@ export class BudgetModule {}
 
 Every new feature module whose controllers use `SessionGuard`/`ActiveUserGuard` (or any other DI-dependent guard) must import `AuthModule` directly — importing it once in `AppModule` does not make its exports reachable from a sibling feature module's own injector.
 
-**Test coverage**: unit specs that hand-construct guards against a fake `ExecutionContext` (see `rules/cts/testing.md` § "Guard decorator chains") never exercise the real module graph and cannot catch this — the module compiles and passes every such spec, then crashes the whole app at startup. Add a module-compile smoke test per feature module instead:
+**Real-world failure** (2026-07-27): `BudgetModule` applied `@UseGuards(SessionGuard, ActiveUserGuard)` on its controllers but never imported `AuthModule` — `nx serve api` crashed at boot with `UnknownDependenciesException` for `Symbol(ITokenIssuer)` and identity tokens. The guard instantiation lives in the controller's host module's injector, not the module that declares/exports the guard.
+
+**Test coverage**: unit specs that hand-construct guards against a fake `ExecutionContext` never exercise the real module graph and cannot catch this — the module compiles and passes every such spec, then crashes the whole app at startup. Add a module-compile smoke test per feature module instead:
 
 ```typescript
 Test.createTestingModule({ imports: [TheFeatureModule] }).compile(); // throws if any provider/guard dep is unresolvable
@@ -328,8 +356,6 @@ Override only the I/O-boundary providers so it needs no live DB/network:
 - `mongoose.createConnection()` called with **no URI**, overriding `TOKENS.MongoConnection` — registers Typegoose models via `getXModel(connection)` without opening a socket.
 
 Verify the spec actually catches the regression it targets by temporarily reverting the fix locally and confirming the test fails with the real `UnknownDependenciesException` — a passing-by-coincidence smoke test is worse than none.
-
-_(Pending upstream: this recipe belongs in `rules/cts/testing.md` § "Guard decorator chains" too — see `docs/KNOWLEDGE_INBOX.md` 2026-07-27 entry, route via `/cts-contribute`.)_
 
 ## NestJS Controller Route Prefixes
 
@@ -345,7 +371,7 @@ NestJS route prefixes come from the `@Controller('prefix')` decorator on the con
 
 ### `CsrfGuard` already safe-lists GET/HEAD/OPTIONS globally — no guard/decorator needed for a new unauthenticated GET endpoint
 
-`apps/api/src/auth/csrf.guard.ts` is registered as the only global `APP_GUARD` in `AppModule` and unconditionally safe-lists GET/HEAD/OPTIONS before any CSRF check runs. `SessionGuard` and `ActiveUserGuard` are opt-in per-route via `@UseGuards(...)`, never global. So any new unauthenticated GET handler needs zero guard changes or bypass decorators — simply omitting `@UseGuards(SessionGuard, ActiveUserGuard)` is the entire exemption, exactly as `HealthController` and `HelloController` already do.
+`apps/api/src/auth/csrf.guard.ts` is registered as the only global `APP_GUARD` in `AppModule` and unconditionally safe-lists GET/HEAD/OPTIONS before any CSRF check runs. `SessionGuard` and `ActiveUserGuard` are opt-in per-route via `@UseGuards(...)`, never global. So any new unauthenticated GET handler needs zero guard changes or bypass decorators — simply omitting `@UseGuards(SessionGuard, ActiveUserGuard)` is the entire exemption, exactly as `HealthController` and `HelloController` already do. Confirmed (2026-07-22) — no guard or decorator changes needed for `GET /api/config` endpoint.
 
 ## Configuration Layering
 

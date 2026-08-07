@@ -1,3 +1,25 @@
+## Vitest Framework Gotchas
+
+### globalSetup/globalTeardown and setupFiles have sharp edges absent from Jest
+
+Migrating to Vitest from Jest surfaced three distinct gotchas:
+
+1. **No separate `globalTeardown` key**: teardown must come from the `globalSetup` module's default export _returning_ a teardown function (or named `setup`/`teardown` exports in the same file). Splitting into two files the Jest way silently breaks teardown with no error — it just never runs.
+
+2. **`setupFiles` imports but never invokes exported functions**: a file imported via `setupFiles` is loaded once per test file, but any exported function is never called automatically. Code that needs to run must be top-level statements, not wrapped in a function, or it silently no-ops.
+
+3. **`@nx/vitest` plugin auto-infers a `test` target from `vitest.config.mts` presence alone**, independent of `project.json`. For e2e-style projects needing a build+serve dependency chain, the inferred target won't carry that `dependsOn` and fails with connection-refused errors. Removing an explicit target expecting the plugin to infer correctly can introduce this regression. Fix: rename the config file itself (e.g. `vitest.config.mts` → `vitest.e2e.config.mts`) so the plugin has nothing to match, then point the real target at it explicitly via `"command": "vitest --config vitest.e2e.config.mts"`.
+
+### Hardcoded calendar literals in assertions rot silently on month boundaries
+
+A test asserting `month: '2026-07'` against a component deriving `month` from `signal(currentMonth(new Date()))` passes when authored in July but breaks the moment the calendar rolls to August, even though the component's behavior was correct throughout.
+
+**Fix:** pin the clock (`vi.setSystemTime` in `beforeEach`, `vi.useRealTimers()` in `afterEach`) rather than updating the literal. Diagnostic: a sibling test that captures the value dynamically from a prior request instead of hardcoding it will never have this bug — "capture dynamically" or "pin the clock," never "hardcode a value derived from `new Date()`."
+
+### `@nx/vitest` plugin can re-infer targets after explicit target deletion
+
+After deleting a duplicate `test` target from `project.json`, the `@nx/vitest` plugin in `nx.json` (with `"testTargetName": "test"`) re-infers the target on any project containing a `vitest.config.mts` file, regardless of what the project config declares. To exclude an e2e project from a CI job designed to skip projects with no `test` target, rename or remove the config file the plugin matches on, not just the `project.json` target.
+
 ## Extends rules/cts/testing.md § Guard decorator chains
 
 The repo follows an established, non-optional pattern (not merely "a common pattern"): guard decorator chains (e.g., `@UseGuards(SessionGuard, ActiveUserGuard)`) are **unit-tested on each guard's `canActivate()` directly** against a hand-built fake `ExecutionContext`, not via real HTTP dispatch through the controller. This keeps specs fast, avoids DI/Mongo bootstrap overhead, and is the repo-wide convention (not merely an option to weigh).
@@ -194,6 +216,18 @@ Adding a field to `ApiConfig` (e.g. `telegramBotUsername: string`) forces edits 
 
 **Solution:** create a shared `makeTestApiConfig(overrides?: Partial<ApiConfig>)` builder helper in a test-utils location, so the next `ApiConfig` field addition touches one file instead of N unrelated ones.
 
+### `createFakeUserRepository` is stub-only, not a stateful drop-in
+
+The shared `createFakeUserRepository` factory in `libs/identity/testing` returns a plain object of `vi.fn()` stubs with static default resolves, overridable per call — no shared state, no real lookup/persist behavior. Local `FakeUserRepository` classes that exist in individual specs (e.g. `set-user-status.service.spec.ts`) are full Map-backed in-memory repositories with `seed()`, working `findByTelegramId`/`findByUsername` lookups, id-generating `save()`, and stateful `updateStatus`/`updateRoles`. Swapping to the stub factory would silently drop that stateful behavior. Diff behavior, not just class name, before assuming a "duplicate" fake is a name-only dupe of a stub factory.
+
+### Controller specs with object-literal query params can't catch transport-shape defects
+
+Every existing controller spec calls `controller.list({ month: '2026-07' }, user)` — a plain-object literal, which is a shape Express never produces (`req.query` is null-prototype). Specs therefore exercise a code path production never takes. Any spec standing in for an HTTP-layer request must construct the query object the way the framework does (e.g. `Object.assign(Object.create(null), { month: '2026-07' })`) to be a faithful stand-in.
+
+### A green, clearly-named test can assert a value that violates a contract enforced elsewhere
+
+A spec named `'resolves the month filter to a Europe/Kyiv instant range'` can pass identically against a UTC implementation, off-by-a-month implementation, or correct one, if it only asserts `expect(...from).toBeInstanceOf(Date)`. Per-lib/per-file coverage audits structurally cannot see cross-lib contract violations. When auditing any timezone, money, or boundary claim, grep for the asserted values and read the assertion body; never accept a matching test name as coverage.
+
 ## Shared/Base Helper Test Coverage
 
 ### Shared/base state-helper classes get only transitive test coverage from consumer specs
@@ -212,36 +246,29 @@ Example: `new Date('2026-06-30T22:00:00.000Z')` is unambiguously `2026-07-01` in
 
 ## Angular HTTP Testing
 
-### `provideAppInitializer` is unit-testable via `TestBed.inject(ApplicationInitStatus).donePromise`
+### `provideAppInitializer` with ApplicationInitStatus.donePromise
 
-`provideAppInitializer` (Angular 17+, successor to the deprecated `APP_INITIALIZER` multi-provider) has no obvious seam for testing async bootstrap-time work — the initializer callback isn't separately exported. Working pattern: configure `TestBed` with `provideHttpClientTesting()`, flush the expected `HttpTestingController` request, then `await TestBed.inject(ApplicationInitStatus).donePromise` (or `await expect(donePromise).rejects...` for failure-path assertions) to observe DI state after the initializer settles. No need to extract the callback into a standalone function for testability.
+When a spec spreads production `ApplicationConfig.providers` into `TestBed.configureTestingModule`, every `provideAppInitializer` runs on first `inject()`, even when the test only touches an unrelated token. Pattern: give that `describe` block its own `beforeEach` adding `provideHttpClientTesting()`, flush the expected request deterministically (e.g. `/api/config`), and `await TestBed.inject(ApplicationInitStatus).donePromise` before assertions; `afterEach` calls `httpController.verify()`. This also works for standalone `provideAppInitializer` testing — no need to extract the callback into a standalone function for testability.
 
-### Use `match(url)` instead of `expectOne(url)` for concurrent same-URL requests
+### `expectOne(url)` ignores HTTP method — use `match(url)` for concurrent same-URL requests
 
-When two concurrent in-flight calls hit an identical URL (no differentiating param), `HttpTestingController.expectOne(url)` throws "matches more than one request" — making race/ordering behavior untestable through the usual API.
+`HttpTestingController.expectOne(url)` matches on `TestRequest.url` only (no query params, no method), so it silently matches whichever pending request has that path, regardless of verb. Two concurrent calls to the same path (e.g. GET list vs POST create) are untestable via `expectOne`.
 
-**Solution:** use `match(url)`, which returns both `TestRequest`s, then `flush()` them individually in a deliberately chosen order to assert last-write-wins vs first-write-wins behavior:
+**Fix:** pass a predicate checking both URL and method, or use `match(url)` (returns all matching `TestRequest`s), then `flush()` them individually in a deliberately chosen order to assert ordering behavior:
 
 ```typescript
-it('last write wins on concurrent refresh', () => {
-  service.load();
-  service.refresh(); // concurrent call to same URL
-
-  const requests = controller.match(url);
-  expect(requests).toHaveLength(2);
-
-  requests[0].flush({
-    /* initial data */
-  });
-  requests[1].flush({
-    /* refreshed data */
-  }); // This response is final
-
-  expect(component.data()).toEqual({
-    /* refreshed */
-  });
+const requests = controller.match(url);
+requests[0].flush({
+  /* first response */
+});
+requests[1].flush({
+  /* second response */
 });
 ```
+
+### Mock HTTP error bodies must match `SerializedBaseErrorBody` shape
+
+`toBudgetApiError` only surfaces a custom error message when the flushed response body matches `{code, message}` with `code` being a known literal (e.g. `DOMAIN_CONFLICT_ERROR`). A bare `{message: '...'}` body falls through to the generic fallback with no warning. Any test flushing a mock HTTP error against a `BudgetRequestState`-backed store needs a valid `code` field to assert the intended message.
 
 ## Nx & Playwright E2E
 
@@ -270,6 +297,20 @@ Running a single e2e spec through Nx requires the exact atomized target string `
 `page.getByRole('navigation', ...)` can intermittently return 0 or 2 matches when queried immediately after `waitForURL`, racing Tailwind's `hidden`/`lg:flex` breakpoint-driven reflow before Angular's zone stabilizes.
 
 **Solution:** add `page.waitForLoadState('networkidle')` (or equivalent) after navigation before querying nav roles in the same test step.
+
+## Automation Limits & Guard Verification
+
+### README boilerplate guard detects presence, not accuracy
+
+The `apps/web/src/readme-boilerplate.guard.spec.ts` guard scans for presence of Nx-generator boilerplate marker strings in library README files and flags files that still contain them. However, the guard **cannot** verify that whatever text replaces the boilerplate is _factually accurate_ — a claimed consumer list, scope tag, or implementation note can be confidently wrong and still pass. Presence is orthogonal to correctness. Any linter/gate checking for "marker string absent" solves the structural problem and introduces a false-confidence risk on semantic correctness.
+
+### `coverage.enabled: true` is the single line that makes CI coverage gating real
+
+CI runs a bare `nx affected -t …,test,…` and never passes `--coverage`. Thresholds in `vitest.config.mts` would therefore apply to nothing without `coverage.enabled: true`, which makes collection unconditional — a "config tidy-up" deleting it as redundant would silently disable coverage enforcement repo-wide with no failing test to catch it. Do not remove this line without re-running the gate with `--coverage` override explicitly.
+
+### Cross-lib Deps interface changes must be caught by the consuming app's typecheck
+
+`RecordTransactionDeps` field additions (e.g. `accountRepository: IAccountRepository`) aren't caught by `budget-application`/`budget-core` test runs when those libs hand-construct the Deps object rather than importing a shared factory. Only `nx typecheck api` (the consuming NestJS app) catches the wiring break via TS2345. Any future `*Deps` field addition needs the consuming app's typecheck/test run included in the gate, not just the owning lib's.
 
 ## QA Tooling Constraints
 

@@ -4,6 +4,10 @@ This rule covers Node.js / NestJS / Express application code, structured logging
 
 ## Configuration & Environment
 
+### CLI has no dotenv loader; requires manual shell env sourcing
+
+`apps/cli/src/config/cli-config.ts` reads `MONGO_URI`/`MONGO_DB_NAME` from `process.env` with no dotenv import anywhere. Running CLI commands without `set -a && source .env && set +a` fails silently with "failed to connect" (the generic error, not "missing MONGO_URI"). (2026-07-28) All CLI invocations must be documented with the env-sourcing prefix.
+
 ### CLI-only secret validation: inline reads need full entropy check
 
 When CLI commands read secrets directly from `process.env` (bypassing the NestJS Config service), a falsy-only check (`if (!secret)`) is insufficient. Single-character values produce structurally valid but cryptographically weak tokens. Pattern: after the presence check, assert minimum length (32 chars for HMAC-SHA256 secrets) before constructing any cryptographic primitive. The production-mode guard limits blast radius but does not substitute for entropy validation since the same secret may be shared with the API server.
@@ -193,9 +197,9 @@ Example: `setLogLevels(['error', 'warn'])` → minimum of (50, 40) = 40 → pino
 
 ### Redundant narrowing guards in `execute` despite prior `authorize` guarantees
 
-ESLint's `no-non-null-assertion` still fires when a prior pipeline step provably guarantees non-null. Example: `execute` runs after `authorize` has already asserted an active caller, so `context.caller` is provably non-null by the time `execute` reads it, but `context.caller!.userId` still trips the lint rule.
+ESLint's `no-non-null-assertion` still fires when a prior pipeline step provably guarantees non-null. Example: `execute` runs after `authorize` has already asserted an active caller, so `context.caller` is provably non-null by the time `execute` reads it, but `context.caller!.userId` still trips the lint rule. (2026-07-22)
 
-**Fix pattern:** add a redundant `if (!context.caller) throw new AuthenticationError()` narrowing guard in `execute` itself, not a suppression comment — even when `authorize` already guarantees non-null. This is cheap and keeps the zero-suppression lint posture consistent.
+**Fix pattern:** add a redundant `if (!context.caller) throw new AuthenticationError()` narrowing guard in `execute` itself, not a suppression comment — even when `authorize` already guarantees non-null. This is cheap and keeps the zero-suppression lint posture consistent. Do not use a suppression; use a guard.
 
 ## Authentication & Cookies
 
