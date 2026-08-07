@@ -77,6 +77,33 @@ Rationale: an ESLint `no-restricted-syntax` ban encoding layer purity is executa
 
 **Dispatch-prompt obligation**: any tooling-config task whose rules mention a layer name (`application`, `core`, `infrastructure`, `kernel`, `feature`, `ui`) must cite the corresponding architecture rule file in the dispatch prompt, whichever agent is chosen. This is the `CLAUDE.local.md` Dispatch-Prompt Cross-Reference applied to a surface where the file path gives no hint that architecture knowledge is needed.
 
+## New section: Phase 2.5 — Plan-back checkpoint before implementation (T2/T3)
+
+**Applies to T2 and T3 only.** T0/T1 are not worth the round-trip — dispatch them straight to implementation.
+
+The orchestrator owns the outcome of the whole cycle, not just the routing of it. But it deliberately cannot read source, and that restriction is load-bearing: it is what keeps orchestrator context small enough to stay sharp across a long pipeline. The checkpoint below is the one supervision step that buys real accountability without spending context, because it reviews a **plan** — checkable against documents the orchestrator already holds — rather than an implementation.
+
+**Mechanism.** Every T2/T3 implementation dispatch prompt ends with:
+
+> Before writing any code, reply via `SendMessage` with a plan of at most 10 lines: (1) the mechanism you intend to use, (2) the files you expect to touch, (3) how you will verify it — the exact command and its expected result. Do not begin implementation until I approve.
+
+The orchestrator then checks that plan against what is already in its context — the task's acceptance criteria, the rule files cited in the dispatch prompt, and the Context/Why section — and replies with exactly one of:
+
+- **Approved** → agent implements.
+- **Corrected** → name the specific conflict (the rule that contradicts the mechanism, the acceptance criterion the verification would not satisfy) and ask for a revised plan. **One correction round maximum.**
+- **Re-routed** → the plan reveals the task needs different expertise than the agent has (see the routing section above). Stop this agent, dispatch the right one with the plan as context. This is the cheapest possible moment to discover a routing error.
+
+**What makes a plan rejectable** — the orchestrator is checking four things, all answerable without opening a source file:
+
+1. The mechanism contradicts a rule cited in the dispatch prompt, or one the task's file surface implicates.
+2. The verification step cannot actually detect the failure the task exists to fix (e.g. proposing a unit-test run to verify a lint-config change — see the gate-relevance section below).
+3. The verification asserts only the positive case, with nothing confirming the change stays inert where it must.
+4. The plan's file list reaches outside the task's stated scope, or omits files the acceptance criteria clearly require.
+
+**Bounds, so this does not become design-by-committee**: one correction round, then proceed with the agent's revised plan even if imperfect — the quality gate and Phase 4.5 are the backstops, and a second round of plan debate costs more than letting the gate catch it. The orchestrator never proposes the mechanism itself; it names the conflict and lets the specialist re-plan. Do not read source to evaluate a plan — if a plan cannot be judged from the task file and the cited rules, approve it and let the gate do its job.
+
+**Not a replacement for `ddd-architect`.** T3 planning decides _what to build and where it belongs_, before a task file exists. This checkpoint decides _whether the stated approach to an already-specified task is sound_, after dispatch. A T3 task gets both.
+
 ## New section: Gate relevance — the gate must verify the thing that changed
 
 `tester(verify)` runs the Vitest suite. For a changeset that touches **only executable config** (`eslint.config.mjs`, `tsconfig*.json`, `nx.json`/`project.json` targets, Dockerfiles, CI workflows), the unit-test suite is structurally incapable of detecting whether the change did what it claims — it will pass identically before and after a completely broken edit. Dispatching it, then restarting from it on every fix-retry cycle, spends real tokens on a signal that carries no information about the change.

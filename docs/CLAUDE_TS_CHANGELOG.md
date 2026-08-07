@@ -21,6 +21,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-08-07 — [Enhancement] Phase 2.5 — plan-back checkpoint before implementation (T2/T3)
+
+- **Component**: `rules/local/workflow.md` (new "Phase 2.5 — Plan-back checkpoint" section), `CLAUDE.local.md` (pointer under "Orchestrator (Dispatcher) Core")
+- **Type**: Enhancement
+- **What happened**: The pipeline had a supervision gap between dispatch and implementation — an agent went straight from prompt to editing files, with no point at which its intended approach was checkable. In the task that exposed this, the agent's first mechanism was contradicted by a rule file dated one day earlier; the contradiction was visible in a single sentence of plan text but was only discovered after two full fix-verify rounds. Added a checkpoint requiring T2/T3 implementation dispatches to return a ≤10-line plan (mechanism, files, exact verification command and expected result) before writing code. The orchestrator approves, corrects once, or re-routes — judging the plan **only** against the task file and the rules already cited in the dispatch prompt, explicitly never by reading source. Four rejection criteria: mechanism contradicts a cited rule; verification cannot detect the failure the task exists to fix; verification asserts only the positive case; file list exceeds or under-covers the stated scope. Bounded at one correction round, with the orchestrator naming the conflict rather than proposing the mechanism itself.
+- **Why it matters upstream**: Every claude-ts consumer's orchestrator is defined as a dispatcher whose tool limits forbid reading source — a restriction that is load-bearing for context economy but that also leaves it unable to supervise anything before the quality gate, i.e. after all implementation cost is already sunk. A plan is the one artifact an orchestrator can review at full competence without spending context, because it is checkable against documents it already holds. This makes the orchestrator accountable for the cycle without weakening the tool limits that keep it cheap, and it catches routing errors at the cheapest possible moment — before any work is done. Distinct from `ddd-architect` planning, which decides what to build before a task file exists; this checks whether the approach to an already-specified task is sound.
+- **Suggested upstream change**: Add a "Phase 2.5 — Plan-back checkpoint" step to `rules/cts/workflow.md` between dispatch and implementation, gated to the two highest tiers (or, for tier-agnostic consumers, to any task where the foresight gate fires). Include the ≤10-line plan contract, the four rejection criteria, the one-correction-round bound, the re-routing case, and an explicit "do not read source to evaluate a plan — if it cannot be judged from the task file and cited rules, approve it and let the gate work" instruction, so the step cannot erode into implementation review.
+- **Status**: pending-port — currently lives only in this project's unsynced `rules/local/workflow.md` + `CLAUDE.local.md`.
+
+---
+
 ## 2026-08-07 — [Enhancement] Cost controls for tooling-config tasks — gate relevance, mechanism-residue cleanup, resolved-state-first, and routing by knowledge
 
 - **Component**: `rules/local/workflow.md` (four new sections: "Routing workspace tooling config", "Gate relevance", "Fix-retry cycles — delete the superseded mechanism", "Opaque-resolution tooling")
