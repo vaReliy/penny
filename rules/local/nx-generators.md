@@ -66,6 +66,30 @@ The tags line must match the actual tags declared in the lib's `project.json` (t
 
 **Concrete incident**: 5 of 11 `libs/budget/*` libraries (`feature-account`, `feature-records`, `feature-history`, `feature-planner`, `ui`) shipped with the template boilerplate README past their feature work, invisible to review and lint, until an explicit governance-docs surface sweep caught them manually.
 
+## New section: Nx Module Boundaries — depConstraints Coverage Gotchas
+
+### `eslint.config.mjs`'s two `depConstraints` blocks must be checked independently
+
+Building a guard spec to catch `scope:*`/`type:*` tags with no matching `sourceTag` entry in `depConstraints`, the first implementation regex-scanned the whole file into one merged `Set<string>` of source tags. This missed a real, live gap: `libs/identity/testing`'s `type:testing` tag had a `sourceTag` entry in the `**/*.spec.ts` override block only, not in the main block — so the merged-set guard read it as "covered" while the main `@nx/enforce-module-boundaries` rule left every non-spec `.ts` file in that lib completely unfenced.
+
+Root cause: ESLint flat-config rule keys replace rather than merge across matching config objects, so this repo's two blocks are independent coverage domains by design (confirmed via the file's own comment) — any tag-coverage tooling must extract and check `depConstraints` per block (e.g. via a bounded per-block regex, or dynamic `import()` of the config module and iterating each flat-config array item's own `rules['@nx/enforce-module-boundaries'][1].depConstraints`), never as one flattened union. The fix (`apps/web/src/dep-constraints-tag-coverage.guard.spec.ts`) now does the latter.
+
+### `@nx/dependency-checks` can mask `@nx/enforce-module-boundaries` when probing a banned-import rule
+
+To verify a newly added `bannedExternalImports` entry actually fires, a probe planted `import { ObjectId } from 'bson'` in a `type:core` lib. Lint failed non-zero as expected, but the reported error was `@nx/dependency-checks` ("missing from dependencies"), not `@nx/enforce-module-boundaries` — a false positive for the thing under test, since a lib that already declared the package as a dependency would never hit this rule at all. Root cause: `@nx/dependency-checks` validates that every package actually imported by a project is declared in that project's own `package.json`, and runs independently of (and apparently before, in reported output) the module-boundary rule.
+
+Fix for probing: temporarily add the package at its already-resolved lockfile version (exact-pinned — check `pnpm-lock.yaml`/a sibling project's `package.json` for the resolved version rather than guessing) to the target project's `package.json`, re-run, confirm the boundary error specifically, then revert. Generalises to any future banned-import probe against a package the workspace doesn't already depend on directly.
+
+### `apps/api` and `apps/cli` carry Nx tags with no `sourceTag` entry in `depConstraints`
+
+While auditing whether a contracts lib's cross-consumer reuse was genuinely enforced, `eslint.config.mjs`'s `depConstraints` blocks were checked line by line: `apps/api/project.json` and `apps/cli/project.json` tags have no matching `sourceTag` entry in either `depConstraints` array. The tag-coverage guard spec only sweeps `libs/*/*/project.json` by its glob, so app-level tag coverage sits entirely outside that guard's reach — not by an explicit allowlist decision, just by the glob's shape. Consequence: "apps/api imports X" is never by itself evidence that a boundary is enforced — only lib-to-lib `depConstraints` entries are. Closing this gap may be a deliberate scope choice for apps (leaf nodes, not shared libs) rather than an oversight.
+
+### A lib tagged `platform:shared` can still be practically unreachable if its `type:*` tag is absent from every frontend-side allowlist
+
+`platform:*` and `type:*` are two independent axes that must both permit a dependency — auditing "is this lib really shared" requires checking the `type:*` tag's reachability from frontend sourceTags, not just reading the `platform:shared` label at face value. A lib tagged `platform:shared` whose `type:*` tag appears in only one consumer type's allowlist (not in every frontend-side `type:*` allowlist) is unreachable from the excluded consumers despite the `platform:shared` label, which can produce silent duplication: constants independently restated in each excluded consumer instead of imported, sometimes with a source comment explicitly justifying the restatement as a workaround for the unreachable tag.
+
+Detectable by cross-referencing a lib's `type:` tag against `eslint.config.mjs`'s frontend-side allowlists, and by grepping for JSDoc comments that explain why a constant is restated instead of imported — a reliable smell for this exact misplacement. (The specific lib that originally surfaced this — `libs/budget/validation` — was since dissolved, its schemas and constants colocated/hoisted elsewhere; the reachability principle and detection method above are the durable part.)
+
 ## Extends rules/cts/nx-generators.md § hand-scaffolded lib missing lint target
 
 Concrete incident in this repo: `libs/shared/testing` was hand-scaffolded (`project.json`/`tsconfig*.json` written by hand, `tsconfig.base.json` path alias added manually) and was missing `eslint.config.mjs`, `package.json`, and `README.md` compared to a generator-created sibling — caught only by diffing the new lib's file listing against a known-generated one.

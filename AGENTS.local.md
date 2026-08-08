@@ -15,6 +15,8 @@ Project-only rule splits (not CTS payload — never synced, never overwritten):
 - `rules/local/architecture-angular.md` — Angular injection tokens, lazy-load boundaries, dev-server proxy
 - `rules/local/code-style-backend.md` — backend config, validation, logging, auth/cookies, error handling
 - `rules/local/code-style-angular.md` — Angular signals, toSignal, templates, SCSS, forms, accessibility
+- `rules/local/ci.md` — GitHub Actions secrets/vars, `actions/cache` key correctness, diagnosing job-level CI failures
+- `rules/local/docs-style.md` — Prettier markdown-corruption hazards, line-number citation rot, detection-tool scope drift
 
 CTS-managed rules with broadened retrieval triggers (on-demand index descriptions narrower than actual rule scope):
 

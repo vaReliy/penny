@@ -84,3 +84,15 @@ When authoring a task that references a `rules/cts/X.md` file path, verify that 
 A hardening task described a constant as `MAX_RESPONSE`, but the actual shipped code named it `MONOBANK_MAX_BODY_BYTES` and placed it in a different file. (2026-08-02) Any task describing code implementation should say "verify actual identifier via grep" rather than naming a specific symbol that may have changed during impl.
 
 Concrete pattern: README/doc-sync tasks referencing prior implementation should cite git refs and use grep to confirm identifiers before trusting the task's prose.
+
+### A task file's enumerated "missing"/"duplicated" list can already be stale — re-run the grep before trusting it as exhaustive
+
+A coverage-gate task listed several tests as required additions; all of them already existed from a prior session's work, independently confirmed by a separate reviewer agent reading the actual assertions — only the coverage-gate config itself was genuinely missing. Separately, a dissolution task (colocating a shared validation library's duplicated constant) named a fixed set of files carrying the duplicate restatement, sourced from an earlier audit's grep; the implementing agent's own repo-wide grep found one more file with the identical workaround-comment pattern, which would have silently failed the task's own "exactly one definition repo-wide" acceptance check had it gone unfixed.
+
+Task files are written at plan time and can drift from the codebase's actual state by execution time, especially on long-lived or dependency-chained task queues — and this applies whether the task claims an item is absent or claims a list of occurrences is complete. Before an implementation agent trusts a task's enumerated list (of missing tests, duplicate occurrences, consumer sites, etc.) as exhaustive, re-run the grep that produced it — cheap, and avoids both redundant authorship and incomplete cleanup.
+
+### `tasks/` is gitignored end-to-end — ledger-integrity reviews must never reach for `git log`/`git blame` on task files
+
+`tasks/` is fully gitignored per `AGENTS.local.md`, so `git log --all -- 'tasks/**'` returns zero commits for the entire directory, not just a particular missing file. No ledger-integrity check can ever use `git log`/`git blame` on a task file itself to see when it was created, moved, or deleted; the only durable trace of a task's existence is (a) its implementing commit's message/diff against real source, and (b) its `docs/METRICS.md` row. A completed task whose numbered task file apparently never existed on disk is undetectable by git, only inferable by cross-referencing `docs/METRICS.md` content against commit messages and other durable descriptions.
+
+General principle: ledger-integrity reviews of this repo's `tasks/` workflow must never reach for `git log -- tasks/**` expecting it to show anything — the source of truth for "did this task exist and get done" is `docs/METRICS.md` plus the implementing commit, full stop.

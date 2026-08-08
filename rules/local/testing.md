@@ -16,6 +16,10 @@ A test asserting `month: '2026-07'` against a component deriving `month` from `s
 
 **Fix:** pin the clock (`vi.setSystemTime` in `beforeEach`, `vi.useRealTimers()` in `afterEach`) rather than updating the literal. Diagnostic: a sibling test that captures the value dynamically from a prior request instead of hardcoding it will never have this bug — "capture dynamically" or "pin the clock," never "hardcode a value derived from `new Date()`."
 
+### Analog-plugin libs name their Vitest config `vite.config.mts`, not `vitest.config.mts`
+
+Angular/Analog-plugin libs (e.g. `libs/budget/data-access`, Analog plugin, `jsdom` environment) name their config `vite.config.mts`, while every pure-Node lib in the same domain (`budget/infrastructure`, `budget/core`, `budget/application`) uses `vitest.config.mts`. The `coverage` block shape is identical either way, only the filename and plugin wiring differ. A uniform-filename assumption across libs — a `find`/glob for config edits, or a dispatch prompt naming a path — will silently skip the Analog-plugin libs.
+
 ### `@nx/vitest` plugin can re-infer targets after explicit target deletion
 
 After deleting a duplicate `test` target from `project.json`, the `@nx/vitest` plugin in `nx.json` (with `"testTargetName": "test"`) re-infers the target on any project containing a `vitest.config.mts` file, regardless of what the project config declares. To exclude an e2e project from a CI job designed to skip projects with no `test` target, rename or remove the config file the plugin matches on, not just the `project.json` target.
@@ -226,7 +230,9 @@ Every existing controller spec calls `controller.list({ month: '2026-07' }, user
 
 ### A green, clearly-named test can assert a value that violates a contract enforced elsewhere
 
-A spec named `'resolves the month filter to a Europe/Kyiv instant range'` can pass identically against a UTC implementation, off-by-a-month implementation, or correct one, if it only asserts `expect(...from).toBeInstanceOf(Date)`. Per-lib/per-file coverage audits structurally cannot see cross-lib contract violations. When auditing any timezone, money, or boundary claim, grep for the asserted values and read the assertion body; never accept a matching test name as coverage.
+`get-planner-summary.service.spec.ts` had a test literally named `'resolves the month filter to a Europe/Kyiv instant range passed to the repository'` whose body asserted only that `from`/`to` were `Date` instances — a spec named for specific behavior but asserting only `toBeInstanceOf(Date)` (or similarly weak shape-only checks) passes identically against a correct implementation, a UTC-only one, or one off by a month. A milestone review caught it: the name makes both a coverage report and a `grep` for "Kyiv" look green, while the assertion verifies nothing about timezone correctness, DST handling, or even the right month. The fix was to assert exact ISO instant values (see `resolve-month-range.spec.ts`, added same session, which pins four DST-boundary cases by exact UTC instant).
+
+Generalises beyond dates: any assertion whose predicate is satisfied by a wide class of wrong implementations (type checks, truthiness, `toBeDefined()`) on a test whose name promises a specific behavior is a coverage-gap-in-disguise — worth a targeted sweep elsewhere in the repo for `toBeInstanceOf`/`toBeDefined()` assertions on specs with specific-sounding names. Per-lib/per-file coverage audits structurally cannot see cross-lib contract violations either way. When auditing any timezone, money, or boundary claim, grep for the asserted values and read the assertion body; never accept a matching test name as coverage.
 
 ## Shared/Base Helper Test Coverage
 
@@ -278,6 +284,10 @@ Running a single e2e spec through Nx requires the exact atomized target string `
 
 **Related linting gotchas:** `playwright/no-conditional-in-test` and `no-non-null-assertion` both fire on the natural `boundingBox()` null-check idiom. Use `evaluate()` with `getBoundingClientRect()` instead once visibility has already been asserted — this sidesteps both rules while testing the same condition.
 
+### `nx test <project>` result caching can serve a stale pass/fail after a dependency file was mutated mid-session
+
+While fire-testing a guard spec that reads `eslint.config.mjs` at runtime, editing that file and re-running `pnpm nx test web -- -t "depConstraints"` (no cache flag) served a cached result from before the edit — the guard's assertion did not reflect the just-mutated file. Nx's test-result cache keys on inputs it tracks for the target, and a runtime `import()`/read of a file outside the spec's own dependency graph as understood by Nx does not necessarily invalidate that cache. Fix: append `--skip-nx-cache` whenever a spec under fire-test reads a file that was just edited in the same session, rather than trusting the next `nx test` run to see the change.
+
 ## Angular + Playwright Test-Writing Gotchas
 
 ### Four confirmed gotchas during web-shell restyle
@@ -307,6 +317,18 @@ The `apps/web/src/readme-boilerplate.guard.spec.ts` guard scans for presence of 
 ### `coverage.enabled: true` is the single line that makes CI coverage gating real
 
 CI runs a bare `nx affected -t …,test,…` and never passes `--coverage`. Thresholds in `vitest.config.mts` would therefore apply to nothing without `coverage.enabled: true`, which makes collection unconditional — a "config tidy-up" deleting it as redundant would silently disable coverage enforcement repo-wide with no failing test to catch it. Do not remove this line without re-running the gate with `--coverage` override explicitly.
+
+### Vitest `coverage.thresholds` are a floor, not a target — a config comment's "calibrated at X" baseline can drift invisibly
+
+`identity-core`'s vitest config recorded a calibrated baseline of 81.81%/78.94% (statements/functions) in its own comment, but thresholds were set at 76%/73% — a margin meant as slack, not a target. Coverage drifted down to 78.26%/75% (uncovered getters accumulating silently) with every CI run still green, because thresholds only fail the build on a drop below the number, never on a drop from the baseline. Nothing short of an explicit review caught it.
+
+When a config comment records a "calibrated at X" baseline distinct from the enforced threshold, that gap is invisible drift budget that depletes silently — worth periodically diffing measured coverage against the recorded baseline, not just against the threshold. Separately: prefer wording a CI comment as an invariant (e.g. "test target is auto-inferred from vitest.config.mts presence") over a hardcoded count where possible — a stated mechanism can't drift the way a tally can.
+
+### A guard that asserts its own mechanism is installed, not the outcome it exists to protect, passes green through the exact defect it was written for
+
+`scripts/web-csp-smoke-check.sh` was added specifically to prevent silent CSP-nonce failures, and it greps the served HTML for `onload="…" nonce="<uuid>"` and the `csp-nonce` meta tag. Both patterns were present and the check passed in CI — while the page was, in fact, completely unstyled, because the nonce it verified was inert against an inline handler (see `rules/local/architecture-angular.md` § Content Security Policy for the root cause). The check could observe that the fix was installed, never that the page rendered.
+
+For any defect whose symptom is user-visible rendering, the regression guard must assert the rendered outcome (zero console violations, stylesheet effective media ≠ `print`, a computed style actually applied) — asserting the presence of the fix's machinery is circular. Corollary: a guard must be observed **failing** on a deliberately broken input before it can be trusted, not merely observed passing.
 
 ### Cross-lib Deps interface changes must be caught by the consuming app's typecheck
 

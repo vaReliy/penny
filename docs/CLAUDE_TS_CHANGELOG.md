@@ -21,6 +21,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-07-23 — [Enhancement] Claude Code Bash allow rules are evaluated per-subcommand, not per-line
+
+- **Component**: `.claude/settings.json` (Bash permission rules) / a settings/permissions-authoring rule
+- **Type**: Enhancement
+- **What happened**: Per the Claude Code permissions docs (§ Compound commands), a rule like `Bash(safe-cmd *)` does not grant permission to run `safe-cmd && other-cmd` — the recognized command separators are `&&`, `||`, `;`, `|`, `|&`, `&`, and newlines, and a rule must match each subcommand independently. Applying this in the project: 26 accreted per-lib entries of the form `Bash(set -a && source .env && set +a && pnpm nx test <lib>)` were replaced by 4 composable rules — `Bash(set -a)`, `Bash(set +a)`, `Bash(source .env)`, `Bash(pnpm nx test *)` — covering every current and future lib with no settings churn while staying chain-safe. Separately confirmed: wildcard allows like `Bash(grep *)`/`Bash(jq *)` are safe to commit at project level, while `cat`/`find`/`awk`/`sort` should stay local-only (they can read arbitrary files, `-exec`, `system()`, or `-o`-overwrite — Read deny rules govern the Read tool, not Bash file reads); and `Bash(rm -rf *)` deny is prefix-fragile — an `rm -fr` variant needed its own deny entry, since deny rules are a speed bump, not a sandbox.
+- **Why it matters upstream**: This describes harness behaviour, not anything project-specific — any claude-ts consumer authoring compound-command Bash allow rules will hit the same trap of assuming a trailing wildcard covers a chained command, and the same collapse pattern (accreted per-target compound rules → a handful of composable single-subcommand rules) generalizes to any workspace with many per-project/per-lib command variants.
+- **Suggested upstream change**: Add a settings/permissions-authoring rule (or a section in the existing permissions guidance) documenting: (1) per-subcommand evaluation and the seven recognized separators; (2) the composable-rules pattern for collapsing N accreted compound-command entries into a handful of single-subcommand allows; (3) the wildcard-allow-at-project-level-vs-local-only distinction, keyed on whether the tool can read arbitrary files/execute embedded code (e.g. `grep`/`jq` vs `cat`/`find`/`awk`/`sort`); (4) the prefix-fragile deny caveat — a deny rule matches literal prefixes, so command variants (e.g. `rm -fr` vs `rm -rf`) need their own explicit deny entries, and deny rules generally should not be treated as a sandbox boundary.
+- **Status**: pending-port — currently lives only in this project's `.claude/settings.json` and this changelog entry.
+
+---
+
 ## 2026-08-08 — [Enhancement] Explicit lib-creation trigger for per-vertical concerns (Nx monorepos)
 
 - **Component**: `rules/local/architecture-backend.md` § "Lib creation trigger for per-vertical concerns" (new subsection under "Architecture Boundaries")

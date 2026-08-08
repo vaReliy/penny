@@ -270,6 +270,12 @@ bootstrapApplication(AppComponent, {
 
 Use `useFactory` (lazy-evaluated during DI resolution) rather than `useValue` (eagerly evaluated at config time) to ensure the DOM is ready when the nonce is retrieved.
 
+### A CSP nonce cannot authorize an inline event handler (`onload=`)
+
+Production CSS activation was "fixed" by injecting the per-request nonce into the `onload="this.media='all'"` attribute on Angular's async-CSS `<link>`, alongside the existing `csp-nonce` meta injection. Running the real production image against a real Chromium showed the original violation still firing verbatim, and the stylesheet `<link>` still sitting at `media="print"` — the handler never executed, so a fully-loaded stylesheet applied to nothing on screen.
+
+Root cause is a CSP-spec property, not a config error: nonces whitelist `<script>`/`<style>` elements; inline handler attributes are governed separately and are enabled only by `'unsafe-inline'` or `'unsafe-hashes'` plus a hash. Chrome's own violation text says so ("hashes do not apply to event handlers … unless the `'unsafe-hashes'` keyword is present"). General principle: when a CSP violation names an inline event handler, adding a nonce anywhere will never fix it; the fix is to remove the handler (for this pattern, Angular's `optimization.styles.inlineCritical`) or to explicitly opt into `'unsafe-hashes'`.
+
 ## Accessibility
 
 - Semantic HTML in templates — use `<button>`, `<a>`, `<header>` not divs with role hacks
@@ -299,6 +305,8 @@ The budget contracts library (`libs/budget/contracts`) exports types as `*Reques
 ## Error Object Translations
 
 Error objects returned from API/service layers must carry a translation key, never a display string. Bare interpolations like `{{ error.message }}` are invisible to i18n audits (no string literal in the template, no audit signal), so untranslated English errors reach users despite a 100%-passing i18n check. Define error objects with a `kind` or `code` enum that maps to Transloco keys rather than storing display text in the object.
+
+This applies across component boundaries too: an error prop passed child→parent (or parent→child) for display must carry the translation key, not a resolved message string. Localizing `BudgetApiError.kind`-driven error text, `PlannerCategoryRowComponent` originally received the error as an already-resolved English `message` string via `@Input`. Resolving the message in the parent and handing a plain string down would have permanently baked in one locale, since the child has no way to re-resolve it on a later language switch. Fix: changed the `@Input` contract to carry the translation key (`errorMessageKey: string | null`) instead, and pipe it through `transloco` in the child's own template — consistent with the rest of this codebase, which has no `TranslocoService` injected anywhere and is pipe-based throughout. Any error/message value crossing a component boundary for eventual display should be a lookup key, never a pre-resolved string, or it silently exits the translation pipeline at that boundary.
 
 ## Responsive Breakpoint Functionality
 
