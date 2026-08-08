@@ -140,3 +140,4 @@ Each completed task is one row in the table below.
 | 2026-08-08 | penny | audit-budget-contracts-validation                            | T1   | 0      | -/-/-/-           | 0       | no       | standard       |                    |
 | 2026-08-08 | penny | dissolve-budget-validation                                   | T1   | 0      | 0/0/-/-           | 1       | no       | standard       |                    |
 | 2026-08-08 | penny | csp-style-src-hash-drift-verification                        | T1   | 2      | -/3/0/-           | 0       | no       | standard       |                    |
+| 2026-08-08 | penny | csp-sub-filter-smoke-check                                   | T1   | 1      | -/1/0/-           | 0       | no       | standard       |                    |

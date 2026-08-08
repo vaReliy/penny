@@ -194,5 +194,12 @@ jobs:
           file: ./apps/web/Dockerfile
           tags: penny-web:latest
           push: false
+          load: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Smoke check — CSP nonce injection
+        run: bash scripts/web-csp-smoke-check.sh penny-web:latest
+        # Verifies that nginx sub_filter patterns successfully inject the per-request CSP nonce
+        # into the served index.html. Fails loudly if either pattern stops matching, preventing
+        # silent CSP bypass caused by Angular/build-tool upgrades.
