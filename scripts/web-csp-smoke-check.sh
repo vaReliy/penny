@@ -26,6 +26,10 @@ log_info() {
   echo "[INFO] $*" >&2
 }
 
+log_warn() {
+  echo "[WARN] $*" >&2
+}
+
 log_error() {
   echo "[ERROR] $*" >&2
 }
@@ -86,31 +90,31 @@ if ! html=$(curl -sf http://localhost:18080/index.html); then
   exit 1
 fi
 
-# Verify pattern 1: stylesheet onload attribute with nonce
-# Pattern: onload="this.media='all'" nonce="<actual-uuid>"
-log_info "Checking stylesheet onload nonce injection..."
-if echo "$html" | grep -Eq "onload=\"this\.media='all'\" nonce=\"[a-f0-9-]+\""; then
-  log_info "✓ Stylesheet onload nonce pattern found"
-else
-  log_error "✗ Stylesheet onload nonce pattern NOT found"
-  log_error "Expected to find: onload=\"this.media='all'\" nonce=\"<uuid>\""
-  log_error "Snippet of index.html:"
-  echo "$html" | grep -A 2 -B 2 "onload=" || true
-  exit 1
-fi
-
-# Verify pattern 2: csp-nonce meta tag with content
-# Pattern: <meta name="csp-nonce" content="<actual-uuid>">
-log_info "Checking csp-nonce meta tag content injection..."
+# Diagnostic (NOT pass/fail): the csp-nonce meta must be filled in per request for Angular to
+# nonce its runtime-injected component styles. This is reported to make failures easier to read,
+# but it must never be the thing that decides the result — a check that only verifies its own
+# mechanism is installed passed green through a completely unstyled production app once already.
+log_info "Diagnostic: csp-nonce meta injection..."
 if echo "$html" | grep -Eq "name=\"csp-nonce\" content=\"[a-f0-9-]+\""; then
-  log_info "✓ CSP-nonce meta tag pattern found"
+  log_info "  csp-nonce meta is populated"
 else
-  log_error "✗ CSP-nonce meta tag pattern NOT found"
-  log_error "Expected to find: name=\"csp-nonce\" content=\"<uuid>\""
-  log_error "Snippet of index.html:"
+  log_warn "  csp-nonce meta NOT populated — sub_filter may have stopped matching the built markup"
   echo "$html" | grep -A 2 -B 2 "csp-nonce" || true
+fi
+
+# Diagnostic (NOT pass/fail): inline event handlers cannot be authorized by a nonce under any CSP.
+if echo "$html" | grep -Eq "on(load|click|error)="; then
+  log_warn "  index.html contains inline event handler(s) — these cannot be nonce-authorized"
+fi
+
+# THE ACTUAL ASSERTION: load the served page in a real browser and require that it renders
+# styled with zero CSP violations. This is the only check here that is independent of any
+# assumption about *how* the CSS is supposed to activate.
+log_info "Running render-level CSP check in headless Chromium..."
+if ! node "$(dirname "$0")/web-csp-render-check.mjs" "http://localhost:18080/"; then
+  log_error "✗ Render-level CSP check FAILED — the served page is not correctly styled"
   exit 1
 fi
 
-log_info "All CSP nonce injection checks passed ✓"
+log_info "All CSP checks passed ✓"
 exit 0

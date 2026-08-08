@@ -1,11 +1,19 @@
 name: CI
 
+# `main` is the release branch and the gate: CI runs on every push to it and on every PR into
+# it. Pushes to `develop` deliberately do NOT run CI — day-to-day development is unverified by
+# design, and breakage is caught when the work reaches `main`. Use `workflow_dispatch` to run
+# the full suite against `develop` on demand before cutting a release.
 on:
   pull_request:
-    branches: [main, skeleton, develop]
+    branches: [main]
   push:
-    branches: [main, skeleton, develop]
+    branches: [main]
   workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -198,8 +206,26 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Smoke check — CSP nonce injection
+      # Node + pnpm are needed only for the render-level CSP check below (it drives Playwright).
+      # Mirrors the `ci` job's setup exactly — same pinned action, .nvmrc, and corepack — rather
+      # than introducing a second, divergent way of installing the same toolchain.
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Smoke check — CSP renders a styled page
         run: bash scripts/web-csp-smoke-check.sh penny-web:latest
-        # Verifies that nginx sub_filter patterns successfully inject the per-request CSP nonce
-        # into the served index.html. Fails loudly if either pattern stops matching, preventing
-        # silent CSP bypass caused by Angular/build-tool upgrades.
+        # Loads the built production image in real Chromium and requires that the page renders
+        # styled with zero CSP violations. This asserts the OUTCOME, not the mechanism: an
+        # earlier grep-only version of this check verified a nonce was present and passed green
+        # while every user received a completely unstyled page.
