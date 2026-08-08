@@ -1,14 +1,11 @@
-/**
- * Shape check for a referenced entity id (Mongo `ObjectId` hex string, as
- * produced by the infrastructure layer). Used via the LIVR `like` rule,
- * which rejects non-primitive input before pattern-matching — this is what
- * closes the Mongo-operator-injection surface (`{ $gt: '' }`-style objects)
- * on every id-shaped field.
- */
+/** Shape check for a referenced entity id: a 24-character lowercase hex string (Mongo `ObjectId` format, as produced by the infrastructure layer). */
 export const ID_PATTERN = '^[a-f0-9]{24}$';
 
-/** Matches a `'YYYY-MM'` calendar month, e.g. `'2026-07'`. */
+/** Matches a `'YYYY-MM'` calendar month, e.g. `'2026-07'`. String form for LIVR's `like` rule. */
 export const MONTH_PATTERN = '^\\d{4}-(0[1-9]|1[0-2])$';
+
+/** Same pattern as {@link MONTH_PATTERN}, as a `RegExp` literal for direct `.test()` use. */
+export const MONTH_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 /**
  * Upper bound on any single money field, in integer minor units. Set well

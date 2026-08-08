@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseAmountToMinorUnits } from './parse-amount.util';
+import { parseAmountToMinorUnits } from './parse-amount.util.js';
 
 describe('parseAmountToMinorUnits', () => {
   it('converts a comma-decimal amount to integer kopiykas', () => {
@@ -17,6 +17,11 @@ describe('parseAmountToMinorUnits', () => {
 
   it('pads a single fraction digit to two', () => {
     expect(parseAmountToMinorUnits('1,5')).toBe(150);
+  });
+
+  it('never round-trips through float arithmetic (0.1 + 0.2 style input stays exact)', () => {
+    expect(parseAmountToMinorUnits('0,1')).toBe(10);
+    expect(parseAmountToMinorUnits('0,29')).toBe(29);
   });
 
   it('rejects empty input', () => {

@@ -144,3 +144,4 @@ Each completed task is one row in the table below.
 | 2026-08-08 | penny | frontend-feature-guide-residual-citations                    | T0   | -      | -/-/-/-           | -       | no       | cheap          | row reconstructed post-hoc; gate counts unrecorded |
 | 2026-08-08 | penny | decisions-md-457-task-slug-citation                          | T0   | -      | -/-/-/-           | -       | no       | cheap          | row reconstructed post-hoc; gate counts unrecorded |
 | 2026-08-09 | penny | csp-nonce-does-not-apply-to-inline-onload                    | T2   | 0      | -/-/-/-           | 3       | no       | deep           | deep                                               |
+| 2026-08-09 | penny | validation-hoist-residual-polish                             | T1   | 0      | 0/0/-/-           | 0       | no       | standard       |                                                    |

@@ -1,7 +1,4 @@
-import { MAX_MONEY_MINOR_UNITS } from 'shared-util';
-
-// Canonical copy of this whole util also lives in `budget-feature-records`
-// (`type:feature` libs don't export/share utils across each other).
+import { MAX_MONEY_MINOR_UNITS } from './validation-patterns.js';
 
 /** Matches an amount typed with either `,` or `.` as the decimal separator, up to 2 fraction digits. */
 const AMOUNT_PATTERN = /^(\d+)(?:[.,](\d{1,2}))?$/;

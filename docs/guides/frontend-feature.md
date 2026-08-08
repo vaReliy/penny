@@ -358,7 +358,7 @@ All money values are represented as `bigint` minor units (kopiykas for UAH; cent
 **At the component boundary** (forms, user input), always convert to minor units:
 
 ```typescript
-// libs/budget/feature-records/src/lib/parse-amount.util.ts (lines 20–40)
+// libs/shared/util/src/lib/parse-amount.util.ts (lines 20–40)
 export function parseAmountToMinorUnits(raw: string): number | null {
   const trimmed = raw.trim();
   if (trimmed.length === 0) {

@@ -10,8 +10,8 @@ import {
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslocoPipe, provideTranslocoScope } from '@jsverse/transloco';
 import { formatMoney } from 'budget-data-access';
+import { parseAmountToMinorUnits } from 'shared-util';
 
-import { parseAmountToMinorUnits } from '../parse-amount.util';
 import { resolveProgressSegments } from '../planner-progress.util';
 import type { PlannerRowViewModel } from '../planner-rows.util';
 
