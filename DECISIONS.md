@@ -454,7 +454,7 @@ classDiagram
 
 **Date:** 2026-07-19
 
-**Decision:** Use Tailwind CSS v4 (utility-first, CSS-first config) for `apps/web` styling. Angular CDK primitives (menu, overlay, dialog, focus-trap) supply behavior for anything Bootstrap components would have covered; Tailwind classes supply the styling. This task records the decision and the design-token seam; it does not install Tailwind (see task `2026-07-16-04-web-shell-mobile-first-restyle`, which installs against this ADR).
+**Decision:** Use Tailwind CSS v4 (utility-first, CSS-first config) for `apps/web` styling. Angular CDK primitives (menu, overlay, dialog, focus-trap) supply behavior for anything Bootstrap components would have covered; Tailwind classes supply the styling. This task records the decision and the design-token seam; it does not install Tailwind — the web-shell mobile-first restyle work installs Tailwind against this ADR.
 
 **Context:** `apps/web` is mid-rebuild (mobile-first, agent-written UI) with only unstyled skeleton pages. The prior legacy app used Bootstrap 5 + ng-bootstrap; the `master:design/` mockups are desktop-oriented and reused only loosely in the new mobile-first design. Owner confirmed the decision 2026-07-16 ("lets use tailwind in this migration, agree") after reviewing a Tailwind-vs-Bootstrap comparison.
 
