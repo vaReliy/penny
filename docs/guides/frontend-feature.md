@@ -76,7 +76,7 @@ The backend's `libs/<domain>/validation/` applies the contract's validation rule
 
 Example from records screen:
 
-- Backend: `libs/budget/validation/src/lib/create-transaction.schema.ts` defines required, max-length, positive-amount rules for LIVR.
+- Backend: `libs/budget/application/src/lib/create-transaction.schema.ts` defines required, max-length, positive-amount rules for LIVR.
 - Frontend: `libs/budget/feature-records/src/lib/transaction-form/transaction-form.ts` (lines 49–72) implements the same validators independently using Angular's `Validators` and custom `amountValidator`.
 
 Both arrive at the same validation, but the frontend cannot import from the backend's validation lib (type:validation) — it is cross-platform and may contain backend-specific logic.

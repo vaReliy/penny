@@ -1,8 +1,9 @@
 import { DomainError } from 'shared-errors';
+import { MONTH_PATTERN as MONTH_PATTERN_STRING } from 'shared-util';
 import type { Money } from 'shared-util';
 
 /** Matches a `'YYYY-MM'` calendar month, e.g. `'2026-07'`. */
-const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
+const MONTH_PATTERN = new RegExp(MONTH_PATTERN_STRING);
 
 /** Constructor input for {@link MonthlyBudget}. */
 export interface MonthlyBudgetProps {

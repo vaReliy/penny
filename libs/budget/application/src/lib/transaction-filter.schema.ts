@@ -1,4 +1,4 @@
-import { ID_PATTERN, MONTH_PATTERN } from './patterns.js';
+import { ID_PATTERN, MONTH_PATTERN } from 'shared-util';
 
 /** LIVR schema for `GET /budget/transactions` (query params — all optional). */
 export const TRANSACTION_FILTER_SCHEMA: Record<string, unknown> = {

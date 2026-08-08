@@ -320,7 +320,7 @@ Transaction and MonthlyBudget have no lifecycle — they exist in a single "stab
 
 **10. Contracts and validation in budget scope**
 
-`libs/budget/contracts` (DTOs, `TransactionType`, `DEFAULT_WORKSPACE_ID`) and `libs/budget/validation` (LIVR schemas) are **not** in `shared/contracts/validation`. Rationale: shared libraries should contain only cross-cutting code that is isomorphic across platforms (server/client/CLI), whereas budget DTOs are domain-specific. Nx tag machinery natively supports domain `type:contracts`/`type:validation`; keeps the vertical slice self-contained. Identity's earlier precedent (contracts in shared) is a skeleton-phase artifact superseded once multiple domains exist. The validation lib's fuse is strict: `type:validation` may depend ONLY on `type:util` — LIVR schemas are self-contained runtime objects, never importing contract TS types.
+`libs/budget/contracts` (DTOs, `TransactionType`, `DEFAULT_WORKSPACE_ID`) is domain-specific and lives in `scope:budget`, not in `shared/contracts`. LIVR validation schemas, originally in a dedicated `libs/budget/validation` lib, are now **colocated with the application services that use them** in `libs/budget/application/src/lib/`. Rationale: shared libraries should contain only cross-cutting code that is isomorphic across platforms (server/client/CLI). Identity's contracts-in-shared model was a skeleton-phase artifact superseded once multiple domains exist. When reuse across domain boundaries occurs, schemas can migrate to a dedicated lib — colocation is the baseline pattern. Shared constants like `MAX_DESCRIPTION_LENGTH` live in `libs/shared/util`.
 
 **`DEFAULT_WORKSPACE_ID`** lives in `libs/budget/contracts`, applied **ONLY at the API/CLI boundary** to stamp `workspaceId` on inbound requests; core/application never import it. A TODO marks its swap point when workspace-scoped multitenancy is implemented.
 
@@ -377,7 +377,6 @@ Identity's real shape is authoritative (supersedes the roadmap's provisional sho
 libs/budget/
   core/            scope:budget type:core           platform:server
   contracts/       scope:budget type:contracts      platform:shared
-  validation/      scope:budget type:validation     platform:shared
   application/     scope:budget type:application    platform:server
   infrastructure/  scope:budget type:infrastructure platform:server
   data-access/     scope:budget type:data           platform:web

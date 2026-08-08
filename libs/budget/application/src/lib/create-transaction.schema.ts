@@ -2,7 +2,7 @@ import {
   ID_PATTERN,
   MAX_DESCRIPTION_LENGTH,
   MAX_MONEY_MINOR_UNITS,
-} from './patterns.js';
+} from 'shared-util';
 
 /** LIVR schema for `POST /budget/transactions`. */
 export const CREATE_TRANSACTION_SCHEMA: Record<string, unknown> = {

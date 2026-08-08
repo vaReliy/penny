@@ -1,4 +1,4 @@
-import { MAX_NAME_LENGTH } from './patterns.js';
+import { MAX_NAME_LENGTH } from 'shared-util';
 
 /** LIVR schema for `POST /budget/categories`. */
 export const CREATE_CATEGORY_SCHEMA: Record<string, unknown> = {

@@ -1,6 +1,6 @@
 import { BaseService } from 'shared-kernel';
 import { NotFoundError } from 'shared-errors';
-import { ID_PATTERN } from 'budget-validation';
+import { ID_PATTERN } from 'shared-util';
 import type { Category, ICategoryRepository } from 'budget-core';
 import type { ServiceContext } from 'shared-kernel';
 
@@ -17,7 +17,7 @@ export interface ArchiveCategoryDeps {
   readonly categoryRepository: ICategoryRepository;
 }
 
-/** LIVR schema for {@link ArchiveCategoryParams}. No task-06 schema exists for this action (`id` is a path parameter, not a `POST`/`PATCH` body) — validated with the same `ID_PATTERN` `budget-validation` uses for id-shaped fields. */
+/** LIVR schema for {@link ArchiveCategoryParams}. No task-06 schema exists for this action (`id` is a path parameter, not a `POST`/`PATCH` body) — validated with the same `ID_PATTERN` `shared-util` exports for id-shaped fields. */
 const ARCHIVE_CATEGORY_SCHEMA: Record<string, unknown> = {
   id: ['required', { like: ID_PATTERN }],
 };

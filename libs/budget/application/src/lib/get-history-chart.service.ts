@@ -1,11 +1,11 @@
 import { BaseService } from 'shared-kernel';
 import { Money } from 'shared-util';
-import { HISTORY_CHART_FILTER_SCHEMA } from 'budget-validation';
 import type { ICategoryRepository, ITransactionRepository } from 'budget-core';
 import type { ServiceContext } from 'shared-kernel';
 
 import { assertActiveCaller } from './assert-active-caller.js';
 import { resolveMonthRange } from './resolve-month-range.js';
+import { HISTORY_CHART_FILTER_SCHEMA } from './history-chart-filter.schema.js';
 import type { BudgetServiceConfig } from './budget-service-config.js';
 
 /** Fallback label when a summed `categoryId` cannot be resolved to a `Category` (should not occur — see `execute`). */

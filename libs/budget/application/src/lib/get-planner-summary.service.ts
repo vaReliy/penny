@@ -1,6 +1,5 @@
 import { BaseService } from 'shared-kernel';
 import { Money } from 'shared-util';
-import { PLANNER_SUMMARY_FILTER_SCHEMA } from 'budget-validation';
 import type {
   IMonthlyBudgetRepository,
   ITransactionRepository,
@@ -9,6 +8,7 @@ import type { ServiceContext } from 'shared-kernel';
 
 import { assertActiveCaller } from './assert-active-caller.js';
 import { resolveMonthRange } from './resolve-month-range.js';
+import { PLANNER_SUMMARY_FILTER_SCHEMA } from './planner-summary-filter.schema.js';
 import type { BudgetServiceConfig } from './budget-service-config.js';
 
 /** Input for {@link GetPlannerSummaryService}, matching `PLANNER_SUMMARY_FILTER_SCHEMA`. */

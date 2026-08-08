@@ -127,7 +127,6 @@ export default [
                 'type:kernel',
                 'type:errors',
                 'type:util',
-                'type:validation',
               ],
               bannedExternalImports: [
                 '@nestjs/*',
@@ -206,10 +205,6 @@ export default [
             {
               sourceTag: 'type:errors',
               onlyDependOnLibsWithTags: ['type:errors', 'type:util'],
-            },
-            {
-              sourceTag: 'type:validation',
-              onlyDependOnLibsWithTags: ['type:validation', 'type:util'],
             },
             { sourceTag: 'type:util', onlyDependOnLibsWithTags: ['type:util'] },
             {
@@ -296,7 +291,6 @@ export default [
                 'type:kernel',
                 'type:errors',
                 'type:util',
-                'type:validation',
                 'type:testing',
               ],
               bannedExternalImports: [
@@ -387,14 +381,6 @@ export default [
               sourceTag: 'type:errors',
               onlyDependOnLibsWithTags: [
                 'type:errors',
-                'type:util',
-                'type:testing',
-              ],
-            },
-            {
-              sourceTag: 'type:validation',
-              onlyDependOnLibsWithTags: [
-                'type:validation',
                 'type:util',
                 'type:testing',
               ],

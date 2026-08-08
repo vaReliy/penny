@@ -1,9 +1,9 @@
 import { BaseService } from 'shared-kernel';
-import { LIST_MONTHLY_BUDGET_BY_MONTH_SCHEMA } from 'budget-validation';
 import type { IMonthlyBudgetRepository, MonthlyBudget } from 'budget-core';
 import type { ServiceContext } from 'shared-kernel';
 
 import { assertActiveCaller } from './assert-active-caller.js';
+import { LIST_MONTHLY_BUDGET_BY_MONTH_SCHEMA } from './list-monthly-budget-by-month.schema.js';
 import type { BudgetServiceConfig } from './budget-service-config.js';
 
 /** Input for {@link ListMonthlyBudgetsService}, matching `LIST_MONTHLY_BUDGET_BY_MONTH_SCHEMA`. */

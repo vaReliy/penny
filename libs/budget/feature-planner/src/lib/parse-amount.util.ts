@@ -1,12 +1,7 @@
-/**
- * Upper bound on any single money field, in integer minor units. Mirrors
- * `budget-validation`'s `MAX_MONEY_MINOR_UNITS` — `type:feature` libs may not
- * depend on `type:validation` (see `eslint.config.mjs` depConstraints), so
- * this is a deliberate, independent restatement of the same limit. Canonical
- * copy of this whole util also lives in `budget-feature-records` (`type:feature`
- * libs don't export/share utils across each other either).
- */
-const MAX_MONEY_MINOR_UNITS = 1_000_000_000_00;
+import { MAX_MONEY_MINOR_UNITS } from 'shared-util';
+
+// Canonical copy of this whole util also lives in `budget-feature-records`
+// (`type:feature` libs don't export/share utils across each other).
 
 /** Matches an amount typed with either `,` or `.` as the decimal separator, up to 2 fraction digits. */
 const AMOUNT_PATTERN = /^(\d+)(?:[.,](\d{1,2}))?$/;

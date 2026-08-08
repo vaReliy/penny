@@ -1,6 +1,6 @@
 import { BaseService } from 'shared-kernel';
 import { NotFoundError } from 'shared-errors';
-import { ID_PATTERN } from 'budget-validation';
+import { ID_PATTERN } from 'shared-util';
 import type { ITransactionRepository, Transaction } from 'budget-core';
 import type { ServiceContext } from 'shared-kernel';
 
@@ -20,7 +20,7 @@ export interface GetTransactionDeps {
 /**
  * LIVR schema for {@link GetTransactionParams}. No task-06 schema exists for
  * this action (`id` is a path parameter, not a request body) — validated
- * with the same `ID_PATTERN` `budget-validation` uses for id-shaped fields,
+ * with the same `ID_PATTERN` `shared-util` exports for id-shaped fields,
  * mirroring `ArchiveCategoryService`'s local `ARCHIVE_CATEGORY_SCHEMA`.
  */
 const GET_TRANSACTION_SCHEMA: Record<string, unknown> = {

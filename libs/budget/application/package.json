@@ -8,7 +8,6 @@
   "dependencies": {
     "budget-contracts": "0.0.1",
     "budget-core": "0.0.1",
-    "budget-validation": "0.0.1",
     "shared-contracts": "0.0.1",
     "shared-errors": "0.0.1",
     "shared-kernel": "0.0.1",

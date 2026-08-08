@@ -1,11 +1,11 @@
 import { BaseService } from 'shared-kernel';
 import { DomainError } from 'shared-errors';
 import { Category } from 'budget-core';
-import { CREATE_CATEGORY_SCHEMA } from 'budget-validation';
 import type { ICategoryRepository } from 'budget-core';
 import type { ServiceContext } from 'shared-kernel';
 
 import { assertActiveCaller } from './assert-active-caller.js';
+import { CREATE_CATEGORY_SCHEMA } from './create-category.schema.js';
 import type { BudgetServiceConfig } from './budget-service-config.js';
 
 /** Input for {@link CreateCategoryService}, matching `CREATE_CATEGORY_SCHEMA`. */

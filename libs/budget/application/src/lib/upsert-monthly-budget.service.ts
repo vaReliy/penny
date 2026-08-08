@@ -1,11 +1,11 @@
 import { BaseService } from 'shared-kernel';
 import { Money } from 'shared-util';
 import { MonthlyBudget } from 'budget-core';
-import { UPSERT_MONTHLY_BUDGET_SCHEMA } from 'budget-validation';
 import type { IMonthlyBudgetRepository } from 'budget-core';
 import type { ServiceContext } from 'shared-kernel';
 
 import { assertActiveCaller } from './assert-active-caller.js';
+import { UPSERT_MONTHLY_BUDGET_SCHEMA } from './upsert-monthly-budget.schema.js';
 import type { BudgetServiceConfig } from './budget-service-config.js';
 
 /** Input for {@link UpsertMonthlyBudgetService}, matching `UPSERT_MONTHLY_BUDGET_SCHEMA`. */

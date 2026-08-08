@@ -1,8 +1,4 @@
-import {
-  ID_PATTERN,
-  MAX_MONEY_MINOR_UNITS,
-  MONTH_PATTERN,
-} from './patterns.js';
+import { ID_PATTERN, MAX_MONEY_MINOR_UNITS, MONTH_PATTERN } from 'shared-util';
 
 /** LIVR schema for `PUT /budget/monthly-budgets`. */
 export const UPSERT_MONTHLY_BUDGET_SCHEMA: Record<string, unknown> = {

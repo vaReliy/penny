@@ -15,13 +15,7 @@ import {
 import { TranslocoPipe, provideTranslocoScope } from '@jsverse/transloco';
 import { CategoryStore, errorMessageKey } from 'budget-data-access';
 import type { CategoryView } from 'budget-data-access';
-
-/**
- * Upper bound on the category name field. Mirrors `budget-validation`'s
- * `MAX_NAME_LENGTH` — `type:feature` libs may not depend on
- * `type:validation` (see `eslint.config.mjs` depConstraints).
- */
-const MAX_NAME_LENGTH = 120;
+import { MAX_NAME_LENGTH } from 'shared-util';
 
 /** How long a post-action confirmation message stays visible, in ms. */
 const SUCCESS_MESSAGE_DURATION_MS = 5000;

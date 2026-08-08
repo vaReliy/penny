@@ -1,11 +1,11 @@
 import { BaseService, ServiceValidationError } from 'shared-kernel';
-import { TRANSACTION_FILTER_SCHEMA } from 'budget-validation';
 import type { ITransactionRepository, Transaction } from 'budget-core';
 import type { TransactionType } from 'budget-contracts';
 import type { ServiceContext } from 'shared-kernel';
 
 import { assertActiveCaller } from './assert-active-caller.js';
 import { resolveMonthRange } from './resolve-month-range.js';
+import { TRANSACTION_FILTER_SCHEMA } from './transaction-filter.schema.js';
 import type { BudgetServiceConfig } from './budget-service-config.js';
 
 /** Message used when a filter carries none of `month`/`from`+`to`. */

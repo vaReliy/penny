@@ -1,4 +1,4 @@
-import { MONTH_PATTERN } from './patterns.js';
+import { MONTH_PATTERN } from 'shared-util';
 
 /**
  * LIVR schema for `GET /budget/history/chart` (query params — all optional).

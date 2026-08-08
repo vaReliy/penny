@@ -37,7 +37,6 @@
       "shared-web-shell-data": ["./libs/shared/web-shell-data/src/index.ts"],
       "budget-core": ["./libs/budget/core/src/index.ts"],
       "budget-contracts": ["./libs/budget/contracts/src/index.ts"],
-      "budget-validation": ["./libs/budget/validation/src/index.ts"],
       "budget-application": ["./libs/budget/application/src/index.ts"],
       "budget-infrastructure": ["./libs/budget/infrastructure/src/index.ts"],
       "budget-data-access": ["./libs/budget/data-access/src/index.ts"],

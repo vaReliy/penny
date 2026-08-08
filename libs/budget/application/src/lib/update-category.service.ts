@@ -1,18 +1,19 @@
 import { BaseService } from 'shared-kernel';
 import { DomainError, NotFoundError } from 'shared-errors';
-import { ID_PATTERN, UPDATE_CATEGORY_SCHEMA } from 'budget-validation';
+import { ID_PATTERN } from 'shared-util';
 import type { Category, ICategoryRepository } from 'budget-core';
 import type { ServiceContext } from 'shared-kernel';
 
 import { assertActiveCaller } from './assert-active-caller.js';
+import { UPDATE_CATEGORY_SCHEMA } from './update-category.schema.js';
 import type { BudgetServiceConfig } from './budget-service-config.js';
 
 /**
  * Input for {@link UpdateCategoryService}. `name` matches
- * `UPDATE_CATEGORY_SCHEMA` from `budget-validation` (task 06); `id`
+ * `UPDATE_CATEGORY_SCHEMA` (colocated in this lib); `id`
  * identifies the category to rename and is not part of that schema (it is a
  * path parameter at the HTTP boundary, not request-body input) — validated
- * here via the same `ID_PATTERN` `budget-validation` uses for id-shaped
+ * here via the same `ID_PATTERN` `shared-util` exports for id-shaped
  * fields.
  */
 export interface UpdateCategoryParams {

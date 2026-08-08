@@ -2,7 +2,6 @@ import { BaseService } from 'shared-kernel';
 import { AuthenticationError } from 'shared-errors';
 import { Money } from 'shared-util';
 import { Transaction } from 'budget-core';
-import { CREATE_TRANSACTION_SCHEMA } from 'budget-validation';
 import type {
   IAccountRepository,
   ICategoryRepository,
@@ -14,6 +13,7 @@ import type { ServiceContext } from 'shared-kernel';
 import { assertActiveCaller } from './assert-active-caller.js';
 import { AccountNotEligibleError } from './account-not-eligible-error.js';
 import { CategoryNotEligibleError } from './category-not-eligible-error.js';
+import { CREATE_TRANSACTION_SCHEMA } from './create-transaction.schema.js';
 import type { BudgetServiceConfig } from './budget-service-config.js';
 
 /** Input for {@link RecordTransactionService}, matching `CREATE_TRANSACTION_SCHEMA`. */

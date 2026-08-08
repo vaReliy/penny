@@ -24,13 +24,7 @@ import type { TransactionType } from 'budget-data-access';
 
 import { parseAmountToMinorUnits } from '../parse-amount.util';
 import { todayIsoDate } from '../today-iso-date.util';
-
-/**
- * Upper bound on the free-text description field. Mirrors
- * `budget-validation`'s `MAX_DESCRIPTION_LENGTH` — `type:feature` libs may
- * not depend on `type:validation` (see `eslint.config.mjs` depConstraints).
- */
-const MAX_DESCRIPTION_LENGTH = 500;
+import { MAX_DESCRIPTION_LENGTH } from 'shared-util';
 
 /** How long the post-submit confirmation message stays visible, in ms. */
 const SUCCESS_MESSAGE_DURATION_MS = 5000;
