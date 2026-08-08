@@ -136,3 +136,4 @@ Each completed task is one row in the table below.
 | 2026-08-08 | penny | ci-comment-drift-and-coverage-ratchet                        | T1   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |
 | 2026-08-08 | penny | per-domain-contracts-validation                              | T2   | 0      | 0/0/-/-           | 0       | no       | standard       |                    |
 | 2026-08-08 | penny | coverage-gate-on-valuable-code                               | T1   | 0      | 0/0/-/-           | 0       | no       | standard       | standard           |
+| 2026-08-08 | penny | csp-blocks-production-css-activation                         | T2   | 0      | 0/0/0/-           | 2       | no       | standard       | standard           |
