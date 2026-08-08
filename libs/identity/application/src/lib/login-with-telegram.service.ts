@@ -8,8 +8,8 @@ import { InfrastructureError } from 'shared-errors';
 /**
  * LIVR schema for the verified Telegram payload this service accepts.
  *
- * Distinct from `TELEGRAM_LOGIN_PAYLOAD_SCHEMA` in `shared-validation`: that
- * one validates the raw, unverified wire payload (snake_case, pre-HMAC
+ * Distinct from `TELEGRAM_LOGIN_PAYLOAD_SCHEMA` in `./telegram-login-payload.schema.js`:
+ * that one validates the raw, unverified wire payload (snake_case, pre-HMAC
  * check); this one validates the already-verified, camelCase
  * `TelegramLoginPayload` produced by `VerifyTelegramLoginService` — the
  * boundary this service itself sits behind.

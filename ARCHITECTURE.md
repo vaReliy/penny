@@ -172,7 +172,7 @@ Boundary rules are enforced by `@nx/enforce-module-boundaries` in `eslint.config
 
 ## Validation
 
-All external input is validated with **LIVR** (`js-validator-livr`) at the application-layer service boundary, before any business logic runs. Shared LIVR schemas live in `libs/shared/validation/`.
+All external input is validated with **LIVR** (`js-validator-livr`) at the application-layer service boundary, before any business logic runs. LIVR schemas are colocated with the application-layer service that uses them, and only extracted to a dedicated `type:validation` lib when reused across multiple verticals (e.g. `libs/budget/validation/`).
 
 See `rules/validation-authorization.md` for the full bootstrap requirement and Telegram HMAC flow.
 

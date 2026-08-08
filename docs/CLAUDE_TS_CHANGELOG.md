@@ -21,6 +21,17 @@ Tracks divergences, overrides, conflicts, fixes, and enhancements discovered in 
 
 ---
 
+## 2026-08-08 — [Enhancement] Explicit lib-creation trigger for per-vertical concerns (Nx monorepos)
+
+- **Component**: `rules/local/architecture-backend.md` § "Lib creation trigger for per-vertical concerns" (new subsection under "Architecture Boundaries")
+- **Type**: Enhancement
+- **What happened**: A task set out to give the `identity` vertical its own `contracts`/`validation` libs "to match" the `budget` vertical's shape, on the premise that per-vertical symmetry was itself the goal. A `ddd-architect` inventory of the shared libs' exported symbols found only 3/8 were actually identity-only — the rest were genuine cross-vertical kernel contracts (e.g. a shared-kernel `CallerIdentity` type consumed by every vertical's base service, which structurally could never move into a per-domain lib regardless of which vertical originates the values). The task's own written gate ("if fewer than half the symbols are identity-only, stop and report") caught this before any code moved, but the deeper problem was upstream of that gate: nothing in the project's rules stated when a vertical _should_ get a dedicated lib in the first place — the only existing precedent was "copy the sibling vertical's shape," which is exactly the anti-pattern that produced the mis-scoped task. Cross-checked against Nx's own documented guidance (`nx.dev/docs/concepts/decisions/project-size`), which explicitly names "ease of reuse is the main driver for splitting into a new project" a common misconception, and states that project splits should track business-domain shape, a second real consumer, or a tag/`depConstraints` enforcement need instead. Added an explicit rule capturing this trigger, plus the source-of-truth-file-vs-per-symbol movability nuance the same inventory surfaced.
+- **Why it matters upstream**: Any claude-ts consumer using Nx for a multi-vertical/multi-domain backend is at risk of the same drift — a first vertical's lib shape becomes an unstated template, and later verticals get libs created for symmetry rather than for a real boundary, accumulating libs whose entire content is generator boilerplate (`project.json`, tags, `depConstraints` entry, README) with no consumer that couldn't have imported from the owning lib directly. The fix generalizes beyond this specific `contracts`/`validation` case to any "does concern X get its own lib" decision in an Nx workspace with more than one domain/vertical.
+- **Suggested upstream change**: Add a subsection to `rules/cts/architecture.md` (or wherever layer-placement guidance lives) stating the trigger: a per-domain lib is justified by (a) a second consumer independent of the domain that first needed it, (b) the concern being its own coherent business-domain boundary, or (c) an active need for an Nx tag/`depConstraints` entry to enforce a boundary — explicitly _not_ by matching a sibling domain's lib shape. Cite Nx's own "Project Size" decision doc for the reuse-is-not-the-driver point, since it's authoritative and consumer-verifiable via Context7/`nx.dev` rather than merely this project's opinion.
+- **Status**: pending-port — currently lives only in this project's unsynced `rules/local/architecture-backend.md`.
+
+---
+
 ## 2026-08-07 — [Fix] `.claude/skills/docs-citation-audit/SKILL.md` scope carve-out incorrectly exempted real work-item sequence numbers
 
 - **Component**: `.claude/skills/docs-citation-audit/SKILL.md` § "Do NOT flag"

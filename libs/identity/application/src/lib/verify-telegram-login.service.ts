@@ -2,12 +2,13 @@ import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 
 import { AuthenticationError } from 'shared-errors';
 import { BaseService } from 'shared-kernel';
-import { TELEGRAM_LOGIN_PAYLOAD_SCHEMA } from 'shared-validation';
 import type {
   TelegramLoginPayload,
   RawTelegramLoginPayload,
 } from 'shared-contracts';
 import type { ServiceContext } from 'shared-kernel';
+
+import { TELEGRAM_LOGIN_PAYLOAD_SCHEMA } from './telegram-login-payload.schema.js';
 
 /** Config slice this service needs from `ServiceContext.config`. */
 export interface VerifyTelegramLoginConfig {

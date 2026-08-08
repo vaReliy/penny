@@ -42,7 +42,7 @@ if (!validData) {
 }
 ```
 
-Shared LIVR schemas live in `libs/shared/validation/` and are imported by backend (application-layer) code only — frontend libs may not import this lib per the Nx boundary contract. Custom rules are registered via `registerLivrRules()` (see above).
+LIVR schemas live colocated with the application-layer service that uses them (e.g. `libs/identity/application/src/lib/telegram-login-payload.schema.ts`) unless reused across multiple verticals, in which case they belong in a `type:validation` lib scoped to the owning vertical. Custom rules are registered via `registerLivrRules()` (see above).
 
 ## Validation Error Flow
 

@@ -85,6 +85,12 @@ When a task says "add MongoDB connection factory to `libs/shared/infrastructure`
 
 This prevents `devops` from writing unpinned dependencies or global singleton patterns that violate Clean Architecture.
 
+### Lib creation trigger for per-vertical concerns
+
+A vertical doesn't get a dedicated `contracts`/`validation`/etc. lib by default — colocate the code in the owning lib. Split it out into its own lib when it becomes its own coherent business-domain concern, when a second consumer (another vertical, or an app independent of this vertical) needs the same export, or when you want an Nx tag/`depConstraints` entry to enforce a boundary on that concern. Reuse is a signal to notice, not the primary trigger — per Nx's own guidance (`nx.dev/docs/concepts/decisions/project-size`), splitting a project into its own lib should track business-domain shape first; treating "ease of reuse" as the main driver is explicitly called a common misconception in that doc. Every new lib has a non-zero fixed cost (`project.json`, tags, `depConstraints` entry, README, generator boilerplate) that must be paid back by a real boundary, not by symmetry with a sibling vertical's shape.
+
+`libs/shared/kernel`'s `CallerIdentity` type (`service-context.ts`) demonstrates why role/claims types cannot be moved out of `shared/contracts` into a per-domain lib even though they originate from the identity vertical — `CallerIdentity.roles: readonly RoleType[]` is consumed by `BaseService.run`, which every vertical depends on transitively, making `RoleType` a structural kernel contract regardless of which vertical "owns" role semantics. Separately: when two related exports live in the same source file (e.g. a re-exported type alias sitting next to the type it's derived from), decide lib-split movability at file/source-of-truth granularity, not per-symbol — splitting only one of the two breaks the single source of truth.
+
 ## Pipeline Re-entry After Fix
 
 When a fix is needed after the quality gate:

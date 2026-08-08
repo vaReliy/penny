@@ -18,7 +18,6 @@
       "shared-util": ["./libs/shared/util/src/index.ts"],
       "shared-contracts": ["./libs/shared/contracts/src/index.ts"],
       "shared-kernel": ["./libs/shared/kernel/src/index.ts"],
-      "shared-validation": ["./libs/shared/validation/src/index.ts"],
       "shared-infrastructure": ["./libs/shared/infrastructure/src/index.ts"],
       "identity-core": ["./libs/identity/core/src/index.ts"],
       "identity-application": ["./libs/identity/application/src/index.ts"],
