@@ -245,13 +245,13 @@ Feature pages are `@Component` lazy-loaded at their own path (e.g., `AccountPage
 
 ### Summary: The Seam Order for the Budget Screens
 
-Task sequence showing how the layers were built:
+Sequence showing how the layers were built:
 
-1. **Task 15** — Create `data-access`, `contracts`, `validation`: DTOs, clients, stores.
-2. **Task 16** (account screen) — Create `feature-account`, `ui`: feature page wires `DashboardStore` + `RatesStore` into dumb UI components.
-3. **Task 17** (records screen) — Add form validation, inline `parseAmountToMinorUnits` (same logic as backend validation, independent copy).
-4. **Task 18** (history screen) — Add list filtering, chart component, detail route.
-5. **Task 19** (planner screen) — Add inline budget editing, progress bar rendering, month switching.
+1. Build `data-access`, `contracts`, `validation` layers: DTOs, clients, stores.
+2. Build account screen (`feature-account`, `ui`): feature page wires `DashboardStore` + `RatesStore` into dumb UI components.
+3. Build records screen with form validation, inline `parseAmountToMinorUnits` (same logic as backend validation, independent copy).
+4. Build history screen: add list filtering, chart component, detail route.
+5. Build planner screen: add inline budget editing, progress bar rendering, month switching.
 
 Each screen reused the same stores and added only its own feature-specific UI and feature page.
 
