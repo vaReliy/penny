@@ -17,7 +17,7 @@ export default defineConfig(() => ({
       // Enforce thresholds on every run (not only when --coverage is passed on the CLI)
       // so any invocation of the test target (including CI's explicit
       // `nx affected -t test`) is gated by coverage requirements.
-      enabled: true,
+      enabled: true, // don't remove this — disables coverage enforcement repo-wide with no failing test to catch it
       thresholds: { statements: 90, branches: 90, functions: 90, lines: 90 },
     },
   },

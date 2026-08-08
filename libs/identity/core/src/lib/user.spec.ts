@@ -13,6 +13,53 @@ const baseProps = (overrides: Partial<UserProps> = {}): UserProps => ({
 });
 
 describe('User', () => {
+  describe('accessors', () => {
+    it('exposes all identity and profile properties', () => {
+      const createdAt = new Date('2026-01-01T00:00:00.000Z');
+      const updatedAt = new Date('2026-02-01T12:00:00.000Z');
+      const user = new User(
+        baseProps({
+          id: 'user-42',
+          telegramId: '9876543210',
+          firstName: 'John',
+          lastName: 'Doe',
+          username: 'johndoe',
+          photoUrl: 'https://example.com/photo.jpg',
+          status: UserStatus.ACTIVE,
+          createdAt,
+          updatedAt,
+          roles: ['superadmin'],
+        }),
+      );
+
+      expect(user.id).toBe('user-42');
+      expect(user.telegramId).toBe('9876543210');
+      expect(user.firstName).toBe('John');
+      expect(user.lastName).toBe('Doe');
+      expect(user.username).toBe('johndoe');
+      expect(user.photoUrl).toBe('https://example.com/photo.jpg');
+      expect(user.status).toBe(UserStatus.ACTIVE);
+      expect(user.createdAt).toEqual(createdAt);
+      expect(user.updatedAt).toEqual(updatedAt);
+      expect(user.roles).toEqual(['superadmin']);
+    });
+
+    it('handles optional profile fields correctly', () => {
+      const user = new User(baseProps({}));
+
+      expect(user.firstName).toBeUndefined();
+      expect(user.lastName).toBeUndefined();
+      expect(user.username).toBeUndefined();
+      expect(user.photoUrl).toBeUndefined();
+    });
+
+    it('normalizes roles to empty array when not provided', () => {
+      const user = new User(baseProps({ roles: undefined }));
+
+      expect(user.roles).toEqual([]);
+    });
+  });
+
   describe('canLogin', () => {
     it('returns true only when status is active', () => {
       const active = new User(baseProps({ status: UserStatus.ACTIVE }));

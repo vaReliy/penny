@@ -14,7 +14,7 @@ export default defineConfig(() => ({
     coverage: {
       reportsDirectory: '../../../coverage/libs/identity/testing',
       provider: 'v8' as const,
-      enabled: true,
+      enabled: true, // don't remove this — disables coverage enforcement repo-wide with no failing test to catch it
     },
   },
 }));

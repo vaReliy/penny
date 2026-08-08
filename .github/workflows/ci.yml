@@ -71,7 +71,7 @@ jobs:
         # Note on targets:
         # - Nx plugins @nx/vitest (testTargetName: test) and @nx/vite/plugin
         #   (typecheckTargetName: typecheck) register these inferred targets.
-        # - test: 16 projects (all libs + web + api + cli), inferred from vitest.config.mts.
+        # - test: projects with vitest.config.mts are automatically inferred as having a test target.
         #   This list must stay in lockstep with nx.json plugin registrations — nx affected
         #   silently skips projects when a named target does not exist (no error).
         # - typecheck: runs on every project that exposes a typecheck target — both the

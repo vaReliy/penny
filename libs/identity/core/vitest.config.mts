@@ -17,7 +17,7 @@ export default defineConfig(() => ({
       // Enforce thresholds on every run (not only when --coverage is passed on the CLI)
       // so any invocation of the test target (including CI's explicit
       // `nx affected -t test`) is gated by coverage requirements.
-      enabled: true,
+      enabled: true, // don't remove this — disables coverage enforcement repo-wide with no failing test to catch it
       // Ratchet, not aspiration: measured baseline was statements 81.81%,
       // branches 100%, functions 78.94%, lines 81.81% (`npx nx test identity-core
       // --skip-nx-cache -- --coverage`). Thresholds set ~5 points below measured to
