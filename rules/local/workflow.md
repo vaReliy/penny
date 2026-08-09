@@ -148,7 +148,7 @@ When the blocking seam or topology is _later_ decided, re-open the parked task w
 
 A task file moved to `tasks/<phase>/done/` leaves no git trace (`/tasks` is git-ignored), so a stale or ghost task file can go unnoticed. Before closing a milestone or trusting a `done/` task:
 
-1. Check that `METRICS.md` has a row for the task (METRICS Stop-hook enforces this post-close)
+1. If a full orchestrator chain ran for the task, check that `METRICS.md` has a row (thin/manual/cut-short chains are exempt — see `docs/METRICS.md` header)
 2. Verify acceptance criteria against `git log` and `git diff`:
    - Search for commits that reference the task ID or implementation keywords
    - Grep for config/code changes that should exist (e.g., `grep "sha-256-pinned" .github/` for a Docker fix, `grep "role" src/` for an auth feature)

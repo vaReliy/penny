@@ -1,8 +1,10 @@
 # Metrics Ledger
 
-Append-only ledger of completed tasks, one table row per task, written during Phase 6 (Knowledge Capture). This is raw data collection, not a dashboard — no aggregation, no analysis, no pruning. A dedicated measurement-design session happens later, once 20–30 real rows exist.
+Append-only ledger of completed tasks with full orchestrator-chain runs, one table row per task, written during Phase 6 (Knowledge Capture). This is raw data collection, not a dashboard — no aggregation, no analysis, no pruning.
 
-**Note**: The measurement-design session is overdue (header states it is due at 20–30 rows; this ledger currently holds ~54 rows). A dedicated session to define metrics, sampling, and analysis goals has not yet run. Measurements below are raw collected values pending later distillation.
+**Decision (2026-08-09)**: Option B — rows are required only for tasks where a real multi-stage orchestrator pipeline ran (impl → tester(verify) → reviewer → security-scanner/qa, the full or near-full quality gate sequence). No rows are added for thin/short chains (e.g., a bare debugger dev-tester bugfix with no reviewer stage), manually emitted work, or sessions where the chain was explicitly cut. A dedicated measurement-design session occurs later, once 20–30 real rows accumulate; this ledger has collected ~54 rows (most now out of scope) and will accrue future rows only from full-chain tasks going forward.
+
+**Note on gaps**: Rows for tasks retroactively judged as not needing an entry, or any gaps in the archive, are permanent and not backfilled. Do not attempt to reconstruct them.
 
 **Hard constraint:** never `@`-reference this file from `CLAUDE.md` or `AGENTS.md` — that would force-load it into every conversation as noise (same constraint that applies to `docs/KNOWLEDGE_INBOX.md`). Reference it only as a plain path in on-demand indexes.
 
