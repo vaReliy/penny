@@ -122,5 +122,8 @@
       "style": "css"
     }
   },
-  "analytics": true
+  "analytics": true,
+  "tui": {
+    "enabled": false
+  }
 }
