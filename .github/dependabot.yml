@@ -42,6 +42,6 @@ updates:
       include: 'scope'
     pull-request-branch-name:
       separator: '/'
-    reviewers:
+    assignees:
       - 'vaReliy'
     versioning-strategy: increase
