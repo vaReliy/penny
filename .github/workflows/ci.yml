@@ -6,9 +6,9 @@ name: CI
 # the full suite against `develop` on demand before cutting a release.
 on:
   pull_request:
-    branches: [main]
+    branches: [main, skeleton]
   push:
-    branches: [main]
+    branches: [main, skeleton]
   workflow_dispatch:
 
 concurrency:

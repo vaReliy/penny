@@ -1,0 +1,47 @@
+version: 2
+updates:
+  # NPM dependencies
+  - package-ecosystem: 'npm'
+    directory: '/'
+    target-branch: 'main'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '03:00'
+    groups:
+      # Angular packages must move in lockstep
+      angular:
+        patterns:
+          - '@angular/*'
+      # NestJS packages should update together
+      nestjs:
+        patterns:
+          - '@nestjs/*'
+      # Tailwind ecosystem
+      tailwind:
+        patterns:
+          - 'tailwindcss'
+          - '@tailwindcss/*'
+      # Development tools
+      dev-tools:
+        patterns:
+          - 'nx'
+          - 'esbuild'
+          - 'vite'
+          - 'webpack*'
+      # Everything else gets bundled together
+      other:
+        patterns:
+          - '*'
+    # Disable rebase to keep PRs in sync with the group strategy
+    rebase-strategy: 'disabled'
+    # Require exact versions (no ^ or ~) — the tool will not append these
+    # but this comment serves as documentation of the requirement.
+    commit-message:
+      prefix: 'chore(deps)'
+      include: 'scope'
+    pull-request-branch-name:
+      separator: '/'
+    reviewers:
+      - 'vaReliy'
+    versioning-strategy: increase
