@@ -156,7 +156,7 @@ The durable principle: a CSP audit — or any header-level security control — 
 
 ### nginx-layer behavior exists only in the built image — CI green carries near-zero information about it
 
-`scripts/web-csp-smoke-check.sh` greps the served HTML for the expected nonce patterns and passed in CI while the production page was, in fact, completely unstyled (see `rules/local/testing.md` § "A guard that asserts its own mechanism is installed" for the mechanism-vs-outcome principle this incident produced). The check now drives headless Chromium (`scripts/web-csp-render-check.mjs`) and the greps survive only as diagnostics. Because nginx-layer substitution and CSP-header interaction with the built artifact only exist in the built image, a green CI run that never exercises that image in a real browser carries near-zero information about whether the production page actually renders.
+`scripts/web-csp-smoke-check.sh` greps the served HTML for the expected nonce patterns and passed in CI while the production page was, in fact, completely unstyled (see `rules/local/testing.md` § "A guard that asserts its own mechanism is installed" for the mechanism-vs-outcome principle this incident produced). The check now drives headless Chromium (`scripts/web-response-surface-check.mjs`) and the greps survive only as diagnostics. Because nginx-layer substitution and CSP-header interaction with the built artifact only exist in the built image, a green CI run that never exercises that image in a real browser carries near-zero information about whether the production page actually renders.
 
 ### Turning off `inlineCritical` changes how `index.html` serializes attributes, silently breaking any nginx `sub_filter` pinned to the old markup
 

@@ -107,12 +107,15 @@ if echo "$html" | grep -Eq "on(load|click|error)="; then
   log_warn "  index.html contains inline event handler(s) — these cannot be nonce-authorized"
 fi
 
-# THE ACTUAL ASSERTION: load the served page in a real browser and require that it renders
-# styled with zero CSP violations. This is the only check here that is independent of any
-# assumption about *how* the CSS is supposed to activate.
-log_info "Running render-level CSP check in headless Chromium..."
-if ! node "$(dirname "$0")/web-csp-render-check.mjs" "http://localhost:18080/"; then
-  log_error "✗ Render-level CSP check FAILED — the served page is not correctly styled"
+# THE ACTUAL ASSERTION: load the served page in a real browser and verify the response surface:
+# - Page renders styled with zero CSP violations (CSS loading outcome-level)
+# - Security headers present and correctly configured (X-Frame-Options, X-Content-Type-Options, Referrer-Policy)
+# - Caching headers set correctly (Cache-Control, Pragma, Expires for HTML vs assets)
+# X-Frame-Options verified via header value (mechanism-level; outcome-level testing not reliably observable at page level)
+# CSP/CSS assertions are outcome-level checks independent of config assumptions about *how* directives work.
+log_info "Running response-surface check in headless Chromium..."
+if ! node "$(dirname "$0")/web-response-surface-check.mjs" "http://localhost:18080/"; then
+  log_error "✗ Response-surface check FAILED — security/caching headers or rendering is incorrect"
   exit 1
 fi
 
