@@ -104,7 +104,13 @@ while IFS= read -r -d '' record; do
 done < <(git status --porcelain -z 2>/dev/null || true)
 
 if [ ${#CHANGED_PATHS[@]} -eq 0 ]; then
-  exit 0  # Clean working tree — nothing to check
+  # BLIND SPOT: The hook derives change set from git status --porcelain and exits 0 here
+  # immediately on a clean tree. Any session that commits before stopping produces a clean
+  # tree and is never nudged at all — for METRICS, KNOWLEDGE_INBOX.md, or CLAUDE_TS_CHANGELOG.md.
+  # This is a known limitation of git-status-based change detection and applies to all
+  # three obligation categories, not only METRICS. Fixing it would require CI-based or
+  # on-demand checks cross-referencing tasks/done/ against ledger entries.
+  exit 0
 fi
 
 # ── 4. Classify the change set ────────────────────────────────────────────────
@@ -199,7 +205,7 @@ fi
 if [ "$SOURCE_CHANGED" = "true" ] && [ "$METRICS_UPDATED" = "false" ]; then
   if ! already_nudged "metrics"; then
     mark_nudged "metrics"
-    REMINDERS+=("METRICS REQUIRED: This session changed source or config files. If this represents a completed task (full pipeline run with potential quality-gate cycles), append a row to docs/METRICS.md now with columns: Date / Repo / Task / Tier / Cycles / Fix Now / Emitted / Hardstop / Model. If this is mid-task work or not a full pipeline completion, state that explicitly instead of adding a METRICS row.")
+    REMINDERS+=("METRICS ENTRY CHECK: This session changed source or config files. If a full orchestrator chain ran (impl → tester → reviewer → security-scanner/qa, a real multi-stage pipeline), append a row to docs/METRICS.md now with columns: Date / Repo / Task / Tier / Cycles / Fix Now / Emitted / Hardstop / Model. If this was thin work (e.g., a bare bugfix with no reviewer stage, manually emitted work, or an explicitly-cut chain), no METRICS row is needed — state that explicitly instead.")
   fi
 fi
 

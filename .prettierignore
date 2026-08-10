@@ -18,3 +18,8 @@ rules/cts/
 docs/USAGE.md
 
 .angular
+
+# pnpm lockfile is auto-generated and pnpm rewrites it in its own format on every
+# install; reformatting it produces pure churn. Prettier rewriting it is also what
+# triggers merge conflicts in lint-staged's stash-and-restore flow during commit.
+pnpm-lock.yaml

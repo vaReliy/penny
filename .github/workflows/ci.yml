@@ -1,12 +1,14 @@
 name: CI
 
-# `main` is the release branch and the gate: CI runs on every push to it and on every PR into
-# it. Pushes to `develop` deliberately do NOT run CI — day-to-day development is unverified by
-# design, and breakage is caught when the work reaches `main`. Use `workflow_dispatch` to run
-# the full suite against `develop` on demand before cutting a release.
+# CI trigger strategy:
+# - Pushes to `main` and `skeleton`: CI runs (all events).
+# - Pushes to `develop`: deliberately skipped by design — day-to-day commits are unblocked; validation is deferred to release.
+# - PRs into `develop`: CI runs (Dependabot now targets develop per branch strategy).
+# - PRs into `main` and `skeleton`: CI runs.
+# Use `workflow_dispatch` to run CI on-demand against any branch before cutting a release.
 on:
   pull_request:
-    branches: [main, skeleton]
+    branches: [main, skeleton, develop]
   push:
     branches: [main, skeleton]
   workflow_dispatch:
