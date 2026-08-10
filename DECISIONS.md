@@ -93,20 +93,19 @@ ADR-style records for load-bearing, hard-to-reverse choices. Each record documen
 
 **Status:** Accepted
 
-**Decision:** All `package.json` dependencies (direct, dev, peer) are pinned to exact versions — no `^` or `~` ranges. Renovate handles upgrades via grouped PRs with CI gate and manual review.
+**Decision:** All `package.json` dependencies (direct, dev, peer) are pinned to exact versions — no `^` or `~` ranges. Dependabot handles upgrades via grouped PRs targeting `develop`, with separate PR streams for security and version updates, and CI gate on all PRs into `develop`.
 
 **Context:** Supply-chain attacks via npm dependency confusion and malicious version bumps are a real and growing risk.
 
 **Rationale:**
 
 - Exact pins + committed `pnpm-lock.yaml` + `pnpm install --frozen-lockfile` in CI mean every transitive dependency is content-hashed and auditable.
-- Renovate `minimumReleaseAge` (≥ 7 d) adds a cooldown before picking up new releases, avoiding zero-day-poisoned packages.
+- Dependabot `cooldown` (7 days) delays routine version updates to avoid zero-day-poisoned packages; does not apply to security updates, which proceed immediately.
 - `pnpm` default-denies install scripts (the dominant supply-chain vector); explicit allowlist required.
 
 **Alternatives rejected:**
 
 - Semver ranges: convenient but mean "whatever was on npm when I installed" — not reproducible.
-- Dependabot: no `rangeStrategy: pin` equivalent; generates noisier PRs with less grouping control.
 
 **Consequences:**
 
@@ -459,13 +458,13 @@ classDiagram
 
 **Rationale:**
 
-- **Framework-decoupled upgrades.** ng-bootstrap has historically lagged Angular majors, creating friction with the Renovate/`nx migrate` discipline (see ADR-004; this repo's exact-pin and `nx migrate` discipline for major-version upgrades). Tailwind ships CSS utilities with no Angular-version coupling.
+- **Framework-decoupled upgrades.** ng-bootstrap has historically lagged Angular majors, creating friction with the Dependabot/`nx migrate` discipline (see ADR-004; this repo's exact-pin and `nx migrate` discipline for major-version upgrades). Tailwind ships CSS utilities with no Angular-version coupling.
 - **Agent-codegen-friendly.** Most UI implementation in this migration is agent-written. Utility classes are self-contained per template (no cross-file theme/SCSS coordination needed to style a single component correctly), which suits AI-generated markup better than a component-class-based framework.
 - **Low mockup reuse.** The mobile-first redesign reuses little of the Bootstrap-era `master:design/` mockups, so there is no meaningful sunk cost in staying on Bootstrap for continuity.
 
 **Alternatives rejected:**
 
-- **Bootstrap 5 + ng-bootstrap.** Honest upside: 3–4 ready-made components (modal, dropdown, progressbar) and continuity with the `master:design/` mockups. Rejected because that upside is narrow — Angular CDK primitives (`@angular/cdk/overlay`, `@angular/cdk/menu`, `@angular/cdk/a11y`) plus Tailwind utility classes cover the same behavior, and the version-lag friction (ADR-004's exact-pin/Renovate discipline) outweighs the convenience for a small, greenfield-styled shell.
+- **Bootstrap 5 + ng-bootstrap.** Honest upside: 3–4 ready-made components (modal, dropdown, progressbar) and continuity with the `master:design/` mockups. Rejected because that upside is narrow — Angular CDK primitives (`@angular/cdk/overlay`, `@angular/cdk/menu`, `@angular/cdk/a11y`) plus Tailwind utility classes cover the same behavior, and the version-lag friction (ADR-004's exact-pin/Dependabot discipline) outweighs the convenience for a small, greenfield-styled shell.
 
 **Revisit triggers:**
 

@@ -5,6 +5,45 @@
 # if/when Docker deployment adopts Nx's pruned per-app install flow.
 saveExact: true
 strictDepBuilds: true
+
+# Dependency overrides force minimum versions for packages with unpatched security
+# advisories in transitive deps. Major-scoped selectors (e.g., 'undici@6', 'undici@7')
+# patch each major line independently so nested copies aren't forced to a single major.
+# All ranges are bounded to prevent pnpm from resolving across major boundaries.
+# Delete entries once their parent package ships the fix on its own — precedent: PR 2
+# bumped Angular tooling, which moved nested vite/esbuild pins, eliminating the need
+# for a planned override.
+overrides:
+  'body-parser@1': '>=1.20.6 <2'
+  'brace-expansion@1': '>=1.1.18 <2'
+  'brace-expansion@2': '>=2.1.4 <3'
+  'brace-expansion@5': '>=5.0.9 <6'
+  tar: '>=7.5.21 <8'
+  'axios@1': '>=1.18.0 <2'
+  'fast-uri@2': '>=2.4.3 <3'
+  'fast-uri@3': '>=3.1.5 <4'
+  'fast-uri@4': '>=4.1.1 <5'
+  hono: '>=4.12.34 <5'
+  'immutable@3': '>=3.8.3 <4'
+  'immutable@4': '>=4.3.8 <5'
+  immutable: '>=5.1.8 <6'
+  'ip-address@9': '>=9.0.5 <10'
+  'ip-address@10': '>=10.3.1 <11'
+  'js-yaml@3': '>=3.15.1 <4'
+  'js-yaml@4': '>=4.3.1 <5'
+  'multer@1': '>=1.4.5-lts.2 <2'
+  'multer@2': '>=2.2.0 <3'
+  'nanoid@3': '>=3.3.17 <4'
+  'nanoid@5': '>=5.1.15 <6'
+  postcss: '>=8.5.23 <9'
+  shell-quote: '>=1.8.5 <2'
+  'svgo@2': '>=2.8.1 <3'
+  'svgo@3': '>=3.3.3 <4'
+  svgo: '>=4.0.2 <5'
+  'undici@6': '>=6.28.0 <7'
+  'undici@7': '>=7.29.0 <8'
+  'webpack-dev-server@4': '>=4.15.2 <5'
+  'webpack-dev-server@5': '>=5.2.6 <6'
 allowBuilds:
   '@parcel/watcher': true
   '@swc/core': true
@@ -14,33 +53,69 @@ allowBuilds:
   msgpackr-extract: true
   nx: true
   unrs-resolver: true
+# Newly published versions are not installable for 14 days, as supply-chain defence
+# against compromised-account publishes. The exclude list below is how a deliberately-
+# adopted younger version is admitted. pnpm 11's default minimumReleaseAge is 1440
+# minutes (1 day); this is a deliberate hardening to 14 days.
+minimumReleaseAge: 20160
 minimumReleaseAgeExclude:
-  - '@nx/angular@23.0.1'
-  - '@nx/devkit@23.0.1'
-  - '@nx/docker@23.0.1'
-  - '@nx/esbuild@23.0.1'
-  - '@nx/eslint-plugin@23.0.1'
-  - '@nx/eslint@23.0.1'
-  - '@nx/jest@23.0.1'
-  - '@nx/js@23.0.1'
-  - '@nx/module-federation@23.0.1'
-  - '@nx/node@23.0.1'
-  - '@nx/nx-darwin-arm64@23.0.1'
-  - '@nx/nx-darwin-x64@23.0.1'
-  - '@nx/nx-freebsd-x64@23.0.1'
-  - '@nx/nx-linux-arm-gnueabihf@23.0.1'
-  - '@nx/nx-linux-arm64-gnu@23.0.1'
-  - '@nx/nx-linux-arm64-musl@23.0.1'
-  - '@nx/nx-linux-x64-gnu@23.0.1'
-  - '@nx/nx-linux-x64-musl@23.0.1'
-  - '@nx/nx-win32-arm64-msvc@23.0.1'
-  - '@nx/nx-win32-x64-msvc@23.0.1'
-  - '@nx/playwright@23.0.1'
-  - '@nx/rspack@23.0.1'
-  - '@nx/vite@23.0.1'
-  - '@nx/vitest@23.0.1'
-  - '@nx/web@23.0.1'
-  - '@nx/webpack@23.0.1'
-  - '@nx/workspace@23.0.1'
-  - nx@23.0.1
-  - '@nx/nest@23.0.1'
+  - '@angular/animations@21.2.19'
+  - '@angular/build@21.2.20'
+  - '@angular/cli@21.2.20'
+  - '@angular/common@21.2.19'
+  - '@angular/compiler@21.2.19'
+  - '@angular/compiler-cli@21.2.19'
+  - '@angular/core@21.2.19'
+  - '@angular/forms@21.2.19'
+  - '@angular/language-service@21.2.19'
+  - '@angular/platform-browser@21.2.19'
+  - '@angular/platform-server@21.2.19'
+  - '@angular/router@21.2.19'
+  - '@angular-devkit/architect@0.2102.20'
+  - '@angular-devkit/build-angular@21.2.20'
+  - '@angular-devkit/build-webpack@0.2102.20'
+  - '@angular-devkit/core@21.2.20'
+  - '@angular-devkit/schematics@21.2.20'
+  - '@nx/angular@23.0.2'
+  - '@nx/devkit@23.0.2'
+  - '@nx/docker@23.0.2'
+  - '@nx/esbuild@23.0.2'
+  - '@nx/eslint-plugin@23.0.2'
+  - '@nx/eslint@23.0.2'
+  - '@nx/jest@23.0.2'
+  - '@nx/js@23.0.2'
+  - '@nx/module-federation@23.0.2'
+  - '@nx/nest@23.0.2'
+  - '@nx/node@23.0.2'
+  - '@nx/nx-darwin-arm64@23.0.2'
+  - '@nx/nx-darwin-x64@23.0.2'
+  - '@nx/nx-freebsd-x64@23.0.2'
+  - '@nx/nx-linux-arm-gnueabihf@23.0.2'
+  - '@nx/nx-linux-arm64-gnu@23.0.2'
+  - '@nx/nx-linux-arm64-musl@23.0.2'
+  - '@nx/nx-linux-x64-gnu@23.0.2'
+  - '@nx/nx-linux-x64-musl@23.0.2'
+  - '@nx/nx-win32-arm64-msvc@23.0.2'
+  - '@nx/nx-win32-x64-msvc@23.0.2'
+  - '@nx/playwright@23.0.2'
+  - '@nx/rspack@23.0.2'
+  - '@nx/vite@23.0.2'
+  - '@nx/vitest@23.0.2'
+  - '@nx/web@23.0.2'
+  - '@nx/webpack@23.0.2'
+  - '@nx/workspace@23.0.2'
+  - '@ngtools/webpack@21.2.20'
+  - '@schematics/angular@21.2.20'
+  - nx@23.0.2
+  # Transitive security patches installed via overrides block. Release-age cooldown
+  # conflicts with security patching (patches are newly published by definition);
+  # the same reason Dependabot's cooldown does not apply to security updates.
+  - 'brace-expansion@1.1.18'
+  - 'brace-expansion@2.1.4'
+  - 'brace-expansion@5.0.9'
+  - 'fast-uri@3.1.5'
+  - 'hono@4.13.1'
+  - 'ip-address@10.4.0'
+  - 'js-yaml@3.15.1'
+  - 'js-yaml@4.3.1'
+  - 'nanoid@3.3.18'

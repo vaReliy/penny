@@ -149,3 +149,4 @@ Each completed task is one row in the table below.
 | 2026-08-09 | penny | validation-hoist-residual-polish                             | T1   | 0      | 0/0/-/-           | 0       | no       | standard       |                                                                   |
 | 2026-08-09 | penny | distill-inbox-ci-and-docs-style-splits                       | T1   | 0      | -/-/-/-           | 0       | no       | standard       | deep (skill run, no quality gate; 1 correction round)             |
 | 2026-08-09 | penny | browser-verify-nginx-response-surface                        | T1   | 5      | 3/1/0/-           | 1       | yes      | standard       | user-authorized +2/+2 cycle extensions past the 2-cycle hard stop |
+| 2026-08-09 | penny | fix-dependabot-pnpm-workspace-axios                          | T1   | 0      | 0/0/-/-           | 0       | no       | standard       |                                                                   |

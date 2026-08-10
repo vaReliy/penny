@@ -3,7 +3,11 @@ updates:
   # NPM dependencies
   - package-ecosystem: 'npm'
     directory: '/'
-    target-branch: 'main'
+    # Target `develop` instead of `main`: main is a fast-forward-only release branch synced from develop.
+    # Dependabot PRs land on develop, where they can be reviewed and merged into the integration flow.
+    # A PR against main would block the release branch's immutability invariant.
+    target-branch: 'develop'
+    open-pull-requests-limit: 10
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -29,10 +33,41 @@ updates:
           - 'esbuild'
           - 'vite'
           - 'webpack*'
-      # Everything else gets bundled together
-      other:
+      # Security-scoped groups keep peer-locked package families in a single PR.
+      # Defined before the catch-all security group so they match first (Dependabot uses first match).
+      # Grouping ensures alerted packages arrive in one PR; CI now gates peer conflicts (see ci.yml).
+      angular-security:
+        applies-to: security-updates
+        patterns:
+          - '@angular/*'
+      nestjs-security:
+        applies-to: security-updates
+        patterns:
+          - '@nestjs/*'
+      dev-tools-security:
+        applies-to: security-updates
+        patterns:
+          - 'nx'
+          - 'esbuild'
+          - 'vite'
+          - 'webpack*'
+      # Security fixes arrive as their own smaller PR stream, separate from regular version updates
+      security:
+        applies-to: security-updates
         patterns:
           - '*'
+      # Regular version updates for everything else
+      other:
+        applies-to: version-updates
+        patterns:
+          - '*'
+    # Cooldown delays routine version updates to avoid picking up freshly-published compromised
+    # releases. Applies only to version updates, not security updates — security updates proceed immediately.
+    cooldown:
+      default-days: 7
+      semver-major-days: 7
+      semver-minor-days: 7
+      semver-patch-days: 7
     # Disable rebase to keep PRs in sync with the group strategy
     rebase-strategy: 'disabled'
     # Require exact versions (no ^ or ~) — the tool will not append these
