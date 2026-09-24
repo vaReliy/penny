@@ -44,7 +44,13 @@
       "budget-feature-account": ["./libs/budget/feature-account/src/index.ts"],
       "budget-feature-records": ["./libs/budget/feature-records/src/index.ts"],
       "budget-feature-history": ["./libs/budget/feature-history/src/index.ts"],
-      "budget-feature-planner": ["./libs/budget/feature-planner/src/index.ts"]
+      "budget-feature-planner": ["./libs/budget/feature-planner/src/index.ts"],
+      "workspace-core": ["./libs/workspace/core/src/index.ts"],
+      "workspace-application": ["./libs/workspace/application/src/index.ts"],
+      "workspace-infrastructure": [
+        "./libs/workspace/infrastructure/src/index.ts"
+      ],
+      "workspace-testing": ["./libs/workspace/testing/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

@@ -77,6 +77,10 @@ export default [
               sourceTag: 'scope:budget',
               onlyDependOnLibsWithTags: ['scope:budget', 'scope:shared'],
             },
+            {
+              sourceTag: 'scope:workspace',
+              onlyDependOnLibsWithTags: ['scope:workspace', 'scope:shared'],
+            },
             // scope:web — the `apps/web` composition root only. It wires
             // together multiple domain scopes (identity nav, budget
             // screens, ...), so it needs its own tag rather than reusing an
@@ -90,6 +94,7 @@ export default [
                 'scope:web',
                 'scope:identity',
                 'scope:budget',
+                'scope:workspace',
                 'scope:shared',
               ],
             },
@@ -250,11 +255,16 @@ export default [
               onlyDependOnLibsWithTags: ['scope:budget', 'scope:shared'],
             },
             {
+              sourceTag: 'scope:workspace',
+              onlyDependOnLibsWithTags: ['scope:workspace', 'scope:shared'],
+            },
+            {
               sourceTag: 'scope:web',
               onlyDependOnLibsWithTags: [
                 'scope:web',
                 'scope:identity',
                 'scope:budget',
+                'scope:workspace',
                 'scope:shared',
               ],
             },

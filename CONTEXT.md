@@ -96,23 +96,86 @@ The `budget` context owns income and expense tracking, monthly spending limits, 
 
 ---
 
+## Implemented Verticals
+
+`identity`, `budget`, and `workspace` are now shipped. Each follows the onion pattern in `libs/<domain>/{core,application,infrastructure,feature-*,data-access,ui,testing}` (backend domains omit feature/ui/testing).
+
 ## Future Verticals
 
-The `identity` and `budget` contexts are the first two vertical slices and the templates every future vertical copies. Planned future contexts:
+Planned future contexts:
 
 - `car` — vehicle history, repairs, expenses.
-- `workspace` — (parked) scoped-admin grouping with hard ≥1-admin invariant.
 
-Each new context will follow the same shape: `libs/<domain>/{core,application,infrastructure,feature-*,data-access,ui,testing}` (backend domains omit feature/ui/testing).
+Each new context will follow the same shape as the implemented verticals: `libs/<domain>/{core,application,infrastructure,feature-*,data-access,ui,testing}` (backend domains omit feature/ui/testing).
 
 ---
 
-## Bounded Context: `workspace` (parked)
+## Bounded Context: `workspace`
 
-Not implemented. Today's flat single-role model is already behaviorally equivalent to "one implicit workspace, superadmin as its admin," so the entity below has no functional gap to fill yet — it's recorded so the naming and shape are settled before anyone builds it.
+The `workspace` context owns multi-tenant data isolation and scoped-admin grouping. It establishes the `Workspace` aggregate as the isolation boundary — every budget entity (and future verticals) carry a `workspaceId` identity-only reference to this context.
 
-- **Workspace** — the entity name for a scoped-admin grouping (deliberately not "tenant," "group," or "organization"). Membership lives inside the `Workspace` aggregate itself, under a hard ≥1-admin invariant.
-- Would live in its own `libs/workspace/*` scope, not folded into `identity`.
+### Ubiquitous Language
+
+| Term                    | Meaning                                                                                                                                  |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Workspace**           | The root aggregate for a scoped-admin grouping (deliberately not "tenant," "group," or "organization"). The isolation boundary for data. |
+| **WorkspaceMemberRole** | Workspace-local authority, orthogonal to platform `Role {SUPERADMIN, USER}`. Values: `admin`, `member`.                                  |
+| **Membership**          | A value object: `{ userId, role: WorkspaceMemberRoleType, grantedAt, grantedBy }`. Holds the user's workspace-scoped authority.          |
+| **userId**              | A Telegram user ID, stored as identity-only reference — workspace never imports `libs/identity/core`.                                    |
+| **admin**               | Workspace membership role. Can manage members, change roles, and remove members (with hard ≥1-admin invariant).                          |
+| **member**              | Workspace membership role. Read-only data access; cannot manage members or roles.                                                        |
+
+### Workspace Aggregate
+
+```ts
+{
+  id: string;
+  name: string;
+  members: Membership[];
+  version: number; // optimistic concurrency
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### Key Invariants
+
+- **Created with one admin:** `Workspace.create(name, initialAdminUserId, grantedBy, now)` always seeds exactly one `ADMIN` membership. Never born admin-less.
+- **Unique membership:** A `userId` appears at most once in `members` — `addMember` on an existing member throws `DomainError`.
+- **Hard ≥1 admin:** A workspace always keeps at least one admin:
+  - `changeRole(userId, 'member')` when that user is the only admin → throws `DomainError`.
+  - `removeMember(userId)` when that user is the only admin → throws `DomainError`.
+  - Self-demotion (last admin demoting themselves) also throws (the aggregate doesn't care who the caller is).
+- **Idempotent role change:** `changeRole(userId, currentRole)` leaves `version` and `members` unchanged (no-op, not an error).
+- **Non-member operations error:** `removeMember` / `changeRole` on a `userId` not in `members` → throws `DomainError`.
+
+### Aggregate Methods
+
+- `create(name, initialAdminUserId, grantedBy, now): Workspace` — factory
+- `addMember(userId, role, grantedBy, now): void` — adds with the given role, throws if `userId` already present
+- `changeRole(userId, role, now): void` — mutates the membership's role, throws on non-member or hard-invariant violation
+- `removeMember(userId, now): void` — removes from members, throws on non-member or hard-invariant violation
+- `isMember(userId): boolean` — membership test
+- `isAdmin(userId): boolean` — admin role test
+- `adminUserIds(): string[]` — list of all admin user IDs
+- `membershipOf(userId): Membership | null` — look up a single membership
+
+### Repository Interface (`IWorkspaceRepository`)
+
+Located in `libs/workspace/core`. Mirrors the `IUserRepository` pattern:
+
+- `create(workspace): Promise<Workspace>` — persists and returns with assigned `id`
+- `findById(id): Promise<Workspace | null>`
+- `save(workspace): Promise<void>` — optimistic CAS on `version`; throws conflict error if stored version moved
+- `findAll(): Promise<Workspace[]>`
+- `findByMemberUserId(userId): Promise<Workspace[]>` — all workspaces this user is a member of
+- `findMembership(workspaceId, userId): Promise<{workspaceId, role, grantedAt} | null>` — quick membership lookup
+
+Persistence (Typegoose schema, MongoDB repo impl) is in `libs/workspace/infrastructure` (W2a task). Core only defines the interface.
+
+### ID Convention
+
+Same as other aggregates: `id = ''` on creation; Mongo ObjectId string assigned at persistence. See `libs/shared/util/src/lib/validation-patterns.ts:2` for `ID_PATTERN`.
 
 ---
 

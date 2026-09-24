@@ -1,0 +1,26 @@
+{
+  "name": "workspace-core",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/workspace/core/src",
+  "projectType": "library",
+  "tags": ["scope:workspace", "type:core", "platform:server"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/workspace/core",
+        "main": "libs/workspace/core/src/index.ts",
+        "tsConfig": "libs/workspace/core/tsconfig.lib.json",
+        "assets": ["libs/workspace/core/*.md"]
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "libs/workspace/core",
+        "command": "tsc --noEmit -p tsconfig.spec.json"
+      }
+    }
+  }
+}

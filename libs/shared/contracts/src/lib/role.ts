@@ -4,9 +4,8 @@
 export const Role = {
   SUPERADMIN: 'superadmin',
   USER: 'user',
-  // TODO: a scoped/tenant-level "admin" role is planned once a
-  // group/tenant entity exists — see backlog task for the
-  // scoped-admin layer. Do not add before that entity is designed.
+  // Platform-wide roles only. Workspace-local authority is
+  // `WorkspaceMemberRole` (`libs/workspace/core`) — never encoded here.
 } as const;
 
 export type RoleType = (typeof Role)[keyof typeof Role];

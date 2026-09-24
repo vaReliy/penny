@@ -1,0 +1,26 @@
+{
+  "name": "workspace-testing",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/workspace/testing/src",
+  "projectType": "library",
+  "tags": ["scope:workspace", "type:testing", "platform:server"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/workspace/testing",
+        "main": "libs/workspace/testing/src/index.ts",
+        "tsConfig": "libs/workspace/testing/tsconfig.lib.json",
+        "assets": ["libs/workspace/testing/*.md"]
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "libs/workspace/testing",
+        "command": "tsc --noEmit -p tsconfig.spec.json"
+      }
+    }
+  }
+}
