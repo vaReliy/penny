@@ -35,6 +35,8 @@ const baseURL = process.env['BASE_URL'] || `http://localhost:${e2ePort}`;
  */
 export default defineConfig({
   ...nxE2EPreset(import.meta.dirname, { testDir: './src' }),
+  /* Fail the build if a `.only` slipped into a committed test. */
+  forbidOnly: true,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     baseURL,

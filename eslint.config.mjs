@@ -1,5 +1,6 @@
 import nx from '@nx/eslint-plugin';
 import playwright from 'eslint-plugin-playwright';
+import vitest from '@vitest/eslint-plugin';
 
 // Selector definitions live here once and are referenced everywhere below.
 // ESLint flat config does NOT merge `no-restricted-syntax` across matching config
@@ -439,6 +440,19 @@ export default [
     },
     rules: {
       ...playwright.configs['flat/recommended'].rules,
+    },
+  },
+  // Not directory-anchored (no path segment keyed off `libs/`/`apps/`), so this
+  // resolves correctly under per-project `nx lint` — unlike the dead-end globs
+  // documented for `no-restricted-syntax` layer-purity rules.
+  {
+    files: ['**/*.spec.ts', '**/*.test.ts'],
+    plugins: {
+      vitest,
+    },
+    rules: {
+      'vitest/no-focused-tests': 'error',
+      'vitest/no-disabled-tests': 'error',
     },
   },
   {

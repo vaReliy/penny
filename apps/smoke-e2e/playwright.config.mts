@@ -14,6 +14,8 @@ import { nxE2EPreset } from '@nx/playwright/preset';
  */
 export default defineConfig({
   ...nxE2EPreset(import.meta.dirname, { testDir: './.' }),
+  /* Fail the build if a `.only` slipped into a committed test. */
+  forbidOnly: true,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
