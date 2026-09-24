@@ -77,13 +77,13 @@ Rationale: an ESLint `no-restricted-syntax` ban encoding layer purity is executa
 
 **Dispatch-prompt obligation**: any tooling-config task whose rules mention a layer name (`application`, `core`, `infrastructure`, `kernel`, `feature`, `ui`) must cite the corresponding architecture rule file in the dispatch prompt, whichever agent is chosen. This is the `CLAUDE.local.md` Dispatch-Prompt Cross-Reference applied to a surface where the file path gives no hint that architecture knowledge is needed.
 
-## New section: Phase 2.5 — Plan-back checkpoint before implementation (T2/T3)
+## New section: Phase 2.5 — Plan-back checkpoint before implementation
 
-**Applies to T2 and T3 only.** T0/T1 are not worth the round-trip — dispatch them straight to implementation.
+**Applies to every task executed from a task file (T1–T3).** T0 — and T1 work from an ad-hoc prompt with no task file — is not worth the round-trip: dispatch it straight to implementation. The checkpoint also serves as the first does-not-fit-session tripwire (see "Session budget & does-not-fit tripwires").
 
 The orchestrator owns the outcome of the whole cycle, not just the routing of it. But it deliberately cannot read source, and that restriction is load-bearing: it is what keeps orchestrator context small enough to stay sharp across a long pipeline. The checkpoint below is the one supervision step that buys real accountability without spending context, because it reviews a **plan** — checkable against documents the orchestrator already holds — rather than an implementation.
 
-**Mechanism.** Every T2/T3 implementation dispatch prompt ends with:
+**Mechanism.** Every implementation dispatch prompt for a task-file task (T1–T3) ends with:
 
 > Before writing any code, reply via `SendMessage` with a plan of at most 10 lines: (1) the mechanism you intend to use, (2) the files you expect to touch, (3) how you will verify it — the exact command and its expected result. Do not begin implementation until I approve.
 
@@ -99,6 +99,8 @@ The orchestrator then checks that plan against what is already in its context �
 2. The verification step cannot actually detect the failure the task exists to fix (e.g. proposing a unit-test run to verify a lint-config change — see the gate-relevance section below).
 3. The verification asserts only the positive case, with nothing confirming the change stays inert where it must.
 4. The plan's file list reaches outside the task's stated scope, or omits files the acceptance criteria clearly require.
+
+**Stop before code — split instead of approving** when the plan lists more than ~8 hand-written files or names a decision the task file does not contain. The orchestrator splits the task at AC boundaries (nothing is lost — no code exists yet) rather than correcting the plan.
 
 **Bounds, so this does not become design-by-committee**: one correction round, then proceed with the agent's revised plan even if imperfect — the quality gate and Phase 4.5 are the backstops, and a second round of plan debate costs more than letting the gate catch it. The orchestrator never proposes the mechanism itself; it names the conflict and lets the specialist re-plan. Do not read source to evaluate a plan — if a plan cannot be judged from the task file and the cited rules, approve it and let the gate do its job.
 
@@ -214,7 +216,21 @@ A full-repo-scan (reading all source code) should only happen after topology doc
 
 **Acceptance verification** is one orchestrator read-and-compare pass, mandatory for every task, positioned after the quality gate (Phase 4) closes and before documentation/knowledge capture (Phase 5 = `docs-writer`).
 
-The orchestrator re-reads the task file's `## Acceptance criteria` and `## Context / Why` blocks **from disk** — not from memory of the Phase 1 dispatch — and checks each criterion against the actual working tree. Each verified criterion must be cited with a specific file path and line number: "Line 42 of `src/x.ts` uses `Money.toJSON()`" is evidence; "the PR looks good" is not. A criterion that cannot be pointed at is not met.
+The orchestrator re-reads the contract **from disk** — not from memory of the Phase 1 dispatch — and checks each criterion against the actual working tree. Each verified criterion must be cited with a specific file path and line number: "Line 42 of `src/x.ts` uses `Money.toJSON()`" is evidence; "the PR looks good" is not. A criterion that cannot be pointed at is not met.
+
+Contract source on disk:
+
+- **Task-file tasks (T1–T3)**: the task file's `## Acceptance criteria`, `## Out of scope` and `## Context / Why` blocks.
+- **T1 / bug / ad-hoc prompt flows with no task file**: `<session scratchpad>/contract-<slug>.md`, written before the first dispatch (see "Requirement contract").
+
+### Consuming the requirement trace
+
+Before starting the read-back, the orchestrator confirms the implementer's `## Requirement trace` is complete, and uses it as the starting evidence map instead of re-deriving it:
+
+- every AC traced to `[test] path:line`, a `[probe]` command, or a `[manual]` check;
+- every file in `git diff HEAD --diff-filter=MD --name-only -- <test globs>` listed and classified `[structure]` or `[expectation] → AC-n`.
+
+A missing or incomplete trace goes back to the implementer before Phase 4.5 proceeds.
 
 **Why this is structural, not a quality-gate defect**: Every phase of the quality gate (tester, reviewer, qa, lint/tsc) verifies _the code that exists_. A feature that was never written has no diff to review, no code to cover, and no flow to exercise — it is invisible from inside the gate by construction, exactly as the gate is designed to be when correctness-checking built code. A green gate therefore proves conformance of the implementation that shipped, not completion of the original ask. This is especially visible in parity tasks (feature replacement where the legacy code already implements the new behavior) — the absence of currency conversion in a "bill balance card" replacement only surfaced by diffing the legacy `page-bill` screen against the new implementation and finding it rendered three separate currency conversions nowhere present in the replacement. (2026-07-27)
 
@@ -329,10 +345,10 @@ T1 / bug / ad-hoc prompt: orchestrator writes `<session scratchpad>/contract-<sl
 
 Global, referenced by all task files' `## Verification gate` section (never copied into each task):
 
-- ✓ Build succeeds: `npm run build` or `nx run-many -t build` on all affected projects
-- ✓ Lint passes: `npm run lint` or `nx run-many -t lint` (zero lint errors; warnings may exist)
-- ✓ Type-check passes: `npm run typecheck` (strict TypeScript, no `any`)
-- ✓ Tests green on all affected projects (unit, feature, integration tests pass)
+- ✓ Build succeeds: `pnpm nx run-many -t build` on all affected projects
+- ✓ Lint passes: `pnpm nx run-many -t lint` (zero lint errors; warnings may exist)
+- ✓ Type-check passes: `pnpm nx run-many -t typecheck` (strict TypeScript, no `any`)
+- ✓ Tests green on all affected projects: `pnpm nx run-many -t test` (unit, feature, integration)
 - ✓ Smoke test where available (real HTTP hit to running API, or real click-through of UI flow, not synthetic)
 - ✓ Every AC has evidence (file:line for test/code, command output for probe, written verification for manual)
 - ✓ No gate file modified (see "Gate flow" section)
@@ -395,59 +411,13 @@ This rule replaces the ">3 files → split" rule of `rules/cts/task-authoring.md
 
 ### Does-not-fit-session tripwires (mechanical, not model self-assessment)
 
-**Plan-back checkpoint extended from T2/T3 to every task executed from a task file** (T1 included). Stop **before code** if the plan has > ~8 hand-written files or names decisions absent from the task → orchestrator splits at AC boundaries (nothing lost, no code yet).
+**Plan-back checkpoint** (Phase 2.5 — every task executed from a task file, T1–T3). Stop **before code** if the plan has > ~8 hand-written files or names decisions absent from the task → orchestrator splits at AC boundaries (nothing lost, no code yet).
 
 **Implementer rules**: work AC-by-AC with the tree green after each AC; a decision not covered by the task/AC → **STOP** and return the question, never invent.
 
 **Mid-session triggers** the orchestrator can see: implementer STOP; `git diff --stat` touching files outside the approved plan; 2nd gate restart cycle (existing); orchestrator context compaction during implementation → finish current AC to green, then handoff.
 
 **Split without knowledge loss**: always at an AC boundary in a green state; `handoff` continuation task carries closed AC with evidence (the `## Requirement trace`), remaining AC, decisions made this session (not to be re-made), learnings → `docs/KNOWLEDGE_INBOX.md` immediately. Owner commits the green partial state.
-
-## Phase 2.5 — Plan-back checkpoint (extended scope)
-
-**Applies to every task executed from a task file** (T1–T3). T0 are not worth the round-trip — dispatch them straight to implementation.
-
-The orchestrator owns the outcome of the whole cycle, not just the routing of it. But it deliberately cannot read source, and that restriction is load-bearing: it is what keeps orchestrator context small enough to stay sharp across a long pipeline. The checkpoint below is the one supervision step that buys real accountability without spending context, because it reviews a **plan** — checkable against documents the orchestrator already holds — rather than an implementation.
-
-**Mechanism.** Every task-file-executed dispatch (T1–T3) includes this block in the dispatch prompt:
-
-> Before writing any code, reply via `SendMessage` with a plan of at most 10 lines: (1) the mechanism you intend to use, (2) the files you expect to touch, (3) how you will verify it — the exact command and its expected result. Do not begin implementation until I approve.
-
-The orchestrator then checks that plan against what is already in its context — the task's acceptance criteria, the rule files cited in the dispatch prompt, and the Context/Why section — and replies with exactly one of:
-
-- **Approved** → agent implements
-- **Corrected** → name the specific conflict and ask for a revised plan; **one correction round maximum**
-- **Re-routed** → the plan reveals the task needs different expertise than the agent has; stop this agent, dispatch the right one with the plan as context
-
-**What makes a plan rejectable**:
-
-1. The mechanism contradicts a rule cited in the dispatch prompt, or one the task's file surface implicates
-2. The verification step cannot actually detect the failure the task exists to fix
-3. The verification asserts only the positive case, with nothing confirming the change stays inert where it must
-4. The plan's file list reaches outside the task's stated scope, or omits files the acceptance criteria clearly require
-
-**Bounds, so this does not become design-by-committee**: one correction round, then proceed with the agent's revised plan even if imperfect — the quality gate and Phase 4.5 are the backstops, and a second round of plan debate costs more than letting the gate catch it. The orchestrator never proposes the mechanism itself; it names the conflict and lets the specialist re-plan. Do not read source to evaluate a plan — if a plan cannot be judged from the task file and the cited rules, approve it and let the gate do its job.
-
-## Phase 4.5 — Acceptance Verification (extended scope)
-
-### Reading the contract file for no-task-file flows
-
-After quality gate closes, before `docs-writer`, orchestrator re-reads the contract from disk:
-
-- **T2/T3 tasks**: the task file's `## Acceptance criteria` and `## Context / Why` blocks
-- **T1 / bug / ad-hoc prompt flows**: the `<session scratchpad>/contract-<slug>.md` file written at Phase 1 dispatch time
-
-The verification process remains unchanged: each criterion is checked against the actual working tree. Each verified criterion must be cited with a specific file path and line number. A criterion that cannot be pointed at is not met.
-
-### Consuming the requirement trace
-
-The orchestrator verifies that the implementer's `## Requirement trace` is complete and consistent before closing the gate:
-
-- Every modified/deleted pre-existing test file named in `git diff HEAD --diff-filter=MD --name-only`
-- Every test-change entry classified as `[structure]` or `[expectation] → AC-n`
-- Every AC traced to `[test] path:line` or `[probe]` command or `[manual]` check
-
-If the implementer skipped the trace, return to implementer for completion before Phase 4.5 proceeds.
 
 ## Items marked for /cts-contribute (upstream candidates)
 
