@@ -96,3 +96,77 @@ Task files are written at plan time and can drift from the codebase's actual sta
 `tasks/` is fully gitignored per `AGENTS.local.md`, so `git log --all -- 'tasks/**'` returns zero commits for the entire directory, not just a particular missing file. No ledger-integrity check can ever use `git log`/`git blame` on a task file itself to see when it was created, moved, or deleted; the only durable trace of a task's existence is (a) its implementing commit's message/diff against real source, and (b) its `docs/METRICS.md` row. A completed task whose numbered task file apparently never existed on disk is undetectable by git, only inferable by cross-referencing `docs/METRICS.md` content against commit messages and other durable descriptions.
 
 General principle: ledger-integrity reviews of this repo's `tasks/` workflow must never reach for `git log -- tasks/**` expecting it to show anything — the source of truth for "did this task exist and get done" is `docs/METRICS.md` plus the implementing commit, full stop.
+
+## Splitting rule override: task = session, budget, packing
+
+This section **overrides** `rules/cts/task-authoring.md` § Splitting Rule.
+
+**The rule**: One task file = one clean session (task count == session count).
+
+**Session budget**: one layer or one vertical slice, one new concept, ≤ ~8 hand-written files.
+
+- Nx-generated files don't count toward the limit
+- N same-pattern edits count as one (e.g. applying the same lint config to 10 files = one edit)
+- A task that requires decisions absent from the task file is too big or under-specified → split before dispatch so decisions can be made separately
+
+**Packing rule** (anti-fragmentation): split only when the budget is exceeded; adjacent same-layer work that fits together goes into one task by default. A 1–2-edit piece with no own new concept is never its own task. The only deliberate exception is the gate-author session (its standalone value is the separate authorship context).
+
+This replaces the ">3 files → split" heuristic in the shared rules. The session budget is more precise for Penny's NestJS + Angular stack, where a modest endpoint or component often involves 5–6 files (route, UseCase, Service, Repository/DTO; or component, service, module/route) without exceeding the budget.
+
+## Template changes (task file header and body)
+
+### Header
+
+- **Keep**: `Executor model` row
+- **Add** (only when `[gate]` AC exist): new `Gate author | tester · <model>` row specifying the model tier for the gate-author session
+
+### Body — Acceptance criteria
+
+Change from:
+
+```
+## Acceptance criteria
+- [ ] <criterion>
+```
+
+To:
+
+```
+## Acceptance criteria
+- [ ] AC-1 [test] <criterion>
+- [ ] AC-2 [probe] <criterion>
+- [ ] AC-3 [manual] <criterion>
+- [ ] AC-4 [gate] <criterion>
+```
+
+Tag each criterion with its evidence type: `[test]` automated test, `[probe]` command + expected exit code/output, `[manual]` human check, `[gate]` boundary test authored red-first by gate-author agent.
+
+### Body — New sections
+
+Add these sections after `## Context / Why`:
+
+**`## Out of scope`** — explicit list of what this task must not do (contracts it must not change, layers it must not touch, features explicitly out of scope). Short list, 3–5 items.
+
+**`## Protected`** — gate file paths from earlier tasks this session must not touch (path list with brief reason), plus a pointer to `rules/local/workflow.md` § Requirement contract for the expectation invariant explanation.
+
+### Body — Verification gate section
+
+Change from:
+
+```
+## Verification gate
+- tester(verify) + reviewer → ...
+```
+
+To:
+
+```
+## Verification gate
+
+See global DoD in `rules/local/workflow.md` § Definition of Done. Task-specific verification commands:
+
+- <probe AC commands with exit codes>
+- <manual AC steps>
+```
+
+Reference the global DoD (do not copy it), and list only task-specific commands or steps beyond DoD baseline. The gate sequence (tester, reviewer, qa, security-scanner) is determined by the orchestrator based on file types touched, not written in task files.

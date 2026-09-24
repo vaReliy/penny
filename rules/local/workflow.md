@@ -294,11 +294,169 @@ git diff HEAD -- <changed files> | grep -E '^\+' | grep -vE '^\+\+\+' | grep -E 
 
 **Exceptions** — these are append-only, dated ledgers where task/decision references are the intended format, not a leak: `docs/METRICS.md`, `docs/KNOWLEDGE_INBOX.md`, `docs/CLAUDE_TS_CHANGELOG.md`.
 
+## Requirement contract
+
+Every task has a contract, written **before** implementation, that protects expectations of automated tests and fixes against implementation drift.
+
+### Contract elements
+
+1. **Acceptance criteria** — numbered `AC-1…n`, each tagged with its evidence type:
+   - `[test]` automated test · `[probe]` command + expected exit code/output · `[manual]` human check · `[gate]` boundary test authored red-first by a separate agent (see "Gate flow" section).
+   - Existing atomic + pointable rules (`rules/local/task-authoring.md`) still apply.
+2. **Expectation invariant** — protected are the _expectations_ of existing tests (asserted values, status codes, removed/weakened assertions, `skip`, deletions), **not** the test files' text. Structural test edits (setup, fixtures, imports, renames, moves) are allowed with a note. Changing an expectation is allowed only when an AC explicitly changes that contract.
+3. **Gates** — only at boundaries: security, external API/CLI contract, domain invariants. Never on internal unit tests.
+4. **Out of scope** — explicit list of what the task must not do.
+5. **Global DoD** (one place, referenced — never copied — by tasks): build, lint, typecheck, tests green on **all** affected projects + smoke run where available; every AC has evidence; no gate file changed; every change to a pre-existing test classified and accepted by reviewer; no `.only`/`.skip`; out-of-scope respected.
+
+Coverage % is never an AC (tool for tester audit only).
+
+### Tier-specific contract contents
+
+| Tier  | Contract author           | Contents                                                                      |
+| ----- | ------------------------- | ----------------------------------------------------------------------------- |
+| T0    | —                         | Expectation invariant + DoD only                                              |
+| T1    | Orchestrator, from prompt | 3–7 AC with evidence types + out of scope + invariant + DoD (before dispatch) |
+| T2/T3 | Business analyst / task   | AC + invariant + `[gate]` where boundary-touching + out of scope + DoD        |
+| Bug   | Debugger                  | Reproducing failing test = gate (hashed) + invariant                          |
+
+Traceability lives **in the implementer's report**, never in code (no AC IDs in test names/comments — they go stale with the task file, same reason as the existing no-task-IDs-in-code rule).
+
+### Contract location when there is no task file
+
+T1 / bug / ad-hoc prompt: orchestrator writes `<session scratchpad>/contract-<slug>.md` (AC + out of scope + gate hashes) **before** the first dispatch; Phase 4.5 re-reads it from disk. T0: no file.
+
+## Definition of Done
+
+Global, referenced by all task files' `## Verification gate` section (never copied into each task):
+
+- ✓ Build succeeds: `npm run build` or `nx run-many -t build` on all affected projects
+- ✓ Lint passes: `npm run lint` or `nx run-many -t lint` (zero lint errors; warnings may exist)
+- ✓ Type-check passes: `npm run typecheck` (strict TypeScript, no `any`)
+- ✓ Tests green on all affected projects (unit, feature, integration tests pass)
+- ✓ Smoke test where available (real HTTP hit to running API, or real click-through of UI flow, not synthetic)
+- ✓ Every AC has evidence (file:line for test/code, command output for probe, written verification for manual)
+- ✓ No gate file modified (see "Gate flow" section)
+- ✓ Every pre-existing test change classified and accepted by reviewer (see "Requirement trace & test-change audit" section)
+- ✓ No `.only` or `.skip` left in any test file
+- ✓ Out-of-scope constraints respected
+
+## Gate flow
+
+Gates are boundary tests authored **red-first by a separate agent** (`tester` in `gate-author` mode), one per task max (all gates of the task in that one session).
+
+### Steps
+
+1. **Gate author = `tester` in `gate-author` mode**, separate dispatch, one per task max. Writes tests from AC + contract only (implementation does not exist yet). Must run them and prove **red**; a gate green at start is invalid (tautological) and must be rewritten.
+2. Orchestrator snapshots gate files: `git hash-object <files>` → recorded in the task file (T2/T3) or contract file (T1/bug).
+3. Implementer makes gates green; gate files are **read-only** for it — structural changes are forbidden.
+4. Orchestrator re-runs `git hash-object`. Any change → **STOP and escalate to the human owner**. Not a Fix Now, no agent self-justification, no exceptions (even structural edits need owner OK).
+5. Across sessions (after owner commits), protection = normal `git diff HEAD` check.
+
+Bug flow: `debugger`'s reproducing test is hashed and follows steps 2–5.
+
+## Requirement trace & test-change audit
+
+### Implementer report mandatory section
+
+Implementer report gets mandatory `## Requirement trace`:
+
+- `AC-n → [test] path:line` | `[probe] <cmd> → exit 0` | `[manual] <what to check>`
+- Every modified/deleted **pre-existing** test file:
+  - `[structure] <what>` (structural change that preserves expectation)
+  - or `[expectation] → AC-n (<why the contract deliberately changed>)`
+
+### Orchestrator mechanical check
+
+- `git diff HEAD --diff-filter=MD --name-only -- <test globs>` scoped to test files
+- Compare with the report's test-change list — a file in the diff but missing from the report = `## Fix Now`
+- Re-hash gates to detect modification
+
+### Reviewer test-change audit
+
+Reviewer gets the list and runs the audit:
+
+- Verify `[structure]` changes no expectation (setup/fixture edits, imports, renames, moves are OK; removed assertions, `skip`, `toEqual`→`toBeDefined` are not)
+- Verify `[expectation]` maps to an AC that explicitly changes the contract
+- Hunt weakening (removed assertions, widened mocks, `skip`)
+- Unjustified expectation change = `## Fix Now` whose fix is **revert the test change**, never "add a justification"
+
+## Session budget & does-not-fit tripwires
+
+### Task = session; session budget; packing
+
+- **One task file = one clean session** (task count == session count)
+- **Session budget**: one layer or one vertical slice, one new concept, ≤ ~8 hand-written files
+  - Nx-generated files don't count
+  - N same-pattern edits count as one
+  - A task needing decisions not written in it is too big / under-specified
+- **Packing rule** (anti-fragmentation): split only when the budget is exceeded; adjacent same-layer work that fits together goes into one task by default; a 1–2-edit piece with no own concept is never its own task; the only deliberate exception is the gate-author session (its value is the separate context)
+
+This rule replaces the ">3 files → split" rule of `rules/cts/task-authoring.md` § Splitting Rule for this repo.
+
+### Does-not-fit-session tripwires (mechanical, not model self-assessment)
+
+**Plan-back checkpoint extended from T2/T3 to every task executed from a task file** (T1 included). Stop **before code** if the plan has > ~8 hand-written files or names decisions absent from the task → orchestrator splits at AC boundaries (nothing lost, no code yet).
+
+**Implementer rules**: work AC-by-AC with the tree green after each AC; a decision not covered by the task/AC → **STOP** and return the question, never invent.
+
+**Mid-session triggers** the orchestrator can see: implementer STOP; `git diff --stat` touching files outside the approved plan; 2nd gate restart cycle (existing); orchestrator context compaction during implementation → finish current AC to green, then handoff.
+
+**Split without knowledge loss**: always at an AC boundary in a green state; `handoff` continuation task carries closed AC with evidence (the `## Requirement trace`), remaining AC, decisions made this session (not to be re-made), learnings → `docs/KNOWLEDGE_INBOX.md` immediately. Owner commits the green partial state.
+
+## Phase 2.5 — Plan-back checkpoint (extended scope)
+
+**Applies to every task executed from a task file** (T1–T3). T0 are not worth the round-trip — dispatch them straight to implementation.
+
+The orchestrator owns the outcome of the whole cycle, not just the routing of it. But it deliberately cannot read source, and that restriction is load-bearing: it is what keeps orchestrator context small enough to stay sharp across a long pipeline. The checkpoint below is the one supervision step that buys real accountability without spending context, because it reviews a **plan** — checkable against documents the orchestrator already holds — rather than an implementation.
+
+**Mechanism.** Every task-file-executed dispatch (T1–T3) includes this block in the dispatch prompt:
+
+> Before writing any code, reply via `SendMessage` with a plan of at most 10 lines: (1) the mechanism you intend to use, (2) the files you expect to touch, (3) how you will verify it — the exact command and its expected result. Do not begin implementation until I approve.
+
+The orchestrator then checks that plan against what is already in its context — the task's acceptance criteria, the rule files cited in the dispatch prompt, and the Context/Why section — and replies with exactly one of:
+
+- **Approved** → agent implements
+- **Corrected** → name the specific conflict and ask for a revised plan; **one correction round maximum**
+- **Re-routed** → the plan reveals the task needs different expertise than the agent has; stop this agent, dispatch the right one with the plan as context
+
+**What makes a plan rejectable**:
+
+1. The mechanism contradicts a rule cited in the dispatch prompt, or one the task's file surface implicates
+2. The verification step cannot actually detect the failure the task exists to fix
+3. The verification asserts only the positive case, with nothing confirming the change stays inert where it must
+4. The plan's file list reaches outside the task's stated scope, or omits files the acceptance criteria clearly require
+
+**Bounds, so this does not become design-by-committee**: one correction round, then proceed with the agent's revised plan even if imperfect — the quality gate and Phase 4.5 are the backstops, and a second round of plan debate costs more than letting the gate catch it. The orchestrator never proposes the mechanism itself; it names the conflict and lets the specialist re-plan. Do not read source to evaluate a plan — if a plan cannot be judged from the task file and the cited rules, approve it and let the gate do its job.
+
+## Phase 4.5 — Acceptance Verification (extended scope)
+
+### Reading the contract file for no-task-file flows
+
+After quality gate closes, before `docs-writer`, orchestrator re-reads the contract from disk:
+
+- **T2/T3 tasks**: the task file's `## Acceptance criteria` and `## Context / Why` blocks
+- **T1 / bug / ad-hoc prompt flows**: the `<session scratchpad>/contract-<slug>.md` file written at Phase 1 dispatch time
+
+The verification process remains unchanged: each criterion is checked against the actual working tree. Each verified criterion must be cited with a specific file path and line number. A criterion that cannot be pointed at is not met.
+
+### Consuming the requirement trace
+
+The orchestrator verifies that the implementer's `## Requirement trace` is complete and consistent before closing the gate:
+
+- Every modified/deleted pre-existing test file named in `git diff HEAD --diff-filter=MD --name-only`
+- Every test-change entry classified as `[structure]` or `[expectation] → AC-n`
+- Every AC traced to `[test] path:line` or `[probe]` command or `[manual]` check
+
+If the implementer skipped the trace, return to implementer for completion before Phase 4.5 proceeds.
+
 ## Items marked for /cts-contribute (upstream candidates)
 
 The following are project-agnostic and worth pushing to the CTS template:
 
 - **Atomic/pointable acceptance criteria rule** — `rules/local/task-authoring.md` §§ Atomic criteria, Pointable criteria. Rationale: prevents ambiguous criteria, makes executor work auditable, catches missing behavior in read-back.
-- **Bounded subagent reports with on-demand detail files** — this section. Rationale: largest cost reduction without quality tradeoff; compound effect with lower orchestrator model tier.
-- **Verify-before-transcribe ledger rule** — Ledger Honesty section above. Rationale: prevents unverified claims from permanently distorting future dispatches; extends existing "verify before tester" principle to the durable ledger.
+- **Bounded subagent reports with on-demand detail files** — Bounded Subagent Reports section. Rationale: largest cost reduction without quality tradeoff; compound effect with lower orchestrator model tier.
+- **Verify-before-transcribe ledger rule** — Ledger Honesty section. Rationale: prevents unverified claims from permanently distorting future dispatches; extends existing "verify before tester" principle to the durable ledger.
 - **Task-ID Leakage Self-Check** — this section. Rationale: any claude-ts consumer writing rule/doc prose out of a task-driven session risks embedding a task ID that outlives the task file; also worth a `cts-rule-auditor` structural check (a 12th check alongside the existing 11) that scans `rules/**`, `CLAUDE.md`, `AGENTS.md` for task-ID/decision-number-shaped patterns outside declared ledger exceptions, catching drift even when the write-time self-check is skipped.
+- **Requirement contract framework** — Requirement contract section (entire section, including tier table). Rationale: foundation for testability and requirement trace; gates protect against expectation drift; session budget prevents cold-start overhead.
+- **Gate flow, requirement trace & test-change audit** — Gate flow and Requirement trace & test-change audit sections (both in full). Rationale: prevents implementation agents from weakening tests; separates gate authorship from implementation; orchestrator can mechanically verify test-change audit without reading source.
+- **Session budget & does-not-fit tripwires** — Session budget & does-not-fit tripwires section. Rationale: prevents the "one task overflows session" anti-pattern; tripwires surface underspecified work before code starts.
