@@ -151,3 +151,4 @@ Each completed task is one row in the table below.
 | 2026-08-09 | penny | browser-verify-nginx-response-surface                        | T1   | 5      | 3/1/0/-           | 1       | yes      | standard       | user-authorized +2/+2 cycle extensions past the 2-cycle hard stop |
 | 2026-08-09 | penny | fix-dependabot-pnpm-workspace-axios                          | T1   | 0      | 0/0/-/-           | 0       | no       | standard       |                                                                   |
 | 2026-09-24 | penny | workspace-domain-aggregate-and-scope-workspace-boundaries    | T2   | 0      | 0/0/-/-           | 0       | no       | standard       |                                                                   |
+| 2026-09-25 | penny | workspace-persistence                                        | T2   | 1      | 0/1/-/-           | 1       | no       | standard       |                                                                   |
