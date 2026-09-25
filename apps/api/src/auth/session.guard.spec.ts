@@ -8,7 +8,7 @@ vi.mock('@nestjs/common', () => ({
 import { SessionGuard } from './session.guard.js';
 import { AUTH_COOKIE_NAME, XSRF_COOKIE_NAME } from './cookie.constants.js';
 import { AuthenticationError } from 'shared-errors';
-import { UserStatus } from 'identity-core';
+import { UserStatus, getUserDisplayName } from 'identity-core';
 import { createFakeUserRepository } from 'identity-testing';
 import type { ExecutionContext } from '@nestjs/common';
 import type { ITokenIssuer } from 'identity-application';
@@ -321,5 +321,41 @@ describe('SessionGuard.canActivate', () => {
     await guard.canActivate(ctx);
 
     expect((getReqUser() as { displayName: string }).displayName).toBe('555');
+  });
+
+  it('req.user.displayName matches getUserDisplayName() for a firstName+username user', async () => {
+    const user = makeUser({
+      firstName: 'Ada',
+      username: 'ada',
+      telegramId: '888',
+    });
+    (userRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(
+      user,
+    );
+    const { ctx, getReqUser } = makeContext(`${AUTH_COOKIE_NAME}=valid-jwt`);
+
+    await guard.canActivate(ctx);
+
+    expect((getReqUser() as { displayName: string }).displayName).toBe(
+      getUserDisplayName(user),
+    );
+  });
+
+  it('req.user.displayName matches getUserDisplayName() for a username-only user', async () => {
+    const user = makeUser({
+      firstName: undefined,
+      username: 'bob_tg',
+      telegramId: '777',
+    });
+    (userRepository.findById as ReturnType<typeof vi.fn>).mockResolvedValue(
+      user,
+    );
+    const { ctx, getReqUser } = makeContext(`${AUTH_COOKIE_NAME}=valid-jwt`);
+
+    await guard.canActivate(ctx);
+
+    expect((getReqUser() as { displayName: string }).displayName).toBe(
+      getUserDisplayName(user),
+    );
   });
 });

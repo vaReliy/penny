@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import pino from 'pino';
 
 import { User, UserStatus } from 'identity-core';
-import type { IUserRepository } from 'identity-core';
+import type { IUserRepository, UserListFilter } from 'identity-core';
 import type { RoleType } from 'shared-contracts';
 import { ApproveUserService, SUPERADMIN_ROLE } from 'identity-application';
 import { registerLivrRules } from 'shared-kernel';
@@ -112,6 +112,23 @@ class FakeUserRepository implements IUserRepository {
     return updated;
   }
 
+  public async findAll(filter: UserListFilter = {}): Promise<readonly User[]> {
+    return [...this.store.values()].filter((user) => {
+      if (filter.status !== undefined && user.status !== filter.status) {
+        return false;
+      }
+      if (
+        filter.usernameContains !== undefined &&
+        !user.username
+          ?.toLowerCase()
+          .includes(filter.usernameContains.toLowerCase())
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }
+
   public async delete(id: string): Promise<void> {
     this.store.delete(id);
   }
@@ -127,12 +144,13 @@ describe('UserApproveCommand', () => {
   let command: UserApproveCommand;
   let repository: FakeUserRepository;
   let approveService: ApproveUserService;
+  let silentLogger: pino.Logger;
 
   beforeEach(async () => {
     repository = new FakeUserRepository();
     approveService = new ApproveUserService({ userRepository: repository });
 
-    const silentLogger = pino({ level: 'silent' });
+    silentLogger = pino({ level: 'silent' });
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -151,7 +169,7 @@ describe('UserApproveCommand', () => {
     const runSpy = vi.spyOn(approveService, 'run');
     repository.seed(buildPendingUser());
 
-    await command.run([TELEGRAM_ID]);
+    await command.run([], { telegramId: TELEGRAM_ID });
 
     expect(runSpy).toHaveBeenCalledOnce();
     expect(runSpy).toHaveBeenCalledWith(
@@ -168,15 +186,20 @@ describe('UserApproveCommand', () => {
     expect(updated?.status).toBe(UserStatus.ACTIVE);
   });
 
-  it('calls process.exit(1) when the telegramId is not found', async () => {
+  it('calls process.exit(1) and logs "User with Telegram ID <id> not found" when the telegramId is unknown (AC-9)', async () => {
+    const errorSpy = vi.spyOn(silentLogger, 'error');
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('process.exit called');
     });
 
-    await expect(command.run(['unknown-id'])).rejects.toThrow(
+    await expect(command.run([], { telegramId: 'unknown-id' })).rejects.toThrow(
       'process.exit called',
     );
+
     expect(exitSpy).toHaveBeenCalledWith(1);
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('User with Telegram ID unknown-id not found'),
+    );
 
     exitSpy.mockRestore();
   });

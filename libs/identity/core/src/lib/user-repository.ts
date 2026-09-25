@@ -4,6 +4,21 @@ import type { RoleType, UserStatus } from 'shared-contracts';
 import type { User, UserProfileUpdate } from './user.js';
 
 /**
+ * Optional filters for {@link IUserRepository.findAll}. Omitting a field
+ * means "no filter on that dimension" — `{}` returns every user.
+ */
+export interface UserListFilter {
+  /** Restricts results to users with exactly this `status`. */
+  readonly status?: UserStatus;
+  /**
+   * Case-insensitive substring match against `username`. Implementers must
+   * treat this as literal text (escape any regex metacharacters) rather
+   * than as a pattern.
+   */
+  readonly usernameContains?: string;
+}
+
+/**
  * Data access contract for {@link User} aggregates.
  *
  * Extends the kernel's generic {@link IRepository} (`findById`/`save`/
@@ -33,6 +48,12 @@ export interface IUserRepository extends IRepository<User, string> {
 
   /** Finds a user by their Telegram username, or `null` if none exists. */
   findByUsername(username: string): Promise<User | null>;
+
+  /**
+   * Lists users matching `filter`, sorted by `createdAt` ascending. An
+   * empty `filter` (or no argument) returns every user.
+   */
+  findAll(filter?: UserListFilter): Promise<readonly User[]>;
 
   /**
    * Updates only mutable profile fields (`firstName`, `lastName`, `username`,

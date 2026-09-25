@@ -1,5 +1,9 @@
 import { User, UserStatus } from 'identity-core';
-import type { IUserRepository, UserProfileUpdate } from 'identity-core';
+import type {
+  IUserRepository,
+  UserListFilter,
+  UserProfileUpdate,
+} from 'identity-core';
 import type { RoleType } from 'shared-contracts';
 
 /**
@@ -54,6 +58,25 @@ export function createInMemoryUserRepository(): IInMemoryUserRepository {
         }
       }
       return null;
+    },
+
+    async findAll(filter: UserListFilter = {}): Promise<readonly User[]> {
+      const usernameNeedle = filter.usernameContains?.toLowerCase();
+      const matches = [...usersById.values()].filter((user) => {
+        if (filter.status !== undefined && user.status !== filter.status) {
+          return false;
+        }
+        if (
+          usernameNeedle !== undefined &&
+          !(user.username?.toLowerCase().includes(usernameNeedle) ?? false)
+        ) {
+          return false;
+        }
+        return true;
+      });
+      return matches.sort(
+        (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+      );
     },
 
     async save(entity: User): Promise<User> {

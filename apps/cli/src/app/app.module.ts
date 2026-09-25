@@ -6,6 +6,7 @@ import { LoggerModule } from '../logger/logger.module.js';
 import { CliIdentityModule } from '../identity/cli-identity.module.js';
 import { UserApproveCommand } from '../commands/user-approve.command.js';
 import { UserRejectCommand } from '../commands/user-reject.command.js';
+import { UserListCommand } from '../commands/user-list.command.js';
 import { DevCreateUserCommand } from '../commands/dev-create-user.command.js';
 import { DevTokenCommand } from '../commands/dev-token.command.js';
 import { AdminPromoteCommand } from '../commands/admin-promote.command.js';
@@ -20,6 +21,7 @@ import { AdminPromoteCommand } from '../commands/admin-promote.command.js';
   providers: [
     UserApproveCommand,
     UserRejectCommand,
+    UserListCommand,
     DevCreateUserCommand,
     DevTokenCommand,
     AdminPromoteCommand,

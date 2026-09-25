@@ -13,6 +13,7 @@
     "shared-kernel": "0.0.1",
     "identity-infrastructure": "0.0.1",
     "shared-infrastructure": "0.0.1",
-    "identity-core": "0.0.1"
+    "identity-core": "0.0.1",
+    "shared-errors": "0.0.1"
   }
 }

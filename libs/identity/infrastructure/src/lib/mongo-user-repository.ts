@@ -4,10 +4,15 @@ import type { ReturnModelType } from '@typegoose/typegoose';
 import type { Connection } from 'mongoose';
 import { isValidObjectId } from 'mongoose';
 
-import type { IUserRepository, UserProfileUpdate } from 'identity-core';
+import type {
+  IUserRepository,
+  UserListFilter,
+  UserProfileUpdate,
+} from 'identity-core';
 import { User } from 'identity-core';
 import type { RoleType, UserStatus } from 'shared-contracts';
 import { InfrastructureError } from 'shared-errors';
+import { escapeRegExp } from 'shared-util';
 
 import { UserMapper } from './user.mapper.js';
 import { getUserModel, type UserModel } from './user.model.js';
@@ -91,6 +96,33 @@ export class MongoUserRepository implements IUserRepository {
       return doc ? UserMapper.toDomain(doc) : null;
     } catch (error) {
       throw this.toInfrastructureError(error, 'findByUsername');
+    }
+  }
+
+  /**
+   * Lists users matching `filter`, sorted by `createdAt` ascending.
+   * `usernameContains` is matched case-insensitively as a literal substring
+   * — the caller's text is escaped via `escapeRegExp` before being embedded
+   * in the `$regex` filter, so metacharacters like `.` or `*` cannot alter
+   * the match semantics.
+   */
+  public async findAll(filter: UserListFilter = {}): Promise<readonly User[]> {
+    const query: Record<string, unknown> = {};
+    if (filter.status !== undefined) {
+      query['status'] = filter.status;
+    }
+    if (filter.usernameContains !== undefined) {
+      query['username'] = {
+        $regex: escapeRegExp(filter.usernameContains),
+        $options: 'i',
+      };
+    }
+
+    try {
+      const docs = await this.model.find(query).sort({ createdAt: 1 }).exec();
+      return docs.map((doc) => UserMapper.toDomain(doc));
+    } catch (error) {
+      throw this.toInfrastructureError(error, 'findAll');
     }
   }
 

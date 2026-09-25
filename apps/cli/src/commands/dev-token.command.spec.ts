@@ -60,6 +60,7 @@ function buildFakeRepository(
     findById: vi.fn().mockResolvedValue(null),
     findByTelegramId: vi.fn().mockResolvedValue(null),
     findByUsername: vi.fn().mockResolvedValue(null),
+    findAll: vi.fn().mockResolvedValue([]),
     save: vi.fn().mockImplementation(async (u: User) => u),
     updateProfile: vi.fn().mockResolvedValue(null),
     updateStatus: vi.fn().mockResolvedValue(null),

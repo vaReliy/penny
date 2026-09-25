@@ -220,6 +220,59 @@ describe('createInMemoryUserRepository', () => {
     await expect(repo.updateRoles('missing', [Role.USER])).resolves.toBeNull();
   });
 
+  it('findAll() with no filter returns every user sorted by createdAt ascending', async () => {
+    const repo = createInMemoryUserRepository();
+    const older = makeUser({
+      id: 'a',
+      telegramId: 'tg-a',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    });
+    const newer = makeUser({
+      id: 'b',
+      telegramId: 'tg-b',
+      createdAt: new Date('2026-02-01T00:00:00.000Z'),
+    });
+    repo.seed(newer);
+    repo.seed(older);
+
+    await expect(repo.findAll()).resolves.toEqual([older, newer]);
+  });
+
+  it('findAll() filters by exact status', async () => {
+    const repo = createInMemoryUserRepository();
+    repo.seed(
+      makeUser({ id: 'a', telegramId: 'tg-a', status: UserStatus.PENDING }),
+    );
+    repo.seed(
+      makeUser({ id: 'b', telegramId: 'tg-b', status: UserStatus.ACTIVE }),
+    );
+
+    const result = await repo.findAll({ status: UserStatus.ACTIVE });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.id).toBe('b');
+  });
+
+  it('findAll() matches usernameContains case-insensitively', async () => {
+    const repo = createInMemoryUserRepository();
+    repo.seed(makeUser({ id: 'a', telegramId: 'tg-a', username: 'alice' }));
+    repo.seed(makeUser({ id: 'b', telegramId: 'tg-b', username: 'Sally' }));
+    repo.seed(makeUser({ id: 'c', telegramId: 'tg-c', username: 'bob' }));
+
+    const result = await repo.findAll({ usernameContains: 'AL' });
+
+    expect(result.map((u) => u.id).sort()).toEqual(['a', 'b']);
+  });
+
+  it('findAll() returns an empty array when nothing matches', async () => {
+    const repo = createInMemoryUserRepository();
+    repo.seed(makeUser({ id: 'a', username: 'bob' }));
+
+    await expect(repo.findAll({ usernameContains: 'zzz' })).resolves.toEqual(
+      [],
+    );
+  });
+
   it('delete() removes a seeded user so subsequent findById() returns null', async () => {
     const repo = createInMemoryUserRepository();
     repo.seed(makeUser({ id: 'user-1' }));

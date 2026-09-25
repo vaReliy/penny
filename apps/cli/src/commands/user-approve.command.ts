@@ -1,28 +1,26 @@
 import { Inject } from '@nestjs/common';
-import { Command, CommandRunner } from 'nest-commander';
+import { Command, CommandRunner, Option } from 'nest-commander';
 import type pino from 'pino';
 
 import { ApproveUserService } from 'identity-application';
 import type { IUserRepository } from 'identity-core';
-import { Role, UserStatus } from 'shared-contracts';
 import type { ServiceContext } from 'shared-kernel';
 
 import { API_CONFIG } from '../config/cli-config.js';
 import type { CliConfig } from '../config/cli-config.js';
 import { PINO_LOGGER } from '../logger/logger.tokens.js';
 import { TOKENS } from '../identity/tokens.js';
+import { CLI_ADMIN_CALLER } from '../shared/cli-admin-caller.js';
+import { resolveUserByTelegramId } from '../shared/resolve-user-by-telegram-id.js';
+import { printCliError } from '../shared/print-cli-error.js';
 
-/** Admin caller identity injected into every CLI service context. */
-const CLI_ADMIN_CALLER = {
-  userId: 'cli-admin',
-  status: UserStatus.ACTIVE,
-  roles: [Role.SUPERADMIN],
-} as const;
+interface UserApproveOptions {
+  telegramId: string;
+}
 
 @Command({
   name: 'user:approve',
   description: 'Approve a pending user, transitioning them to active.',
-  arguments: '<telegramId>',
 })
 export class UserApproveCommand extends CommandRunner {
   constructor(
@@ -38,15 +36,17 @@ export class UserApproveCommand extends CommandRunner {
     super();
   }
 
-  async run([telegramId]: string[]): Promise<void> {
+  async run(_inputs: string[], options: UserApproveOptions): Promise<void> {
+    const { telegramId } = options;
+
+    let user;
     try {
-      const user = await this.userRepository.findByTelegramId(telegramId);
+      user = await resolveUserByTelegramId(this.userRepository, telegramId);
+    } catch (err) {
+      printCliError(err, this.logger);
+    }
 
-      if (!user) {
-        this.logger.error({ telegramId }, 'User not found');
-        process.exit(1);
-      }
-
+    try {
       const ctx: ServiceContext<CliConfig> = {
         config: this.config,
         caller: CLI_ADMIN_CALLER,
@@ -58,5 +58,14 @@ export class UserApproveCommand extends CommandRunner {
       this.logger.error({ telegramId, err }, 'user:approve failed');
       process.exit(1);
     }
+  }
+
+  @Option({
+    flags: '--telegram-id <telegramId>',
+    description: 'Telegram ID of the user to approve.',
+    required: true,
+  })
+  parseTelegramId(val: string): string {
+    return val;
   }
 }

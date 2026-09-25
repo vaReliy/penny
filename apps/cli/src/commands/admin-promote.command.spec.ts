@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import pino from 'pino';
 
 import { User, UserStatus } from 'identity-core';
-import type { IUserRepository } from 'identity-core';
+import type { IUserRepository, UserListFilter } from 'identity-core';
 import { Role } from 'shared-contracts';
 import type { RoleType } from 'shared-contracts';
 
@@ -15,15 +15,15 @@ import { PINO_LOGGER } from '../logger/logger.tokens.js';
 import { TOKENS } from '../identity/tokens.js';
 import { AdminPromoteCommand } from './admin-promote.command.js';
 
-const TELEGRAM_USERNAME = 'ada_lovelace';
+const TELEGRAM_ID = '987654321';
 const USER_ID = 'user-abc-123';
 
 function buildActiveUser(roles: readonly RoleType[] = []): User {
   const now = new Date('2026-01-01T00:00:00.000Z');
   return new User({
     id: USER_ID,
-    telegramId: '987654321',
-    username: TELEGRAM_USERNAME,
+    telegramId: TELEGRAM_ID,
+    username: 'ada_lovelace',
     firstName: 'Ada',
     status: UserStatus.ACTIVE,
     roles,
@@ -123,6 +123,23 @@ class FakeUserRepository implements IUserRepository {
     return updated;
   }
 
+  public async findAll(filter: UserListFilter = {}): Promise<readonly User[]> {
+    return [...this.store.values()].filter((user) => {
+      if (filter.status !== undefined && user.status !== filter.status) {
+        return false;
+      }
+      if (
+        filter.usernameContains !== undefined &&
+        !user.username
+          ?.toLowerCase()
+          .includes(filter.usernameContains.toLowerCase())
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }
+
   public async delete(id: string): Promise<void> {
     this.store.delete(id);
   }
@@ -160,7 +177,7 @@ describe('AdminPromoteCommand', () => {
     repository.seed(buildActiveUser([]));
     const updateRolesSpy = vi.spyOn(repository, 'updateRoles');
 
-    await command.run([], { telegramUsername: TELEGRAM_USERNAME });
+    await command.run([], { telegramId: TELEGRAM_ID });
 
     expect(updateRolesSpy).toHaveBeenCalledOnce();
     const updated = await repository.findById(USER_ID);
@@ -171,7 +188,7 @@ describe('AdminPromoteCommand', () => {
     repository.seed(buildActiveUser([Role.SUPERADMIN]));
     const updateRolesSpy = vi.spyOn(repository, 'updateRoles');
 
-    await command.run([], { telegramUsername: TELEGRAM_USERNAME });
+    await command.run([], { telegramId: TELEGRAM_ID });
 
     expect(updateRolesSpy).not.toHaveBeenCalled();
     const updated = await repository.findById(USER_ID);
@@ -181,8 +198,8 @@ describe('AdminPromoteCommand', () => {
   it('does not duplicate the role across repeated promotions', async () => {
     repository.seed(buildActiveUser([]));
 
-    await command.run([], { telegramUsername: TELEGRAM_USERNAME });
-    await command.run([], { telegramUsername: TELEGRAM_USERNAME });
+    await command.run([], { telegramId: TELEGRAM_ID });
+    await command.run([], { telegramId: TELEGRAM_ID });
 
     const updated = await repository.findById(USER_ID);
     expect(updated?.roles).toEqual([Role.SUPERADMIN]);
@@ -197,9 +214,9 @@ describe('AdminPromoteCommand', () => {
       throw new Error('process.exit called');
     });
 
-    await expect(
-      command.run([], { telegramUsername: TELEGRAM_USERNAME }),
-    ).rejects.toThrow('process.exit called');
+    await expect(command.run([], { telegramId: TELEGRAM_ID })).rejects.toThrow(
+      'process.exit called',
+    );
 
     expect(exitSpy).toHaveBeenCalledWith(1);
     expect(errorSpy).toHaveBeenCalledWith(
@@ -210,15 +227,20 @@ describe('AdminPromoteCommand', () => {
     exitSpy.mockRestore();
   });
 
-  it('calls process.exit(1) when the telegram username is not found', async () => {
+  it('calls process.exit(1) and logs "User with Telegram ID <id> not found" when the telegram id is unknown (AC-9)', async () => {
+    const errorSpy = vi.spyOn(silentLogger, 'error');
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('process.exit called');
     });
 
-    await expect(
-      command.run([], { telegramUsername: 'unknown-user' }),
-    ).rejects.toThrow('process.exit called');
+    await expect(command.run([], { telegramId: 'unknown-id' })).rejects.toThrow(
+      'process.exit called',
+    );
+
     expect(exitSpy).toHaveBeenCalledWith(1);
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('User with Telegram ID unknown-id not found'),
+    );
 
     exitSpy.mockRestore();
   });

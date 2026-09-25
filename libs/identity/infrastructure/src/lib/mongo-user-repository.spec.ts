@@ -354,4 +354,50 @@ describe('MongoUserRepository (integration)', () => {
 
     await repository.delete(created.id);
   });
+
+  describe('findAll', () => {
+    it('usernameContains matches case-insensitively and excludes non-matches', async () => {
+      const alice = await repository.save(
+        buildUser({ telegramId: 'findall-alice' }),
+      );
+      await repository.updateProfile(alice.id, { username: 'alice' });
+      const sally = await repository.save(
+        buildUser({ telegramId: 'findall-sally' }),
+      );
+      await repository.updateProfile(sally.id, { username: 'Sally' });
+      const bob = await repository.save(
+        buildUser({ telegramId: 'findall-bob' }),
+      );
+      await repository.updateProfile(bob.id, { username: 'bob' });
+
+      const result = await repository.findAll({ usernameContains: 'AL' });
+
+      const usernames = result.map((u) => u.username).sort();
+      expect(usernames).toEqual(['Sally', 'alice']);
+      expect(usernames).not.toContain('bob');
+
+      await repository.delete(alice.id);
+      await repository.delete(sally.id);
+      await repository.delete(bob.id);
+    });
+
+    it('escapes regex metacharacters so usernameContains matches only literal text', async () => {
+      const literal = await repository.save(
+        buildUser({ telegramId: 'findall-literal' }),
+      );
+      await repository.updateProfile(literal.id, { username: 'weird.*name' });
+      const other = await repository.save(
+        buildUser({ telegramId: 'findall-other' }),
+      );
+      await repository.updateProfile(other.id, { username: 'anything' });
+
+      const result = await repository.findAll({ usernameContains: '.*' });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]?.username).toBe('weird.*name');
+
+      await repository.delete(literal.id);
+      await repository.delete(other.id);
+    });
+  });
 });

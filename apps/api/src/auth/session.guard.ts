@@ -4,6 +4,7 @@ import type { Request, Response } from 'express';
 
 import type { ITokenIssuer, TokenClaims } from 'identity-application';
 import type { IUserRepository } from 'identity-core';
+import { getUserDisplayName } from 'identity-core';
 import { AuthenticationError } from 'shared-errors';
 import type { SessionUser } from 'shared-contracts';
 
@@ -63,7 +64,7 @@ export class SessionGuard implements CanActivate {
     req.user = {
       id: user.id,
       telegramId: user.telegramId,
-      displayName: user.firstName ?? user.username ?? user.telegramId,
+      displayName: getUserDisplayName(user),
       status: user.status,
       roles: claims.roles,
     };

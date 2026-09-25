@@ -9,17 +9,21 @@ import { API_CONFIG } from '../config/cli-config.js';
 import type { CliConfig } from '../config/cli-config.js';
 import { PINO_LOGGER } from '../logger/logger.tokens.js';
 import { TOKENS } from '../identity/tokens.js';
+import { resolveUserByTelegramId } from '../shared/resolve-user-by-telegram-id.js';
+import { printCliError } from '../shared/print-cli-error.js';
 
 interface AdminPromoteOptions {
-  telegramUsername: string;
+  telegramId: string;
 }
 
 /**
- * Grants `Role.SUPERADMIN` to an existing user, identified by Telegram
- * username. Infra-level trust boundary by design: whoever can run this CLI
- * / reach the Mongo connection is implicitly trusted — there is no in-app
- * authorization check here (see the task's decision record for the CLI
- * privilege model). Never expose an HTTP equivalent of this command.
+ * Grants `Role.SUPERADMIN` to an existing user, identified by Telegram id
+ * (usernames are mutable, so every CLI user-identifying command resolves by
+ * `--telegram-id`, never username). Infra-level trust boundary by design:
+ * whoever can run this CLI / reach the Mongo connection is implicitly
+ * trusted — there is no in-app authorization check here (see the task's
+ * decision record for the CLI privilege model). Never expose an HTTP
+ * equivalent of this command.
  *
  * The target user must already have a `User` row — i.e. have logged in via
  * Telegram at least once — before this command can act on them. There is no
@@ -27,8 +31,7 @@ interface AdminPromoteOptions {
  */
 @Command({
   name: 'admin:promote',
-  description:
-    'Grant Role.SUPERADMIN to an existing user by --telegram-username.',
+  description: 'Grant Role.SUPERADMIN to an existing user by --telegram-id.',
 })
 export class AdminPromoteCommand extends CommandRunner {
   constructor(
@@ -43,49 +46,53 @@ export class AdminPromoteCommand extends CommandRunner {
   }
 
   async run(_inputs: string[], options: AdminPromoteOptions): Promise<void> {
-    const { telegramUsername } = options;
+    const { telegramId } = options;
 
-    const user = await this.userRepository.findByUsername(telegramUsername);
-    if (!user) {
-      this.logger.error({ username: telegramUsername }, 'User not found');
-      process.exit(1);
-    }
+    try {
+      const user = await resolveUserByTelegramId(
+        this.userRepository,
+        telegramId,
+      );
 
-    if (user.roles.includes(Role.SUPERADMIN)) {
+      if (user.roles.includes(Role.SUPERADMIN)) {
+        this.logger.info(
+          { telegramId, userId: user.id },
+          'User is already a superadmin; no-op',
+        );
+        return;
+      }
+
+      const currentRoles = user.roles;
+      const updated = await this.userRepository.updateRoles(
+        user.id,
+        [...currentRoles, Role.SUPERADMIN],
+        currentRoles,
+      );
+
+      if (!updated) {
+        this.logger.error(
+          { telegramId, userId: user.id },
+          'Promotion failed: roles changed concurrently since this command read them (CAS conflict). Re-run the command to retry against the latest roles.',
+        );
+        process.exit(1);
+        return;
+      }
+
       this.logger.info(
-        { username: telegramUsername, userId: user.id },
-        'User is already a superadmin; no-op',
+        { telegramId, userId: user.id },
+        'User promoted to superadmin',
       );
-      return;
+    } catch (error) {
+      printCliError(error, this.logger);
     }
-
-    const currentRoles = user.roles;
-    const updated = await this.userRepository.updateRoles(
-      user.id,
-      [...currentRoles, Role.SUPERADMIN],
-      currentRoles,
-    );
-
-    if (!updated) {
-      this.logger.error(
-        { username: telegramUsername, userId: user.id },
-        'Promotion failed: roles changed concurrently since this command read them (CAS conflict). Re-run the command to retry against the latest roles.',
-      );
-      process.exit(1);
-    }
-
-    this.logger.info(
-      { username: telegramUsername, userId: user.id },
-      'User promoted to superadmin',
-    );
   }
 
   @Option({
-    flags: '--telegram-username <username>',
-    description: 'Username of the user to promote to superadmin.',
+    flags: '--telegram-id <telegramId>',
+    description: 'Telegram ID of the user to promote to superadmin.',
     required: true,
   })
-  parseTelegramUsername(val: string): string {
+  parseTelegramId(val: string): string {
     return val;
   }
 }

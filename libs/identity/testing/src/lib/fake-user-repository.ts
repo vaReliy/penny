@@ -16,6 +16,7 @@ export function createFakeUserRepository(
     findById: vi.fn().mockResolvedValue(null),
     findByTelegramId: vi.fn().mockResolvedValue(null),
     findByUsername: vi.fn().mockResolvedValue(null),
+    findAll: vi.fn().mockResolvedValue([]),
     save: vi.fn().mockResolvedValue(null),
     delete: vi.fn().mockResolvedValue(undefined),
     updateProfile: vi.fn().mockResolvedValue(null),
