@@ -189,3 +189,19 @@ Why: adding `findAll` to `IUserRepository` required updating `libs/identity/test
 ## 2026-09-25 — [nx-generators] `@nx/dependency-checks` lint fires on a lib's `package.json` even for a same-repo sibling-lib import
 
 Why: `libs/identity/infrastructure` newly importing `libs/shared/util` (for a new `escapeRegExp` helper) required adding the dependency to `libs/identity/infrastructure/package.json` explicitly — confirmed by this session's diff (`libs/identity/infrastructure/package.json` +1 line, `apps/cli/package.json` +3/-1 for the same reason). A tsconfig path alias resolving the import at compile time is not sufficient; `@nx/dependency-checks` lints declared `package.json` dependencies independently. Belongs in: `rules/local/nx-generators.md` or `rules/cts/dependencies.md` (needs a decision on which file owns lint-driven manifest requirements, as opposed to `pnpm add`-driven ones already covered there).
+
+## 2026-09-26 — [testing-e2e] `api-e2e` also has no `typecheck` target, so the existing "E2E projects lack typecheck targets" note is broader than `web-e2e`
+
+Why: `api-e2e` exposes only `lint` and `e2e`. Type errors in its Vitest specs and support helpers are invisible to `nx run-many -t typecheck`. The workaround used while authoring the workspace isolation gates was a one-off `tsc --noEmit -p apps/api-e2e/tsconfig.spec.json` (exit 0). The existing section in `rules/local/testing-e2e.md` names only Playwright/`web-e2e`, so it should be generalised to every e2e project, Vitest ones included. Belongs in: `rules/local/testing-e2e.md` § "E2E projects lack `typecheck` targets".
+
+## 2026-09-26 — [testing-e2e] `api-e2e:e2e` needs the API's `.env` loaded into the invoking shell
+
+Why: there is no dotenv loader in the api-e2e harness. `api:serve` (started via `dependsOn`) and the suite's own direct-Mongo/JWT fixture helpers both read `process.env` (Mongo URI/db name, JWT secret), so the working invocation is `set -a && source .env && set +a && pnpm nx run api-e2e:e2e`. Mongo must be running first (`docker compose up -d mongo`). The global teardown kills :3000. Belongs in: `rules/local/testing-e2e.md`.
+
+## 2026-09-26 — [testing] "Identical response" gates must send byte-identical requests except for the variable under test
+
+Why: NestJS's default route-not-found 404 body embeds the request path in its `message`. Per-call fixture ids or differing query strings therefore produce body diffs that look like an information leak but are only request noise. An equality assertion such as "non-member / nonexistent id / malformed id → identical 404" is only meaningful when the compared requests differ solely in the id being probed, and when the production error path emits an opaque body that does not echo the path. Belongs in: `rules/local/testing.md`.
+
+## 2026-09-26 — [testing] `BaseErrorFilter` bodies are `{code, message}` only, so cross-request error-body identity is achievable when the thrown message is generic
+
+Why: `apps/api/src/filters/base-error.filter.ts` emits neither `timestamp` nor `path` for `BaseError`-derived exceptions. That is unlike Nest's default not-found body, which embeds the path. A gate that asserts identical error bodies across different ids/paths is therefore satisfiable when the production code throws a `BaseError` with a message that doesn't echo the id. A related seeding note: `AccountRepository.findOrCreateDefault` upserts on the `{workspaceId, name}` unique index, so a raw-inserted "Main" account safely pre-empts the API's own default-account creation. Belongs in: `rules/local/testing-e2e.md` (gate-authoring / fixture seeding).
