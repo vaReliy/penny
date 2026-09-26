@@ -40,8 +40,8 @@ function buildNotFoundError(): NotFoundError {
  *
  * Framework-free `application` service — no DI decorators. Delegates the
  * summation itself to `ITransactionRepository.sumAmountsByType` (a repo
- * aggregation, never an in-memory reduce over the full transaction set —
- * D1) and only performs the final subtraction and `Money` construction here,
+ * aggregation, never an in-memory reduce over the full transaction set)
+ * and only performs the final subtraction and `Money` construction here,
  * using the account's own currency (never `context.config.defaultCurrency`
  * directly — that value seeds `Account.currency` at creation time, but this
  * service reads it back off the resolved `Account`, keeping a future

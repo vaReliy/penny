@@ -45,14 +45,14 @@ export interface HistoryChartEntry {
  * and `GetPlannerSummaryService`). Unlike `ListTransactionsService`, a
  * period is not mandatory here: every call is answered by a single
  * repository aggregation (`sumExpenseByCategory`), never an in-memory scan
- * of the transaction set, so an unbounded (all-time) chart is a legitimate,
- * D1-compliant query — not the unbounded-`findByWorkspace` foot-gun
+ * of the transaction set, so an unbounded (all-time) chart is a legitimate
+ * query — not the unbounded-`findByWorkspace` foot-gun
  * `ListTransactionsService` guards against.
  *
  * Framework-free `application` service — no DI decorators. Category names
  * are resolved via a bounded `ICategoryRepository.findByWorkspace` lookup
  * (bounded by the workspace's category count, not its transaction count —
- * not the fetch-all-and-reduce pattern D1 forbids, since the aggregation
+ * never the fetch-all-and-reduce pattern, since the aggregation
  * itself is still repository-pushed) and joined onto the repo's
  * `{categoryId, total}` aggregation result; archived categories are
  * included (`includeArchived: true`) because `sumExpenseByCategory` itself

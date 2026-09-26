@@ -60,13 +60,13 @@ export interface PlannerSummary {
  * Summarizes budgeted vs. actual expense spending, per category, for one
  * calendar month.
  *
- * Framework-free `application` service — no DI decorators. Union semantics
- * per the task-09 spec: a category appears in the result if it has a budget
+ * Framework-free `application` service — no DI decorators. Union semantics:
+ * a category appears in the result if it has a budget
  * for this month, actual expense spend this month, or both — a category
  * with spend but no budget shows `budgeted: 0`; a category with a budget but
  * no spend shows `spent: 0`. Both aggregations (`findByWorkspaceAndMonth`,
  * `sumExpenseByCategory`) are repository-pushed, never an in-memory reduce
- * over the full transaction set (D1) — this service only merges two already-
+ * over the full transaction set — this service only merges two already-
  * aggregated result sets and does the per-category subtraction/percent math.
  *
  * Month attribution: `params.month` is resolved once, up front, to a half-
