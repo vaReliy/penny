@@ -3,10 +3,21 @@ import type { Route } from '@playwright/test';
 
 const ME_URL = '**/auth/me';
 const CONFIG_URL = '**/api/config';
-const CATEGORIES_URL = '**/api/budget/categories';
-const TRANSACTIONS_URL = '**/api/budget/transactions';
-const BALANCE_URL = '**/api/budget/balance';
+const WORKSPACES_URL = '**/api/workspaces';
+const CATEGORIES_URL = '**/api/workspaces/*/budget/categories';
+const TRANSACTIONS_URL = '**/api/workspaces/*/budget/transactions';
+const BALANCE_URL = '**/api/workspaces/*/budget/balance';
 const RATES_URL = '**/api/rates';
+
+const WORKSPACE_ID = 'w1';
+const workspaces = [
+  {
+    id: WORKSPACE_ID,
+    name: 'Family',
+    role: 'admin',
+    grantedAt: '2026-01-01T00:00:00.000Z',
+  },
+];
 
 const activeUser = {
   id: '3',
@@ -42,6 +53,13 @@ async function mockBudgetBackend(page: import('@playwright/test').Page) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify(activeUser),
+    }),
+  );
+  await page.route(WORKSPACES_URL, (route: Route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(workspaces),
     }),
   );
 
@@ -128,7 +146,7 @@ test.describe('records screen («Записи») — money round trip', () => {
   }) => {
     await mockBudgetBackend(page);
 
-    await page.goto('/records');
+    await page.goto('/w/w1/records');
     await page.waitForURL('**/records');
 
     // No active category yet — the transaction form shows the empty-state
@@ -162,7 +180,7 @@ test.describe('records screen («Записи») — money round trip', () => {
 
     // Net balance: 1000.00 - 300.00 = 700.00 UAH — assert the exact figure,
     // not just "changed", on the account screen this transaction affects.
-    await page.goto('/account');
+    await page.goto('/w/w1/account');
     await page.waitForURL('**/account');
 
     const balanceCard = page.getByRole('region', { name: 'Рахунок' });
@@ -177,7 +195,7 @@ test.describe('records screen («Записи») — money round trip', () => {
     }) => {
       await mockBudgetBackend(page);
 
-      await page.goto('/records');
+      await page.goto('/w/w1/records');
       await page.waitForURL('**/records');
 
       const transactionForm = page.getByRole('region', {

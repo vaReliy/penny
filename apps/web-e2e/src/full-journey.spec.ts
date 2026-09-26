@@ -5,13 +5,24 @@ const ME_URL = '**/auth/me';
 const HELLO_URL = '**/api/hello';
 const CONFIG_URL = '**/api/config';
 const LOGOUT_URL = '**/auth/logout';
-const CATEGORIES_URL = '**/api/budget/categories';
-const TRANSACTIONS_URL = '**/api/budget/transactions*';
-const BALANCE_URL = '**/api/budget/balance';
+const WORKSPACES_URL = '**/api/workspaces';
+const CATEGORIES_URL = '**/api/workspaces/*/budget/categories';
+const TRANSACTIONS_URL = '**/api/workspaces/*/budget/transactions*';
+const BALANCE_URL = '**/api/workspaces/*/budget/balance';
 const RATES_URL = '**/api/rates';
-const CHART_URL = '**/api/budget/chart*';
-const SUMMARY_URL = '**/api/budget/summary*';
-const MONTHLY_BUDGETS_URL = '**/api/budget/monthly-budgets*';
+const CHART_URL = '**/api/workspaces/*/budget/chart*';
+const SUMMARY_URL = '**/api/workspaces/*/budget/summary*';
+const MONTHLY_BUDGETS_URL = '**/api/workspaces/*/budget/monthly-budgets*';
+
+const WORKSPACE_ID = 'w1';
+const workspaces = [
+  {
+    id: WORKSPACE_ID,
+    name: 'Family',
+    role: 'admin',
+    grantedAt: '2026-01-01T00:00:00.000Z',
+  },
+];
 
 const pendingUser = {
   id: '3',
@@ -96,6 +107,14 @@ function mockJourneyBackend(page: Page) {
     logoutCalled = true;
     return route.fulfill({ status: 200 });
   });
+
+  page.route(WORKSPACES_URL, (route: Route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(workspaces),
+    }),
+  );
 
   page.route(CATEGORIES_URL, (route: Route) => {
     const request = route.request();
@@ -326,7 +345,7 @@ async function runFullJourney(page: Page): Promise<void> {
   await expect(nav.first()).toBeVisible();
 
   // 4. Create 2 categories.
-  await page.goto('/records');
+  await page.goto('/w/w1/records');
   await page.waitForURL('**/records');
   await page
     .getByLabel('Введіть назву', { exact: true })
@@ -343,7 +362,7 @@ async function runFullJourney(page: Page): Promise<void> {
   await expect(page.getByText('Категорію додано!')).toBeVisible();
 
   // 5. Set monthly budgets for both categories.
-  await page.goto('/planner');
+  await page.goto('/w/w1/planner');
   await page.waitForURL('**/planner');
 
   const productsRow = page
@@ -368,7 +387,7 @@ async function runFullJourney(page: Page): Promise<void> {
 
   // 6. Record income + 3 expenses across the 2 categories — one expense
   // dated in the previous month.
-  await page.goto('/records');
+  await page.goto('/w/w1/records');
   await page.waitForURL('**/records');
 
   async function recordTransaction(
@@ -416,13 +435,13 @@ async function runFullJourney(page: Page): Promise<void> {
 
   // 7. «Рахунок» shows the correct derived balance:
   // 2000.00 - 300.00 - 480.00 - 200.00 = 1020.00 UAH.
-  await page.goto('/account');
+  await page.goto('/w/w1/account');
   await page.waitForURL('**/account');
   const balanceCard = page.getByRole('region', { name: 'Рахунок' });
   await expect(balanceCard.getByText(/1.?020,00/)).toBeVisible();
 
   // 8. «Історія» — filter by category narrows results, chart renders.
-  await page.goto('/history');
+  await page.goto('/w/w1/history');
   await page.waitForURL('**/history');
 
   const chartRegion = page.getByRole('region', {
@@ -460,7 +479,7 @@ async function runFullJourney(page: Page): Promise<void> {
 
   // 9. «Планувальник» — current month shows correct spent/remaining/colors;
   // the previous-month expense (200.00, Продукти) is excluded.
-  await page.goto('/planner');
+  await page.goto('/w/w1/planner');
   await page.waitForURL('**/planner');
 
   const productsRowAfter = page
@@ -525,26 +544,26 @@ test.describe('360px mobile sweep — every screen + shell', () => {
         expect(page.getByText('Hello, Petro')).toBeVisible(),
     },
     {
-      path: '/account',
+      path: '/w/w1/account',
       assertLoaded: (page) =>
         expect(page.getByRole('region', { name: 'Рахунок' })).toBeVisible(),
     },
     {
-      path: '/history',
+      path: '/w/w1/history',
       assertLoaded: (page) =>
         expect(
           page.getByRole('region', { name: 'Список операцій' }),
         ).toBeVisible(),
     },
     {
-      path: '/planner',
+      path: '/w/w1/planner',
       assertLoaded: (page) =>
         expect(
           page.getByRole('heading', { name: 'Планувальник' }),
         ).toBeVisible(),
     },
     {
-      path: '/records',
+      path: '/w/w1/records',
       assertLoaded: (page) =>
         expect(
           page.getByRole('region', { name: 'Додати подію' }),

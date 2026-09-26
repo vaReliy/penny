@@ -8,6 +8,7 @@ import type {
   HistoryChartResponse,
   PlannerSummaryResponse,
 } from 'budget-contracts';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 
 import type {
   BalanceView,
@@ -16,10 +17,6 @@ import type {
   PlannerSummaryView,
 } from './budget-view-models';
 import { toIsoDateOnly } from './date-boundary.util';
-
-const BALANCE_URL = '/api/budget/balance';
-const SUMMARY_URL = '/api/budget/summary';
-const CHART_URL = '/api/budget/chart';
 
 function toBalanceView(response: BalanceResponse): BalanceView {
   return {
@@ -66,16 +63,27 @@ function toHistoryChartQuery(
 @Injectable({ providedIn: 'root' })
 export class AnalyticsClient {
   private readonly http = inject(HttpClient);
+  private readonly currentWorkspace = inject(CurrentWorkspace);
+
+  private budgetBase(): string {
+    const workspaceId = this.currentWorkspace.currentId();
+    if (workspaceId === null) {
+      throw new Error('AnalyticsClient called with no current workspace');
+    }
+    return `/api/workspaces/${workspaceId}/budget`;
+  }
 
   public getBalance(): Observable<BalanceView> {
     return this.http
-      .get<BalanceResponse>(BALANCE_URL, { withCredentials: true })
+      .get<BalanceResponse>(`${this.budgetBase()}/balance`, {
+        withCredentials: true,
+      })
       .pipe(map(toBalanceView));
   }
 
   public getSummary(month: string): Observable<PlannerSummaryView> {
     return this.http
-      .get<PlannerSummaryResponse>(SUMMARY_URL, {
+      .get<PlannerSummaryResponse>(`${this.budgetBase()}/summary`, {
         withCredentials: true,
         params: { month },
       })
@@ -86,7 +94,7 @@ export class AnalyticsClient {
     params: HistoryChartParams = {},
   ): Observable<readonly HistoryChartEntryView[]> {
     return this.http
-      .get<HistoryChartResponse>(CHART_URL, {
+      .get<HistoryChartResponse>(`${this.budgetBase()}/chart`, {
         withCredentials: true,
         params: toHistoryChartQuery(params),
       })

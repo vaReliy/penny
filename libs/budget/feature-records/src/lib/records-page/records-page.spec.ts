@@ -8,6 +8,7 @@ import { provideRouter } from '@angular/router';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { RecordsPageComponent } from './records-page';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 
 const UK_TRANSLATIONS = { common: { loading: 'Завантаження...' } };
 const BUDGET_UK_TRANSLATIONS = {
@@ -74,6 +75,7 @@ describe('RecordsPageComponent', () => {
       ],
     }).compileComponents();
 
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws1');
     httpController = TestBed.inject(HttpTestingController);
   });
 
@@ -86,9 +88,9 @@ describe('RecordsPageComponent', () => {
     fixture.detectChanges();
 
     httpController
-      .expectOne('/api/budget/categories')
+      .expectOne('/api/workspaces/ws1/budget/categories')
       .flush([{ id: 'c1', name: 'Продукти' }]);
-    httpController.expectOne('/api/budget/balance').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
       accountId: 'a1',
       balance: { amount: '0', currency: 'UAH' },
     });

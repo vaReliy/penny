@@ -8,6 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { TranslocoTestingModule } from '@jsverse/transloco';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 import { HistoryPageComponent } from './history-page';
 
 const UK_TRANSLATIONS = {};
@@ -77,6 +78,7 @@ describe('HistoryPageComponent', () => {
       ],
     }).compileComponents();
 
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws1');
     httpController = TestBed.inject(HttpTestingController);
   });
 
@@ -88,12 +90,17 @@ describe('HistoryPageComponent', () => {
     const fixture = TestBed.createComponent(HistoryPageComponent);
     fixture.detectChanges();
 
-    httpController.expectOne('/api/budget/categories').flush([]);
+    httpController.expectOne('/api/workspaces/ws1/budget/categories').flush([]);
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/transactions')
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/workspaces/ws1/budget/transactions',
+      )
       .flush([]);
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/chart')
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/chart',
+      )
       .flush([]);
 
     expect(fixture.componentInstance).toBeTruthy();
@@ -102,12 +109,17 @@ describe('HistoryPageComponent', () => {
   it('re-loads transactions/chart with the new params when query params change', () => {
     const fixture = TestBed.createComponent(HistoryPageComponent);
     fixture.detectChanges();
-    httpController.expectOne('/api/budget/categories').flush([]);
+    httpController.expectOne('/api/workspaces/ws1/budget/categories').flush([]);
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/transactions')
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/workspaces/ws1/budget/transactions',
+      )
       .flush([]);
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/chart')
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/chart',
+      )
       .flush([]);
 
     queryParamsSubject.next({
@@ -120,7 +132,7 @@ describe('HistoryPageComponent', () => {
     httpController
       .expectOne(
         (candidate) =>
-          candidate.url === '/api/budget/transactions' &&
+          candidate.url === '/api/workspaces/ws1/budget/transactions' &&
           candidate.params.get('type') === 'income' &&
           candidate.params.get('month') === '2026-03',
       )
@@ -128,7 +140,7 @@ describe('HistoryPageComponent', () => {
     httpController
       .expectOne(
         (candidate) =>
-          candidate.url === '/api/budget/chart' &&
+          candidate.url === '/api/workspaces/ws1/budget/chart' &&
           candidate.params.get('month') === '2026-03',
       )
       .flush([]);
@@ -137,12 +149,17 @@ describe('HistoryPageComponent', () => {
   it('navigates with the mapped query params when the filter panel emits a change', () => {
     const fixture = TestBed.createComponent(HistoryPageComponent);
     fixture.detectChanges();
-    httpController.expectOne('/api/budget/categories').flush([]);
+    httpController.expectOne('/api/workspaces/ws1/budget/categories').flush([]);
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/transactions')
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/workspaces/ws1/budget/transactions',
+      )
       .flush([]);
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/chart')
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/chart',
+      )
       .flush([]);
 
     fixture.componentInstance['onFilterChange']({ type: 'expense' });
@@ -158,12 +175,17 @@ describe('HistoryPageComponent', () => {
   it('reports "noneAtAll" when the filter is empty and the list is empty', () => {
     const fixture = TestBed.createComponent(HistoryPageComponent);
     fixture.detectChanges();
-    httpController.expectOne('/api/budget/categories').flush([]);
+    httpController.expectOne('/api/workspaces/ws1/budget/categories').flush([]);
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/transactions')
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/workspaces/ws1/budget/transactions',
+      )
       .flush([]);
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/chart')
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/chart',
+      )
       .flush([]);
 
     expect(fixture.componentInstance['emptyReason']()).toBe('noneAtAll');
@@ -172,12 +194,17 @@ describe('HistoryPageComponent', () => {
   it('reports "noneForFilter" when a filter is active and the list is empty', () => {
     const fixture = TestBed.createComponent(HistoryPageComponent);
     fixture.detectChanges();
-    httpController.expectOne('/api/budget/categories').flush([]);
+    httpController.expectOne('/api/workspaces/ws1/budget/categories').flush([]);
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/transactions')
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/workspaces/ws1/budget/transactions',
+      )
       .flush([]);
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/chart')
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/chart',
+      )
       .flush([]);
 
     queryParamsSubject.next({ type: 'income' });
@@ -185,14 +212,14 @@ describe('HistoryPageComponent', () => {
     httpController
       .expectOne(
         (candidate) =>
-          candidate.url === '/api/budget/transactions' &&
+          candidate.url === '/api/workspaces/ws1/budget/transactions' &&
           candidate.params.get('type') === 'income',
       )
       .flush([]);
     httpController
       .expectOne(
         (candidate) =>
-          candidate.url === '/api/budget/chart' &&
+          candidate.url === '/api/workspaces/ws1/budget/chart' &&
           candidate.params.keys().length === 0,
       )
       .flush([]);
@@ -203,12 +230,17 @@ describe('HistoryPageComponent', () => {
   it('surfaces a 500 from the transactions list as a role="alert" message, without touching the chart', () => {
     const fixture = TestBed.createComponent(HistoryPageComponent);
     fixture.detectChanges();
-    httpController.expectOne('/api/budget/categories').flush([]);
+    httpController.expectOne('/api/workspaces/ws1/budget/categories').flush([]);
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/transactions')
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/workspaces/ws1/budget/transactions',
+      )
       .flush('boom', { status: 500, statusText: 'Internal Server Error' });
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/chart')
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/chart',
+      )
       .flush([]);
     fixture.detectChanges();
 
@@ -228,12 +260,17 @@ describe('HistoryPageComponent', () => {
   it('surfaces a 500 from the chart endpoint as a role="alert" message, without touching the list', () => {
     const fixture = TestBed.createComponent(HistoryPageComponent);
     fixture.detectChanges();
-    httpController.expectOne('/api/budget/categories').flush([]);
+    httpController.expectOne('/api/workspaces/ws1/budget/categories').flush([]);
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/transactions')
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/workspaces/ws1/budget/transactions',
+      )
       .flush([]);
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/chart')
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/chart',
+      )
       .flush('boom', { status: 500, statusText: 'Internal Server Error' });
     fixture.detectChanges();
 

@@ -6,6 +6,7 @@ import {
 } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { TransactionType } from 'budget-contracts';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 import { TransactionClient } from './transaction.client.js';
 
 describe('TransactionClient', () => {
@@ -21,6 +22,7 @@ describe('TransactionClient', () => {
       ],
     });
 
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws1');
     client = TestBed.inject(TransactionClient);
     httpController = TestBed.inject(HttpTestingController);
   });
@@ -41,7 +43,9 @@ describe('TransactionClient', () => {
         })
         .subscribe();
 
-      const req = httpController.expectOne('/api/budget/transactions');
+      const req = httpController.expectOne(
+        '/api/workspaces/ws1/budget/transactions',
+      );
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({
         accountId: 'a1',
@@ -74,7 +78,9 @@ describe('TransactionClient', () => {
         })
         .subscribe();
 
-      const req = httpController.expectOne('/api/budget/transactions');
+      const req = httpController.expectOne(
+        '/api/workspaces/ws1/budget/transactions',
+      );
       expect(req.request.body.description).toBeUndefined();
 
       req.flush({
@@ -101,7 +107,9 @@ describe('TransactionClient', () => {
         })
         .subscribe((transaction) => (result = transaction));
 
-      const req = httpController.expectOne('/api/budget/transactions');
+      const req = httpController.expectOne(
+        '/api/workspaces/ws1/budget/transactions',
+      );
       req.flush({
         id: 't1',
         accountId: 'a1',
@@ -130,7 +138,8 @@ describe('TransactionClient', () => {
         .subscribe();
 
       const req = httpController.expectOne(
-        (candidate) => candidate.url === '/api/budget/transactions',
+        (candidate) =>
+          candidate.url === '/api/workspaces/ws1/budget/transactions',
       );
       expect(req.request.method).toBe('GET');
       expect(req.request.params.get('from')).toBe('2026-07-01');
@@ -143,7 +152,8 @@ describe('TransactionClient', () => {
       client.list().subscribe();
 
       const req = httpController.expectOne(
-        (candidate) => candidate.url === '/api/budget/transactions',
+        (candidate) =>
+          candidate.url === '/api/workspaces/ws1/budget/transactions',
       );
       expect(req.request.params.keys()).toHaveLength(0);
       req.flush([]);
@@ -151,10 +161,12 @@ describe('TransactionClient', () => {
   });
 
   describe('get', () => {
-    it('sends GET to /api/budget/transactions/:id', () => {
+    it('AC-5: sends GET to /api/workspaces/<currentId>/budget/transactions/:id', () => {
       client.get('t1').subscribe();
 
-      const req = httpController.expectOne('/api/budget/transactions/t1');
+      const req = httpController.expectOne(
+        '/api/workspaces/ws1/budget/transactions/t1',
+      );
       expect(req.request.method).toBe('GET');
       req.flush({
         id: 't1',
@@ -167,5 +179,23 @@ describe('TransactionClient', () => {
         createdAt: '2026-07-27T00:00:00.000Z',
       });
     });
+  });
+});
+
+describe('TransactionClient with no current workspace', () => {
+  it('throws a clear programming error', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        TransactionClient,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
+    });
+
+    const client = TestBed.inject(TransactionClient);
+
+    expect(() => client.list()).toThrow(
+      'TransactionClient called with no current workspace',
+    );
   });
 });

@@ -4,6 +4,7 @@ const ME_URL = '**/auth/me';
 const HELLO_URL = '**/api/hello';
 const LOGOUT_URL = '**/auth/logout';
 const CONFIG_URL = '**/api/config';
+const WORKSPACES_URL = '**/api/workspaces';
 
 const activeUser = {
   id: '3',
@@ -11,6 +12,15 @@ const activeUser = {
   telegramId: 123456,
   status: 'active',
 };
+
+const workspaces = [
+  {
+    id: 'w1',
+    name: 'Family',
+    role: 'admin',
+    grantedAt: '2026-01-01T00:00:00.000Z',
+  },
+];
 
 test.describe('app shell — mobile viewport (390x844)', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
@@ -35,6 +45,13 @@ test.describe('app shell — mobile viewport (390x844)', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({ greeting: 'Hello, Petro' }),
+      }),
+    );
+    await page.route(WORKSPACES_URL, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(workspaces),
       }),
     );
   });

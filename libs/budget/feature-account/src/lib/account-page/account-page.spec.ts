@@ -8,6 +8,7 @@ import { provideRouter } from '@angular/router';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { AccountPageComponent } from './account-page';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 
 const UK_TRANSLATIONS = { common: { loading: 'Завантаження...' } };
 const BUDGET_UK_TRANSLATIONS = {
@@ -49,6 +50,7 @@ describe('AccountPageComponent', () => {
       ],
     }).compileComponents();
 
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws1');
     httpController = TestBed.inject(HttpTestingController);
   });
 
@@ -65,7 +67,7 @@ describe('AccountPageComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent).toContain('Завантаження...');
 
-    httpController.expectOne('/api/budget/balance').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
       accountId: 'a1',
       balance: { amount: '415000', currency: 'UAH' },
     });
@@ -80,7 +82,7 @@ describe('AccountPageComponent', () => {
     fixture = TestBed.createComponent(AccountPageComponent);
     fixture.detectChanges();
 
-    httpController.expectOne('/api/budget/balance').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
       accountId: 'a1',
       balance: { amount: '415000', currency: 'UAH' },
     });
@@ -102,7 +104,7 @@ describe('AccountPageComponent', () => {
     fixture = TestBed.createComponent(AccountPageComponent);
     fixture.detectChanges();
 
-    httpController.expectOne('/api/budget/balance').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
       accountId: 'a1',
       balance: { amount: '415000', currency: 'UAH' },
     });
@@ -125,7 +127,7 @@ describe('AccountPageComponent', () => {
       rates: [{ currency: 'USD', rateToBase: '42.0000' }],
       asOf: '2026-07-27T11:00:00.000Z',
     });
-    httpController.expectNone('/api/budget/balance');
+    httpController.expectNone('/api/workspaces/ws1/budget/balance');
   });
 
   it('shows the error state and retries on button click', async () => {
@@ -133,7 +135,7 @@ describe('AccountPageComponent', () => {
     fixture.detectChanges();
 
     httpController
-      .expectOne('/api/budget/balance')
+      .expectOne('/api/workspaces/ws1/budget/balance')
       .flush(
         { code: 'UNKNOWN_ERROR', message: 'boom' },
         { status: 500, statusText: 'Internal Server Error' },
@@ -156,7 +158,7 @@ describe('AccountPageComponent', () => {
     ) as HTMLButtonElement;
     retryButton.click();
 
-    httpController.expectOne('/api/budget/balance').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
       accountId: 'a1',
       balance: { amount: '0', currency: 'UAH' },
     });
@@ -171,7 +173,7 @@ describe('AccountPageComponent', () => {
     fixture = TestBed.createComponent(AccountPageComponent);
     fixture.detectChanges();
 
-    httpController.expectOne('/api/budget/balance').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
       accountId: 'a1',
       balance: { amount: '415000', currency: 'UAH' },
     });

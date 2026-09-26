@@ -10,6 +10,7 @@ import { convertToParamMap } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { TranslocoTestingModule } from '@jsverse/transloco';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 import { HistoryDetailPageComponent } from './history-detail-page';
 
 const UK_TRANSLATIONS = {};
@@ -60,6 +61,7 @@ describe('HistoryDetailPageComponent', () => {
       ],
     }).compileComponents();
 
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws1');
     httpController = TestBed.inject(HttpTestingController);
   });
 
@@ -81,19 +83,21 @@ describe('HistoryDetailPageComponent', () => {
     fixture.detectChanges();
 
     httpController
-      .expectOne('/api/budget/categories')
+      .expectOne('/api/workspaces/ws1/budget/categories')
       .flush([{ id: 'c1', name: 'Їжа' }]);
-    httpController.expectOne('/api/budget/transactions/t1').flush({
-      id: 't1',
-      accountId: 'a1',
-      categoryId: 'c1',
-      type: 'expense',
-      amount: { amount: '15000', currency: 'UAH' },
-      date: '2026-07-27',
-      description: 'Обід',
-      createdBy: 'u1',
-      createdAt: '2026-07-27T00:00:00.000Z',
-    });
+    httpController
+      .expectOne('/api/workspaces/ws1/budget/transactions/t1')
+      .flush({
+        id: 't1',
+        accountId: 'a1',
+        categoryId: 'c1',
+        type: 'expense',
+        amount: { amount: '15000', currency: 'UAH' },
+        date: '2026-07-27',
+        description: 'Обід',
+        createdBy: 'u1',
+        createdAt: '2026-07-27T00:00:00.000Z',
+      });
 
     await detectAndStabilize(fixture);
 
@@ -106,17 +110,19 @@ describe('HistoryDetailPageComponent', () => {
   it('carries the route snapshot query params into the back link', async () => {
     const fixture = TestBed.createComponent(HistoryDetailPageComponent);
     fixture.detectChanges();
-    httpController.expectOne('/api/budget/categories').flush([]);
-    httpController.expectOne('/api/budget/transactions/t1').flush({
-      id: 't1',
-      accountId: 'a1',
-      categoryId: 'c1',
-      type: 'expense',
-      amount: { amount: '15000', currency: 'UAH' },
-      date: '2026-07-27',
-      createdBy: 'u1',
-      createdAt: '2026-07-27T00:00:00.000Z',
-    });
+    httpController.expectOne('/api/workspaces/ws1/budget/categories').flush([]);
+    httpController
+      .expectOne('/api/workspaces/ws1/budget/transactions/t1')
+      .flush({
+        id: 't1',
+        accountId: 'a1',
+        categoryId: 'c1',
+        type: 'expense',
+        amount: { amount: '15000', currency: 'UAH' },
+        date: '2026-07-27',
+        createdBy: 'u1',
+        createdAt: '2026-07-27T00:00:00.000Z',
+      });
     await detectAndStabilize(fixture);
 
     const link = (fixture.nativeElement as HTMLElement).querySelector('a');
@@ -126,9 +132,9 @@ describe('HistoryDetailPageComponent', () => {
   it('surfaces a detail load error', async () => {
     const fixture = TestBed.createComponent(HistoryDetailPageComponent);
     fixture.detectChanges();
-    httpController.expectOne('/api/budget/categories').flush([]);
+    httpController.expectOne('/api/workspaces/ws1/budget/categories').flush([]);
     httpController
-      .expectOne('/api/budget/transactions/t1')
+      .expectOne('/api/workspaces/ws1/budget/transactions/t1')
       .flush('not found', { status: 404, statusText: 'Not Found' });
 
     await detectAndStabilize(fixture);
@@ -140,9 +146,9 @@ describe('HistoryDetailPageComponent', () => {
   it('surfaces a 500 from the detail endpoint without throwing', async () => {
     const fixture = TestBed.createComponent(HistoryDetailPageComponent);
     fixture.detectChanges();
-    httpController.expectOne('/api/budget/categories').flush([]);
+    httpController.expectOne('/api/workspaces/ws1/budget/categories').flush([]);
     httpController
-      .expectOne('/api/budget/transactions/t1')
+      .expectOne('/api/workspaces/ws1/budget/transactions/t1')
       .flush('boom', { status: 500, statusText: 'Internal Server Error' });
 
     await detectAndStabilize(fixture);

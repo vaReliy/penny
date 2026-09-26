@@ -5,6 +5,7 @@ import {
   HttpTestingController,
 } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { TransactionType } from 'budget-contracts';
 import { TransactionStore } from './transaction.store.js';
@@ -26,6 +27,7 @@ describe('TransactionStore', () => {
       ],
     });
 
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws1');
     store = TestBed.inject(TransactionStore);
     dashboardStore = TestBed.inject(DashboardStore);
     httpController = TestBed.inject(HttpTestingController);
@@ -41,7 +43,7 @@ describe('TransactionStore', () => {
     httpController
       .expectOne(
         (candidate) =>
-          candidate.url === '/api/budget/transactions' &&
+          candidate.url === '/api/workspaces/ws1/budget/transactions' &&
           candidate.params.get('month') === '2026-07',
       )
       .flush([]);
@@ -58,7 +60,7 @@ describe('TransactionStore', () => {
       date: new Date('2026-07-27T00:00:00.000Z'),
     });
 
-    httpController.expectOne('/api/budget/transactions').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/transactions').flush({
       id: 't1',
       accountId: 'a1',
       categoryId: 'c1',
@@ -69,7 +71,7 @@ describe('TransactionStore', () => {
       createdAt: '2026-07-27T00:00:00.000Z',
     });
 
-    httpController.expectOne('/api/budget/balance').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
       accountId: 'a1',
       balance: { amount: '85000', currency: 'UAH' },
     });
@@ -81,16 +83,18 @@ describe('TransactionStore', () => {
   it('loadDetail() populates detail', () => {
     store.loadDetail('t1');
 
-    httpController.expectOne('/api/budget/transactions/t1').flush({
-      id: 't1',
-      accountId: 'a1',
-      categoryId: 'c1',
-      type: TransactionType.EXPENSE,
-      amount: { amount: '15000', currency: 'UAH' },
-      date: '2026-07-27',
-      createdBy: 'u1',
-      createdAt: '2026-07-27T00:00:00.000Z',
-    });
+    httpController
+      .expectOne('/api/workspaces/ws1/budget/transactions/t1')
+      .flush({
+        id: 't1',
+        accountId: 'a1',
+        categoryId: 'c1',
+        type: TransactionType.EXPENSE,
+        amount: { amount: '15000', currency: 'UAH' },
+        date: '2026-07-27',
+        createdBy: 'u1',
+        createdAt: '2026-07-27T00:00:00.000Z',
+      });
 
     expect(store.detail()?.id).toBe('t1');
     expect(store.detailLoading()).toBe(false);
@@ -101,7 +105,7 @@ describe('TransactionStore', () => {
     store.loadDetail('missing');
 
     httpController
-      .expectOne('/api/budget/transactions/missing')
+      .expectOne('/api/workspaces/ws1/budget/transactions/missing')
       .flush('not found', { status: 404, statusText: 'Not Found' });
 
     expect(store.detail()).toBeNull();
@@ -111,7 +115,9 @@ describe('TransactionStore', () => {
   it('record() triggers DashboardStore.refresh(), refetching balance and the last-loaded summary month', () => {
     dashboardStore.loadSummary('2026-07');
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/summary')
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/summary',
+      )
       .flush({ month: '2026-07', categories: [] });
 
     store.record({
@@ -122,7 +128,7 @@ describe('TransactionStore', () => {
       date: new Date('2026-07-27T00:00:00.000Z'),
     });
 
-    httpController.expectOne('/api/budget/transactions').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/transactions').flush({
       id: 't1',
       accountId: 'a1',
       categoryId: 'c1',
@@ -133,13 +139,13 @@ describe('TransactionStore', () => {
       createdAt: '2026-07-27T00:00:00.000Z',
     });
 
-    httpController.expectOne('/api/budget/balance').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
       accountId: 'a1',
       balance: { amount: '85000', currency: 'UAH' },
     });
     const summaryReq = httpController.expectOne(
       (candidate) =>
-        candidate.url === '/api/budget/summary' &&
+        candidate.url === '/api/workspaces/ws1/budget/summary' &&
         candidate.params.get('month') === '2026-07',
     );
     summaryReq.flush({ month: '2026-07', categories: [] });
@@ -163,7 +169,7 @@ describe('TransactionStore', () => {
     httpController
       .expectOne(
         (candidate) =>
-          candidate.url === '/api/budget/transactions' &&
+          candidate.url === '/api/workspaces/ws1/budget/transactions' &&
           candidate.method === 'POST',
       )
       .flush({
@@ -176,7 +182,7 @@ describe('TransactionStore', () => {
         createdBy: 'u1',
         createdAt: '2026-07-27T00:00:00.000Z',
       });
-    httpController.expectOne('/api/budget/balance').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
       accountId: 'a1',
       balance: { amount: '85000', currency: 'UAH' },
     });
@@ -187,7 +193,7 @@ describe('TransactionStore', () => {
     httpController
       .expectOne(
         (candidate) =>
-          candidate.url === '/api/budget/transactions' &&
+          candidate.url === '/api/workspaces/ws1/budget/transactions' &&
           candidate.params.get('month') === '2026-07',
       )
       .flush([]);
@@ -208,7 +214,7 @@ describe('TransactionStore', () => {
     httpController
       .expectOne(
         (candidate) =>
-          candidate.url === '/api/budget/transactions' &&
+          candidate.url === '/api/workspaces/ws1/budget/transactions' &&
           candidate.method === 'POST',
       )
       .flush('record failed', { status: 500, statusText: 'Server Error' });
@@ -219,7 +225,7 @@ describe('TransactionStore', () => {
     httpController
       .expectOne(
         (candidate) =>
-          candidate.url === '/api/budget/transactions' &&
+          candidate.url === '/api/workspaces/ws1/budget/transactions' &&
           candidate.params.get('month') === '2026-07',
       )
       .flush([]);

@@ -3,9 +3,20 @@ import type { Route } from '@playwright/test';
 
 const ME_URL = '**/auth/me';
 const CONFIG_URL = '**/api/config';
-const CATEGORIES_URL = '**/api/budget/categories';
-const SUMMARY_URL = '**/api/budget/summary*';
-const MONTHLY_BUDGETS_URL = '**/api/budget/monthly-budgets*';
+const WORKSPACES_URL = '**/api/workspaces';
+const CATEGORIES_URL = '**/api/workspaces/*/budget/categories';
+const SUMMARY_URL = '**/api/workspaces/*/budget/summary*';
+const MONTHLY_BUDGETS_URL = '**/api/workspaces/*/budget/monthly-budgets*';
+
+const WORKSPACE_ID = 'w1';
+const workspaces = [
+  {
+    id: WORKSPACE_ID,
+    name: 'Family',
+    role: 'admin',
+    grantedAt: '2026-01-01T00:00:00.000Z',
+  },
+];
 
 const activeUser = {
   id: '3',
@@ -35,6 +46,13 @@ async function mockBudgetBackend(page: import('@playwright/test').Page) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify(activeUser),
+    }),
+  );
+  await page.route(WORKSPACES_URL, (route: Route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(workspaces),
     }),
   );
 
@@ -122,7 +140,7 @@ test.describe('planner screen («Планувальник») — budget + spend 
     const backend = await mockBudgetBackend(page);
     backend.seedExpense(currentYearMonth(), 'c1', 95000);
 
-    await page.goto('/planner');
+    await page.goto('/w/w1/planner');
     await page.waitForURL('**/planner');
 
     // Spend-but-no-budget renders distinctly before any budget is set.
@@ -145,7 +163,7 @@ test.describe('planner screen («Планувальник») — budget + spend 
   }) => {
     await mockBudgetBackend(page);
 
-    await page.goto('/planner');
+    await page.goto('/w/w1/planner');
     await page.waitForURL('**/planner');
 
     await expect(
@@ -167,7 +185,7 @@ test.describe('planner screen («Планувальник») — budget + spend 
     }) => {
       await mockBudgetBackend(page);
 
-      await page.goto('/planner');
+      await page.goto('/w/w1/planner');
       await page.waitForURL('**/planner');
 
       await expect(

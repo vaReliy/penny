@@ -5,6 +5,7 @@ import {
   HttpTestingController,
 } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { MonthlyBudgetStore } from './monthly-budget.store.js';
 
@@ -22,6 +23,7 @@ describe('MonthlyBudgetStore', () => {
       ],
     });
 
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws1');
     store = TestBed.inject(MonthlyBudgetStore);
     httpController = TestBed.inject(HttpTestingController);
   });
@@ -36,7 +38,7 @@ describe('MonthlyBudgetStore', () => {
     httpController
       .expectOne(
         (candidate) =>
-          candidate.url === '/api/budget/monthly-budgets' &&
+          candidate.url === '/api/workspaces/ws1/budget/monthly-budgets' &&
           candidate.params.get('month') === '2026-07',
       )
       .flush([
@@ -59,12 +61,14 @@ describe('MonthlyBudgetStore', () => {
       amountMinorUnits: 500000,
     });
 
-    httpController.expectOne('/api/budget/monthly-budgets').flush({
-      id: 'b1',
-      categoryId: 'c1',
-      month: '2026-07',
-      amount: { amount: '500000', currency: 'UAH' },
-    });
+    httpController
+      .expectOne('/api/workspaces/ws1/budget/monthly-budgets')
+      .flush({
+        id: 'b1',
+        categoryId: 'c1',
+        month: '2026-07',
+        amount: { amount: '500000', currency: 'UAH' },
+      });
 
     expect(store.data()).toHaveLength(1);
   });
@@ -72,7 +76,10 @@ describe('MonthlyBudgetStore', () => {
   it('upsert() replaces an existing budget with the same id', () => {
     store.loadByMonth('2026-07');
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/monthly-budgets')
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/workspaces/ws1/budget/monthly-budgets',
+      )
       .flush([
         {
           id: 'b1',
@@ -87,12 +94,14 @@ describe('MonthlyBudgetStore', () => {
       month: '2026-07',
       amountMinorUnits: 600000,
     });
-    httpController.expectOne('/api/budget/monthly-budgets').flush({
-      id: 'b1',
-      categoryId: 'c1',
-      month: '2026-07',
-      amount: { amount: '600000', currency: 'UAH' },
-    });
+    httpController
+      .expectOne('/api/workspaces/ws1/budget/monthly-budgets')
+      .flush({
+        id: 'b1',
+        categoryId: 'c1',
+        month: '2026-07',
+        amount: { amount: '600000', currency: 'UAH' },
+      });
 
     expect(store.data()).toHaveLength(1);
     expect(store.data()[0]?.amount.amount).toBe(600000n);
@@ -112,7 +121,7 @@ describe('MonthlyBudgetStore', () => {
     httpController
       .expectOne(
         (candidate) =>
-          candidate.url === '/api/budget/monthly-budgets' &&
+          candidate.url === '/api/workspaces/ws1/budget/monthly-budgets' &&
           candidate.method === 'PUT',
       )
       .flush({
@@ -128,7 +137,7 @@ describe('MonthlyBudgetStore', () => {
     httpController
       .expectOne(
         (candidate) =>
-          candidate.url === '/api/budget/monthly-budgets' &&
+          candidate.url === '/api/workspaces/ws1/budget/monthly-budgets' &&
           candidate.params.get('month') === '2026-07',
       )
       .flush([]);
@@ -147,7 +156,7 @@ describe('MonthlyBudgetStore', () => {
     httpController
       .expectOne(
         (candidate) =>
-          candidate.url === '/api/budget/monthly-budgets' &&
+          candidate.url === '/api/workspaces/ws1/budget/monthly-budgets' &&
           candidate.method === 'PUT',
       )
       .flush('upsert failed', { status: 500, statusText: 'Server Error' });
@@ -158,7 +167,7 @@ describe('MonthlyBudgetStore', () => {
     httpController
       .expectOne(
         (candidate) =>
-          candidate.url === '/api/budget/monthly-budgets' &&
+          candidate.url === '/api/workspaces/ws1/budget/monthly-budgets' &&
           candidate.params.get('month') === '2026-07',
       )
       .flush([]);

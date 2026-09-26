@@ -3,13 +3,24 @@ import type { Route } from '@playwright/test';
 
 const ME_URL = '**/auth/me';
 const CONFIG_URL = '**/api/config';
-const CATEGORIES_URL = '**/api/budget/categories';
+const WORKSPACES_URL = '**/api/workspaces';
+const CATEGORIES_URL = '**/api/workspaces/*/budget/categories';
 // Trailing `*` is required: Playwright glob patterns anchor at the end, so
 // a pattern with no trailing wildcard fails to match once a query string
 // (e.g. `?type=income`) is appended by the filter panel.
-const TRANSACTIONS_URL = '**/api/budget/transactions*';
-const TRANSACTION_DETAIL_URL = '**/api/budget/transactions/*';
-const CHART_URL = '**/api/budget/chart*';
+const TRANSACTIONS_URL = '**/api/workspaces/*/budget/transactions*';
+const TRANSACTION_DETAIL_URL = '**/api/workspaces/*/budget/transactions/*';
+const CHART_URL = '**/api/workspaces/*/budget/chart*';
+
+const WORKSPACE_ID = 'w1';
+const workspaces = [
+  {
+    id: WORKSPACE_ID,
+    name: 'Family',
+    role: 'admin',
+    grantedAt: '2026-01-01T00:00:00.000Z',
+  },
+];
 
 const activeUser = {
   id: '3',
@@ -75,6 +86,13 @@ async function mockBudgetBackend(page: import('@playwright/test').Page) {
       body: JSON.stringify(activeUser),
     }),
   );
+  await page.route(WORKSPACES_URL, (route: Route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(workspaces),
+    }),
+  );
   await page.route(CATEGORIES_URL, (route: Route) =>
     route.fulfill({
       status: 200,
@@ -126,7 +144,7 @@ test.describe('history screen («Історія»)', () => {
   }) => {
     await mockBudgetBackend(page);
 
-    await page.goto('/history');
+    await page.goto('/w/w1/history');
     await page.waitForURL('**/history');
 
     await expect(page.locator('table').getByText('-150,00')).toBeVisible();
@@ -171,7 +189,7 @@ test.describe('history screen («Історія»)', () => {
     }) => {
       await mockBudgetBackend(page);
 
-      await page.goto('/history');
+      await page.goto('/w/w1/history');
       await page.waitForURL('**/history');
 
       await expect(page.locator('table').getByText('-150,00')).toBeVisible();
@@ -203,7 +221,7 @@ test.describe('history screen («Історія»)', () => {
     }) => {
       await mockBudgetBackend(page);
 
-      await page.goto('/history');
+      await page.goto('/w/w1/history');
       await page.waitForURL('**/history');
 
       await expect(page.locator('table').getByText('-150,00')).toBeVisible();
@@ -231,7 +249,7 @@ test.describe('history screen («Історія»)', () => {
     }) => {
       await mockBudgetBackend(page);
 
-      await page.goto('/history');
+      await page.goto('/w/w1/history');
       await page.waitForURL('**/history');
 
       await expect(page.locator('table').getByText('-150,00')).toBeVisible();
@@ -284,7 +302,7 @@ test.describe('history screen («Історія»)', () => {
     }) => {
       await mockBudgetBackend(page);
 
-      await page.goto('/history');
+      await page.goto('/w/w1/history');
       await page.waitForURL('**/history');
 
       await expect(page.locator('table')).toBeHidden();

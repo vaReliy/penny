@@ -6,6 +6,7 @@ import {
 } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { Money } from 'shared-util';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 import { MonthlyBudgetClient } from './monthly-budget.client.js';
 
 describe('MonthlyBudgetClient', () => {
@@ -21,6 +22,7 @@ describe('MonthlyBudgetClient', () => {
       ],
     });
 
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws1');
     client = TestBed.inject(MonthlyBudgetClient);
     httpController = TestBed.inject(HttpTestingController);
   });
@@ -30,12 +32,12 @@ describe('MonthlyBudgetClient', () => {
   });
 
   describe('listByMonth', () => {
-    it('sends GET with the month as a query param', () => {
+    it('AC-5: sends GET with the month as a query param under /api/workspaces/<currentId>/budget/monthly-budgets', () => {
       client.listByMonth('2026-07').subscribe();
 
       const req = httpController.expectOne(
         (candidate) =>
-          candidate.url === '/api/budget/monthly-budgets' &&
+          candidate.url === '/api/workspaces/ws1/budget/monthly-budgets' &&
           candidate.params.get('month') === '2026-07',
       );
       expect(req.request.method).toBe('GET');
@@ -48,7 +50,8 @@ describe('MonthlyBudgetClient', () => {
       client.listByMonth('2026-07').subscribe((budgets) => (result = budgets));
 
       const req = httpController.expectOne(
-        (candidate) => candidate.url === '/api/budget/monthly-budgets',
+        (candidate) =>
+          candidate.url === '/api/workspaces/ws1/budget/monthly-budgets',
       );
       req.flush([
         {
@@ -75,7 +78,9 @@ describe('MonthlyBudgetClient', () => {
         })
         .subscribe();
 
-      const req = httpController.expectOne('/api/budget/monthly-budgets');
+      const req = httpController.expectOne(
+        '/api/workspaces/ws1/budget/monthly-budgets',
+      );
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toEqual({
         categoryId: 'c1',
@@ -89,5 +94,23 @@ describe('MonthlyBudgetClient', () => {
         amount: { amount: '500000', currency: 'UAH' },
       });
     });
+  });
+});
+
+describe('MonthlyBudgetClient with no current workspace', () => {
+  it('throws a clear programming error', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        MonthlyBudgetClient,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
+    });
+
+    const client = TestBed.inject(MonthlyBudgetClient);
+
+    expect(() => client.listByMonth('2026-07')).toThrow(
+      'MonthlyBudgetClient called with no current workspace',
+    );
   });
 });

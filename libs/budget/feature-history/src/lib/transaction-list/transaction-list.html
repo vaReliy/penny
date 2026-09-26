@@ -58,7 +58,7 @@
     @for (row of filteredRows(); track row.transaction.id) {
     <li>
       <a
-        [routerLink]="['/history', row.transaction.id]"
+        [routerLink]="detailLink(row.transaction.id)"
         [queryParams]="detailQueryParams()"
         class="flex flex-col gap-1 rounded-btn border border-border p-3 hover:bg-background"
       >
@@ -135,7 +135,7 @@
         <tr class="border-b border-border">
           <td class="py-2">
             <a
-              [routerLink]="['/history', row.transaction.id]"
+              [routerLink]="detailLink(row.transaction.id)"
               [queryParams]="detailQueryParams()"
               class="block text-text-primary hover:underline"
             >

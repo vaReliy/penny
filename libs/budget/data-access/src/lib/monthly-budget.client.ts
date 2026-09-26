@@ -8,10 +8,9 @@ import type {
   MonthlyBudgetResponse,
   UpsertMonthlyBudgetRequest,
 } from 'budget-contracts';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 
 import type { MonthlyBudgetView } from './budget-view-models';
-
-const MONTHLY_BUDGETS_BASE = '/api/budget/monthly-budgets';
 
 function toMonthlyBudgetView(
   response: MonthlyBudgetResponse,
@@ -28,10 +27,19 @@ function toMonthlyBudgetView(
 @Injectable({ providedIn: 'root' })
 export class MonthlyBudgetClient {
   private readonly http = inject(HttpClient);
+  private readonly currentWorkspace = inject(CurrentWorkspace);
+
+  private monthlyBudgetsBase(): string {
+    const workspaceId = this.currentWorkspace.currentId();
+    if (workspaceId === null) {
+      throw new Error('MonthlyBudgetClient called with no current workspace');
+    }
+    return `/api/workspaces/${workspaceId}/budget/monthly-budgets`;
+  }
 
   public listByMonth(month: string): Observable<readonly MonthlyBudgetView[]> {
     return this.http
-      .get<MonthlyBudgetListResponse>(MONTHLY_BUDGETS_BASE, {
+      .get<MonthlyBudgetListResponse>(this.monthlyBudgetsBase(), {
         withCredentials: true,
         params: { month },
       })
@@ -42,7 +50,7 @@ export class MonthlyBudgetClient {
     request: UpsertMonthlyBudgetRequest,
   ): Observable<MonthlyBudgetView> {
     return this.http
-      .put<MonthlyBudgetResponse>(MONTHLY_BUDGETS_BASE, request, {
+      .put<MonthlyBudgetResponse>(this.monthlyBudgetsBase(), request, {
         withCredentials: true,
       })
       .pipe(map(toMonthlyBudgetView));

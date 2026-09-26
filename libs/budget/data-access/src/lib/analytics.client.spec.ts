@@ -6,6 +6,7 @@ import {
 } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { Money } from 'shared-util';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 import { AnalyticsClient } from './analytics.client.js';
 
 describe('AnalyticsClient', () => {
@@ -21,6 +22,7 @@ describe('AnalyticsClient', () => {
       ],
     });
 
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws1');
     client = TestBed.inject(AnalyticsClient);
     httpController = TestBed.inject(HttpTestingController);
   });
@@ -30,11 +32,13 @@ describe('AnalyticsClient', () => {
   });
 
   describe('getBalance', () => {
-    it('sends GET to /api/budget/balance and converts to Money', () => {
+    it('AC-5: sends GET to /api/workspaces/<currentId>/budget/balance and converts to Money', () => {
       let result: { balance: Money } | undefined;
       client.getBalance().subscribe((balance) => (result = balance));
 
-      const req = httpController.expectOne('/api/budget/balance');
+      const req = httpController.expectOne(
+        '/api/workspaces/ws1/budget/balance',
+      );
       expect(req.request.method).toBe('GET');
       expect(req.request.withCredentials).toBe(true);
       req.flush({
@@ -53,7 +57,7 @@ describe('AnalyticsClient', () => {
 
       const req = httpController.expectOne(
         (candidate) =>
-          candidate.url === '/api/budget/summary' &&
+          candidate.url === '/api/workspaces/ws1/budget/summary' &&
           candidate.params.get('month') === '2026-07',
       );
       req.flush({ month: '2026-07', categories: [] });
@@ -72,7 +76,7 @@ describe('AnalyticsClient', () => {
       client.getSummary('2026-07').subscribe((summary) => (result = summary));
 
       const req = httpController.expectOne(
-        (candidate) => candidate.url === '/api/budget/summary',
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/summary',
       );
       req.flush({
         month: '2026-07',
@@ -101,7 +105,7 @@ describe('AnalyticsClient', () => {
         .subscribe();
 
       const req = httpController.expectOne(
-        (candidate) => candidate.url === '/api/budget/chart',
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/chart',
       );
       expect(req.request.params.get('from')).toBe('2026-07-01');
       expect(req.request.params.get('to')).toBe('2026-07-31');
@@ -113,7 +117,7 @@ describe('AnalyticsClient', () => {
       client.getChart().subscribe((entries) => (result = entries));
 
       const req = httpController.expectOne(
-        (candidate) => candidate.url === '/api/budget/chart',
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/chart',
       );
       req.flush([
         {
@@ -126,5 +130,23 @@ describe('AnalyticsClient', () => {
       expect(result?.[0]?.value).toBeInstanceOf(Money);
       expect(result?.[0]?.value.amount).toBe(400000n);
     });
+  });
+});
+
+describe('AnalyticsClient with no current workspace', () => {
+  it('throws a clear programming error', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        AnalyticsClient,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
+    });
+
+    const client = TestBed.inject(AnalyticsClient);
+
+    expect(() => client.getBalance()).toThrow(
+      'AnalyticsClient called with no current workspace',
+    );
   });
 });

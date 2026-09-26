@@ -8,6 +8,7 @@ import type {
   TransactionListResponse,
   TransactionResponse,
 } from 'budget-contracts';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 
 import type {
   ListTransactionsParams,
@@ -15,8 +16,6 @@ import type {
   TransactionView,
 } from './budget-view-models';
 import { fromIsoDate, toIsoDateOnly } from './date-boundary.util';
-
-const TRANSACTIONS_BASE = '/api/budget/transactions';
 
 function toTransactionView(response: TransactionResponse): TransactionView {
   return {
@@ -66,11 +65,20 @@ function toTransactionFilterQuery(
 @Injectable({ providedIn: 'root' })
 export class TransactionClient {
   private readonly http = inject(HttpClient);
+  private readonly currentWorkspace = inject(CurrentWorkspace);
+
+  private transactionsBase(): string {
+    const workspaceId = this.currentWorkspace.currentId();
+    if (workspaceId === null) {
+      throw new Error('TransactionClient called with no current workspace');
+    }
+    return `/api/workspaces/${workspaceId}/budget/transactions`;
+  }
 
   public record(params: RecordTransactionParams): Observable<TransactionView> {
     return this.http
       .post<TransactionResponse>(
-        TRANSACTIONS_BASE,
+        this.transactionsBase(),
         toCreateTransactionRequest(params),
         { withCredentials: true },
       )
@@ -81,7 +89,7 @@ export class TransactionClient {
     params: ListTransactionsParams = {},
   ): Observable<readonly TransactionView[]> {
     return this.http
-      .get<TransactionListResponse>(TRANSACTIONS_BASE, {
+      .get<TransactionListResponse>(this.transactionsBase(), {
         withCredentials: true,
         params: toTransactionFilterQuery(params),
       })
@@ -90,7 +98,7 @@ export class TransactionClient {
 
   public get(id: string): Observable<TransactionView> {
     return this.http
-      .get<TransactionResponse>(`${TRANSACTIONS_BASE}/${id}`, {
+      .get<TransactionResponse>(`${this.transactionsBase()}/${id}`, {
         withCredentials: true,
       })
       .pipe(map(toTransactionView));

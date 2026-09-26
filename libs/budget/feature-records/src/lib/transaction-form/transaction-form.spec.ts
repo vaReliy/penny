@@ -9,6 +9,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { CategoryStore, DashboardStore } from 'budget-data-access';
 import { TransactionFormComponent } from './transaction-form';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 
 const UK_TRANSLATIONS = { common: { loading: 'Завантаження...' } };
 const VALIDATION_ERROR_TEXT = 'Перевірте правильність введених даних.';
@@ -60,6 +61,7 @@ describe('TransactionFormComponent', () => {
       ],
     }).compileComponents();
 
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws1');
     httpController = TestBed.inject(HttpTestingController);
     categoryStore = TestBed.inject(CategoryStore);
     dashboardStore = TestBed.inject(DashboardStore);
@@ -75,9 +77,11 @@ describe('TransactionFormComponent', () => {
     ],
   ): void {
     categoryStore.load();
-    httpController.expectOne('/api/budget/categories').flush(categories);
+    httpController
+      .expectOne('/api/workspaces/ws1/budget/categories')
+      .flush(categories);
     dashboardStore.loadBalance();
-    httpController.expectOne('/api/budget/balance').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
       accountId: 'a1',
       balance: { amount: '0', currency: 'UAH' },
     });
@@ -109,7 +113,7 @@ describe('TransactionFormComponent', () => {
     expect(fixture.nativeElement.textContent).toContain(
       'Поле не може бути пустим.',
     );
-    httpController.expectNone('/api/budget/transactions');
+    httpController.expectNone('/api/workspaces/ws1/budget/transactions');
   });
 
   it('shows an invalid-amount message for a malformed amount', async () => {
@@ -149,7 +153,9 @@ describe('TransactionFormComponent', () => {
     const form = fixture.nativeElement.querySelector('form') as HTMLFormElement;
     form.dispatchEvent(new Event('submit'));
 
-    const req = httpController.expectOne('/api/budget/transactions');
+    const req = httpController.expectOne(
+      '/api/workspaces/ws1/budget/transactions',
+    );
     expect(req.request.body).toEqual({
       accountId: 'a1',
       categoryId: 'c1',
@@ -167,7 +173,7 @@ describe('TransactionFormComponent', () => {
       createdBy: 'u1',
       createdAt: '2026-07-28T10:00:00.000Z',
     });
-    httpController.expectOne('/api/budget/balance').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
       accountId: 'a1',
       balance: { amount: '-12345', currency: 'UAH' },
     });
@@ -192,7 +198,7 @@ describe('TransactionFormComponent', () => {
       .querySelector('form')
       .dispatchEvent(new Event('submit'));
 
-    httpController.expectOne('/api/budget/transactions').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/transactions').flush({
       id: 't1',
       accountId: 'a1',
       categoryId: 'c1',
@@ -202,7 +208,7 @@ describe('TransactionFormComponent', () => {
       createdBy: 'u1',
       createdAt: '2026-07-28T10:00:00.000Z',
     });
-    httpController.expectOne('/api/budget/balance').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
       accountId: 'a1',
       balance: { amount: '-1000', currency: 'UAH' },
     });
@@ -237,7 +243,7 @@ describe('TransactionFormComponent', () => {
       .dispatchEvent(new Event('submit'));
 
     httpController
-      .expectOne('/api/budget/transactions')
+      .expectOne('/api/workspaces/ws1/budget/transactions')
       .flush(
         { code: 'VALIDATION_ERROR', message: 'categoryId is not eligible' },
         { status: 422, statusText: 'Unprocessable Entity' },

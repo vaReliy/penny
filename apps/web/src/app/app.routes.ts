@@ -1,5 +1,6 @@
 import type { Routes } from '@angular/router';
 import { loginGuard, statusGuard } from 'identity-data-access';
+import { workspaceGuard, workspaceRedirectGuard } from 'shared-web-shell-data';
 
 export const appRoutes: Routes = [
   {
@@ -22,7 +23,12 @@ export const appRoutes: Routes = [
     loadComponent: () =>
       import('shared-web-shell').then((m) => m.AppShellComponent),
     children: [
-      { path: '', redirectTo: 'greeting', pathMatch: 'full' },
+      {
+        path: '',
+        pathMatch: 'full',
+        canActivate: [workspaceRedirectGuard],
+        children: [],
+      },
       {
         path: 'greeting',
         loadComponent: () =>
@@ -31,31 +37,50 @@ export const appRoutes: Routes = [
           ),
       },
       {
-        path: 'account',
+        path: 'no-workspace',
         loadComponent: () =>
-          import('budget-feature-account').then((m) => m.AccountPageComponent),
+          import('shared-web-shell').then((m) => m.NoWorkspacePageComponent),
       },
       {
-        path: 'history',
-        loadComponent: () =>
-          import('budget-feature-history').then((m) => m.HistoryPageComponent),
-      },
-      {
-        path: 'history/:id',
-        loadComponent: () =>
-          import('budget-feature-history').then(
-            (m) => m.HistoryDetailPageComponent,
-          ),
-      },
-      {
-        path: 'planner',
-        loadComponent: () =>
-          import('budget-feature-planner').then((m) => m.PlannerPageComponent),
-      },
-      {
-        path: 'records',
-        loadComponent: () =>
-          import('budget-feature-records').then((m) => m.RecordsPageComponent),
+        path: 'w/:workspaceId',
+        canActivate: [workspaceGuard],
+        children: [
+          {
+            path: 'account',
+            loadComponent: () =>
+              import('budget-feature-account').then(
+                (m) => m.AccountPageComponent,
+              ),
+          },
+          {
+            path: 'history',
+            loadComponent: () =>
+              import('budget-feature-history').then(
+                (m) => m.HistoryPageComponent,
+              ),
+          },
+          {
+            path: 'history/:id',
+            loadComponent: () =>
+              import('budget-feature-history').then(
+                (m) => m.HistoryDetailPageComponent,
+              ),
+          },
+          {
+            path: 'planner',
+            loadComponent: () =>
+              import('budget-feature-planner').then(
+                (m) => m.PlannerPageComponent,
+              ),
+          },
+          {
+            path: 'records',
+            loadComponent: () =>
+              import('budget-feature-records').then(
+                (m) => m.RecordsPageComponent,
+              ),
+          },
+        ],
       },
     ],
   },

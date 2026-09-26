@@ -9,6 +9,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 
 import { PlannerPageComponent } from './planner-page';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 
 const UK_TRANSLATIONS = {};
 const DOMAIN_ERROR_TEXT = 'Цю дію не можна виконати.';
@@ -64,6 +65,7 @@ describe('PlannerPageComponent', () => {
       providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws1');
     httpController = TestBed.inject(HttpTestingController);
   });
 
@@ -74,7 +76,7 @@ describe('PlannerPageComponent', () => {
   function flushCategories(
     fixture: ReturnType<typeof TestBed.createComponent<PlannerPageComponent>>,
   ): void {
-    httpController.expectOne('/api/budget/categories').flush([
+    httpController.expectOne('/api/workspaces/ws1/budget/categories').flush([
       { id: 'c1', name: 'Їжа' },
       { id: 'c2', name: 'Транспорт' },
     ]);
@@ -87,7 +89,9 @@ describe('PlannerPageComponent', () => {
 
     flushCategories(fixture);
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/summary')
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/summary',
+      )
       .flush({ month: '2026-07', categories: [] });
 
     expect(fixture.componentInstance).toBeTruthy();
@@ -98,7 +102,7 @@ describe('PlannerPageComponent', () => {
     fixture.detectChanges();
     flushCategories(fixture);
     const initialMonth = httpController.expectOne(
-      (candidate) => candidate.url === '/api/budget/summary',
+      (candidate) => candidate.url === '/api/workspaces/ws1/budget/summary',
     );
     const requestedMonth = initialMonth.request.params.get('month');
     initialMonth.flush({ month: requestedMonth, categories: [] });
@@ -109,7 +113,7 @@ describe('PlannerPageComponent', () => {
     httpController
       .expectOne(
         (candidate) =>
-          candidate.url === '/api/budget/summary' &&
+          candidate.url === '/api/workspaces/ws1/budget/summary' &&
           candidate.params.get('month') !== requestedMonth,
       )
       .flush({ month: 'next', categories: [] });
@@ -120,7 +124,9 @@ describe('PlannerPageComponent', () => {
     fixture.detectChanges();
     flushCategories(fixture);
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/summary')
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/summary',
+      )
       .flush({
         month: '2026-07',
         categories: [
@@ -143,7 +149,9 @@ describe('PlannerPageComponent', () => {
     expect(fixture.componentInstance['editingCategoryId']()).toBeNull();
 
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/summary')
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/summary',
+      )
       .flush({ month: '2026-08', categories: [] });
   });
 
@@ -152,7 +160,9 @@ describe('PlannerPageComponent', () => {
     fixture.detectChanges();
     flushCategories(fixture);
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/summary')
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/summary',
+      )
       .flush({
         month: '2026-07',
         categories: [
@@ -185,7 +195,9 @@ describe('PlannerPageComponent', () => {
     fixture.detectChanges();
     flushCategories(fixture);
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/summary')
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/summary',
+      )
       .flush({ month: '2026-07', categories: [] });
     fixture.detectChanges();
 
@@ -200,7 +212,9 @@ describe('PlannerPageComponent', () => {
     fixture.detectChanges();
     flushCategories(fixture);
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/summary')
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/summary',
+      )
       .flush({ month: '2026-07', categories: [] });
     fixture.detectChanges();
 
@@ -217,7 +231,7 @@ describe('PlannerPageComponent', () => {
 
     const putRequest = httpController.expectOne(
       (candidate) =>
-        candidate.url === '/api/budget/monthly-budgets' &&
+        candidate.url === '/api/workspaces/ws1/budget/monthly-budgets' &&
         candidate.method === 'PUT',
     );
     // '2026-07' matches the clock pinned in the outer `beforeEach`
@@ -237,7 +251,9 @@ describe('PlannerPageComponent', () => {
     fixture.detectChanges();
 
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/summary')
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/summary',
+      )
       .flush({
         month: '2026-07',
         categories: [
@@ -259,7 +275,9 @@ describe('PlannerPageComponent', () => {
     fixture.detectChanges();
     flushCategories(fixture);
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/summary')
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/summary',
+      )
       .flush({ month: '2026-07', categories: [] });
     fixture.detectChanges();
 
@@ -276,7 +294,7 @@ describe('PlannerPageComponent', () => {
 
     const putRequest = httpController.expectOne(
       (candidate) =>
-        candidate.url === '/api/budget/monthly-budgets' &&
+        candidate.url === '/api/workspaces/ws1/budget/monthly-budgets' &&
         candidate.method === 'PUT',
     );
     putRequest.flush(
@@ -293,7 +311,7 @@ describe('PlannerPageComponent', () => {
       'Не вдалося зберегти бюджет',
     );
     httpController.expectNone(
-      (candidate) => candidate.url === '/api/budget/summary',
+      (candidate) => candidate.url === '/api/workspaces/ws1/budget/summary',
     );
   });
 });

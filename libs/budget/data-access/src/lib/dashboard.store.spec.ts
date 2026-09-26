@@ -5,6 +5,7 @@ import {
   HttpTestingController,
 } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { DashboardStore } from './dashboard.store.js';
 
@@ -22,6 +23,7 @@ describe('DashboardStore', () => {
       ],
     });
 
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws1');
     store = TestBed.inject(DashboardStore);
     httpController = TestBed.inject(HttpTestingController);
   });
@@ -32,7 +34,7 @@ describe('DashboardStore', () => {
 
   it('loadBalance() populates the balance signal', () => {
     store.loadBalance();
-    httpController.expectOne('/api/budget/balance').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
       accountId: 'a1',
       balance: { amount: '100000', currency: 'UAH' },
     });
@@ -45,7 +47,7 @@ describe('DashboardStore', () => {
     httpController
       .expectOne(
         (candidate) =>
-          candidate.url === '/api/budget/summary' &&
+          candidate.url === '/api/workspaces/ws1/budget/summary' &&
           candidate.params.get('month') === '2026-07',
       )
       .flush({ month: '2026-07', categories: [] });
@@ -55,7 +57,7 @@ describe('DashboardStore', () => {
 
   it('loadChart() populates the chart signal', () => {
     store.loadChart();
-    httpController.expectOne('/api/budget/chart').flush([]);
+    httpController.expectOne('/api/workspaces/ws1/budget/chart').flush([]);
 
     expect(store.chart()).toEqual([]);
   });
@@ -63,30 +65,32 @@ describe('DashboardStore', () => {
   it('refresh() re-fetches balance but not summary when no month was ever loaded', () => {
     store.refresh();
 
-    httpController.expectOne('/api/budget/balance').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
       accountId: 'a1',
       balance: { amount: '100000', currency: 'UAH' },
     });
     httpController.expectNone(
-      (candidate) => candidate.url === '/api/budget/summary',
+      (candidate) => candidate.url === '/api/workspaces/ws1/budget/summary',
     );
   });
 
   it('refresh() re-fetches both balance and the last-loaded month summary', () => {
     store.loadSummary('2026-07');
     httpController
-      .expectOne((candidate) => candidate.url === '/api/budget/summary')
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/summary',
+      )
       .flush({ month: '2026-07', categories: [] });
 
     store.refresh();
 
-    httpController.expectOne('/api/budget/balance').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
       accountId: 'a1',
       balance: { amount: '150000', currency: 'UAH' },
     });
     const summaryReq = httpController.expectOne(
       (candidate) =>
-        candidate.url === '/api/budget/summary' &&
+        candidate.url === '/api/workspaces/ws1/budget/summary' &&
         candidate.params.get('month') === '2026-07',
     );
     summaryReq.flush({ month: '2026-07', categories: [] });
@@ -104,7 +108,7 @@ describe('DashboardStore', () => {
     httpController
       .expectOne(
         (candidate) =>
-          candidate.url === '/api/budget/summary' &&
+          candidate.url === '/api/workspaces/ws1/budget/summary' &&
           candidate.params.get('month') === '2026-07',
       )
       .flush({ month: '2026-07', categories: [] });
@@ -112,7 +116,7 @@ describe('DashboardStore', () => {
     expect(store.summaryLoading()).toBe(false);
     expect(store.balanceLoading()).toBe(true);
 
-    httpController.expectOne('/api/budget/balance').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
       accountId: 'a1',
       balance: { amount: '100000', currency: 'UAH' },
     });
@@ -127,7 +131,7 @@ describe('DashboardStore', () => {
     httpController
       .expectOne(
         (candidate) =>
-          candidate.url === '/api/budget/summary' &&
+          candidate.url === '/api/workspaces/ws1/budget/summary' &&
           candidate.params.get('month') === '2026-07',
       )
       .flush('summary failed', { status: 500, statusText: 'Server Error' });
@@ -135,7 +139,7 @@ describe('DashboardStore', () => {
     expect(store.summaryError()).not.toBeNull();
     expect(store.balanceError()).toBeNull();
 
-    httpController.expectOne('/api/budget/balance').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
       accountId: 'a1',
       balance: { amount: '100000', currency: 'UAH' },
     });
@@ -150,14 +154,14 @@ describe('DashboardStore', () => {
     expect(store.chartLoading()).toBe(true);
 
     httpController
-      .expectOne('/api/budget/balance')
+      .expectOne('/api/workspaces/ws1/budget/balance')
       .flush('balance failed', { status: 500, statusText: 'Server Error' });
 
     expect(store.balanceError()).not.toBeNull();
     expect(store.chartError()).toBeNull();
     expect(store.chartLoading()).toBe(true);
 
-    httpController.expectOne('/api/budget/chart').flush([]);
+    httpController.expectOne('/api/workspaces/ws1/budget/chart').flush([]);
 
     expect(store.chartLoading()).toBe(false);
     expect(store.chartError()).toBeNull();

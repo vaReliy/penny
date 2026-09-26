@@ -5,6 +5,7 @@ import {
   HttpTestingController,
 } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 import { CategoryClient } from './category.client.js';
 
 describe('CategoryClient', () => {
@@ -20,6 +21,7 @@ describe('CategoryClient', () => {
       ],
     });
 
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws1');
     client = TestBed.inject(CategoryClient);
     httpController = TestBed.inject(HttpTestingController);
   });
@@ -29,11 +31,13 @@ describe('CategoryClient', () => {
   });
 
   describe('list', () => {
-    it('sends GET to /api/budget/categories with withCredentials', () => {
+    it('AC-5: sends GET to /api/workspaces/<currentId>/budget/categories with withCredentials', () => {
       let result: readonly { id: string }[] | undefined;
       client.list().subscribe((categories) => (result = categories));
 
-      const req = httpController.expectOne('/api/budget/categories');
+      const req = httpController.expectOne(
+        '/api/workspaces/ws1/budget/categories',
+      );
       expect(req.request.method).toBe('GET');
       expect(req.request.withCredentials).toBe(true);
 
@@ -50,7 +54,9 @@ describe('CategoryClient', () => {
       let result: readonly { archivedAt?: Date }[] | undefined;
       client.list().subscribe((categories) => (result = categories));
 
-      const req = httpController.expectOne('/api/budget/categories');
+      const req = httpController.expectOne(
+        '/api/workspaces/ws1/budget/categories',
+      );
       req.flush([
         { id: 'c1', name: 'Rent', archivedAt: '2026-01-15T00:00:00.000Z' },
       ]);
@@ -65,7 +71,9 @@ describe('CategoryClient', () => {
       let result: readonly { archivedAt?: Date }[] | undefined;
       client.list().subscribe((categories) => (result = categories));
 
-      const req = httpController.expectOne('/api/budget/categories');
+      const req = httpController.expectOne(
+        '/api/workspaces/ws1/budget/categories',
+      );
       req.flush([{ id: 'c1', name: 'Groceries' }]);
 
       expect(result?.[0]?.archivedAt).toBeUndefined();
@@ -76,7 +84,9 @@ describe('CategoryClient', () => {
     it('sends POST with the request body', () => {
       client.create({ name: 'Utilities' }).subscribe();
 
-      const req = httpController.expectOne('/api/budget/categories');
+      const req = httpController.expectOne(
+        '/api/workspaces/ws1/budget/categories',
+      );
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({ name: 'Utilities' });
       req.flush({ id: 'c3', name: 'Utilities' });
@@ -84,10 +94,12 @@ describe('CategoryClient', () => {
   });
 
   describe('update', () => {
-    it('sends PATCH to /api/budget/categories/:id', () => {
+    it('sends PATCH to /api/workspaces/<currentId>/budget/categories/:id', () => {
       client.update('c1', { name: 'Groceries & Household' }).subscribe();
 
-      const req = httpController.expectOne('/api/budget/categories/c1');
+      const req = httpController.expectOne(
+        '/api/workspaces/ws1/budget/categories/c1',
+      );
       expect(req.request.method).toBe('PATCH');
       expect(req.request.body).toEqual({ name: 'Groceries & Household' });
       req.flush({ id: 'c1', name: 'Groceries & Household' });
@@ -95,10 +107,12 @@ describe('CategoryClient', () => {
   });
 
   describe('archive', () => {
-    it('sends POST to /api/budget/categories/:id/archive with a null body', () => {
+    it('sends POST to /api/workspaces/<currentId>/budget/categories/:id/archive with a null body', () => {
       client.archive('c1').subscribe();
 
-      const req = httpController.expectOne('/api/budget/categories/c1/archive');
+      const req = httpController.expectOne(
+        '/api/workspaces/ws1/budget/categories/c1/archive',
+      );
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toBeNull();
       req.flush({
@@ -107,5 +121,23 @@ describe('CategoryClient', () => {
         archivedAt: '2026-01-01T00:00:00.000Z',
       });
     });
+  });
+});
+
+describe('CategoryClient with no current workspace', () => {
+  it('throws a clear programming error', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        CategoryClient,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
+    });
+
+    const client = TestBed.inject(CategoryClient);
+
+    expect(() => client.list()).toThrow(
+      'CategoryClient called with no current workspace',
+    );
   });
 });

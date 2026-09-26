@@ -9,6 +9,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { CategoryStore } from 'budget-data-access';
 import { CategoryManagerComponent } from './category-manager';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 
 const UK_TRANSLATIONS = { common: { loading: 'Завантаження...' } };
 const VALIDATION_ERROR_TEXT = 'Перевірте правильність введених даних.';
@@ -63,6 +64,7 @@ describe('CategoryManagerComponent', () => {
       ],
     }).compileComponents();
 
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws1');
     httpController = TestBed.inject(HttpTestingController);
     categoryStore = TestBed.inject(CategoryStore);
   });
@@ -75,7 +77,9 @@ describe('CategoryManagerComponent', () => {
     categories: readonly { id: string; name: string; archivedAt?: string }[],
   ): void {
     categoryStore.load();
-    httpController.expectOne('/api/budget/categories').flush(categories);
+    httpController
+      .expectOne('/api/workspaces/ws1/budget/categories')
+      .flush(categories);
   }
 
   it('hides archived categories by default and shows them once the toggle is checked', async () => {
@@ -115,7 +119,9 @@ describe('CategoryManagerComponent', () => {
       .querySelector('form')
       .dispatchEvent(new Event('submit'));
 
-    const req = httpController.expectOne('/api/budget/categories');
+    const req = httpController.expectOne(
+      '/api/workspaces/ws1/budget/categories',
+    );
     expect(req.request.body).toEqual({ name: 'Транспорт' });
     req.flush({ id: 'c3', name: 'Транспорт' });
 
@@ -141,7 +147,7 @@ describe('CategoryManagerComponent', () => {
     expect(fixture.nativeElement.textContent).toContain(
       'Поле не може бути пустим.',
     );
-    httpController.expectNone('/api/budget/categories');
+    httpController.expectNone('/api/workspaces/ws1/budget/categories');
   });
 
   it('renames a category via the rename affordance', async () => {
@@ -158,7 +164,9 @@ describe('CategoryManagerComponent', () => {
     component.renameForm.controls.name.setValue('Їжа');
     component.onRenameSubmit('c1');
 
-    const req = httpController.expectOne('/api/budget/categories/c1');
+    const req = httpController.expectOne(
+      '/api/workspaces/ws1/budget/categories/c1',
+    );
     expect(req.request.method).toBe('PATCH');
     expect(req.request.body).toEqual({ name: 'Їжа' });
     req.flush({ id: 'c1', name: 'Їжа' });
@@ -185,7 +193,7 @@ describe('CategoryManagerComponent', () => {
       .dispatchEvent(new Event('submit'));
 
     httpController
-      .expectOne('/api/budget/categories')
+      .expectOne('/api/workspaces/ws1/budget/categories')
       .flush(
         { code: 'VALIDATION_ERROR', message: 'name already in use' },
         { status: 422, statusText: 'Unprocessable Entity' },
@@ -215,16 +223,20 @@ describe('CategoryManagerComponent', () => {
     component.requestArchive('c1');
     fixture.detectChanges();
 
-    httpController.expectNone('/api/budget/categories/c1/archive');
+    httpController.expectNone(
+      '/api/workspaces/ws1/budget/categories/c1/archive',
+    );
 
     component.confirmArchive('c1');
-    httpController.expectOne('/api/budget/categories/c1/archive').flush(
-      {
-        code: 'DOMAIN_CONFLICT_ERROR',
-        message: 'Category is already archived.',
-      },
-      { status: 409, statusText: 'Conflict' },
-    );
+    httpController
+      .expectOne('/api/workspaces/ws1/budget/categories/c1/archive')
+      .flush(
+        {
+          code: 'DOMAIN_CONFLICT_ERROR',
+          message: 'Category is already archived.',
+        },
+        { status: 409, statusText: 'Conflict' },
+      );
 
     await fixture.whenStable();
     fixture.detectChanges();

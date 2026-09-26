@@ -14,6 +14,7 @@ import {
   errorMessageKey,
   formatMoney,
 } from 'budget-data-access';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 
 const DATE_LOCALE = 'uk-UA';
 
@@ -43,6 +44,7 @@ function formatDate(date: Date): string {
 export class HistoryDetailPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly currentWorkspace = inject(CurrentWorkspace);
 
   protected readonly categoryStore = inject(CategoryStore);
   protected readonly transactionStore = inject(TransactionStore);
@@ -50,6 +52,11 @@ export class HistoryDetailPageComponent {
   protected readonly errorMessageKey = errorMessageKey;
 
   protected readonly backQueryParams = this.route.snapshot.queryParams;
+
+  protected readonly historyLink = computed(() => {
+    const workspaceId = this.currentWorkspace.currentId();
+    return workspaceId !== null ? ['/w', workspaceId, 'history'] : [];
+  });
 
   protected readonly categoryName = computed(() => {
     const transaction = this.transactionStore.detail();

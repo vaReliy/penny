@@ -2,8 +2,11 @@ import { test, expect } from '@playwright/test';
 
 const ME_URL = '**/auth/me';
 const CONFIG_URL = '**/api/config';
-const BALANCE_URL = '**/api/budget/balance';
+const WORKSPACES_URL = '**/api/workspaces';
+const BALANCE_URL = '**/api/workspaces/*/budget/balance';
 const RATES_URL = '**/api/rates';
+
+const WORKSPACE_ID = 'w1';
 
 const activeUser = {
   id: '3',
@@ -11,6 +14,15 @@ const activeUser = {
   telegramId: 123456,
   status: 'active',
 };
+
+const workspaces = [
+  {
+    id: WORKSPACE_ID,
+    name: 'Family',
+    role: 'admin',
+    grantedAt: '2026-01-01T00:00:00.000Z',
+  },
+];
 
 const balanceResponse = {
   accountId: 'a1',
@@ -44,6 +56,13 @@ test.describe('account page («Рахунок») — balance + FX rates', () => 
         body: JSON.stringify(activeUser),
       }),
     );
+    await page.route(WORKSPACES_URL, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(workspaces),
+      }),
+    );
     await page.route(BALANCE_URL, (route) =>
       route.fulfill({
         status: 200,
@@ -64,7 +83,7 @@ test.describe('account page («Рахунок») — balance + FX rates', () => 
       }),
     );
 
-    await page.goto('/account');
+    await page.goto('/w/w1/account');
     await page.waitForURL('**/account');
 
     const balanceCard = page.getByRole('region', { name: 'Рахунок' });
@@ -102,7 +121,7 @@ test.describe('account page («Рахунок») — balance + FX rates', () => 
       });
     });
 
-    await page.goto('/account');
+    await page.goto('/w/w1/account');
     await page.waitForURL('**/account');
 
     const ratesCard = page.getByRole('region', { name: 'Курс' });
@@ -138,7 +157,7 @@ test.describe('account page («Рахунок») — balance + FX rates', () => 
       });
     });
 
-    await page.goto('/account');
+    await page.goto('/w/w1/account');
     await page.waitForURL('**/account');
 
     const ratesCard = page.getByRole('region', { name: 'Курс' });
@@ -181,7 +200,7 @@ test.describe('account page («Рахунок») — balance + FX rates', () => 
       }),
     );
 
-    await page.goto('/account');
+    await page.goto('/w/w1/account');
     await page.waitForURL('**/account');
 
     const balanceCard = page.getByRole('region', { name: 'Рахунок' });
@@ -236,7 +255,7 @@ test.describe('account page («Рахунок») — balance + FX rates', () => 
         }),
       );
 
-      await page.goto('/account');
+      await page.goto('/w/w1/account');
       await page.waitForURL('**/account');
 
       const balanceCard = page.getByRole('region', { name: 'Рахунок' });

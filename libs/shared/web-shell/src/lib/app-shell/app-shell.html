@@ -10,10 +10,10 @@
       class="hidden lg:flex lg:items-center lg:gap-1"
       [attr.aria-label]="'shell.nav.label' | transloco"
     >
-      @for (item of navItems; track item.path) {
+      @for (item of navLinks(); track item.path) {
       <a
         #desktopRla="routerLinkActive"
-        [routerLink]="item.path"
+        [routerLink]="item.route"
         routerLinkActive
         ariaCurrentWhenActive="page"
         class="rounded-btn px-3 py-2 text-sm font-medium"
@@ -75,10 +75,10 @@
     class="fixed inset-x-0 bottom-0 z-10 flex border-t border-border bg-surface lg:hidden"
     [attr.aria-label]="'shell.nav.label' | transloco"
   >
-    @for (item of navItems; track item.path) {
+    @for (item of navLinks(); track item.path) {
     <a
       #mobileRla="routerLinkActive"
-      [routerLink]="item.path"
+      [routerLink]="item.route"
       routerLinkActive
       ariaCurrentWhenActive="page"
       class="mx-1 my-1 flex min-h-touch flex-1 flex-col items-center justify-center gap-0.5 rounded-btn text-xs"

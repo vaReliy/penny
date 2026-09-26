@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   signal,
 } from '@angular/core';
@@ -9,6 +10,7 @@ import { RouterLink } from '@angular/router';
 import { TranslocoPipe, provideTranslocoScope } from '@jsverse/transloco';
 import { formatMoney } from 'budget-data-access';
 import type { CategoryView, TransactionView } from 'budget-data-access';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 
 type SortColumn = 'date' | 'amount' | 'category' | 'type';
 type SortDirection = 'asc' | 'desc';
@@ -58,6 +60,8 @@ function compareRows(a: DisplayRow, b: DisplayRow, column: SortColumn): number {
   styleUrl: './transaction-list.css',
 })
 export class TransactionListComponent {
+  private readonly currentWorkspace = inject(CurrentWorkspace);
+
   public readonly transactions = input.required<readonly TransactionView[]>();
   public readonly categories = input<readonly CategoryView[]>([]);
   /** Distinguishes "no transactions at all" from "filter matched nothing" — decided by the caller. */
@@ -141,5 +145,12 @@ export class TransactionListComponent {
       return 'none';
     }
     return this.sortDirection() === 'asc' ? 'ascending' : 'descending';
+  }
+
+  protected detailLink(transactionId: string): readonly string[] {
+    const workspaceId = this.currentWorkspace.currentId();
+    return workspaceId !== null
+      ? ['/w', workspaceId, 'history', transactionId]
+      : [];
   }
 }
