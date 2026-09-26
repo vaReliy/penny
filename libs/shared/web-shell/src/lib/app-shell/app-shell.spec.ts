@@ -99,7 +99,7 @@ describe('AppShellComponent', () => {
     }
   });
 
-  it('AC-9: nav links point to /w/<currentId>/{account,history,planner,records}', async () => {
+  it('nav links point to /w/<currentId>/{account,history,planner,records}', async () => {
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/w/ws1/account', AppShellComponent);
     harness.detectChanges();
@@ -198,16 +198,14 @@ describe('AppShellComponent', () => {
     await harness.navigateByUrl('/', AppShellComponent);
     harness.detectChanges();
 
-    controller
-      .expectOne('/api/workspaces')
-      .flush([
-        {
-          id: 'a',
-          name: 'Family',
-          role: 'admin',
-          grantedAt: '2026-01-01T00:00:00.000Z',
-        },
-      ]);
+    controller.expectOne('/api/workspaces').flush([
+      {
+        id: 'a',
+        name: 'Family',
+        role: 'admin',
+        grantedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ]);
     harness.detectChanges();
 
     expect(TestBed.inject(CurrentWorkspace).currentId()).toBe('a');

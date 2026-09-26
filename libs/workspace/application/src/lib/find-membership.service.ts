@@ -8,9 +8,9 @@ import type { ServiceContext } from 'shared-kernel';
 
 /**
  * LIVR schema for {@link FindMembershipService} input. `workspaceId` is
- * intentionally NOT `{ like: ID_PATTERN }`-validated here: the W5 guard that
- * calls this service must turn a malformed id into the same opaque `null`
- * (→ 404) as a non-member, not a distinguishable validation error.
+ * intentionally NOT `{ like: ID_PATTERN }`-validated here: the HTTP guard
+ * that calls this service must turn a malformed id into the same opaque
+ * `null` (→ 404) as a non-member, not a distinguishable validation error.
  */
 const FIND_MEMBERSHIP_SCHEMA: Record<string, unknown> = {
   workspaceId: ['required', 'string'],
@@ -31,7 +31,7 @@ export interface FindMembershipDeps {
  * malformed id, a nonexistent workspace, or one where the caller is not a
  * member — all three collapse to the same opaque `null` result. Never
  * checks `SUPERADMIN` — a superadmin caller gets no implicit access to
- * other workspaces' memberships (S6).
+ * other workspaces' memberships.
  */
 export class FindMembershipService extends BaseService<
   FindMembershipParams,

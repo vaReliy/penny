@@ -53,7 +53,7 @@ describe('MongoWorkspaceRepository (integration)', () => {
     await disconnectMongoConnection(connection);
   });
 
-  it('AC-1: create then findById round-trips name, members, and version 0', async () => {
+  it('create then findById round-trips name, members, and version 0', async () => {
     const created = await repository.create(buildWorkspace());
 
     expect(created.id).not.toBe('');
@@ -74,7 +74,7 @@ describe('MongoWorkspaceRepository (integration)', () => {
     ]);
   });
 
-  it('AC-2: save with the current version persists changes and increments version', async () => {
+  it('save with the current version persists changes and increments version', async () => {
     const created = await persistWorkspace();
     const changed = created.addMember(
       'member-user-2',
@@ -92,7 +92,7 @@ describe('MongoWorkspaceRepository (integration)', () => {
     expect(reloaded?.members).toHaveLength(2);
   });
 
-  it('AC-3: save with a stale version throws the conflict error and leaves the stored doc unchanged', async () => {
+  it('save with a stale version throws the conflict error and leaves the stored doc unchanged', async () => {
     const created = await persistWorkspace();
     const changed = created.addMember(
       'member-user-2',
@@ -133,7 +133,7 @@ describe('MongoWorkspaceRepository (integration)', () => {
     );
   });
 
-  it('AC-4: findMembership returns the workspaceId/role/grantedAt for a member', async () => {
+  it('findMembership returns the workspaceId/role/grantedAt for a member', async () => {
     const created = await persistWorkspace();
 
     const membership = await repository.findMembership(
@@ -148,7 +148,7 @@ describe('MongoWorkspaceRepository (integration)', () => {
     });
   });
 
-  it('AC-5: findMembership returns null for a non-member, a nonexistent id, and a malformed id — never throws', async () => {
+  it('findMembership returns null for a non-member, a nonexistent id, and a malformed id — never throws', async () => {
     const created = await persistWorkspace();
 
     await expect(
@@ -179,7 +179,7 @@ describe('MongoWorkspaceRepository (integration)', () => {
     ).resolves.toBeNull();
   });
 
-  it('AC-6: findByMemberUserId returns exactly the workspaces containing that user', async () => {
+  it('findByMemberUserId returns exactly the workspaces containing that user', async () => {
     const workspaceWithMember = await persistWorkspace();
     await repository.create(
       Workspace.create('Someone Else', 'other-admin', 'other-admin'),

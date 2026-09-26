@@ -29,9 +29,9 @@ const activeUser = {
  * Wires a mock backend with a stateful, per-month budgeted/spent ledger, so
  * `GET /api/budget/summary?month=...` reflects whatever budgets were PUT —
  * the planner screen's own view of the union of budgeted-or-spent
- * categories, not just a hard-coded fixture. Spend is seeded directly (API
- * seed, per the task's allowed alternative to driving the records screen —
- * that flow already has its own dedicated e2e coverage).
+ * categories, not just a hard-coded fixture. Spend is seeded directly via
+ * the API rather than by driving the records screen — that flow already
+ * has its own dedicated e2e coverage.
  */
 async function mockBudgetBackend(page: import('@playwright/test').Page) {
   await page.route(CONFIG_URL, (route: Route) =>

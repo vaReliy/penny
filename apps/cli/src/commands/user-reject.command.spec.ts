@@ -185,7 +185,7 @@ describe('UserRejectCommand', () => {
     expect(updated?.status).toBe(UserStatus.REJECTED);
   });
 
-  it('calls process.exit(1) and logs "User with Telegram ID <id> not found" when the telegramId is unknown (AC-9)', async () => {
+  it('calls process.exit(1) and logs "User with Telegram ID <id> not found" when the telegramId is unknown', async () => {
     const errorSpy = vi.spyOn(silentLogger, 'error');
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('process.exit called');

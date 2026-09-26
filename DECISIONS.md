@@ -695,7 +695,7 @@ These axes are orthogonal: a `SUPERADMIN` has no implicit access to workspace bu
 
 - `members` is embedded within the `Workspace` document (not a separate collection).
 - Multikey index on `{members.userId: 1}` for membership lookups (find all workspaces a user belongs to).
-- Unique index on `{name: 1}` (workspace names are globally unique in MVP; deferred to workspace-admin-scoped uniqueness if needed later).
+- No uniqueness constraint on `name` — names may collide; workspaces are addressed by id only.
 - **Optimistic concurrency control** via `version` field: when an admin command (`workspace:set-role`, `workspace:remove-member`) modifies the workspace, it increments the version and uses a CAS (compare-and-swap) pattern to detect concurrent modifications. If the version check fails, the command is retried by the CLI operator.
 
 ### Enforcement Mechanisms
@@ -711,7 +711,7 @@ These axes are orthogonal: a `SUPERADMIN` has no implicit access to workspace bu
 
 **Lint boundaries:** Nx tags enforce that `scope:workspace` exports from `scope:shared` only, preventing accidental budget/identity imports that would undermine isolation.
 
-**Aggregate invariant tests:** `Workspace` entities have static factory methods (`Workspace.create()`) and invariant-checking methods (`Workspace.ensureAtLeastOneAdmin()`, etc.) tested in `libs/workspace/core/*.spec.ts`. These ensure no workspace ever has zero admins.
+**Aggregate invariant tests:** `Workspace` entities have the static factory method (`Workspace.create()`) and invariant enforcement inlined in `changeRole()` and `removeMember()` — both methods throw when attempting to demote/remove the last remaining admin (tested in `libs/workspace/core/*.spec.ts`). These ensure no workspace ever has zero admins.
 
 **Guard order spec:** The `WorkspaceMemberGuard` spec (`apps/api/src/workspace/workspace-member.guard.spec.ts`) documents the guard sequence and validates that a stale workspace ID (user was removed since their session was created) is correctly detected and rejected.
 

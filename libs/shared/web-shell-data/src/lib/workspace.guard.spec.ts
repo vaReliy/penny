@@ -64,7 +64,7 @@ describe('workspaceGuard', () => {
     expect(currentWorkspace.currentId()).toBe('b');
   });
 
-  it('AC-4: silently redirects to the first workspace when the id is not in the list', async () => {
+  it('silently redirects to the first workspace when the id is not in the list', async () => {
     mockWorkspaceClient.list.mockReturnValue(of([WORKSPACE_A, WORKSPACE_B]));
 
     const result = await firstValueFrom(runGuard('unknown'));

@@ -96,7 +96,7 @@ describe('WorkspaceListCommand', () => {
     );
   }
 
-  it('resolves --telegram-id to a userId and filters to that user’s workspaces (AC-10)', async () => {
+  it('resolves --telegram-id to a userId and filters to that user’s workspaces', async () => {
     seedWorkspace(workspaceRepository);
     const userRepository = createFakeUserRepository({
       findByTelegramId: vi.fn().mockResolvedValue(makeAdmin()),
@@ -114,7 +114,7 @@ describe('WorkspaceListCommand', () => {
     expect(exitSpy).not.toHaveBeenCalled();
   });
 
-  it('prints "No workspaces found." and exits 0 for an empty result (AC-11)', async () => {
+  it('prints "No workspaces found." and exits 0 for an empty result', async () => {
     const userRepository = createFakeUserRepository();
     const command = makeCommand(userRepository);
 
@@ -125,7 +125,7 @@ describe('WorkspaceListCommand', () => {
     expect(errorSpy).not.toHaveBeenCalled();
   });
 
-  it('exits 1 with "User with Telegram ID <id> not found" for an unknown --telegram-id (AC-13)', async () => {
+  it('exits 1 with "User with Telegram ID <id> not found" for an unknown --telegram-id', async () => {
     const userRepository = createFakeUserRepository({
       findByTelegramId: vi.fn().mockResolvedValue(null),
     });
@@ -139,7 +139,7 @@ describe('WorkspaceListCommand', () => {
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 
-  it('shows each member’s role/status, and "missing" for an absent user doc (AC-12)', async () => {
+  it('shows each member’s role/status, and "missing" for an absent user doc', async () => {
     seedWorkspace(workspaceRepository);
     const userRepository = createFakeUserRepository({
       findById: vi.fn().mockImplementation(async (id: string) => {

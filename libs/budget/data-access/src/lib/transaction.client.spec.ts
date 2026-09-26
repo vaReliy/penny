@@ -161,7 +161,7 @@ describe('TransactionClient', () => {
   });
 
   describe('get', () => {
-    it('AC-5: sends GET to /api/workspaces/<currentId>/budget/transactions/:id', () => {
+    it('sends GET to /api/workspaces/<currentId>/budget/transactions/:id', () => {
       client.get('t1').subscribe();
 
       const req = httpController.expectOne(

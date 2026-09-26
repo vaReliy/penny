@@ -171,7 +171,7 @@ Located in `libs/workspace/core`. Mirrors the `IUserRepository` pattern:
 - `findByMemberUserId(userId): Promise<Workspace[]>` — all workspaces this user is a member of
 - `findMembership(workspaceId, userId): Promise<{workspaceId, role, grantedAt} | null>` — quick membership lookup
 
-Persistence (Typegoose schema, MongoDB repo impl) is in `libs/workspace/infrastructure` (W2a task). Core only defines the interface.
+Persistence (Typegoose schema, MongoDB repo impl) is in `libs/workspace/infrastructure`. Core only defines the interface.
 
 ### ID Convention
 

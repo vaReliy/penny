@@ -6,7 +6,6 @@ export default defineConfig(() => ({
   resolve: { tsconfigPaths: true },
   test: {
     name: 'workspace-application',
-    // Empty shell until W2b — see README.md.
     passWithNoTests: true,
     watch: false,
     globals: true,

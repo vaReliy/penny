@@ -86,7 +86,7 @@ function mockCommon(
 }
 
 test.describe('workspace switcher', () => {
-  test('AC-7: switching A -> B changes the URL and the next budget request goes to /api/workspaces/B/...', async ({
+  test('switching A -> B changes the URL and the next budget request goes to /api/workspaces/B/...', async ({
     page,
   }) => {
     await mockCommon(page, twoWorkspaces);
@@ -112,7 +112,7 @@ test.describe('workspace switcher', () => {
     expect(requestedWorkspaceIds).toContain('w2');
   });
 
-  test('AC-8: opening /w/<unknown>/account lands on /w/<first>/account with no error shown', async ({
+  test('opening /w/<unknown>/account lands on /w/<first>/account with no error shown', async ({
     page,
   }) => {
     await mockCommon(page, twoWorkspaces);
@@ -124,7 +124,7 @@ test.describe('workspace switcher', () => {
     await expect(page.getByRole('alert')).toHaveCount(0);
   });
 
-  test('AC-9: GET /api/workspaces -> [] lands on the no-workspace screen with the Ukrainian copy', async ({
+  test('GET /api/workspaces -> [] lands on the no-workspace screen with the Ukrainian copy', async ({
     page,
   }) => {
     await mockCommon(page, []);
@@ -139,7 +139,7 @@ test.describe('workspace switcher', () => {
     ).toBeVisible();
   });
 
-  test('AC-10: at a 390px viewport, the switcher is visible and operable', async ({
+  test('at a 390px viewport, the switcher is visible and operable', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });

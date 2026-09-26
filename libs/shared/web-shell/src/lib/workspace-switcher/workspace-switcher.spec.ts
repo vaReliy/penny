@@ -57,7 +57,7 @@ describe('WorkspaceSwitcherComponent', () => {
     currentWorkspace = TestBed.inject(CurrentWorkspace);
   });
 
-  it('AC-1: renders the current workspace name', async () => {
+  it('renders the current workspace name', async () => {
     currentWorkspace.setWorkspaces([
       { id: 'a', name: 'Family', role: 'admin', grantedAt: '2026-01-01' },
     ]);
@@ -70,7 +70,7 @@ describe('WorkspaceSwitcherComponent', () => {
     expect(harness.routeNativeElement?.textContent).toContain('Family');
   });
 
-  it('AC-2: with 2 workspaces, the menu lists both and marks the current one', async () => {
+  it('with 2 workspaces, the menu lists both and marks the current one', async () => {
     currentWorkspace.setWorkspaces([
       { id: 'a', name: 'Family', role: 'admin', grantedAt: '2026-01-01' },
       { id: 'b', name: 'Business', role: 'member', grantedAt: '2026-01-02' },
@@ -103,7 +103,7 @@ describe('WorkspaceSwitcherComponent', () => {
     expect(items.length).toBeGreaterThan(0);
   });
 
-  it('AC-3: selecting the other workspace on /w/a/planner navigates to /w/b/planner', async () => {
+  it('selecting the other workspace on /w/a/planner navigates to /w/b/planner', async () => {
     currentWorkspace.setWorkspaces([
       { id: 'a', name: 'Family', role: 'admin', grantedAt: '2026-01-01' },
       { id: 'b', name: 'Business', role: 'member', grantedAt: '2026-01-02' },
@@ -129,7 +129,7 @@ describe('WorkspaceSwitcherComponent', () => {
     expect(router.url).toBe('/w/b/planner');
   });
 
-  it('AC-4: selecting on /w/a/history/tx1 navigates to /w/b/history (drops the id)', async () => {
+  it('selecting on /w/a/history/tx1 navigates to /w/b/history (drops the id)', async () => {
     currentWorkspace.setWorkspaces([
       { id: 'a', name: 'Family', role: 'admin', grantedAt: '2026-01-01' },
       { id: 'b', name: 'Business', role: 'member', grantedAt: '2026-01-02' },
@@ -174,7 +174,7 @@ describe('WorkspaceSwitcherComponent', () => {
     expect(router.url).toBe('/w/b/history');
   });
 
-  it('AC-5: with 1 workspace, no menu items are rendered', async () => {
+  it('with 1 workspace, no menu items are rendered', async () => {
     currentWorkspace.setWorkspaces([
       { id: 'a', name: 'Family', role: 'admin', grantedAt: '2026-01-01' },
     ]);
@@ -192,7 +192,7 @@ describe('WorkspaceSwitcherComponent', () => {
     expect(document.body.querySelector('[cdkmenu]')).toBeNull();
   });
 
-  it('AC-6: the trigger has the Робочий простір aria-label', async () => {
+  it('the trigger has the Робочий простір aria-label', async () => {
     currentWorkspace.setWorkspaces([
       { id: 'a', name: 'Family', role: 'admin', grantedAt: '2026-01-01' },
     ]);

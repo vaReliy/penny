@@ -32,7 +32,7 @@ describe('AnalyticsClient', () => {
   });
 
   describe('getBalance', () => {
-    it('AC-5: sends GET to /api/workspaces/<currentId>/budget/balance and converts to Money', () => {
+    it('sends GET to /api/workspaces/<currentId>/budget/balance and converts to Money', () => {
       let result: { balance: Money } | undefined;
       client.getBalance().subscribe((balance) => (result = balance));
 

@@ -123,7 +123,7 @@ export class MongoWorkspaceRepository implements IWorkspaceRepository {
    * Looks up `userId`'s membership in `workspaceId` via a single projected
    * query (`members.$`). Returns `null` — never throws — for a malformed
    * `workspaceId`, a nonexistent workspace, and a non-member alike, so the
-   * W5 HTTP guard can map all three to the same opaque 404.
+   * HTTP guard can map all three to the same opaque 404.
    */
   public async findMembership(
     workspaceId: string,

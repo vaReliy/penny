@@ -95,7 +95,7 @@ describe('WorkspaceSetRoleCommand', () => {
     );
   }
 
-  it('prints "Role unchanged", exits 0, and emits no audit line when changed is false (AC-6)', async () => {
+  it('prints "Role unchanged", exits 0, and emits no audit line when changed is false', async () => {
     seedWorkspace(workspaceRepository, [
       { userId: ADMIN_ID, role: WorkspaceMemberRole.ADMIN },
       { userId: MEMBER_ID, role: WorkspaceMemberRole.MEMBER },
@@ -116,7 +116,7 @@ describe('WorkspaceSetRoleCommand', () => {
     expect(infoSpy).not.toHaveBeenCalled();
   });
 
-  it('prints "<CODE>: <message>" and exits 1 when demoting the last admin (AC-7)', async () => {
+  it('prints "<CODE>: <message>" and exits 1 when demoting the last admin', async () => {
     seedWorkspace(workspaceRepository, [
       { userId: MEMBER_ID, role: WorkspaceMemberRole.ADMIN },
     ]);
@@ -138,7 +138,7 @@ describe('WorkspaceSetRoleCommand', () => {
     expect(infoSpy).not.toHaveBeenCalled();
   });
 
-  it('emits exactly one audit line with action: member.set-role on a real change (AC-9)', async () => {
+  it('emits exactly one audit line with action: member.set-role on a real change', async () => {
     seedWorkspace(workspaceRepository, [
       { userId: ADMIN_ID, role: WorkspaceMemberRole.ADMIN },
       { userId: MEMBER_ID, role: WorkspaceMemberRole.MEMBER },
@@ -168,7 +168,7 @@ describe('WorkspaceSetRoleCommand', () => {
     );
   });
 
-  it('exits 1 with "User with Telegram ID <id> not found" for an unknown --telegram-id (AC-13)', async () => {
+  it('exits 1 with "User with Telegram ID <id> not found" for an unknown --telegram-id', async () => {
     const userRepository = createFakeUserRepository({
       findByTelegramId: vi.fn().mockResolvedValue(null),
     });

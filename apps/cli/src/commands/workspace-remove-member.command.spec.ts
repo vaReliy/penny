@@ -101,7 +101,7 @@ describe('WorkspaceRemoveMemberCommand', () => {
     );
   }
 
-  it('emits exactly one audit line with action: member.remove and by: cli on success (AC-8)', async () => {
+  it('emits exactly one audit line with action: member.remove and by: cli on success', async () => {
     const userRepository = createFakeUserRepository({
       findByTelegramId: vi.fn().mockResolvedValue(makeUser()),
     });
@@ -125,7 +125,7 @@ describe('WorkspaceRemoveMemberCommand', () => {
     expect(consoleSpy).toHaveBeenCalledOnce();
   });
 
-  it('exits 1 with "User with Telegram ID <id> not found" for an unknown --telegram-id (AC-13)', async () => {
+  it('exits 1 with "User with Telegram ID <id> not found" for an unknown --telegram-id', async () => {
     const userRepository = createFakeUserRepository({
       findByTelegramId: vi.fn().mockResolvedValue(null),
     });

@@ -69,7 +69,7 @@ describe('WorkspaceCreateCommand', () => {
     );
   }
 
-  it('calls CreateWorkspaceService with grantedBy: cli and prints the created workspace (AC-1)', async () => {
+  it('calls CreateWorkspaceService with grantedBy: cli and prints the created workspace', async () => {
     const userRepository = createFakeUserRepository({
       findByTelegramId: vi.fn().mockResolvedValue(makeUser(UserStatus.ACTIVE)),
     });
@@ -99,7 +99,7 @@ describe('WorkspaceCreateCommand', () => {
     );
   });
 
-  it('refuses a PENDING admin and never calls the service (AC-2)', async () => {
+  it('refuses a PENDING admin and never calls the service', async () => {
     const userRepository = createFakeUserRepository({
       findByTelegramId: vi.fn().mockResolvedValue(makeUser(UserStatus.PENDING)),
     });

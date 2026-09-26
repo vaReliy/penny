@@ -31,7 +31,7 @@ describe('CategoryClient', () => {
   });
 
   describe('list', () => {
-    it('AC-5: sends GET to /api/workspaces/<currentId>/budget/categories with withCredentials', () => {
+    it('sends GET to /api/workspaces/<currentId>/budget/categories with withCredentials', () => {
       let result: readonly { id: string }[] | undefined;
       client.list().subscribe((categories) => (result = categories));
 

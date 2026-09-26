@@ -2,4 +2,4 @@
 
 **Tags:** `scope:workspace` · `type:testing` · `platform:server`
 
-Empty shell — shared in-memory fakes are added alongside `IWorkspaceRepository`'s implementation in W2a.
+Shared in-memory fakes for `IWorkspaceRepository`, used across the workspace domain's test suites.

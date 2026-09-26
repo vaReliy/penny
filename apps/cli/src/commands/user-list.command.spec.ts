@@ -49,7 +49,7 @@ describe('UserListCommand', () => {
     return new UserListCommand(repository, logger);
   }
 
-  it('prints the header, one row per user, and the total (AC-3)', async () => {
+  it('prints the header, one row per user, and the total', async () => {
     const alice = makeUser({
       id: 'a',
       telegramId: '1',
@@ -86,7 +86,7 @@ describe('UserListCommand', () => {
     expect(exitSpy).not.toHaveBeenCalled();
   });
 
-  it('prints "No users found." and does not exit(1) for an empty result (AC-4)', async () => {
+  it('prints "No users found." and does not exit(1) for an empty result', async () => {
     const repo = createFakeUserRepository({
       findAll: vi.fn().mockResolvedValue([]),
     });
@@ -98,7 +98,7 @@ describe('UserListCommand', () => {
     expect(exitSpy).not.toHaveBeenCalledWith(1);
   });
 
-  it('parseStatus rejects an invalid --status, logging the valid values and exiting 1 (AC-5)', () => {
+  it('parseStatus rejects an invalid --status, logging the valid values and exiting 1', () => {
     const repo = createFakeUserRepository();
     const command = makeCommand(repo);
 

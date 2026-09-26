@@ -29,7 +29,7 @@ export interface ListMyWorkspacesDeps {
 /**
  * Lists the caller's own workspaces, sorted by the caller's `grantedAt`
  * ascending. Never checks `SUPERADMIN` — a superadmin caller gets no
- * implicit access to other workspaces' memberships (S6).
+ * implicit access to other workspaces' memberships.
  */
 export class ListMyWorkspacesService extends BaseService<
   ListMyWorkspacesParams,

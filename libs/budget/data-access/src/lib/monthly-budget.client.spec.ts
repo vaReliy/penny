@@ -32,7 +32,7 @@ describe('MonthlyBudgetClient', () => {
   });
 
   describe('listByMonth', () => {
-    it('AC-5: sends GET with the month as a query param under /api/workspaces/<currentId>/budget/monthly-budgets', () => {
+    it('sends GET with the month as a query param under /api/workspaces/<currentId>/budget/monthly-budgets', () => {
       client.listByMonth('2026-07').subscribe();
 
       const req = httpController.expectOne(

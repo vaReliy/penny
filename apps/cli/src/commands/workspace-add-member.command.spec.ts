@@ -95,7 +95,7 @@ describe('WorkspaceAddMemberCommand', () => {
     );
   }
 
-  it('adds as member when --role is omitted (AC-3)', async () => {
+  it('adds as member when --role is omitted', async () => {
     const userRepository = createFakeUserRepository({
       findByTelegramId: vi.fn().mockResolvedValue(makeUser(UserStatus.ACTIVE)),
     });
@@ -111,7 +111,7 @@ describe('WorkspaceAddMemberCommand', () => {
     expect(consoleSpy).toHaveBeenCalledOnce();
   });
 
-  it('refuses a REJECTED user with the exact refusal message + exit 1 (AC-4)', async () => {
+  it('refuses a REJECTED user with the exact refusal message + exit 1', async () => {
     const userRepository = createFakeUserRepository({
       findByTelegramId: vi
         .fn()
@@ -129,7 +129,7 @@ describe('WorkspaceAddMemberCommand', () => {
     expect(workspace?.isMember(MEMBER_ID)).toBe(false);
   });
 
-  it('emits exactly one audit line with action: member.add on success (AC-9)', async () => {
+  it('emits exactly one audit line with action: member.add on success', async () => {
     const userRepository = createFakeUserRepository({
       findByTelegramId: vi.fn().mockResolvedValue(makeUser(UserStatus.ACTIVE)),
     });
@@ -155,7 +155,7 @@ describe('WorkspaceAddMemberCommand', () => {
     );
   });
 
-  it('exits 1 with "User with Telegram ID <id> not found" for an unknown --telegram-id (AC-13)', async () => {
+  it('exits 1 with "User with Telegram ID <id> not found" for an unknown --telegram-id', async () => {
     const userRepository = createFakeUserRepository({
       findByTelegramId: vi.fn().mockResolvedValue(null),
     });
@@ -174,7 +174,7 @@ describe('WorkspaceAddMemberCommand', () => {
   });
 
   describe('parseRole', () => {
-    it('rejects "owner" with the exact error + exit 1 (AC-5)', () => {
+    it('rejects "owner" with the exact error + exit 1', () => {
       const userRepository = createFakeUserRepository();
       const command = makeCommand(userRepository);
 

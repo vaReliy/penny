@@ -301,9 +301,8 @@ describe('UpsertMonthlyBudgetService', () => {
 
   it('surfaces DomainError when the entity factory rejects a zero amount', async () => {
     // amountMinorUnits: 0 fails LIVR's positive_integer rule before the
-    // entity factory even runs — this test documents that the boundary
-    // (validate) is what fires, per the task's "delegating to schemas is
-    // fine, just assert the boundary fires" guidance.
+    // entity factory even runs — this test documents that the validation
+    // boundary is what fires, not the entity factory's own invariant.
     await expect(
       service.run(
         { categoryId: CATEGORY_ID, month: '2026-07', amountMinorUnits: 0 },

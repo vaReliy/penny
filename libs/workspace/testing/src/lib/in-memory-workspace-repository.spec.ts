@@ -5,14 +5,14 @@ import { describe, expect, it } from 'vitest';
 import { createInMemoryWorkspaceRepository } from './in-memory-workspace-repository.js';
 
 /**
- * Behavioral parity with `MongoWorkspaceRepository`'s integration spec
- * (AC-1…AC-6) — same scenarios, in-memory implementation (AC-8).
+ * Behavioral parity with `MongoWorkspaceRepository`'s integration spec —
+ * same scenarios, in-memory implementation.
  */
 describe('createInMemoryWorkspaceRepository', () => {
   const buildWorkspace = (): Workspace =>
     Workspace.create('The Family', 'admin-user-1', 'admin-user-1');
 
-  it('AC-1/AC-8: create then findById round-trips name, members, and version 0', async () => {
+  it('create then findById round-trips name, members, and version 0', async () => {
     const repository = createInMemoryWorkspaceRepository();
 
     const created = await repository.create(buildWorkspace());
@@ -34,7 +34,7 @@ describe('createInMemoryWorkspaceRepository', () => {
     ]);
   });
 
-  it('AC-2/AC-8: save with the current version persists changes and increments version', async () => {
+  it('save with the current version persists changes and increments version', async () => {
     const repository = createInMemoryWorkspaceRepository();
     const created = await repository.create(buildWorkspace());
     const changed = created.addMember(
@@ -53,7 +53,7 @@ describe('createInMemoryWorkspaceRepository', () => {
     expect(reloaded?.members).toHaveLength(2);
   });
 
-  it('AC-3/AC-8: save with a stale version throws the conflict error and leaves the stored doc unchanged', async () => {
+  it('save with a stale version throws the conflict error and leaves the stored doc unchanged', async () => {
     const repository = createInMemoryWorkspaceRepository();
     const created = await repository.create(buildWorkspace());
     const changed = created.addMember(
@@ -76,7 +76,7 @@ describe('createInMemoryWorkspaceRepository', () => {
     expect(reloaded?.members).toHaveLength(2);
   });
 
-  it('AC-4/AC-8: findMembership returns the workspaceId/role/grantedAt for a member', async () => {
+  it('findMembership returns the workspaceId/role/grantedAt for a member', async () => {
     const repository = createInMemoryWorkspaceRepository();
     const created = await repository.create(buildWorkspace());
 
@@ -92,7 +92,7 @@ describe('createInMemoryWorkspaceRepository', () => {
     });
   });
 
-  it('AC-5/AC-8: findMembership returns null for a non-member, a nonexistent id, and a malformed id — never throws', async () => {
+  it('findMembership returns null for a non-member, a nonexistent id, and a malformed id — never throws', async () => {
     const repository = createInMemoryWorkspaceRepository();
     const created = await repository.create(buildWorkspace());
 
@@ -120,7 +120,7 @@ describe('createInMemoryWorkspaceRepository', () => {
     await expect(repository.findById('')).resolves.toBeNull();
   });
 
-  it('AC-6/AC-8: findByMemberUserId returns exactly the workspaces containing that user', async () => {
+  it('findByMemberUserId returns exactly the workspaces containing that user', async () => {
     const repository = createInMemoryWorkspaceRepository();
     const workspaceWithMember = await repository.create(buildWorkspace());
     await repository.create(

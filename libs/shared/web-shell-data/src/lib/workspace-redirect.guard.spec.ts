@@ -46,7 +46,7 @@ describe('workspaceRedirectGuard', () => {
     router = TestBed.inject(Router);
   });
 
-  it('AC-1: redirects to the last-used workspace when it is still in the list', async () => {
+  it('redirects to the last-used workspace when it is still in the list', async () => {
     localStorage.setItem('penny.lastWorkspaceId', 'b');
     mockWorkspaceClient.list.mockReturnValue(of([WORKSPACE_A, WORKSPACE_B]));
 
@@ -55,7 +55,7 @@ describe('workspaceRedirectGuard', () => {
     expect(router.serializeUrl(result)).toBe('/w/b/account');
   });
 
-  it('AC-2: redirects to the first workspace when there is no last-used id', async () => {
+  it('redirects to the first workspace when there is no last-used id', async () => {
     mockWorkspaceClient.list.mockReturnValue(of([WORKSPACE_A, WORKSPACE_B]));
 
     const result = await firstValueFrom(runGuard());
@@ -63,7 +63,7 @@ describe('workspaceRedirectGuard', () => {
     expect(router.serializeUrl(result)).toBe('/w/a/account');
   });
 
-  it('AC-2: redirects to the first workspace when the last-used id is no longer granted', async () => {
+  it('redirects to the first workspace when the last-used id is no longer granted', async () => {
     localStorage.setItem('penny.lastWorkspaceId', 'stale');
     mockWorkspaceClient.list.mockReturnValue(of([WORKSPACE_A, WORKSPACE_B]));
 
@@ -72,7 +72,7 @@ describe('workspaceRedirectGuard', () => {
     expect(router.serializeUrl(result)).toBe('/w/a/account');
   });
 
-  it('AC-2: redirects to the first workspace when localStorage throws', async () => {
+  it('redirects to the first workspace when localStorage throws', async () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('storage unavailable');
     });
@@ -85,7 +85,7 @@ describe('workspaceRedirectGuard', () => {
     vi.restoreAllMocks();
   });
 
-  it('AC-3: redirects to /no-workspace when the list is empty', async () => {
+  it('redirects to /no-workspace when the list is empty', async () => {
     mockWorkspaceClient.list.mockReturnValue(of([]));
 
     const result = await firstValueFrom(runGuard());

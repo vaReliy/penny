@@ -40,7 +40,7 @@ export class WorkspaceMemberModel {
 
 /**
  * Typegoose schema for the `workspaces` collection. Members are embedded
- * (no separate memberships collection — grill "Storage" decision). Mongoose's
+ * (no separate memberships collection). Mongoose's
  * own `_id` is used as the document id and mapped to the domain `id`
  * (string) by {@link WorkspaceMapper} — `WorkspaceModel` itself never
  * appears outside `workspace-infrastructure`.
