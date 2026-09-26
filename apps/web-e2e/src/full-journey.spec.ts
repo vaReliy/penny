@@ -593,7 +593,7 @@ test.describe('360px mobile sweep — every screen + shell', () => {
       const box = await accountLink.evaluate((el) =>
         el.getBoundingClientRect().toJSON(),
       );
-      // task-03 design-token minimum touch target: --spacing-touch (2.75rem = 44px).
+      // Design-token minimum touch target: --spacing-touch (2.75rem = 44px).
       expect(box.height).toBeGreaterThanOrEqual(44);
     });
   }

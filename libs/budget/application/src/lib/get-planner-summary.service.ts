@@ -25,14 +25,13 @@ export interface GetPlannerSummaryDeps {
 
 /**
  * Per-category rollup of budgeted vs. actual expense spending for one month.
- * Field names mirror the task-06 `PlannerCategorySummary` contract
+ * Field names mirror the `budget-contracts` `PlannerCategorySummary` DTO
  * (`categoryId`/`budgeted`/`spent`/`remaining`) exactly, plus `percent` — a
  * derived UI-progress value the legacy planner screen computed client-side
- * (`page-planner.component.ts#getProgressPercent`), absent from the task-06
- * DTO. Kept as an `application`-layer-only field on this result type (not
- * added to the `budget-contracts` DTO, which is a signed-off, already-tested
- * deliverable of a prior task) — a future controller task decides whether to
- * fold it into the wire response or recompute it in the presentation layer.
+ * (`page-planner.component.ts#getProgressPercent`), absent from that DTO.
+ * Kept as an `application`-layer-only field on this result type rather than
+ * widening the signed-off wire contract; whether it later joins the wire
+ * response or is recomputed in the presentation layer is still open.
  */
 export interface PlannerCategorySummaryResult {
   readonly categoryId: string;

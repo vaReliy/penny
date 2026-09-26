@@ -57,6 +57,11 @@ const PATTERNS = {
     regex: /per the task/i,
     desc: '"per the task" phrase',
   },
+  task_citation: {
+    regex:
+      /\btask-\d+(?:\s+(?:spec|schema|DTO|model|interface|type|contract))?\b/,
+    desc: 'task-NN citation',
+  },
 };
 
 // Allowlist: files/sections exempt from checking
@@ -344,7 +349,6 @@ function checkFile(filePath, content, revMode = false) {
       let match;
       const regex = new RegExp(patternInfo.regex, 'g');
 
-       
       while ((match = regex.exec(processedLine)) !== null) {
         // Adjust match index back to original line if we modified processedLine
         let charIndex = match.index;
@@ -608,6 +612,16 @@ function runSelfTest() {
       content: '// per the task description',
       shouldMatch: true,
     },
+    {
+      name: 'Task citation with suffix word',
+      content: '// See task-12 spec for the shape',
+      shouldMatch: true,
+    },
+    {
+      name: 'Task citation bare (no suffix word)',
+      content: '// Implements task-06',
+      shouldMatch: true,
+    },
 
     // Negative cases (should NOT match)
     {
@@ -633,6 +647,16 @@ function runSelfTest() {
     {
       name: 'SessionGuard class',
       content: 'export class SessionGuard {}',
+      shouldMatch: false,
+    },
+    {
+      name: 'Subtask identifier should not false-positive as task citation',
+      content: '// See subtask-12 for the child unit',
+      shouldMatch: false,
+    },
+    {
+      name: 'Word glued to digits should not false-positive as task citation',
+      content: '// Reference to task-12abc in generated fixture',
       shouldMatch: false,
     },
     {
@@ -691,6 +715,20 @@ function runSelfTest() {
       content:
         '| Task | Notes |\n| ---- | ----- |\n| 2026-09-26-01-task-S6-slug | ok |',
       shouldMatch: false,
+      file: 'docs/METRICS.md',
+    },
+    {
+      name: 'METRICS Task column skip, task citation pattern',
+      content:
+        '| Date | Task | Notes |\n| ---------- | ---- | ------- |\n| 2026-09-26 | task-06 schema | OK |',
+      shouldMatch: false,
+      file: 'docs/METRICS.md',
+    },
+    {
+      name: 'METRICS Notes column flags task citation pattern',
+      content:
+        '| Date | Task | Notes |\n| ---------- | ---- | ------- |\n| 2026-09-26 | 2026-09-26-01-plan | see task-06 schema |',
+      shouldMatch: true,
       file: 'docs/METRICS.md',
     },
   ];

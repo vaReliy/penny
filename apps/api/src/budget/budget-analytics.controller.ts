@@ -27,7 +27,7 @@ import { buildBudgetContext } from './build-budget-context.js';
 import { resolveDefaultAccount } from './resolve-default-account.js';
 import { TOKENS } from './tokens.js';
 
-/** Maps one `PlannerCategorySummaryResult` to its wire `PlannerCategorySummary` shape (drops the application-only `percent` field — not yet part of the signed-off task-06 contract). */
+/** Maps one `PlannerCategorySummaryResult` to its wire `PlannerCategorySummary` shape (drops the application-only `percent` field — not part of the `budget-contracts` wire DTO). */
 function toPlannerCategorySummary(
   result: PlannerCategorySummaryResult,
 ): PlannerCategorySummary {

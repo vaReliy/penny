@@ -18,8 +18,8 @@ export interface GetTransactionDeps {
 }
 
 /**
- * LIVR schema for {@link GetTransactionParams}. No task-06 schema exists for
- * this action (`id` is a path parameter, not a request body) — validated
+ * LIVR schema for {@link GetTransactionParams}. No shared `*.schema.ts` file
+ * exists for this action (`id` is a path parameter, not a request body) — validated
  * with the same `ID_PATTERN` `shared-util` exports for id-shaped fields,
  * mirroring `ArchiveCategoryService`'s local `ARCHIVE_CATEGORY_SCHEMA`.
  */

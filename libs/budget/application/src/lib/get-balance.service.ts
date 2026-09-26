@@ -19,8 +19,8 @@ export interface GetBalanceDeps {
 }
 
 /**
- * LIVR schema for {@link GetBalanceParams}. No task-06 schema exists for this
- * action (`accountId` is a path parameter, not a request body) — validated
+ * LIVR schema for {@link GetBalanceParams}. No shared `*.schema.ts` file exists
+ * for this action (`accountId` is a path parameter, not a request body) — validated
  * with the same `ID_PATTERN` `shared-util` exports for id-shaped fields,
  * mirroring `GetTransactionService`'s local `GET_TRANSACTION_SCHEMA`.
  */
