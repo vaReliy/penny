@@ -74,18 +74,18 @@ The `budget` context owns income and expense tracking, monthly spending limits, 
 
 ### Ubiquitous Language
 
-| Term                | Meaning                                                                                                                    |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| **Account**         | A bank account or wallet scoped to a workspace. Root aggregate. Holds a name and currency code (e.g., UAH).                |
-| **Transaction**     | A single income or expense event: date, amount, category, account, and optional description. Root aggregate.               |
-| **TransactionType** | The polarity of a transaction: exactly `'income' \| 'expense'`. Stored as a const enum in `budget/contracts`.              |
-| **Category**        | A semantic tag for grouping transactions (e.g., "groceries", "transport"). Root aggregate. Supports soft-archive.          |
-| **archived**        | A category marked as no longer accepting new transactions. Historical transactions retain the archived tag.                |
-| **MonthlyBudget**   | A spending ceiling for a specific category in a specific month (e.g., "€ 50 for transport in July"). Root agg.             |
-| **month**           | Represented as an ISO string `'YYYY-MM'`. Boundaries are calendar months in Europe/Kyiv timezone.                          |
-| **balance**         | Derived as `Σ(income) − Σ(expense)` across all transactions for an account, never stored. Recomputed on read.              |
-| **workspaceId**     | Every budget entity carries a workspace identifier (a UUID string) for multi-tenant scoping. Identity-only ref.            |
-| **Money**           | A value object: `{ amount: bigint, currency: 'UAH' \| 'USD' \| 'EUR' }`. Amounts stored as minor units (kopiykas for UAH). |
+| Term                | Meaning                                                                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Account**         | A bank account or wallet scoped to a workspace. Root aggregate. Holds a name and currency code (e.g., UAH).                                 |
+| **Transaction**     | A single income or expense event: date, amount, category, account, and optional description. Root aggregate.                                |
+| **TransactionType** | The polarity of a transaction: exactly `'income' \| 'expense'`. Stored as a const enum in `budget/contracts`.                               |
+| **Category**        | A semantic tag for grouping transactions (e.g., "groceries", "transport"). Root aggregate. Supports soft-archive.                           |
+| **archived**        | A category marked as no longer accepting new transactions. Historical transactions retain the archived tag.                                 |
+| **MonthlyBudget**   | A spending ceiling for a specific category in a specific month (e.g., "€ 50 for transport in July"). Root agg.                              |
+| **month**           | Represented as an ISO string `'YYYY-MM'`. Boundaries are calendar months in Europe/Kyiv timezone.                                           |
+| **balance**         | Derived as `Σ(income) − Σ(expense)` across all transactions for an account, never stored. Recomputed on read.                               |
+| **workspaceId**     | Every budget entity carries a workspace identifier (a MongoDB ObjectId string) of a `Workspace` the user is a member of. Identity-only ref. |
+| **Money**           | A value object: `{ amount: bigint, currency: 'UAH' \| 'USD' \| 'EUR' }`. Amounts stored as minor units (kopiykas for UAH).                  |
 
 ### Key Invariants
 
@@ -112,18 +112,19 @@ Each new context will follow the same shape as the implemented verticals: `libs/
 
 ## Bounded Context: `workspace`
 
-The `workspace` context owns multi-tenant data isolation and scoped-admin grouping. It establishes the `Workspace` aggregate as the isolation boundary — every budget entity (and future verticals) carry a `workspaceId` identity-only reference to this context.
+The `workspace` context owns multi-tenant data isolation and scoped-admin grouping. It establishes the `Workspace` aggregate as the isolation boundary — every budget entity (and future verticals) carry a `workspaceId` identity-only reference to this context. For CLI command reference (creation, membership management, listing), see `docs/CLI.md`.
 
 ### Ubiquitous Language
 
-| Term                    | Meaning                                                                                                                                  |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **Workspace**           | The root aggregate for a scoped-admin grouping (deliberately not "tenant," "group," or "organization"). The isolation boundary for data. |
-| **WorkspaceMemberRole** | Workspace-local authority, orthogonal to platform `Role {SUPERADMIN, USER}`. Values: `admin`, `member`.                                  |
-| **Membership**          | A value object: `{ userId, role: WorkspaceMemberRoleType, grantedAt, grantedBy }`. Holds the user's workspace-scoped authority.          |
-| **userId**              | A Telegram user ID, stored as identity-only reference — workspace never imports `libs/identity/core`.                                    |
-| **admin**               | Workspace membership role. Can manage members, change roles, and remove members (with hard ≥1-admin invariant).                          |
-| **member**              | Workspace membership role. Read-only data access; cannot manage members or roles.                                                        |
+| Term                      | Meaning                                                                                                                                           |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Workspace**             | The root aggregate for a scoped-admin grouping (deliberately not "tenant," "group," or "organization"). The isolation boundary for data.          |
+| **Workspace member role** | The role a user holds within a workspace: `admin` or `member`. Orthogonal to platform-level `Role`. Determines membership-management permissions. |
+| **Membership**            | A value object: `{ userId, role: WorkspaceMemberRoleType, grantedAt, grantedBy }`. Holds the user's workspace-scoped authority.                   |
+| **WorkspaceMemberRole**   | The TypeScript type encoding workspace member roles (`'admin' \| 'member'`).                                                                      |
+| **userId**                | A Telegram user ID, stored as identity-only reference — workspace never imports `libs/identity/core`.                                             |
+| **admin**                 | Workspace membership role. Can manage members, change roles, and remove members (with hard ≥1-admin invariant).                                   |
+| **member**                | Workspace membership role. Read-only data access; cannot manage members or roles.                                                                 |
 
 ### Workspace Aggregate
 

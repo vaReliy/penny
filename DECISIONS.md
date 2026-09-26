@@ -444,6 +444,10 @@ classDiagram
 
 **DEVIL SIGN-OFF:** No blocking objections. Accepts all ba/ddd resolutions including both overrides (TransactionType in budget/contracts; Mongoose-native-BigInt with Decimal128 fallback). Escalated one item — the category-type/budget-eligibility question — now resolved by the owner (type-agnostic tag, no eligibility validation, free-form MVP risk consciously accepted). Non-blocking clarifications folded into this ADR: archived-category aggregation, monthly-name permanence, BigInt-storage verification spike at the schema implementation start.
 
+### Superseding Decision
+
+The discussion of `DEFAULT_WORKSPACE_ID` in design decisions 2 and 10 (above) describes workspace-scoped authorization as a future feature. That decision has since been made and implemented — see **ADR-010 — Workspaces: Multi-Tenant Budget Isolation** for the actual workspace model, membership enforcement, and the removal of the default-workspace constant in favor of path-parameter-driven workspace targeting.
+
 ---
 
 ## ADR-008 — CSS Framework: Tailwind CSS v4
@@ -612,3 +616,105 @@ This is a real constraint, not a stylistic pick: light text only clears AA on th
 **Revisit triggers:**
 
 - Light theme built (separate future task) → default theme logic changes from hardcoded dark to `prefers-color-scheme`, and the switcher gets built at that point, not before.
+
+---
+
+## ADR-010 — Workspaces: Multi-Tenant Budget Isolation
+
+**Status:** Accepted
+
+**Date:** 2026-09-24
+
+**Decision:** Implement workspace-scoped budget isolation (MVP feature-complete for team/family use). Users belong to zero or more workspaces as members; each workspace has its own budget data (accounts, categories, transactions, budgets), members list with roles, and immutable grant history. Authorization is membership-based (authenticated user in session + workspace membership verified per request) + role-based for administrative actions (member vs. admin within the workspace, independent of platform role).
+
+### MVP Scope
+
+Workspaces in MVP are **isolation-only**: HTTP API routes at `/api/workspaces/:workspaceId/budget/…`, web SPA routes at `/w/:workspaceId/…`, and CLI commands for member and role management. Deferred to post-MVP: workspace creation/rename/deletion UI (CLI-only for MVP), workspace settings/export, and workspace-admin role (member and admin only, no workspace-level "owner" distinction in this iteration).
+
+### Membership Model
+
+- **Membership** is the join entity between a `User` and a `Workspace` (many-to-many).
+- No pending membership lifecycle; members are grant-state only: granted by admin, listed in workspace membership, no invitation/acceptance step, and no grace-period rejection in this MVP.
+- A user with zero memberships sees an empty no-workspace screen and cannot access budget routes.
+- Adding a user to a workspace requires `workspace:add-member` CLI command; membership is atomic (either fully created or fails).
+- Removing a user from a workspace is also CLI-only, blocked if it would leave the workspace with no admins.
+
+### Existing Data & Migration
+
+A one-time cleanup is required before the first deploy to an environment with legacy budget data from the single-implicit-workspace era. Budget documents carry `workspaceId: 'default-workspace'`, which no real workspace can ever match; they are not migrated (MVP has no real users). The operator deletes legacy documents via `mongosh`, then creates workspaces using the CLI (`workspace:create`) with real users as admins. See `docs/RECIPES.md` § "Workspace rollout (one-time)" for the cleanup procedure.
+
+### Targeting: Path Parameters
+
+Workspace-scoped routes use MongoDB ObjectId path parameters: `/api/workspaces/:workspaceId/budget/categories`, `/w/:workspaceId/accounts`, etc. Client-side workspace selection is stored in `localStorage` (a convenience only; does not drive authorization). If `localStorage` is unavailable or contains a stale/non-member workspace ID, the web app falls back silently to the first workspace by grant date. Path parameters are the only source of truth for workspace targeting; client-supplied workspace IDs in request bodies are ignored.
+
+### Member Rights: Read/Write Parity
+
+All workspace members (both `member` and `admin` roles) have full read and write access to budget data within that workspace. There is no read-only member role. Administrative power (member/role management) differs by role: `MEMBER` cannot add/remove/promote other members; `ADMIN` can. In a single-member workspace, that member must be an admin.
+
+### Workspace Switcher: Redirect & Fallback
+
+The `/` web route redirects to the last-used workspace (stored in `localStorage`). If `localStorage` is unavailable, empty, or references a non-member workspace ID, the redirect falls back to the workspace that was granted earliest (minimum `grantedAt` timestamp). A fresh login redirects to this fallback; subsequent route changes in the session update `localStorage` to the current workspace, so subsequent `/` navigations land in the user's most recent workspace.
+
+### Two Orthogonal Role Axes
+
+The codebase has two independent role systems:
+
+1. **Platform `Role`** (global, per-user): `SUPERADMIN` (CLI admin, can manage any user's approval status and global admin grants), or default/no role (ordinary user). Conferred via `admin:promote` CLI command. Stored in `User.roles`.
+2. **`WorkspaceMemberRole`** (workspace-scoped, per membership): `MEMBER` or `ADMIN` within a specific workspace. Conferred via `workspace:add-member` and `workspace:set-role` CLI commands. Stored in `Workspace.members[].role`. No JWT claim for workspace membership — membership is checked per-request from the database.
+
+These axes are orthogonal: a `SUPERADMIN` has no implicit access to workspace budget data (membership is still required), and a workspace `ADMIN` has no global privileges outside their own workspace.
+
+### Security Properties
+
+- **Opaque 404s**: Non-member, nonexistent, and malformed workspace IDs in path parameters all return 404 (generic, no distinction to the client).
+- **Fresh membership read per request**: The `WorkspaceMemberGuard` re-reads the user's workspace membership from MongoDB on every request (no caching in session/JWT). Guard chain: `SessionGuard` (verify JWT and load user) → `ActiveUserGuard` (verify status = active) → `WorkspaceMemberGuard` (verify membership in the target workspace from path params). This ensures membership changes (removal, role changes) are enforced immediately, without waiting for session expiry.
+- **Cross-workspace body references forbidden**: API request bodies never reference workspace IDs (workspace ID comes from the path only). Inbound DTOs do not carry `workspaceId` fields. This prevents accidental/malicious cross-workspace moves.
+- **Client-supplied workspace IDs ignored**: If a request body includes a `workspaceId` field (legacy or misconfigured client), it is stripped or ignored before reaching application logic. The workspace ID is derived solely from the path parameter and validated by the guard chain.
+- **CLI is the only administrative surface**: `workspace:add-member`, `workspace:set-role`, `workspace:remove-member`, and `workspace:create` are CLI-only. No HTTP admin endpoints for membership management exist in MVP. This limits the attack surface and ensures administrative changes leave an audit trail.
+- **Superadmin has no implicit workspace access**: The `SUPERADMIN` role does not grant access to any workspace data; a superadmin must also be a member (have a workspace membership record) to access budget routes. Implicit access would defeat isolation and is not implemented.
+
+### Storage Model
+
+**Workspace aggregate:**
+
+```ts
+{
+  id: string; // MongoDB ObjectId
+  name: string; // display name
+  members: Array<{
+    userId: string; // reference to User.id
+    role: 'member' | 'admin'; // workspace member role
+    grantedAt: Date; // membership creation timestamp (used for fallback ordering)
+    grantedBy: string; // 'cli' or 'api' (audit trail)
+  }>;
+  version: number; // optimistic concurrency version (incremented on write)
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+- `members` is embedded within the `Workspace` document (not a separate collection).
+- Multikey index on `{members.userId: 1}` for membership lookups (find all workspaces a user belongs to).
+- Unique index on `{name: 1}` (workspace names are globally unique in MVP; deferred to workspace-admin-scoped uniqueness if needed later).
+- **Optimistic concurrency control** via `version` field: when an admin command (`workspace:set-role`, `workspace:remove-member`) modifies the workspace, it increments the version and uses a CAS (compare-and-swap) pattern to detect concurrent modifications. If the version check fails, the command is retried by the CLI operator.
+
+### Enforcement Mechanisms
+
+**Route meta-test:** Every workspace-scoped route carries Nx tag `scope:workspace` and imports only from `scope:workspace` and `scope:shared` libs (enforced by `@nx/enforce-module-boundaries`). No route imports from `scope:budget` directly; budget services are composed in the `workspace` layer's application/infrastructure.
+
+**API E2E isolation suite:** `apps/api-e2e/src/workspace/workspace-isolation.spec.ts` asserts that a user in workspace A cannot:
+
+- Read/write budget data from workspace B.
+- Add/remove/promote members in workspace B.
+- Redirect to workspace B via path parameters.
+- Infer workspace B's existence via timing or error messages (opaque 404s).
+
+**Lint boundaries:** Nx tags enforce that `scope:workspace` exports from `scope:shared` only, preventing accidental budget/identity imports that would undermine isolation.
+
+**Aggregate invariant tests:** `Workspace` entities have static factory methods (`Workspace.create()`) and invariant-checking methods (`Workspace.ensureAtLeastOneAdmin()`, etc.) tested in `libs/workspace/core/*.spec.ts`. These ensure no workspace ever has zero admins.
+
+**Guard order spec:** The `WorkspaceMemberGuard` spec (`apps/api/src/workspace/workspace-member.guard.spec.ts`) documents the guard sequence and validates that a stale workspace ID (user was removed since their session was created) is correctly detected and rejected.
+
+### Why This Design
+
+Workspaces in Penny are a **multi-tenant isolation boundary**, not a cosmetic grouping. MVP scope is read/write budget isolation; post-MVP will add admin UI, rename/delete, and workspace-creation flows. The membership-without-invitation model is motivated by a family-group use case (all members approved by one admin upfront); invite/acceptance workflows are deferred. CLI-only administrative commands keep the attack surface small and decisions auditable. The two-role-axis design separates global admin (platform superuser) from workspace-local admin (who can grant membership), since a family's budget-app admin is not necessarily the system superadmin. Path-parameter-only workspace targeting prevents subtle cross-workspace routing bugs and simplifies the mental model for operators and developers.

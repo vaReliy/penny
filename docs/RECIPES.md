@@ -126,7 +126,7 @@ This guide is for human operators running Claude Code sessions. It documents sev
 3. (In Docker: `docker compose exec app <command>` from the root where `docker-compose.yml` resides.)
 4. Verify the output confirms approval; the user can now log in.
 
-**Reference:** `docs/SKELETON.md` § b, step 5 (setup guide); `apps/cli/src/commands/` for other CLI commands (`user-reject`, `admin-promote`, etc.).
+**Reference:** `docs/SKELETON.md` § b, step 5 (setup guide); `docs/CLI.md` for all CLI commands.
 
 ---
 
@@ -155,7 +155,7 @@ This guide is for human operators running Claude Code sessions. It documents sev
 3. Add further members with `workspace:add-member --workspace <workspaceId> --telegram-id <telegramId> --role member` (or `--role admin`).
 4. Verify with `workspace:list`, then sign in: `GET /api/workspaces` lists the caller's workspaces, and the web client must address budget data through the chosen workspace's id.
 
-**Reference:** `apps/cli/src/commands/` (`workspace-*` commands). The default `Main` account is created lazily per workspace on its first balance read, so no account seeding is needed.
+**Reference:** `docs/CLI.md` for workspace management commands. The default `Main` account is created lazily per workspace on its first balance read, so no account seeding is needed.
 
 ---
 

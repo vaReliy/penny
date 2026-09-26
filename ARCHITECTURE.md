@@ -29,7 +29,7 @@ penny/
       kernel/     Base onion abstractions: BaseService, base repo interfaces, ServiceContext
       infrastructure/  MongoDB connection factory (platform:server)
       web-shell/  Angular app root shell component, layout (platform:web)
-      web-shell-data/  Angular shell state: workspace, auth, layout signals (platform:web)
+      web-shell-data/  Angular shell state: current workspace selection, workspace API client, workspace routing guards (platform:web)
 
     identity/     scope:identity — first vertical slice (auth & users), full stack
       core/             User entity, IUserRepository interface, UserStatus (platform:server)
@@ -219,3 +219,9 @@ Browser
 - CSP nonce injection (when implemented) must happen at the nginx layer via `sub_filter` — see ADR-006 in `DECISIONS.md`.
 - Static JS/CSS bundles use content-hashed filenames and are cached for 1 year (`immutable`). `index.html` itself is served with `no-cache` so the latest bundle references are always fetched.
 - The `web` container health check hits nginx's `/health` stub location; the `api` container health check hits `/api/health` via `wget`.
+
+---
+
+## See Also
+
+- `docs/CLI.md` — Full command reference for `apps/cli` (user, workspace, and admin management commands).

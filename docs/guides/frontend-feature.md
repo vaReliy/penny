@@ -88,8 +88,8 @@ The `libs/<domain>/data-access` layer holds two things:
 **HTTP clients** — one per endpoint family, calling `HttpClient.get/post`:
 
 - `libs/budget/data-access/src/lib/rates.client.ts` — `GET /api/rates`
-- `libs/budget/data-access/src/lib/analytics.client.ts` — `GET /api/budget/balance`, `GET /api/budget/summary`, etc.
-- `libs/budget/data-access/src/lib/transaction.client.ts` — `POST /api/budget/transactions`
+- `libs/budget/data-access/src/lib/analytics.client.ts` — `GET /api/workspaces/:workspaceId/budget/balance`, `GET /api/workspaces/:workspaceId/budget/summary`, etc.
+- `libs/budget/data-access/src/lib/transaction.client.ts` — `POST /api/workspaces/:workspaceId/budget/transactions`
 
 **Signal stores** — one per concern (e.g., `DashboardStore` for read models, `TransactionStore` for mutations):
 
@@ -555,7 +555,7 @@ describe('AccountPageComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent).toContain('Завантаження...');
 
-    httpController.expectOne('/api/budget/balance').flush({
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
       accountId: 'a1',
       balance: { amount: '415000', currency: 'UAH' },
     });

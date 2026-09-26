@@ -219,9 +219,9 @@ export class RecordTransactionService extends BaseService<RecordTransactionParam
   public async authorize(context: ServiceContext, params: RecordTransactionParams): Promise<void> {
     if (!context.caller) throw new AuthenticationError();
 
-    // Cross-aggregate check: category exists, is owned by this workspace, and is not archived
-    const category = await this.categoryRepository.findById(params.categoryId);
-    if (!category || category.workspaceId !== context.caller.workspaceId || category.archivedAt !== null) {
+    // Cross-aggregate check: category exists, is in this workspace, and is not archived
+    const category = await this.categoryRepository.findByIdInWorkspace(params.categoryId, context.config.workspaceId);
+    if (!category || category.isArchived()) {
       throw new CategoryNotEligibleError('Category not found or archived');
     }
   }
@@ -248,7 +248,7 @@ public authorize(context: ServiceContext): void {
 }
 ```
 
-The check has no `??` or default-true fallback — it rejects on `null` / empty `roles`. This is the _only_ `context.caller?.roles` check in the codebase as of now. Any future admin-gated service should reuse this exact pattern rather than re-deriving a new role-check. The `caller` is built by `SessionGuard` from JWT-verified `req.user`, ensuring the roles claim is signature-verified.
+The check has no `??` or default-true fallback — it rejects on `null` / empty `roles`. This is the _only_ `context.caller?.roles` check in the codebase as of now. Any future admin-gated service should reuse this exact pattern rather than re-deriving a new role-check. The `caller` is built by `SessionGuard` from JWT-verified `req.user`, ensuring the roles claim is signature-verified. Workspace-scoped member roles (admin vs. member within a workspace) are enforced separately by `WorkspaceMemberGuard` and checked independently of platform-level `Role` — the two role axes are orthogonal.
 
 ## Validation Rules
 

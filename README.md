@@ -50,7 +50,7 @@ Three apps exist: `apps/api` (NestJS HTTP API), `apps/web` (Angular SPA), and `a
 
 ### CLI environment setup
 
-The `apps/cli` app does not include a dotenv loader (see `apps/cli/src/config/cli-config.ts`). All CLI commands must be prefixed with `set -a && source .env && set +a` to make `MONGO_URI`, `MONGO_DB_NAME`, and other environment variables available to the process — alternatively, run in Docker (see below) to inject env vars into the container. Without env-sourcing, CLI commands fail silently on missing database connection info.
+The `apps/cli` app does not include a dotenv loader (see `apps/cli/src/config/cli-config.ts`). All CLI commands must be prefixed with `set -a && source .env && set +a` to make `MONGO_URI`, `MONGO_DB_NAME`, and other environment variables available to the process — alternatively, run in Docker (see below) to inject env vars into the container. Without env-sourcing, CLI commands fail silently on missing database connection info. See `docs/CLI.md` for the full command reference.
 
 ### Environment configuration
 
