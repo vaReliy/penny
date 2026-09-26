@@ -14,6 +14,7 @@ import {
   WorkspaceClient,
 } from 'shared-web-shell-data';
 import { SHELL_NAV_ITEMS } from '../shell-nav-item';
+import { WorkspaceSwitcherComponent } from '../workspace-switcher/workspace-switcher';
 
 @Component({
   selector: 'lib-app-shell',
@@ -24,6 +25,7 @@ import { SHELL_NAV_ITEMS } from '../shell-nav-item';
     RouterOutlet,
     CdkMenuModule,
     TranslocoPipe,
+    WorkspaceSwitcherComponent,
   ],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.css',

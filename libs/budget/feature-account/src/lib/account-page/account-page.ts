@@ -2,21 +2,25 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
-  OnInit,
 } from '@angular/core';
 import { TranslocoPipe, provideTranslocoScope } from '@jsverse/transloco';
 import { DashboardStore, RatesStore } from 'budget-data-access';
 import { BalanceCardComponent, RatesCardComponent } from 'budget-ui';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 
 type AccountPageState = 'loading' | 'error' | 'ready';
 
 /**
  * Feature page for the «Рахунок» screen: composes the dumb `budget-ui` cards
  * over `DashboardStore` (balance) and `RatesStore` (FX rates). Balance and
- * rates load independently on init; only the rates card's refresh action
- * re-fetches (mirrors the legacy `page-bill` UX — refresh never re-pulls the
- * balance itself).
+ * rates re-load whenever the current workspace changes (including the
+ * initial load) — the route is reused across a workspace switch since the
+ * route config itself doesn't change, only `:workspaceId`, so `ngOnInit`
+ * alone would never re-fire. Only the rates card's refresh action
+ * re-fetches on demand (mirrors the legacy `page-bill` UX — refresh never
+ * re-pulls the balance itself).
  */
 @Component({
   selector: 'lib-account-page',
@@ -26,9 +30,10 @@ type AccountPageState = 'loading' | 'error' | 'ready';
   templateUrl: './account-page.html',
   styleUrl: './account-page.css',
 })
-export class AccountPageComponent implements OnInit {
+export class AccountPageComponent {
   protected readonly dashboardStore = inject(DashboardStore);
   protected readonly ratesStore = inject(RatesStore);
+  private readonly currentWorkspace = inject(CurrentWorkspace);
 
   protected readonly state = computed<AccountPageState>(() => {
     if (
@@ -46,9 +51,12 @@ export class AccountPageComponent implements OnInit {
     return 'loading';
   });
 
-  public ngOnInit(): void {
-    this.dashboardStore.loadBalance();
-    this.ratesStore.load();
+  public constructor() {
+    effect(() => {
+      this.currentWorkspace.currentId();
+      this.dashboardStore.loadBalance();
+      this.ratesStore.load();
+    });
   }
 
   protected onRetry(): void {

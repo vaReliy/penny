@@ -15,6 +15,9 @@
       "menuLabel": "Меню профілю",
       "logout": "Вийти"
     },
+    "workspace": {
+      "triggerLabel": "Робочий простір: {{name}}"
+    },
     "placeholder": {
       "comingSoon": "Цей розділ ще в розробці"
     },

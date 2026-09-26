@@ -28,27 +28,31 @@
       }
     </nav>
 
-    <button
-      type="button"
-      class="flex min-h-touch min-w-touch cursor-pointer items-center justify-center rounded-full text-text-secondary hover:bg-background"
-      [attr.aria-label]="'shell.profile.menuLabel' | transloco"
-      [cdkMenuTriggerFor]="profileMenu"
-    >
-      <svg
-        class="h-6 w-6"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.5"
-        aria-hidden="true"
+    <div class="flex items-center gap-1">
+      <lib-workspace-switcher />
+
+      <button
+        type="button"
+        class="flex min-h-touch min-w-touch cursor-pointer items-center justify-center rounded-full text-text-secondary hover:bg-background"
+        [attr.aria-label]="'shell.profile.menuLabel' | transloco"
+        [cdkMenuTriggerFor]="profileMenu"
       >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.25a7.5 7.5 0 0 1 15 0"
-        />
-      </svg>
-    </button>
+        <svg
+          class="h-6 w-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.25a7.5 7.5 0 0 1 15 0"
+          />
+        </svg>
+      </button>
+    </div>
 
     <ng-template #profileMenu>
       <div
