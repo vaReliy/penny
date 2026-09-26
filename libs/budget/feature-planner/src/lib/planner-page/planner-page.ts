@@ -14,6 +14,7 @@ import {
   errorMessageKey,
   formatMoney,
 } from 'budget-data-access';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 
 import { PlannerCategoryRowComponent } from '../planner-category-row/planner-category-row';
 import {
@@ -47,6 +48,7 @@ export class PlannerPageComponent {
   protected readonly categoryStore = inject(CategoryStore);
   protected readonly dashboardStore = inject(DashboardStore);
   protected readonly monthlyBudgetStore = inject(MonthlyBudgetStore);
+  private readonly currentWorkspace = inject(CurrentWorkspace);
 
   protected readonly errorMessageKey = errorMessageKey;
 
@@ -81,9 +83,15 @@ export class PlannerPageComponent {
   private editSubmitted = false;
 
   public constructor() {
-    this.categoryStore.load();
+    effect(() => {
+      this.currentWorkspace.currentId();
+      this.categoryStore.reset();
+      this.categoryStore.load();
+    });
 
     effect(() => {
+      this.currentWorkspace.currentId();
+      this.dashboardStore.resetSummary();
       this.dashboardStore.loadSummary(this.month());
     });
 

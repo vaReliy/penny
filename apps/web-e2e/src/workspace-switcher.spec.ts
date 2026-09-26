@@ -158,6 +158,83 @@ test.describe('workspace switcher', () => {
     ).toBeVisible();
   });
 
+  test("switching A -> B on /planner replaces A's categories with B's, not stale data from the reused component", async ({
+    page,
+  }) => {
+    await mockCommon(page, twoWorkspaces);
+    await page.route('**/api/workspaces/w1/budget/categories', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([{ id: 'c1', name: 'A-Category' }]),
+      }),
+    );
+    await page.route('**/api/workspaces/w2/budget/categories', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([{ id: 'c2', name: 'B-Category' }]),
+      }),
+    );
+    await page.route('**/api/workspaces/*/budget/summary', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ month: '2026-01', categories: [] }),
+      }),
+    );
+
+    await page.goto('/w/w1/planner');
+    await page.waitForURL('**/w/w1/planner');
+    await expect(page.getByText('A-Category')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Робочий простір: Family' }).click();
+    await page.getByRole('menuitem', { name: 'Business' }).click();
+    await page.waitForURL('**/w/w2/planner');
+
+    // Retrying assertion, not `waitForURL` alone or `networkidle` (see
+    // rules/local/testing-e2e.md's ban on networkidle) — waits out the
+    // re-fetch race before asserting the reused component shows B's data.
+    await expect(page.getByText('B-Category')).toBeVisible();
+    await expect(page.getByText('A-Category')).toHaveCount(0);
+  });
+
+  test("switching A -> B on /records replaces A's category options with B's, not stale data from the reused component", async ({
+    page,
+  }) => {
+    await mockCommon(page, twoWorkspaces);
+    await page.route('**/api/workspaces/w1/budget/categories', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([{ id: 'c1', name: 'A-Category' }]),
+      }),
+    );
+    await page.route('**/api/workspaces/w2/budget/categories', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([{ id: 'c2', name: 'B-Category' }]),
+      }),
+    );
+
+    await page.goto('/w/w1/records');
+    await page.waitForURL('**/w/w1/records');
+    await expect(page.locator('#records-category')).toContainText('A-Category');
+
+    await page.getByRole('button', { name: 'Робочий простір: Family' }).click();
+    await page.getByRole('menuitem', { name: 'Business' }).click();
+    await page.waitForURL('**/w/w2/records');
+
+    // Retrying assertion, not `waitForURL` alone or `networkidle` (see
+    // rules/local/testing-e2e.md's ban on networkidle) — waits out the
+    // re-fetch race before asserting the reused component shows B's data.
+    await expect(page.locator('#records-category')).toContainText('B-Category');
+    await expect(page.locator('#records-category')).not.toContainText(
+      'A-Category',
+    );
+  });
+
   test('single-workspace case: switcher shows the name and has no menu', async ({
     page,
   }) => {

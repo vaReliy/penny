@@ -51,6 +51,33 @@ describe('TransactionStore', () => {
     expect(store.data()).toEqual([]);
   });
 
+  it('resetList() clears the loaded list', () => {
+    store.load({ month: '2026-07' });
+    httpController
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/workspaces/ws1/budget/transactions' &&
+          candidate.params.get('month') === '2026-07',
+      )
+      .flush([
+        {
+          id: 't1',
+          accountId: 'a1',
+          categoryId: 'c1',
+          type: TransactionType.EXPENSE,
+          amount: { amount: '15000', currency: 'UAH' },
+          date: '2026-07-27',
+          createdBy: 'u1',
+          createdAt: '2026-07-27T00:00:00.000Z',
+        },
+      ]);
+    expect(store.data()).toHaveLength(1);
+
+    store.resetList();
+
+    expect(store.data()).toEqual([]);
+  });
+
   it('record() prepends the new transaction to data', () => {
     store.record({
       accountId: 'a1',

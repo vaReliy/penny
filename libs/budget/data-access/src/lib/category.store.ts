@@ -78,6 +78,11 @@ export class CategoryStore {
     });
   }
 
+  /** Clears the currently loaded categories, e.g. before a workspace switch's re-fetch so stale data is never shown as current. */
+  public reset(): void {
+    this.categoriesSignal.set([]);
+  }
+
   public create(request: CreateCategoryRequest): void {
     this.createRequestState.run(this.client.create(request), (created) => {
       this.categoriesSignal.set([...this.categoriesSignal(), created]);

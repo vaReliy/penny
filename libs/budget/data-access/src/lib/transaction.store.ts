@@ -76,6 +76,11 @@ export class TransactionStore {
     });
   }
 
+  /** Clears the currently loaded list, e.g. before a workspace switch's re-fetch so stale data is never shown as current. */
+  public resetList(): void {
+    this.transactionsSignal.set([]);
+  }
+
   public record(params: RecordTransactionParams): void {
     this.recordRequestState.run(this.client.record(params), (recorded) => {
       this.transactionsSignal.set([recorded, ...this.transactionsSignal()]);

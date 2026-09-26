@@ -3,6 +3,7 @@ import {
   Component,
   DestroyRef,
   computed,
+  effect,
   inject,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -82,7 +83,11 @@ export class HistoryDetailPageComponent {
   });
 
   public constructor() {
-    this.categoryStore.load();
+    effect(() => {
+      this.currentWorkspace.currentId();
+      this.categoryStore.reset();
+      this.categoryStore.load();
+    });
 
     this.route.paramMap
       .pipe(takeUntilDestroyed(this.destroyRef))

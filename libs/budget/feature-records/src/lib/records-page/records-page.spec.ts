@@ -8,6 +8,7 @@ import { provideRouter } from '@angular/router';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { RecordsPageComponent } from './records-page';
+import { CategoryStore, DashboardStore } from 'budget-data-access';
 import { CurrentWorkspace } from 'shared-web-shell-data';
 
 const UK_TRANSLATIONS = { common: { loading: 'Завантаження...' } };
@@ -102,5 +103,63 @@ describe('RecordsPageComponent', () => {
     expect(el.textContent).toContain('Записи');
     expect(el.querySelector('lib-transaction-form')).not.toBeNull();
     expect(el.querySelector('lib-category-manager')).not.toBeNull();
+  });
+
+  it('clears the previous workspace’s categories and balance immediately on a workspace switch, before the new response resolves', async () => {
+    fixture = TestBed.createComponent(RecordsPageComponent);
+    fixture.detectChanges();
+
+    httpController
+      .expectOne('/api/workspaces/ws1/budget/categories')
+      .flush([{ id: 'c1', name: 'Продукти' }]);
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
+      accountId: 'a1',
+      balance: { amount: '415000', currency: 'UAH' },
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const categoryStore = TestBed.inject(CategoryStore);
+    const dashboardStore = TestBed.inject(DashboardStore);
+
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws2');
+    fixture.detectChanges();
+
+    expect(categoryStore.data()).toEqual([]);
+    expect(dashboardStore.balance()).toBeNull();
+
+    httpController
+      .expectOne('/api/workspaces/ws2/budget/categories')
+      .flush([{ id: 'c2', name: 'Транспорт' }]);
+    httpController.expectOne('/api/workspaces/ws2/budget/balance').flush({
+      accountId: 'a2',
+      balance: { amount: '0', currency: 'UAH' },
+    });
+  });
+
+  it('re-loads categories and balance against the new workspace when the current workspace changes', async () => {
+    fixture = TestBed.createComponent(RecordsPageComponent);
+    fixture.detectChanges();
+
+    httpController
+      .expectOne('/api/workspaces/ws1/budget/categories')
+      .flush([{ id: 'c1', name: 'Продукти' }]);
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
+      accountId: 'a1',
+      balance: { amount: '0', currency: 'UAH' },
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws2');
+    fixture.detectChanges();
+
+    httpController
+      .expectOne('/api/workspaces/ws2/budget/categories')
+      .flush([{ id: 'c2', name: 'Транспорт' }]);
+    httpController.expectOne('/api/workspaces/ws2/budget/balance').flush({
+      accountId: 'a2',
+      balance: { amount: '0', currency: 'UAH' },
+    });
   });
 });

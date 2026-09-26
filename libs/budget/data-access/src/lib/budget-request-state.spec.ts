@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { throwError, of } from 'rxjs';
+import { throwError, of, Subject } from 'rxjs';
 import { describe, it, expect, vi } from 'vitest';
 import { BudgetRequestState } from './budget-request-state.js';
 import type { BudgetSessionExpiryService } from './budget-session-expiry.service.js';
@@ -104,5 +104,40 @@ describe('BudgetRequestState', () => {
     expect(state.error()?.kind).toBe('UNKNOWN');
     expect(state.loading()).toBe(false);
     expect(sessionExpiry.redirectToLogin).not.toHaveBeenCalled();
+  });
+
+  it('ignores a late completion of a superseded run (does not invoke its onSuccess)', () => {
+    const state = new BudgetRequestState(makeSessionExpiry());
+    const run1 = new Subject<string>();
+    const run2 = new Subject<string>();
+    const onSuccess1 = vi.fn();
+    const onSuccess2 = vi.fn();
+
+    state.run(run1, onSuccess1);
+    state.run(run2, onSuccess2);
+
+    run2.next('B');
+    run2.complete();
+    run1.next('A');
+    run1.complete();
+
+    expect(onSuccess1).not.toHaveBeenCalled();
+    expect(onSuccess2).toHaveBeenCalledExactlyOnceWith('B');
+  });
+
+  it('ignores a late error from a superseded run (does not set the error state)', () => {
+    const state = new BudgetRequestState(makeSessionExpiry());
+    const run1 = new Subject<string>();
+    const run2 = new Subject<string>();
+
+    state.run(run1, () => undefined);
+    state.run(run2, () => undefined);
+
+    run2.next('B');
+    run2.complete();
+    run1.error(new HttpErrorResponse({ status: 500, error: null }));
+
+    expect(state.error()).toBeNull();
+    expect(state.loading()).toBe(false);
   });
 });

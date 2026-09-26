@@ -54,6 +54,8 @@ export class AccountPageComponent {
   public constructor() {
     effect(() => {
       this.currentWorkspace.currentId();
+      this.dashboardStore.resetBalance();
+      this.ratesStore.reset();
       this.dashboardStore.loadBalance();
       this.ratesStore.load();
     });

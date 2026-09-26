@@ -143,6 +143,58 @@ describe('HistoryDetailPageComponent', () => {
     expect(text).toContain(NOT_FOUND_ERROR_TEXT);
   });
 
+  it('clears the previous workspace’s categories immediately on a workspace switch, before the new response resolves', async () => {
+    const fixture = TestBed.createComponent(HistoryDetailPageComponent);
+    fixture.detectChanges();
+    httpController
+      .expectOne('/api/workspaces/ws1/budget/categories')
+      .flush([{ id: 'c1', name: 'Їжа' }]);
+    httpController
+      .expectOne('/api/workspaces/ws1/budget/transactions/t1')
+      .flush({
+        id: 't1',
+        accountId: 'a1',
+        categoryId: 'c1',
+        type: 'expense',
+        amount: { amount: '15000', currency: 'UAH' },
+        date: '2026-07-27',
+        createdBy: 'u1',
+        createdAt: '2026-07-27T00:00:00.000Z',
+      });
+    await detectAndStabilize(fixture);
+
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws2');
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance['categoryStore'].data()).toEqual([]);
+
+    httpController.expectOne('/api/workspaces/ws2/budget/categories').flush([]);
+  });
+
+  it('re-loads categories against the new workspace when the current workspace changes', async () => {
+    const fixture = TestBed.createComponent(HistoryDetailPageComponent);
+    fixture.detectChanges();
+    httpController.expectOne('/api/workspaces/ws1/budget/categories').flush([]);
+    httpController
+      .expectOne('/api/workspaces/ws1/budget/transactions/t1')
+      .flush({
+        id: 't1',
+        accountId: 'a1',
+        categoryId: 'c1',
+        type: 'expense',
+        amount: { amount: '15000', currency: 'UAH' },
+        date: '2026-07-27',
+        createdBy: 'u1',
+        createdAt: '2026-07-27T00:00:00.000Z',
+      });
+    await detectAndStabilize(fixture);
+
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws2');
+    fixture.detectChanges();
+
+    httpController.expectOne('/api/workspaces/ws2/budget/categories').flush([]);
+  });
+
   it('surfaces a 500 from the detail endpoint without throwing', async () => {
     const fixture = TestBed.createComponent(HistoryDetailPageComponent);
     fixture.detectChanges();

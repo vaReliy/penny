@@ -42,4 +42,9 @@ export class RatesStore {
   public refresh(): void {
     this.load();
   }
+
+  /** Clears any previously loaded rates, e.g. before a workspace switch's re-fetch so stale data is never shown as current. */
+  public reset(): void {
+    this.ratesSignal.set(null);
+  }
 }

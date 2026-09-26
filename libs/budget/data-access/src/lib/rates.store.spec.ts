@@ -70,13 +70,11 @@ describe('RatesStore', () => {
     ]);
   });
 
-  it('documents concurrent-refresh behavior: no dedup/cancellation, last-to-resolve wins regardless of call order', () => {
-    // There is no in-flight guard on `run()` — calling refresh() while a
-    // load() is still pending fires a second, independent HTTP request. This
-    // test pins down what the store actually does today (last response to
-    // resolve overwrites the signal, even if it was the *older* call) rather
-    // than asserting the dedup behavior tracked by an open backlog item to
-    // add in-flight-request dedup/cancellation for concurrent refresh() calls.
+  it('ignores a late-resolving superseded call: a stale first request never overwrites a second, newer call’s data', () => {
+    // Calling refresh() while a load() is still pending fires a second,
+    // independent HTTP request. BudgetRequestState's generation guard
+    // ensures the second (newer) call always wins, regardless of which
+    // response actually arrives first over the wire.
     store.load();
     store.refresh();
 
@@ -94,16 +92,30 @@ describe('RatesStore', () => {
       { currency: 'EUR', rateToBase: '45.0000' },
     ]);
 
-    // ...then resolve the first (earlier) call, which overwrites it, even
-    // though it was issued first and carries staler data.
+    // ...then resolve the first (earlier, now-superseded) call, which is
+    // dropped rather than overwriting the newer data.
     first.flush({
       base: 'UAH',
       rates: [{ currency: 'USD', rateToBase: '41.5000' }],
       asOf: '2026-07-27T10:00:00.000Z',
     });
     expect(store.rates()?.rates).toEqual([
-      { currency: 'USD', rateToBase: '41.5000' },
+      { currency: 'EUR', rateToBase: '45.0000' },
     ]);
+  });
+
+  it('reset() clears the loaded rates', () => {
+    store.load();
+    httpController.expectOne('/api/rates').flush({
+      base: 'UAH',
+      rates: [{ currency: 'USD', rateToBase: '41.5000' }],
+      asOf: '2026-07-27T10:00:00.000Z',
+    });
+    expect(store.rates()).not.toBeNull();
+
+    store.reset();
+
+    expect(store.rates()).toBeNull();
   });
 
   it('maps a failed request into the error signal and clears loading', () => {

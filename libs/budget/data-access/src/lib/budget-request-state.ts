@@ -19,6 +19,8 @@ import type { BudgetSessionExpiryService } from './budget-session-expiry.service
 export class BudgetRequestState {
   private readonly loadingSignal = signal(false);
   private readonly errorSignal = signal<BudgetApiError | null>(null);
+  /** Bumped on every `run()` call; a run only writes state while it still holds the latest generation, so a superseded run's late completion/error is dropped. */
+  private generation = 0;
 
   public constructor(
     private readonly sessionExpiry: BudgetSessionExpiryService,
@@ -32,23 +34,34 @@ export class BudgetRequestState {
     return this.errorSignal;
   }
 
-  /** Runs `source`, invoking `onSuccess` with its emitted value. Errors are captured in `error`, never thrown. */
+  /** Runs `source`, invoking `onSuccess` with its emitted value. Errors are captured in `error`, never thrown. A run superseded by a later `run()` call writes neither data, error, nor loading state. */
   public run<T>(source: Observable<T>, onSuccess: (value: T) => void): void {
+    const generation = ++this.generation;
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
 
     source
       .pipe(
         catchError((httpError: HttpErrorResponse) => {
-          const apiError = toBudgetApiError(httpError);
-          this.errorSignal.set(apiError);
-          if (apiError.kind === BudgetApiErrorKind.AUTHENTICATION) {
-            this.sessionExpiry.redirectToLogin();
+          if (generation === this.generation) {
+            const apiError = toBudgetApiError(httpError);
+            this.errorSignal.set(apiError);
+            if (apiError.kind === BudgetApiErrorKind.AUTHENTICATION) {
+              this.sessionExpiry.redirectToLogin();
+            }
           }
           return EMPTY;
         }),
-        finalize(() => this.loadingSignal.set(false)),
+        finalize(() => {
+          if (generation === this.generation) {
+            this.loadingSignal.set(false);
+          }
+        }),
       )
-      .subscribe(onSuccess);
+      .subscribe((value) => {
+        if (generation === this.generation) {
+          onSuccess(value);
+        }
+      });
   }
 }

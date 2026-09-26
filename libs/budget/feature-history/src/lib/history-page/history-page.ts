@@ -18,6 +18,7 @@ import {
 } from 'budget-data-access';
 import type { HistoryChartEntry } from 'budget-ui';
 import { HistoryChartComponent } from 'budget-ui';
+import { CurrentWorkspace } from 'shared-web-shell-data';
 
 import { HistoryFilterPanelComponent } from '../history-filter-panel/history-filter-panel';
 import { TransactionListComponent } from '../transaction-list/transaction-list';
@@ -58,6 +59,7 @@ export class HistoryPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly currentWorkspace = inject(CurrentWorkspace);
 
   protected readonly categoryStore = inject(CategoryStore);
   protected readonly transactionStore = inject(TransactionStore);
@@ -93,7 +95,22 @@ export class HistoryPageComponent {
   });
 
   public constructor() {
-    this.categoryStore.load();
+    effect(() => {
+      // Keyed only on the workspace id, not `filter()` — a plain filter
+      // change must re-fetch without this reset-to-empty flash (it would
+      // otherwise toggle the desktop table / mobile list container away and
+      // back within the same render, since both are conditionally rendered
+      // on `transactionStore.data()`).
+      this.currentWorkspace.currentId();
+      this.categoryStore.reset();
+      this.transactionStore.resetList();
+      this.dashboardStore.resetChart();
+    });
+
+    effect(() => {
+      this.currentWorkspace.currentId();
+      this.categoryStore.load();
+    });
 
     this.route.queryParams
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -102,6 +119,7 @@ export class HistoryPageComponent {
       });
 
     effect(() => {
+      this.currentWorkspace.currentId();
       const filter = this.filter();
       const today = new Date();
       this.transactionStore.load(toListTransactionsParams(filter, today));

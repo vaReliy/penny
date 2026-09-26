@@ -270,6 +270,63 @@ describe('PlannerPageComponent', () => {
     expect(fixture.componentInstance['editingCategoryId']()).toBeNull();
   });
 
+  it('clears the previous workspace’s categories and summary immediately on a workspace switch, before the new response resolves', () => {
+    const fixture = TestBed.createComponent(PlannerPageComponent);
+    fixture.detectChanges();
+    flushCategories(fixture);
+    httpController
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/summary',
+      )
+      .flush({
+        month: '2026-07',
+        categories: [
+          {
+            categoryId: 'c1',
+            budgeted: { amount: '10000', currency: 'UAH' },
+            spent: { amount: '0', currency: 'UAH' },
+            remaining: { amount: '10000', currency: 'UAH' },
+          },
+        ],
+      });
+    fixture.detectChanges();
+
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws2');
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance['categoryStore'].data()).toEqual([]);
+    expect(fixture.componentInstance['dashboardStore'].summary()).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Їжа');
+
+    httpController.expectOne('/api/workspaces/ws2/budget/categories').flush([]);
+    httpController
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws2/budget/summary',
+      )
+      .flush({ month: '2026-07', categories: [] });
+  });
+
+  it('re-fetches categories and the summary against the new workspace when the current workspace changes', () => {
+    const fixture = TestBed.createComponent(PlannerPageComponent);
+    fixture.detectChanges();
+    flushCategories(fixture);
+    httpController
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/summary',
+      )
+      .flush({ month: '2026-07', categories: [] });
+
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws2');
+    fixture.detectChanges();
+
+    httpController.expectOne('/api/workspaces/ws2/budget/categories').flush([]);
+    httpController
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws2/budget/summary',
+      )
+      .flush({ month: '2026-07', categories: [] });
+  });
+
   it('keeps the row in edit mode and surfaces the error when the upsert fails', () => {
     const fixture = TestBed.createComponent(PlannerPageComponent);
     fixture.detectChanges();

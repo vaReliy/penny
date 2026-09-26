@@ -138,6 +138,18 @@ describe('CategoryStore', () => {
     expect(store.createLoading()).toBe(false);
   });
 
+  it('reset() clears the loaded categories', () => {
+    store.load();
+    httpController
+      .expectOne('/api/workspaces/ws1/budget/categories')
+      .flush([{ id: 'c1', name: 'Groceries' }]);
+    expect(store.data()).toHaveLength(1);
+
+    store.reset();
+
+    expect(store.data()).toEqual([]);
+  });
+
   it('an error on create() leaves update()/archive() error signals null', () => {
     store.create({ name: 'Utilities' });
     store.update('c1', { name: 'Groceries & Household' });

@@ -249,4 +249,39 @@ describe('AccountPageComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent).toContain('EUR');
   });
+
+  it('shows the loading state, not stale ready data, immediately after a workspace switch and before the new response resolves', async () => {
+    fixture = TestBed.createComponent(AccountPageComponent);
+    fixture.detectChanges();
+
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
+      accountId: 'a1',
+      balance: { amount: '415000', currency: 'UAH' },
+    });
+    httpController.expectOne('/api/rates').flush({
+      base: 'UAH',
+      rates: [{ currency: 'USD', rateToBase: '41.5000' }],
+      asOf: '2026-07-27T10:00:00.000Z',
+    });
+
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws2');
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain('Завантаження...');
+    expect(el.textContent).not.toContain('USD');
+
+    httpController.expectOne('/api/workspaces/ws2/budget/balance').flush({
+      accountId: 'a2',
+      balance: { amount: '100', currency: 'UAH' },
+    });
+    httpController.expectOne('/api/rates').flush({
+      base: 'UAH',
+      rates: [{ currency: 'EUR', rateToBase: '45.0000' }],
+      asOf: '2026-07-27T11:00:00.000Z',
+    });
+  });
 });

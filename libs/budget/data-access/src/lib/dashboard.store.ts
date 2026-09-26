@@ -87,6 +87,11 @@ export class DashboardStore {
     });
   }
 
+  /** Clears the currently loaded balance, e.g. before a workspace switch's re-fetch so stale data is never shown as current. */
+  public resetBalance(): void {
+    this.balanceSignal.set(null);
+  }
+
   public loadSummary(month: string): void {
     this.lastLoadedMonth = month;
     this.summaryRequestState.run(this.client.getSummary(month), (summary) => {
@@ -94,10 +99,20 @@ export class DashboardStore {
     });
   }
 
+  /** Clears the currently loaded summary, e.g. before a workspace switch's re-fetch so stale data is never shown as current. */
+  public resetSummary(): void {
+    this.summarySignal.set(null);
+  }
+
   public loadChart(params: HistoryChartParams = {}): void {
     this.chartRequestState.run(this.client.getChart(params), (chart) => {
       this.chartSignal.set(chart);
     });
+  }
+
+  /** Clears the currently loaded chart, e.g. before a workspace switch's re-fetch so stale data is never shown as current. */
+  public resetChart(): void {
+    this.chartSignal.set([]);
   }
 
   /** Re-fetches balance and (if a month was previously loaded) the planner summary. */

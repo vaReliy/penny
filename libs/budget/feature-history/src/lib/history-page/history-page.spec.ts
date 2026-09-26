@@ -227,6 +227,63 @@ describe('HistoryPageComponent', () => {
     expect(fixture.componentInstance['emptyReason']()).toBe('noneForFilter');
   });
 
+  it('clears the previous workspace’s categories, transactions, and chart immediately on a workspace switch, before the new response resolves', () => {
+    const fixture = TestBed.createComponent(HistoryPageComponent);
+    fixture.detectChanges();
+    httpController
+      .expectOne('/api/workspaces/ws1/budget/categories')
+      .flush([{ id: 'c1', name: 'A-Category' }]);
+    httpController
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/workspaces/ws1/budget/transactions',
+      )
+      .flush([
+        {
+          id: 't1',
+          accountId: 'a1',
+          categoryId: 'c1',
+          type: 'expense',
+          amount: { amount: '1000', currency: 'UAH' },
+          date: '2026-07-27',
+          createdBy: 'u1',
+          createdAt: '2026-07-27T00:00:00.000Z',
+        },
+      ]);
+    httpController
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/chart',
+      )
+      .flush([
+        {
+          categoryId: 'c1',
+          name: 'A-Category',
+          value: { amount: '1000', currency: 'UAH' },
+        },
+      ]);
+    fixture.detectChanges();
+
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws2');
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance['categoryStore'].data()).toEqual([]);
+    expect(fixture.componentInstance['transactionStore'].data()).toEqual([]);
+    expect(fixture.componentInstance['dashboardStore'].chart()).toEqual([]);
+
+    httpController.expectOne('/api/workspaces/ws2/budget/categories').flush([]);
+    httpController
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/workspaces/ws2/budget/transactions',
+      )
+      .flush([]);
+    httpController
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws2/budget/chart',
+      )
+      .flush([]);
+  });
+
   it('surfaces a 500 from the transactions list as a role="alert" message, without touching the chart', () => {
     const fixture = TestBed.createComponent(HistoryPageComponent);
     fixture.detectChanges();
@@ -255,6 +312,39 @@ describe('HistoryPageComponent', () => {
       'Something went wrong. Please try again.',
     );
     expect(fixture.componentInstance['dashboardStore'].chartError()).toBeNull();
+  });
+
+  it('re-loads categories, transactions, and chart against the new workspace when the current workspace changes', () => {
+    const fixture = TestBed.createComponent(HistoryPageComponent);
+    fixture.detectChanges();
+    httpController.expectOne('/api/workspaces/ws1/budget/categories').flush([]);
+    httpController
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/workspaces/ws1/budget/transactions',
+      )
+      .flush([]);
+    httpController
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws1/budget/chart',
+      )
+      .flush([]);
+
+    TestBed.inject(CurrentWorkspace).setCurrentId('ws2');
+    fixture.detectChanges();
+
+    httpController.expectOne('/api/workspaces/ws2/budget/categories').flush([]);
+    httpController
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/workspaces/ws2/budget/transactions',
+      )
+      .flush([]);
+    httpController
+      .expectOne(
+        (candidate) => candidate.url === '/api/workspaces/ws2/budget/chart',
+      )
+      .flush([]);
   });
 
   it('surfaces a 500 from the chart endpoint as a role="alert" message, without touching the list', () => {

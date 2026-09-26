@@ -62,6 +62,38 @@ describe('DashboardStore', () => {
     expect(store.chart()).toEqual([]);
   });
 
+  it('resetSummary() clears the loaded summary', () => {
+    store.loadSummary('2026-07');
+    httpController
+      .expectOne(
+        (candidate) =>
+          candidate.url === '/api/workspaces/ws1/budget/summary' &&
+          candidate.params.get('month') === '2026-07',
+      )
+      .flush({ month: '2026-07', categories: [] });
+    expect(store.summary()).not.toBeNull();
+
+    store.resetSummary();
+
+    expect(store.summary()).toBeNull();
+  });
+
+  it('resetChart() clears the loaded chart', () => {
+    store.loadChart();
+    httpController.expectOne('/api/workspaces/ws1/budget/chart').flush([
+      {
+        categoryId: 'c1',
+        name: 'Food',
+        value: { amount: '1000', currency: 'UAH' },
+      },
+    ]);
+    expect(store.chart()).toHaveLength(1);
+
+    store.resetChart();
+
+    expect(store.chart()).toEqual([]);
+  });
+
   it('refresh() re-fetches balance but not summary when no month was ever loaded', () => {
     store.refresh();
 
@@ -145,6 +177,19 @@ describe('DashboardStore', () => {
     });
 
     expect(store.balanceError()).toBeNull();
+  });
+
+  it('resetBalance() clears the loaded balance', () => {
+    store.loadBalance();
+    httpController.expectOne('/api/workspaces/ws1/budget/balance').flush({
+      accountId: 'a1',
+      balance: { amount: '100000', currency: 'UAH' },
+    });
+    expect(store.balance()).not.toBeNull();
+
+    store.resetBalance();
+
+    expect(store.balance()).toBeNull();
   });
 
   it('chartLoading and chartError stay isolated from a concurrent balance failure', () => {

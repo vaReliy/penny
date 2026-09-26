@@ -160,3 +160,4 @@ Each completed task is one row in the table below.
 | 2026-09-26 | penny | web-workspace-switcher                                       | T1   | 0      | 0/0/-/0           | 1       | no       | standard       |                                                                   |
 | 2026-09-26 | penny | workspace-shared-not-admin-message                           | T1   | 0      | 0/0/-/-           | 0       | no       | standard       |                                                                   |
 | 2026-09-26 | penny | planning-leak-guard                                          | T1   | 2      | 2/2/-/-           | 1       | yes      | standard       | deep                                                              |
+| 2026-09-26 | penny | web-reload-on-workspace-switch                               | T1   | 1      | 0/1/-/0           | 0       | no       | standard       |                                                                   |
