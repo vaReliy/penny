@@ -92,7 +92,6 @@ The `budget` context owns income and expense tracking, monthly spending limits, 
 - **Immutable transactions** — Transactions cannot be edited or deleted (additive capability deferred to Q5).
 - **Soft-archive only** — Categories are marked `archivedAt` to hide them from UI selections, but archived tags persist on historical transactions for integrity.
 - **Derived balance** — No stored balance field; balance is always recomputed from transaction aggregations.
-- **Single workspace per session** — MVP uses a single implicit workspace; future multitenancy is backward-compatible (identity-only reference, no schema change needed).
 
 ---
 
@@ -124,7 +123,7 @@ The `workspace` context owns multi-tenant data isolation and scoped-admin groupi
 | **WorkspaceMemberRole**   | The TypeScript type encoding workspace member roles (`'admin' \| 'member'`).                                                                      |
 | **userId**                | A Telegram user ID, stored as identity-only reference — workspace never imports `libs/identity/core`.                                             |
 | **admin**                 | Workspace membership role. Can manage members, change roles, and remove members (with hard ≥1-admin invariant).                                   |
-| **member**                | Workspace membership role. Read-only data access; cannot manage members or roles.                                                                 |
+| **member**                | Workspace membership role. Can read and write budget data; cannot manage members or roles.                                                        |
 
 ### Workspace Aggregate
 
