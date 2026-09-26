@@ -15,12 +15,11 @@ function getRepoRoot() {
   return REPO_ROOT;
 }
 
-// Normalize path to repo-relative (handles both absolute and relative paths from lint-staged)
+// Normalize path to repo-relative POSIX form (handles both absolute and relative paths)
 function normalizePath(filePath) {
-  if (path.isAbsolute(filePath)) {
-    return path.relative(getRepoRoot(), filePath);
-  }
-  return filePath;
+  const resolved = path.resolve(process.cwd(), filePath);
+  const repoRoot = getRepoRoot();
+  return path.relative(repoRoot, resolved).split(path.sep).join('/');
 }
 
 // Pattern classes — tuned for precision
@@ -489,6 +488,14 @@ function isAllowlisted(filePath) {
 // Self-test mode
 function runSelfTest() {
   const testCases = [
+    // Finding 1: relative path normalization (new test)
+    {
+      name: 'Finding 1: relative path ./AGENTS.local.md should not error',
+      content: "console.log('test')",
+      shouldMatch: false,
+      file: './AGENTS.local.md',
+      isAbsolutePath: true,
+    },
     // Finding 1: absolute path allowlist (new test)
     {
       name: 'Finding 1: absolute path to allowlisted file should not error',
