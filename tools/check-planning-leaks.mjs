@@ -4,6 +4,25 @@ import { execSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 
+// Get repo root for path normalization
+let REPO_ROOT = null;
+function getRepoRoot() {
+  if (!REPO_ROOT) {
+    REPO_ROOT = execSync('git rev-parse --show-toplevel', {
+      encoding: 'utf8',
+    }).trim();
+  }
+  return REPO_ROOT;
+}
+
+// Normalize path to repo-relative (handles both absolute and relative paths from lint-staged)
+function normalizePath(filePath) {
+  if (path.isAbsolute(filePath)) {
+    return path.relative(getRepoRoot(), filePath);
+  }
+  return filePath;
+}
+
 // Pattern classes — tuned for precision
 const PATTERNS = {
   task_slug: {
@@ -79,6 +98,28 @@ function isBinaryOrNonText(filePath, content) {
   return sample.includes('\x00');
 }
 
+// Split markdown table row by | while respecting backticks
+function splitTableCells(row) {
+  const cells = [];
+  let currentCell = '';
+  let inBacktick = false;
+
+  for (let i = 0; i < row.length; i++) {
+    const char = row[i];
+    if (char === '`') {
+      inBacktick = !inBacktick;
+      currentCell += char;
+    } else if (char === '|' && !inBacktick) {
+      cells.push(currentCell);
+      currentCell = '';
+    } else {
+      currentCell += char;
+    }
+  }
+  cells.push(currentCell);
+  return cells;
+}
+
 // For METRICS.md, exempt only the Task column (AC-5)
 function isInMetricsTaskColumn(content, lineNum, charIndex) {
   const lines = content.split('\n');
@@ -100,9 +141,8 @@ function isInMetricsTaskColumn(content, lineNum, charIndex) {
   const headerRow = lines[separatorLine - 1];
   if (!headerRow.includes('|')) return false;
 
-  // Split header: find Task column
-  const headerCells = headerRow
-    .split('|')
+  // Split header using backtick-aware splitter: find Task column
+  const headerCells = splitTableCells(headerRow)
     .map((c) => c.trim())
     .filter((c) => c);
   const taskColIndex = headerCells.findIndex((c) => c.toLowerCase() === 'task');
@@ -110,9 +150,11 @@ function isInMetricsTaskColumn(content, lineNum, charIndex) {
 
   // Find which cell in the data row contains charIndex
   const currentRow = lines[lineNum - 1];
+  const dataCells = splitTableCells(currentRow);
   let cellIndex = 0;
   let cellStart = 0;
-  for (const cell of currentRow.split('|')) {
+
+  for (const cell of dataCells) {
     const cellEnd = cellStart + cell.length;
     if (charIndex >= cellStart && charIndex < cellEnd) {
       // Adjust for filtered cells (empties removed from leading/trailing pipes)
@@ -134,6 +176,16 @@ function isInCodeOrString(line, charIndex, filename) {
   // For .md files, apply patterns to prose (not just comments)
   if (filename.endsWith('.md')) {
     return true; // Always check prose in markdown
+  }
+
+  // For .html files, treat as prose/comments (no code strings)
+  if (filename.endsWith('.html')) {
+    return true;
+  }
+
+  // For .yml/.yaml files, treat as prose (no code strings)
+  if (filename.endsWith('.yml') || filename.endsWith('.yaml')) {
+    return true;
   }
 
   // For code files, check if charIndex is in a comment or string
@@ -189,18 +241,118 @@ function checkFile(filePath, content, revMode = false) {
   }
 
   const lines = content.split('\n');
+  let inBlockComment = false; // Track multi-line JS/TS /* */ across all lines
+  let inHtmlComment = false; // Track multi-line HTML <!-- --> across all lines
+  let lineWasInBlockComment = false; // Flag if current line started in a block comment
+  let lineWasInHtmlComment = false; // Flag if current line started in an HTML comment
 
   lines.forEach((line, lineIdx) => {
     const lineNum = lineIdx + 1;
+    let processedLine = line;
+    lineWasInBlockComment = false;
+    lineWasInHtmlComment = false;
 
-    // Check each pattern
+    // Track multi-line JS/TS block comments (but still scan content within them)
+    if (
+      filePath.endsWith('.ts') ||
+      filePath.endsWith('.js') ||
+      filePath.endsWith('.mts') ||
+      filePath.endsWith('.mjs')
+    ) {
+      if (inBlockComment) {
+        lineWasInBlockComment = true;
+      }
+      // Process all comment markers on this line
+      let idx = 0;
+      while (idx < line.length) {
+        if (inBlockComment) {
+          // Look for closing */
+          const endIdx = line.indexOf('*/', idx);
+          if (endIdx !== -1) {
+            inBlockComment = false;
+            idx = endIdx + 2; // Continue searching after the */
+          } else {
+            break; // No more */ on this line
+          }
+        } else {
+          // Look for opening /*
+          const startIdx = line.indexOf('/*', idx);
+          if (startIdx !== -1) {
+            inBlockComment = true;
+            lineWasInBlockComment = true;
+            idx = startIdx + 2; // Continue searching after the /*
+          } else {
+            break; // No more /* on this line
+          }
+        }
+      }
+    }
+
+    // Track multi-line HTML comments (but still scan content within them)
+    if (filePath.endsWith('.html')) {
+      if (inHtmlComment) {
+        lineWasInHtmlComment = true;
+      }
+      // Process all comment markers on this line
+      let idx = 0;
+      while (idx < line.length) {
+        if (inHtmlComment) {
+          // Look for closing -->
+          const endIdx = line.indexOf('-->', idx);
+          if (endIdx !== -1) {
+            inHtmlComment = false;
+            idx = endIdx + 3; // Continue searching after the -->
+          } else {
+            break; // No more --> on this line
+          }
+        } else {
+          // Look for opening <!--
+          const startIdx = line.indexOf('<!--', idx);
+          if (startIdx !== -1) {
+            inHtmlComment = true;
+            lineWasInHtmlComment = true;
+            idx = startIdx + 4; // Continue searching after the <!--
+          } else {
+            break; // No more <!-- on this line
+          }
+        }
+      }
+    }
+
+    // For YAML, only check comments (lines where # appears at start or after whitespace)
+    if (filePath.endsWith('.yml') || filePath.endsWith('.yaml')) {
+      const trimmed = line.trimStart();
+      const commentIdx = line.indexOf('#');
+      if (commentIdx !== -1) {
+        const beforeHash = line.substring(0, commentIdx);
+        // Only treat as comment if # is at start or after whitespace
+        if (beforeHash === '' || /^\s+$/.test(beforeHash)) {
+          // This is a comment line, only check the part after #
+          processedLine = line.substring(commentIdx);
+        } else {
+          // # is in a value, skip this line
+          processedLine = '';
+        }
+      } else {
+        // No comment marker, skip this line (it's a value line)
+        processedLine = '';
+      }
+    }
+
+    // Check each pattern on the processed line
     for (const [patternKey, patternInfo] of Object.entries(PATTERNS)) {
       let match;
       const regex = new RegExp(patternInfo.regex, 'g');
 
-      // eslint-disable-next-line no-cond-assign
-      while ((match = regex.exec(line)) !== null) {
-        const charIndex = match.index;
+       
+      while ((match = regex.exec(processedLine)) !== null) {
+        // Adjust match index back to original line if we modified processedLine
+        let charIndex = match.index;
+        if (processedLine !== line) {
+          // Recalculate character index in the original line
+          charIndex = line.indexOf(match[0], charIndex);
+          if (charIndex === -1) continue; // Couldn't find it in original
+        }
 
         // Skip METRICS.md Task column
         if (
@@ -211,7 +363,12 @@ function checkFile(filePath, content, revMode = false) {
         }
 
         // Skip false positives in code files (not comments/strings)
-        if (!filePath.endsWith('.md')) {
+        if (
+          !filePath.endsWith('.md') &&
+          !filePath.endsWith('.html') &&
+          !filePath.endsWith('.yml') &&
+          !filePath.endsWith('.yaml')
+        ) {
           // For code files, allow certain patterns
           // grill-me and grill-with-docs are skill names, not references
           if (
@@ -240,8 +397,12 @@ function checkFile(filePath, content, revMode = false) {
             continue;
           }
 
-          // Check if in comment or string
-          if (!isInCodeOrString(line, charIndex, filePath)) {
+          // Check if in comment or string (skip this check if we're in a tracked multi-line comment)
+          if (
+            !lineWasInBlockComment &&
+            !lineWasInHtmlComment &&
+            !isInCodeOrString(line, charIndex, filePath)
+          ) {
             continue;
           }
         }
@@ -271,7 +432,7 @@ function getFilesToCheck(revRef = null) {
       files = gitFiles.filter(
         (f) =>
           f &&
-          (f.match(/^(apps|libs|tools|docs|rules\/local)\//) ||
+          (f.match(/^(apps|libs|tools|docs|rules\/local|\.github)\//) ||
             /^[^/]+\.md$/.test(f)) &&
           !f.includes('node_modules'),
       );
@@ -289,7 +450,7 @@ function getFilesToCheck(revRef = null) {
         .filter(
           (f) =>
             f &&
-            (f.match(/^(apps|libs|tools|docs|rules\/local)\//) ||
+            (f.match(/^(apps|libs|tools|docs|rules\/local|\.github)\//) ||
               /^[^/]+\.md$/.test(f)) &&
             !f.includes('node_modules'),
         );
@@ -303,14 +464,17 @@ function getFilesToCheck(revRef = null) {
 }
 
 function isAllowlisted(filePath) {
+  // Normalize to repo-relative path for allowlist matching
+  const normalizedPath = normalizePath(filePath);
+
   for (const allowedPattern of Object.keys(ALLOWLIST)) {
-    if (allowedPattern === filePath) {
+    if (allowedPattern === normalizedPath) {
       return true;
     }
     // Simple glob support for patterns like tasks/**
     if (allowedPattern.includes('**')) {
       const prefix = allowedPattern.replace('/**', '');
-      if (filePath.startsWith(prefix + '/')) {
+      if (normalizedPath.startsWith(prefix + '/')) {
         return true;
       }
     }
@@ -321,6 +485,73 @@ function isAllowlisted(filePath) {
 // Self-test mode
 function runSelfTest() {
   const testCases = [
+    // Finding 1: absolute path allowlist (new test)
+    {
+      name: 'Finding 1: absolute path to allowlisted file should not error',
+      content: "console.log('test')",
+      shouldMatch: false,
+      file: '/home/vh/Projects/vg/penny/AGENTS.local.md',
+      isAbsolutePath: true,
+    },
+    // Finding 2: multi-line JSDoc with AC number (new test)
+    {
+      name: 'Finding 2: AC number in 3-line JSDoc block',
+      content: '/**\n * Handle AC-3 case\n */',
+      shouldMatch: true,
+      file: 'src/index.ts',
+    },
+    // Finding 3: HTML template text with slice ID (new test)
+    {
+      name: 'Finding 3: slice ID in HTML text node',
+      content: '<p>Component for W2a implementation</p>',
+      shouldMatch: true,
+      file: 'apps/web/src/app.component.html',
+    },
+    // Finding 3: HTML comment with decision ID (new test)
+    {
+      name: 'Finding 3: decision ID in HTML comment',
+      content: '<!-- TODO: see S6 for details -->',
+      shouldMatch: true,
+      file: 'apps/web/src/app.component.html',
+    },
+    // Finding 4: YAML comment with decision ID (new test)
+    {
+      name: 'Finding 4: decision ID in YAML comment',
+      content: '# TODO: see S6 in issue',
+      shouldMatch: true,
+      file: '.github/workflows/ci.yml',
+    },
+    // Finding 4: YAML value should not match (new test)
+    {
+      name: 'Finding 4: YAML run-on value should not match',
+      content: 'runs-on: ubuntu-24.04',
+      shouldMatch: false,
+      file: '.github/workflows/ci.yml',
+    },
+    // Finding 6: backticked pipe in markdown table (new test)
+    {
+      name: 'Finding 6: backticked pipe in markdown table cell',
+      content: '| Command | Notes |\n| ---- | ----- |\n| `a|b` | works |',
+      shouldMatch: false,
+      file: 'docs/METRICS.md',
+    },
+    // Finding 6 repro: backtick-pipe in Repo cell shifts Task column index
+    {
+      name: 'Finding 6 repro: backticked pipe shifts column index',
+      content:
+        '| Repo | Task | Notes |\n| ---- | ---- | ----- |\n| `a|b` | 2026-09-26-01-plan | ok |',
+      shouldMatch: false,
+      file: 'docs/METRICS.md',
+    },
+    // Finding 2 repro: consecutive comment open/close on same line
+    {
+      name: 'Finding 2 repro: consecutive block comments on same line',
+      content:
+        '/** doc */ code here /* unterminated new block\n AC-3 leaked here\n*/',
+      shouldMatch: true,
+      file: 'src/index.ts',
+    },
+
     // Positive cases (should match)
     {
       name: 'AC spec title',
@@ -468,7 +699,26 @@ function runSelfTest() {
   let failed = 0;
 
   for (const testCase of testCases) {
-    const violations = checkFile(testCase.file || 'test.ts', testCase.content);
+    const fileName = testCase.file || 'test.ts';
+
+    // For absolute path tests, verify allowlist works with absolute paths
+    if (testCase.isAbsolutePath) {
+      const isAllowed = isAllowlisted(fileName);
+      if (testCase.shouldMatch === !isAllowed) {
+        // For absolute path test, shouldMatch means it SHOULD be flagged (should NOT be allowlisted)
+        // isAllowlisted returning true means it's allowed (no violation)
+        passed++;
+        console.log(`✓ ${testCase.name}`);
+      } else {
+        failed++;
+        console.error(
+          `✗ ${testCase.name}: expected ${testCase.shouldMatch ? 'to be flagged' : 'to be allowlisted'}, but isAllowlisted=${isAllowed}`,
+        );
+      }
+      continue;
+    }
+
+    const violations = checkFile(fileName, testCase.content);
     const hasViolations = violations.length > 0;
 
     if (testCase.shouldMatch === hasViolations) {
@@ -495,7 +745,7 @@ function runSelfTest() {
 const args = process.argv.slice(2);
 let revRef = null;
 let selfTest = false;
-let explicitFiles = [];
+const explicitFiles = [];
 
 // Parse arguments
 for (let i = 0; i < args.length; i++) {
@@ -522,31 +772,35 @@ for (const filePath of filesToCheck) {
     continue;
   }
 
-  if (!existsSync(filePath) && !revRef) {
+  // Normalize path for file system operations (but keep original for reporting)
+  const normalizedPath = normalizePath(filePath);
+  const fileSystemPath = revRef ? normalizedPath : filePath;
+
+  if (!existsSync(fileSystemPath) && !revRef) {
     continue;
   }
 
   let content;
   try {
     if (revRef) {
-      content = execSync(`git show ${revRef}:${filePath}`, {
+      content = execSync(`git show ${revRef}:${normalizedPath}`, {
         encoding: 'utf8',
       });
     } else {
-      content = readFileSync(filePath, 'utf8');
+      content = readFileSync(fileSystemPath, 'utf8');
     }
   } catch {
     continue;
   }
 
-  const violations = checkFile(filePath, content, !!revRef);
+  const violations = checkFile(normalizedPath, content, !!revRef);
 
   if (violations.length === 0) continue;
 
   hasViolations = true;
   for (const violation of violations) {
     console.error(
-      `${filePath}:${violation.lineNum}: ${violation.pattern}: ${violation.match}`,
+      `${normalizedPath}:${violation.lineNum}: ${violation.pattern}: ${violation.match}`,
     );
   }
 }
