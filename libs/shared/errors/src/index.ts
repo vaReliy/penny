@@ -7,3 +7,4 @@ export * from './lib/authentication-error.js';
 export * from './lib/not-found-error.js';
 export * from './lib/domain-error.js';
 export * from './lib/infrastructure-error.js';
+export * from './lib/messages.js';

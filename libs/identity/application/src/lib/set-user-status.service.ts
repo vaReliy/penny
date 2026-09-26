@@ -1,4 +1,9 @@
-import { AuthenticationError, DomainError, NotFoundError } from 'shared-errors';
+import {
+  AuthenticationError,
+  DomainError,
+  NOT_ADMIN_MESSAGE,
+  NotFoundError,
+} from 'shared-errors';
 import { BaseService } from 'shared-kernel';
 import { Role, UserStatus } from 'shared-contracts';
 import type { IUserRepository, User } from 'identity-core';
@@ -6,9 +11,6 @@ import type { ServiceContext } from 'shared-kernel';
 
 /** Role name a `CallerIdentity` must carry to approve/reject users. */
 export const SUPERADMIN_ROLE = Role.SUPERADMIN;
-
-/** Message used when a non-admin caller attempts an approve/reject action. */
-const NOT_ADMIN_MESSAGE = 'Only an admin may approve or reject a user.';
 
 /** LIVR schema shared by `ApproveUserService`/`RejectUserService` input. */
 const SET_USER_STATUS_SCHEMA: Record<string, unknown> = {
