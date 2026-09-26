@@ -170,3 +170,9 @@ See global DoD in `rules/local/workflow.md` § Definition of Done. Task-specific
 ```
 
 Reference the global DoD (do not copy it), and list only task-specific commands or steps beyond DoD baseline. The gate sequence (tester, reviewer, qa, security-scanner) is determined by the orchestrator based on file types touched, not written in task files.
+
+## Planning IDs stay in the task file
+
+AC numbers (`AC-1`, `AC-2`, etc.) and decision labels (`S6`, `G3`, `B1`, etc.) are for task-file ↔ implementer-report traceability and live in those two places only. A task must not instruct code-writing steps that reference them ("write a test for AC-3," "empty until W2b is merged"). When a task instructs naming a test after an AC number or filling a scaffold placeholder after a decision is made, that coupling breaks silently once the task file is archived or deleted. Rewrite instructional text to describe the behavior instead: "add a test for currency conversion" rather than "add a test for AC-3". Don't leave placeholder comments at all — the filling change removes them.
+
+Paired obligation: see `AGENTS.local.md` § Code Style Essentials, which states that planning IDs never appear in committed code/docs anywhere — the broader rule that this narrower task-authoring rule protects against.

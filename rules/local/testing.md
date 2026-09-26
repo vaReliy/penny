@@ -133,7 +133,7 @@ Concrete incident in this repo: `mongo-connection.spec.ts` and `mongo-user-repos
 
 ## Extends rules/cts/testing.md § DB-backed integration specs need explicit isolation under parallel test workers
 
-Concrete incident in this repo: `mongo-user-repository.spec.ts`'s `updateProfile does not overwrite status (concurrent login + approval safety)` test failed once against a real local Mongo, then passed 24/24 on the immediate next run — the parallel vitest workers share the `penny-test` database with no per-file isolation. Unfixed; tracked in `tasks/rebuild/todo/2026-07-15-01-mongo-test-db-parallel-isolation.md`.
+Concrete incident in this repo: `mongo-user-repository.spec.ts`'s `updateProfile does not overwrite status (concurrent login + approval safety)` test failed once against a real local Mongo, then passed 24/24 on the immediate next run — the parallel vitest workers share the `penny-test` database with no per-file isolation. Unfixed; needs per-file DB isolation (or a unique DB name per worker) for parallel test runs.
 
 ## New section: Identity Mongo integration tests need `MONGO_TEST_URI` env var
 

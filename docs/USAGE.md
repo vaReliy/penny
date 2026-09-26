@@ -85,7 +85,7 @@ See the **Foresight Gate** in `rules/cts/workflow.md` to recognize T2/T3 seams: 
 **One-line invocation:**
 
 ```
-please implement task: tasks/todo/2026-07-23-01-user-auth.md
+please implement task: tasks/todo/<date>-<nn>-<slug>.md
 ```
 
 **What that means:**
@@ -106,7 +106,7 @@ After the session reports completion, you review `git diff`, commit, and move th
 ```bash
 git diff          # review
 git commit -m "..."
-mv tasks/todo/2026-07-23-01-user-auth.md tasks/done/
+mv tasks/todo/<date>-<nn>-<slug>.md tasks/done/
 ```
 
 **Acceptance criteria marked complete in the report mean:**

@@ -5,6 +5,7 @@ Node.js 22+ · TypeScript 5 (strict) · NestJS (API + CLI) · Angular 17+ (stand
 ## Overrides AGENTS.md § "Code Style Essentials"
 
 - `.js` extensions in relative imports — enforced **backend-only** via ESLint; resolver is `bundler`, not NodeNext.
+- Planning identifiers (task file names/paths, slice IDs, `AC-n`, decision labels like `S6`/`G3`/`B1`, "grill" references) never appear in committed code or docs (comments, test/describe titles, error messages, READMEs, config comments, scaffold placeholders). Describe behavior or reasoning instead. Traceability goes in the implementer's report. Enforced by `tools/check-planning-leaks.mjs` (pre-commit + CI); run `pnpm check:leaks` before finishing.
 
 ## Extends AGENTS.md § "On-Demand Rules Index"
 

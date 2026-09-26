@@ -64,6 +64,9 @@ jobs:
       - name: Check exact pins
         run: node tools/check-exact-pins.mjs
 
+      - name: Check for planning leaks
+        run: node tools/check-planning-leaks.mjs
+
       - name: Root-level lint (path-anchored rules)
         run: pnpm nx lint:root
         # Root-level lint covers path-anchored ESLint rules (e.g., .js-extension gate,

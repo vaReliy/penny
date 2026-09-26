@@ -302,13 +302,13 @@ The related existing rules — _"verify working-tree side effects before dispatc
 
 Rule/doc prose is meant to outlive any specific task file (`tasks/**` is gitignored and its files are routinely archived or deleted). A task-ID or decision-number reference embedded in such prose reads as authoritative today and as meaningless noise once that task file is gone. This mirrors the existing code-comment rule in `AGENTS.md` § Code Style Essentials ("never reference task IDs, decision IDs, or task file paths in comments — these go stale"), extended explicitly to durable docs and rules, which the comment-scoped wording didn't cover — and which slipped through review twice in the same session before being caught.
 
-**Before finishing any edit to a rules file, `CLAUDE.md`, `AGENTS.md`, or a non-ledger doc under `docs/`**, grep the diff for task-ID/decision-number-shaped patterns and rewrite any hit as a content description instead:
+**Before finishing any edit to a rules file, `CLAUDE.md`, `AGENTS.md`, or any committed doc**, run the planning-leak check and rewrite any hits as content descriptions instead:
 
 ```
-git diff HEAD -- <changed files> | grep -E '^\+' | grep -vE '^\+\+\+' | grep -E 'task [0-9]+\b|[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]+\b|ADR-[0-9]+'
+pnpm check:leaks <changed files>
 ```
 
-**Exceptions** — these are append-only, dated ledgers where task/decision references are the intended format, not a leak: `docs/METRICS.md`, `docs/KNOWLEDGE_INBOX.md`, `docs/CLAUDE_TS_CHANGELOG.md`.
+See the exempt-path allowlist in `tools/check-planning-leaks.mjs` for which files are automatically excluded. Consult the script's allowlist rather than duplicating it here — that list is the source of truth.
 
 ## Requirement contract
 
@@ -335,7 +335,7 @@ Coverage % is never an AC (tool for tester audit only).
 | T2/T3 | Business analyst / task   | AC + invariant + `[gate]` where boundary-touching + out of scope + DoD        |
 | Bug   | Debugger                  | Reproducing failing test = gate (hashed) + invariant                          |
 
-Traceability lives **in the implementer's report**, never in code (no AC IDs in test names/comments — they go stale with the task file, same reason as the existing no-task-IDs-in-code rule).
+Traceability lives **in the implementer's report**, never in code (no AC IDs in test names/comments — they go stale with the task file, same reason as the existing no-task-IDs-in-code rule). See `AGENTS.local.md` § Code Style Essentials for the unified rule covering all surfaces (comments, tests, error messages, docs, config, scaffold placeholders).
 
 ### Contract location when there is no task file
 

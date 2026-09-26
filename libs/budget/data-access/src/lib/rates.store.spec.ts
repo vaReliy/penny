@@ -75,8 +75,8 @@ describe('RatesStore', () => {
     // load() is still pending fires a second, independent HTTP request. This
     // test pins down what the store actually does today (last response to
     // resolve overwrites the signal, even if it was the *older* call) rather
-    // than asserting the dedup behavior tracked by the open backlog task
-    // 2026-07-27-02-exchange-rates-inflight-dedup.md.
+    // than asserting the dedup behavior tracked by an open backlog item to
+    // add in-flight-request dedup/cancellation for concurrent refresh() calls.
     store.load();
     store.refresh();
 

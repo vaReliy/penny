@@ -314,7 +314,7 @@ When a component renders separate mobile and desktop markup branches (via `md:hi
 
 ## Internationalization (Transloco)
 
-`@jsverse/transloco` provides i18n. Only `uk` ships today (see `tasks/migration/parked/2026-07-16-25-en-locale-and-multi-currency.md` for the parked `en`/multi-currency work) — root providers are wired once in `apps/web/src/app/app.config.ts` via `provideTransloco()`, with a hand-written `TranslocoHttpLoader` (`apps/web/src/app/transloco-http-loader.ts`) since the `@jsverse/transloco` package ships no default HTTP loader.
+`@jsverse/transloco` provides i18n. Only `uk` ships today (the `en`/multi-currency work is parked) — root providers are wired once in `apps/web/src/app/app.config.ts` via `provideTransloco()`, with a hand-written `TranslocoHttpLoader` (`apps/web/src/app/transloco-http-loader.ts`) since the `@jsverse/transloco` package ships no default HTTP loader.
 
 ### Scope-per-domain pattern
 
