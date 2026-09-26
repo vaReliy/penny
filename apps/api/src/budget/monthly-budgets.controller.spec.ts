@@ -25,11 +25,13 @@ import {
   UpsertMonthlyBudgetService,
   ListMonthlyBudgetsService,
 } from 'budget-application';
-import { MonthlyBudget } from 'budget-core';
-import { DEFAULT_WORKSPACE_ID } from 'budget-contracts';
+import { Category, MonthlyBudget } from 'budget-core';
 import { Money } from 'shared-util';
 import { createFakeUserRepository } from 'identity-testing';
-import type { IMonthlyBudgetRepository } from 'budget-core';
+import type {
+  ICategoryRepository,
+  IMonthlyBudgetRepository,
+} from 'budget-core';
 import type { SessionUser } from 'shared-contracts';
 import type { ITokenIssuer } from 'identity-application';
 import type { IUserRepository } from 'identity-core';
@@ -37,8 +39,16 @@ import type { IUserRepository } from 'identity-core';
 import { SessionGuard } from '../auth/session.guard.js';
 import { AUTH_COOKIE_NAME } from '../auth/cookie.constants.js';
 import { MonthlyBudgetsController } from './monthly-budgets.controller.js';
+import type { RequestWorkspaceMembership } from '../workspace/workspace-membership.js';
 
 registerLivrRules();
+
+/** The path workspace every request in this spec targets, as verified by `WorkspaceMemberGuard`. */
+const WORKSPACE_ID = 'f'.repeat(24);
+const MEMBERSHIP: RequestWorkspaceMembership = {
+  workspaceId: WORKSPACE_ID,
+  role: 'member',
+};
 
 const VALID_CATEGORY_ID = 'b'.repeat(24);
 const VALID_BUDGET_ID = 'c'.repeat(24);
@@ -115,8 +125,18 @@ describe('MonthlyBudgetsController (real SessionGuard in the chain)', () => {
 
     monthlyBudgetRepository = makeFakeMonthlyBudgetRepository();
 
+    // Every category id resolves inside whichever workspace it is looked up in.
+    const categoryRepository = {
+      findByIdInWorkspace: vi.fn(async (id: string, workspaceId: string) =>
+        Category.create(id, workspaceId, 'Groceries'),
+      ),
+    } as unknown as ICategoryRepository;
+
     controller = new MonthlyBudgetsController(
-      new UpsertMonthlyBudgetService({ monthlyBudgetRepository }),
+      new UpsertMonthlyBudgetService({
+        monthlyBudgetRepository,
+        categoryRepository,
+      }),
       new ListMonthlyBudgetsService({ monthlyBudgetRepository }),
     );
   });
@@ -148,7 +168,7 @@ describe('MonthlyBudgetsController (real SessionGuard in the chain)', () => {
     const user = await authenticate(UserStatus.REJECTED);
 
     await expect(
-      controller.list({ month: MONTH }, user),
+      controller.list({ month: MONTH }, user, MEMBERSHIP),
     ).rejects.toBeInstanceOf(AuthenticationError);
   });
 
@@ -163,6 +183,7 @@ describe('MonthlyBudgetsController (real SessionGuard in the chain)', () => {
           amountMinorUnits: 10000,
         },
         user,
+        MEMBERSHIP,
       )
       .catch((e: unknown) => e);
 
@@ -175,7 +196,7 @@ describe('MonthlyBudgetsController (real SessionGuard in the chain)', () => {
     const amount = Money.fromMinorUnits(50000, 'UAH');
     const budget = MonthlyBudget.create(
       VALID_BUDGET_ID,
-      DEFAULT_WORKSPACE_ID,
+      WORKSPACE_ID,
       VALID_CATEGORY_ID,
       MONTH,
       amount,
@@ -186,7 +207,7 @@ describe('MonthlyBudgetsController (real SessionGuard in the chain)', () => {
       >
     ).mockResolvedValue([budget]);
 
-    const result = await controller.list({ month: MONTH }, user);
+    const result = await controller.list({ month: MONTH }, user, MEMBERSHIP);
 
     expect(result).toEqual([
       {
@@ -203,7 +224,7 @@ describe('MonthlyBudgetsController (real SessionGuard in the chain)', () => {
     const amount = Money.fromMinorUnits(75000, 'UAH');
     const persisted = MonthlyBudget.create(
       VALID_BUDGET_ID,
-      DEFAULT_WORKSPACE_ID,
+      WORKSPACE_ID,
       VALID_CATEGORY_ID,
       MONTH,
       amount,
@@ -217,6 +238,7 @@ describe('MonthlyBudgetsController (real SessionGuard in the chain)', () => {
     const result = await controller.upsert(
       { categoryId: VALID_CATEGORY_ID, month: MONTH, amountMinorUnits: 75000 },
       user,
+      MEMBERSHIP,
     );
 
     expect(result).toEqual({
@@ -226,7 +248,7 @@ describe('MonthlyBudgetsController (real SessionGuard in the chain)', () => {
       amount: amount.toJSON(),
     });
     expect(monthlyBudgetRepository.upsertAmount).toHaveBeenCalledWith(
-      DEFAULT_WORKSPACE_ID,
+      WORKSPACE_ID,
       VALID_CATEGORY_ID,
       MONTH,
       expect.objectContaining({ currency: 'UAH' }),
@@ -238,7 +260,7 @@ describe('MonthlyBudgetsController (real SessionGuard in the chain)', () => {
     const amount = Money.fromMinorUnits(75000, 'UAH');
     const persisted = MonthlyBudget.create(
       VALID_BUDGET_ID,
-      DEFAULT_WORKSPACE_ID,
+      WORKSPACE_ID,
       VALID_CATEGORY_ID,
       MONTH,
       amount,
@@ -255,8 +277,8 @@ describe('MonthlyBudgetsController (real SessionGuard in the chain)', () => {
       amountMinorUnits: 75000,
     };
 
-    const first = await controller.upsert(request, user);
-    const second = await controller.upsert(request, user);
+    const first = await controller.upsert(request, user, MEMBERSHIP);
+    const second = await controller.upsert(request, user, MEMBERSHIP);
 
     expect(first).toEqual(second);
     expect(monthlyBudgetRepository.upsertAmount).toHaveBeenCalledTimes(2);

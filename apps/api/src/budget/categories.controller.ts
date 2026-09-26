@@ -27,6 +27,9 @@ import type { SessionUser } from 'shared-contracts';
 import { SessionGuard } from '../auth/session.guard.js';
 import { ActiveUserGuard } from '../auth/active-user.guard.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
+import { CurrentMembership } from '../auth/current-membership.decorator.js';
+import { WorkspaceMemberGuard } from '../workspace/workspace-member.guard.js';
+import type { RequestWorkspaceMembership } from '../workspace/workspace-membership.js';
 import { buildBudgetContext } from './build-budget-context.js';
 import { TOKENS } from './tokens.js';
 
@@ -49,8 +52,8 @@ function toCategoryResponse(category: Category): CategoryResponse {
  * its own, only request/response shape translation. Mirrors
  * `UserAdminController`'s guard/DI pattern.
  */
-@Controller('budget/categories')
-@UseGuards(SessionGuard, ActiveUserGuard)
+@Controller('workspaces/:workspaceId/budget/categories')
+@UseGuards(SessionGuard, ActiveUserGuard, WorkspaceMemberGuard)
 export class CategoriesController {
   public constructor(
     @Inject(TOKENS.CreateCategory)
@@ -66,10 +69,11 @@ export class CategoriesController {
   @Get()
   public async list(
     @CurrentUser() user: SessionUser,
+    @CurrentMembership() membership: RequestWorkspaceMembership,
   ): Promise<CategoryListResponse> {
     const { data } = await this.listCategories.run(
       {},
-      buildBudgetContext(user),
+      buildBudgetContext(user, membership),
     );
     return data.map(toCategoryResponse);
   }
@@ -78,10 +82,11 @@ export class CategoriesController {
   public async create(
     @Body() body: CreateCategoryRequest,
     @CurrentUser() user: SessionUser,
+    @CurrentMembership() membership: RequestWorkspaceMembership,
   ): Promise<CategoryResponse> {
     const { data } = await this.createCategory.run(
       body,
-      buildBudgetContext(user),
+      buildBudgetContext(user, membership),
     );
     return toCategoryResponse(data);
   }
@@ -91,10 +96,11 @@ export class CategoriesController {
     @Param('id') id: string,
     @Body() body: UpdateCategoryRequest,
     @CurrentUser() user: SessionUser,
+    @CurrentMembership() membership: RequestWorkspaceMembership,
   ): Promise<CategoryResponse> {
     const { data } = await this.updateCategory.run(
       { id, name: body.name },
-      buildBudgetContext(user),
+      buildBudgetContext(user, membership),
     );
     return toCategoryResponse(data);
   }
@@ -103,10 +109,11 @@ export class CategoriesController {
   public async archive(
     @Param('id') id: string,
     @CurrentUser() user: SessionUser,
+    @CurrentMembership() membership: RequestWorkspaceMembership,
   ): Promise<CategoryResponse> {
     const { data } = await this.archiveCategory.run(
       { id },
-      buildBudgetContext(user),
+      buildBudgetContext(user, membership),
     );
     return toCategoryResponse(data);
   }

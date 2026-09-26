@@ -26,6 +26,9 @@ import type { SessionUser } from 'shared-contracts';
 import { SessionGuard } from '../auth/session.guard.js';
 import { ActiveUserGuard } from '../auth/active-user.guard.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
+import { CurrentMembership } from '../auth/current-membership.decorator.js';
+import { WorkspaceMemberGuard } from '../workspace/workspace-member.guard.js';
+import type { RequestWorkspaceMembership } from '../workspace/workspace-membership.js';
 import { buildBudgetContext } from './build-budget-context.js';
 import { TOKENS } from './tokens.js';
 
@@ -72,8 +75,8 @@ function toTransactionResponse(transaction: Transaction): TransactionResponse {
  * if/when the workspace feature admits many concurrent members per
  * workspace.
  */
-@Controller('budget/transactions')
-@UseGuards(SessionGuard, ActiveUserGuard)
+@Controller('workspaces/:workspaceId/budget/transactions')
+@UseGuards(SessionGuard, ActiveUserGuard, WorkspaceMemberGuard)
 export class TransactionsController {
   public constructor(
     @Inject(TOKENS.RecordTransaction)
@@ -88,10 +91,11 @@ export class TransactionsController {
   public async record(
     @Body() body: CreateTransactionRequest,
     @CurrentUser() user: SessionUser,
+    @CurrentMembership() membership: RequestWorkspaceMembership,
   ): Promise<TransactionResponse> {
     const { data } = await this.recordTransaction.run(
       body,
-      buildBudgetContext(user),
+      buildBudgetContext(user, membership),
     );
     return toTransactionResponse(data);
   }
@@ -100,12 +104,13 @@ export class TransactionsController {
   public async list(
     @Query() query: TransactionFilterQuery,
     @CurrentUser() user: SessionUser,
+    @CurrentMembership() membership: RequestWorkspaceMembership,
   ): Promise<TransactionListResponse> {
     // Express builds `req.query` with a null prototype, which LIVR rejects
     // as a non-object — spread it into a plain object before validation.
     const { data } = await this.listTransactions.run(
       { ...query },
-      buildBudgetContext(user),
+      buildBudgetContext(user, membership),
     );
     return data.map(toTransactionResponse);
   }
@@ -114,10 +119,11 @@ export class TransactionsController {
   public async get(
     @Param('id') id: string,
     @CurrentUser() user: SessionUser,
+    @CurrentMembership() membership: RequestWorkspaceMembership,
   ): Promise<TransactionResponse> {
     const { data } = await this.getTransaction.run(
       { id },
-      buildBudgetContext(user),
+      buildBudgetContext(user, membership),
     );
     return toTransactionResponse(data);
   }

@@ -1,7 +1,8 @@
-import { DEFAULT_WORKSPACE_ID } from 'budget-contracts';
 import type { CallerIdentity, ServiceContext } from 'shared-kernel';
 import type { BudgetServiceConfig } from 'budget-application';
 import type { SessionUser } from 'shared-contracts';
+
+import type { RequestWorkspaceMembership } from '../workspace/workspace-membership.js';
 
 /** Currency every budget document is denominated in for the MVP single-currency assumption. */
 const DEFAULT_CURRENCY = 'UAH';
@@ -13,17 +14,19 @@ function toCallerIdentity(user: SessionUser): CallerIdentity {
 
 /**
  * Builds the `ServiceContext<BudgetServiceConfig>` every budget controller
- * hands to a `budget-application` service. `workspaceId` is stamped with the
- * single-implicit-workspace placeholder here — the ADR-mandated single point
- * where `DEFAULT_WORKSPACE_ID` reaches the API boundary (`application` code
- * never imports it directly).
+ * hands to a `budget-application` service. `workspaceId` comes only from the
+ * membership `WorkspaceMemberGuard` verified for the `:workspaceId` path
+ * segment — never from the body, query or session. The member role is
+ * deliberately not forwarded: budget services stay unaware of workspace
+ * roles.
  */
 export function buildBudgetContext(
   user: SessionUser,
+  membership: RequestWorkspaceMembership,
 ): ServiceContext<BudgetServiceConfig> {
   return {
     config: {
-      workspaceId: DEFAULT_WORKSPACE_ID,
+      workspaceId: membership.workspaceId,
       defaultCurrency: DEFAULT_CURRENCY,
     },
     caller: toCallerIdentity(user),

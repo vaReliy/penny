@@ -24,6 +24,9 @@ import type { SessionUser } from 'shared-contracts';
 import { SessionGuard } from '../auth/session.guard.js';
 import { ActiveUserGuard } from '../auth/active-user.guard.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
+import { CurrentMembership } from '../auth/current-membership.decorator.js';
+import { WorkspaceMemberGuard } from '../workspace/workspace-member.guard.js';
+import type { RequestWorkspaceMembership } from '../workspace/workspace-membership.js';
 import { buildBudgetContext } from './build-budget-context.js';
 import { TOKENS } from './tokens.js';
 
@@ -45,8 +48,8 @@ function toMonthlyBudgetResponse(budget: MonthlyBudget): MonthlyBudgetResponse {
  * own, only request/response shape translation. Mirrors
  * `UserAdminController`'s guard/DI pattern.
  */
-@Controller('budget/monthly-budgets')
-@UseGuards(SessionGuard, ActiveUserGuard)
+@Controller('workspaces/:workspaceId/budget/monthly-budgets')
+@UseGuards(SessionGuard, ActiveUserGuard, WorkspaceMemberGuard)
 export class MonthlyBudgetsController {
   public constructor(
     @Inject(TOKENS.UpsertMonthlyBudget)
@@ -59,10 +62,11 @@ export class MonthlyBudgetsController {
   public async list(
     @Query() query: ListMonthlyBudgetByMonthQuery,
     @CurrentUser() user: SessionUser,
+    @CurrentMembership() membership: RequestWorkspaceMembership,
   ): Promise<MonthlyBudgetListResponse> {
     const { data } = await this.listMonthlyBudgets.run(
       { month: query.month },
-      buildBudgetContext(user),
+      buildBudgetContext(user, membership),
     );
     return data.map(toMonthlyBudgetResponse);
   }
@@ -71,10 +75,11 @@ export class MonthlyBudgetsController {
   public async upsert(
     @Body() body: UpsertMonthlyBudgetRequest,
     @CurrentUser() user: SessionUser,
+    @CurrentMembership() membership: RequestWorkspaceMembership,
   ): Promise<MonthlyBudgetResponse> {
     const { data } = await this.upsertMonthlyBudget.run(
       body,
-      buildBudgetContext(user),
+      buildBudgetContext(user, membership),
     );
     return toMonthlyBudgetResponse(data);
   }

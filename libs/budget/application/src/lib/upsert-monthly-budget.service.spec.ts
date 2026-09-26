@@ -1,12 +1,16 @@
 import { AuthenticationError } from 'shared-errors';
 import { Money } from 'shared-util';
-import { MonthlyBudget } from 'budget-core';
+import { Category, MonthlyBudget } from 'budget-core';
 import { UserStatus } from 'shared-contracts';
 import { ServiceValidationError } from 'shared-kernel';
-import type { IMonthlyBudgetRepository } from 'budget-core';
+import type {
+  ICategoryRepository,
+  IMonthlyBudgetRepository,
+} from 'budget-core';
 import type { CallerIdentity, ServiceContext } from 'shared-kernel';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { CategoryNotEligibleError } from './category-not-eligible-error.js';
 import { UpsertMonthlyBudgetService } from './upsert-monthly-budget.service.js';
 import type { BudgetServiceConfig } from './budget-service-config.js';
 
@@ -84,6 +88,50 @@ class FakeMonthlyBudgetRepository implements IMonthlyBudgetRepository {
   }
 }
 
+/** In-memory `ICategoryRepository` fake, keyed by `id`; only the workspace-scoped lookup is exercised. */
+class FakeCategoryRepository implements ICategoryRepository {
+  private readonly categoriesById = new Map<string, Category>();
+
+  public seed(category: Category): void {
+    this.categoriesById.set(category.id, category);
+  }
+
+  public async findById(id: string): Promise<Category | null> {
+    return this.categoriesById.get(id) ?? null;
+  }
+
+  public async findByWorkspace(workspaceId: string): Promise<Category[]> {
+    return [...this.categoriesById.values()].filter(
+      (category) => category.workspaceId === workspaceId,
+    );
+  }
+
+  public async findByIdInWorkspace(
+    id: string,
+    workspaceId: string,
+  ): Promise<Category | null> {
+    const category = this.categoriesById.get(id);
+    return category?.workspaceId === workspaceId ? category : null;
+  }
+
+  public async findByNameInWorkspace(): Promise<Category | null> {
+    return null;
+  }
+
+  public async archive(): Promise<void> {
+    return undefined;
+  }
+
+  public async save(entity: Category): Promise<Category> {
+    this.categoriesById.set(entity.id, entity);
+    return entity;
+  }
+
+  public async delete(id: string): Promise<void> {
+    this.categoriesById.delete(id);
+  }
+}
+
 function buildContext(
   caller: CallerIdentity | null,
 ): ServiceContext<BudgetServiceConfig> {
@@ -106,6 +154,9 @@ const PENDING_CALLER: CallerIdentity = {
 };
 
 const CATEGORY_ID = '507f1f77bcf86cd799439011';
+const FOREIGN_CATEGORY_ID = '507f1f77bcf86cd799439022';
+const ARCHIVED_CATEGORY_ID = '507f1f77bcf86cd799439033';
+const UNKNOWN_CATEGORY_ID = '507f1f77bcf86cd799439099';
 
 describe('UpsertMonthlyBudgetService', () => {
   let repository: FakeMonthlyBudgetRepository;
@@ -113,8 +164,17 @@ describe('UpsertMonthlyBudgetService', () => {
 
   beforeEach(() => {
     repository = new FakeMonthlyBudgetRepository();
+    const categoryRepository = new FakeCategoryRepository();
+    categoryRepository.seed(Category.create(CATEGORY_ID, 'ws-1', 'Groceries'));
+    categoryRepository.seed(
+      Category.create(FOREIGN_CATEGORY_ID, 'ws-2', 'Foreign'),
+    );
+    categoryRepository.seed(
+      Category.create(ARCHIVED_CATEGORY_ID, 'ws-1', 'Old').archive(),
+    );
     service = new UpsertMonthlyBudgetService({
       monthlyBudgetRepository: repository,
+      categoryRepository,
     });
   });
 
@@ -196,17 +256,47 @@ describe('UpsertMonthlyBudgetService', () => {
     ).rejects.toBeInstanceOf(AuthenticationError);
   });
 
-  it('does not validate that categoryId refers to an existing category (ADR: any category may be budgeted)', async () => {
+  it.each([
+    ["another workspace's category", FOREIGN_CATEGORY_ID],
+    ['a nonexistent category', UNKNOWN_CATEGORY_ID],
+  ])(
+    'rejects %s with CategoryNotEligibleError and never writes',
+    async (_label, categoryId) => {
+      let writes = 0;
+      const upsertAmount = repository.upsertAmount.bind(repository);
+      repository.upsertAmount = async (...args) => {
+        writes += 1;
+        return upsertAmount(...args);
+      };
+
+      await expect(
+        service.run(
+          { categoryId, month: '2026-07', amountMinorUnits: 1_000 },
+          buildContext(ACTIVE_CALLER),
+        ),
+      ).rejects.toBeInstanceOf(CategoryNotEligibleError);
+      expect(writes).toBe(0);
+      expect(
+        await repository.findByWorkspaceCategoryMonth(
+          'ws-1',
+          categoryId,
+          '2026-07',
+        ),
+      ).toBeNull();
+    },
+  );
+
+  it('still budgets an archived category of the caller workspace (ADR: any category may be budgeted)', async () => {
     const outcome = await service.run(
       {
-        categoryId: '507f1f77bcf86cd799439099',
+        categoryId: ARCHIVED_CATEGORY_ID,
         month: '2026-07',
         amountMinorUnits: 1_000,
       },
       buildContext(ACTIVE_CALLER),
     );
 
-    expect(outcome.data.categoryId).toBe('507f1f77bcf86cd799439099');
+    expect(outcome.data.categoryId).toBe(ARCHIVED_CATEGORY_ID);
   });
 
   it('surfaces DomainError when the entity factory rejects a zero amount', async () => {

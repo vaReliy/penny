@@ -25,7 +25,6 @@ import {
   GetHistoryChartService,
 } from 'budget-application';
 import { Account, Category } from 'budget-core';
-import { DEFAULT_WORKSPACE_ID } from 'budget-contracts';
 import { Money } from 'shared-util';
 import { createFakeUserRepository } from 'identity-testing';
 import type { IAccountRepository, ICategoryRepository } from 'budget-core';
@@ -39,8 +38,16 @@ import type { IUserRepository } from 'identity-core';
 import { SessionGuard } from '../auth/session.guard.js';
 import { AUTH_COOKIE_NAME } from '../auth/cookie.constants.js';
 import { BudgetAnalyticsController } from './budget-analytics.controller.js';
+import type { RequestWorkspaceMembership } from '../workspace/workspace-membership.js';
 
 registerLivrRules();
+
+/** The path workspace every request in this spec targets, as verified by `WorkspaceMemberGuard`. */
+const WORKSPACE_ID = 'f'.repeat(24);
+const MEMBERSHIP: RequestWorkspaceMembership = {
+  workspaceId: WORKSPACE_ID,
+  role: 'member',
+};
 
 const VALID_ACCOUNT_ID = 'a'.repeat(24);
 const VALID_CATEGORY_ID = 'b'.repeat(24);
@@ -83,12 +90,7 @@ function makeSessionRepoUser(
 function makeFakeAccountRepository(
   overrides: Partial<IAccountRepository> = {},
 ): IAccountRepository {
-  const account = Account.create(
-    VALID_ACCOUNT_ID,
-    DEFAULT_WORKSPACE_ID,
-    'Main',
-    'UAH',
-  );
+  const account = Account.create(VALID_ACCOUNT_ID, WORKSPACE_ID, 'Main', 'UAH');
   return {
     findById: vi.fn().mockResolvedValue(null),
     save: vi.fn(async (a: Account) => a),
@@ -205,7 +207,7 @@ describe('BudgetAnalyticsController (real SessionGuard/ActiveUserGuard in the ch
   it('denies (defense in depth) when a non-active caller reaches the controller directly', async () => {
     const user = await authenticate(UserStatus.PENDING);
 
-    await expect(controller.balance(user)).rejects.toBeInstanceOf(
+    await expect(controller.balance(user, MEMBERSHIP)).rejects.toBeInstanceOf(
       AuthenticationError,
     );
   });
@@ -213,14 +215,14 @@ describe('BudgetAnalyticsController (real SessionGuard/ActiveUserGuard in the ch
   it('returns a zero balance for the resolved default account with no transactions', async () => {
     const user = await authenticate();
 
-    const result = await controller.balance(user);
+    const result = await controller.balance(user, MEMBERSHIP);
 
     expect(result).toEqual({
       accountId: VALID_ACCOUNT_ID,
       balance: Money.zero('UAH').toJSON(),
     });
     expect(accountRepository.findOrCreateDefault).toHaveBeenCalledWith(
-      DEFAULT_WORKSPACE_ID,
+      WORKSPACE_ID,
       'Main',
       'UAH',
     );
@@ -232,7 +234,7 @@ describe('BudgetAnalyticsController (real SessionGuard/ActiveUserGuard in the ch
       transactionRepository.sumAmountsByType as ReturnType<typeof vi.fn>
     ).mockResolvedValue({ income: 10000n, expense: 4000n });
 
-    const result = await controller.balance(user);
+    const result = await controller.balance(user, MEMBERSHIP);
 
     expect(result.balance).toEqual(Money.fromMinorUnits(6000, 'UAH').toJSON());
   });
@@ -240,7 +242,11 @@ describe('BudgetAnalyticsController (real SessionGuard/ActiveUserGuard in the ch
   it('returns an empty planner summary for a month with no budgets/spend', async () => {
     const user = await authenticate();
 
-    const result = await controller.summary({ month: '2026-07' }, user);
+    const result = await controller.summary(
+      { month: '2026-07' },
+      user,
+      MEMBERSHIP,
+    );
 
     expect(result).toEqual({ month: '2026-07', categories: [] });
   });
@@ -261,7 +267,11 @@ describe('BudgetAnalyticsController (real SessionGuard/ActiveUserGuard in the ch
       transactionRepository.sumExpenseByCategory as ReturnType<typeof vi.fn>
     ).mockResolvedValue([{ categoryId: VALID_CATEGORY_ID, total: 20000n }]);
 
-    const result = await controller.summary({ month: '2026-07' }, user);
+    const result = await controller.summary(
+      { month: '2026-07' },
+      user,
+      MEMBERSHIP,
+    );
 
     expect(result.categories).toEqual([
       {
@@ -278,7 +288,11 @@ describe('BudgetAnalyticsController (real SessionGuard/ActiveUserGuard in the ch
   it('returns an empty chart for a workspace with no expense transactions', async () => {
     const user = await authenticate();
 
-    const result = await controller.chart({ month: '2026-07' }, user);
+    const result = await controller.chart(
+      { month: '2026-07' },
+      user,
+      MEMBERSHIP,
+    );
 
     expect(result).toEqual([]);
   });
@@ -292,14 +306,16 @@ describe('BudgetAnalyticsController (real SessionGuard/ActiveUserGuard in the ch
       month: '2026-07',
     }) as HistoryChartFilterQuery;
 
-    await expect(controller.chart(query, user)).resolves.toEqual([]);
+    await expect(controller.chart(query, user, MEMBERSHIP)).resolves.toEqual(
+      [],
+    );
   });
 
   it('returns chart entries sorted by value, descending', async () => {
     const user = await authenticate();
     const category = Category.create(
       VALID_CATEGORY_ID,
-      DEFAULT_WORKSPACE_ID,
+      WORKSPACE_ID,
       'Groceries',
     );
     (
@@ -309,7 +325,7 @@ describe('BudgetAnalyticsController (real SessionGuard/ActiveUserGuard in the ch
       transactionRepository.sumExpenseByCategory as ReturnType<typeof vi.fn>
     ).mockResolvedValue([{ categoryId: VALID_CATEGORY_ID, total: 15000n }]);
 
-    const result = await controller.chart({}, user);
+    const result = await controller.chart({}, user, MEMBERSHIP);
 
     expect(result).toEqual([
       {

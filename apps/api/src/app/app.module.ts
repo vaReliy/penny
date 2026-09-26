@@ -5,6 +5,7 @@ import { ConfigModule } from '../config/config.module.js';
 import { LoggerModule } from '../logger/logger.module.js';
 import { IdentityModule } from '../identity/identity.module.js';
 import { BudgetModule } from '../budget/budget.module.js';
+import { WorkspaceModule } from '../workspace/workspace.module.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { HelloModule } from '../hello/hello.module.js';
 import { HealthController } from '../health/health.controller.js';
@@ -18,6 +19,7 @@ import { UnknownErrorFilter } from '../filters/unknown-error.filter.js';
     LoggerModule,
     IdentityModule,
     BudgetModule,
+    WorkspaceModule,
     AuthModule,
     HelloModule,
   ],

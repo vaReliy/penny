@@ -8,6 +8,8 @@ import { describe, expect, it, afterEach } from 'vitest';
 import { API_CONFIG } from '../config/api-config.js';
 import type { ApiConfig } from '../config/api-config.js';
 import { TOKENS as IDENTITY_TOKENS } from '../identity/tokens.js';
+import { TOKENS as WORKSPACE_TOKENS } from '../workspace/tokens.js';
+import { WorkspaceMemberGuard } from '../workspace/workspace-member.guard.js';
 import { BudgetModule } from './budget.module.js';
 import { TOKENS } from './tokens.js';
 
@@ -57,6 +59,8 @@ describe('BudgetModule', () => {
       .useValue(createUnconnectedConnection())
       .overrideProvider(IDENTITY_TOKENS.MongoConnection)
       .useValue(createUnconnectedConnection())
+      .overrideProvider(WORKSPACE_TOKENS.MongoConnection)
+      .useValue(createUnconnectedConnection())
       .compile();
 
     expect(moduleRef).toBeDefined();
@@ -70,6 +74,8 @@ describe('BudgetModule', () => {
       .useValue(createUnconnectedConnection())
       .overrideProvider(IDENTITY_TOKENS.MongoConnection)
       .useValue(createUnconnectedConnection())
+      .overrideProvider(WORKSPACE_TOKENS.MongoConnection)
+      .useValue(createUnconnectedConnection())
       .compile();
 
     expect(
@@ -77,6 +83,26 @@ describe('BudgetModule', () => {
     ).toBeDefined();
     expect(
       moduleRef.get(IDENTITY_TOKENS.UserRepository, { strict: false }),
+    ).toBeDefined();
+  });
+
+  it('resolves the workspace-member guard its workspace-scoped controllers depend on', async () => {
+    moduleRef = await Test.createTestingModule({
+      imports: [TestConfigModule, BudgetModule],
+    })
+      .overrideProvider(TOKENS.MongoConnection)
+      .useValue(createUnconnectedConnection())
+      .overrideProvider(IDENTITY_TOKENS.MongoConnection)
+      .useValue(createUnconnectedConnection())
+      .overrideProvider(WORKSPACE_TOKENS.MongoConnection)
+      .useValue(createUnconnectedConnection())
+      .compile();
+
+    expect(
+      moduleRef.get(WorkspaceMemberGuard, { strict: false }),
+    ).toBeInstanceOf(WorkspaceMemberGuard);
+    expect(
+      moduleRef.get(WORKSPACE_TOKENS.FindMembership, { strict: false }),
     ).toBeDefined();
   });
 });

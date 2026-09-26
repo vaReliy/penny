@@ -130,6 +130,35 @@ This guide is for human operators running Claude Code sessions. It documents sev
 
 ---
 
+## 8. Workspace rollout (one-time)
+
+**When:** Once, before the first deploy of the workspace-scoped budget API (`/api/workspaces/:workspaceId/budget/...`) to an environment that still holds budget data from the single-implicit-workspace era.
+
+**What:** Budget documents written before workspaces existed all carry `workspaceId: 'default-workspace'`, which no real workspace can ever match. They are not migrated (there are no real users yet); delete them, then create real workspaces via the CLI.
+
+**Flow:**
+
+1. Delete the legacy documents from all four budget collections — `accounts`, `categories`, `transactions` and `monthlyBudgets`:
+   ```bash
+   set -a && source .env && set +a && mongosh "$MONGO_URI" --quiet --eval '
+     const penny = db.getSiblingDB(process.env.MONGO_DB_NAME);
+     for (const name of ["accounts", "categories", "transactions", "monthlyBudgets"]) {
+       const { deletedCount } = penny.getCollection(name).deleteMany({ workspaceId: "default-workspace" });
+       print(`${name}: ${deletedCount} deleted`);
+     }'
+   ```
+2. Create each workspace with its first admin (the admin must be an existing, active user):
+   ```bash
+   set -a && source .env && set +a && pnpm nx build cli && node dist/apps/cli/main.js workspace:create --name demo --admin-telegram-id <telegramId>
+   ```
+   A demo workspace is just a regular workspace with a demo name.
+3. Add further members with `workspace:add-member --workspace <workspaceId> --telegram-id <telegramId> --role member` (or `--role admin`).
+4. Verify with `workspace:list`, then sign in: `GET /api/workspaces` lists the caller's workspaces, and the web client must address budget data through the chosen workspace's id.
+
+**Reference:** `apps/cli/src/commands/` (`workspace-*` commands). The default `Main` account is created lazily per workspace on its first balance read, so no account seeding is needed.
+
+---
+
 ## Further Reading
 
 - **Orchestrator and pipeline:** `rules/cts/workflow.md` — First Action (Triage), Tiered Planning Ladder, Foresight gate, Standard Feature Pipeline, Quality Gate, Knowledge Capture.

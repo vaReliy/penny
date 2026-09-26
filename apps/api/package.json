@@ -24,6 +24,9 @@
     "budget-contracts": "0.0.1",
     "budget-core": "0.0.1",
     "budget-infrastructure": "0.0.1",
+    "workspace-application": "0.0.1",
+    "workspace-core": "0.0.1",
+    "workspace-infrastructure": "0.0.1",
     "helmet": "8.2.0",
     "shared-util": "0.0.1"
   }

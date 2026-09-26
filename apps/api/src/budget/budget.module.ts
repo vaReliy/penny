@@ -39,6 +39,7 @@ import { API_CONFIG } from '../config/api-config.js';
 import type { ApiConfig } from '../config/api-config.js';
 import { LoggerModule } from '../logger/logger.module.js';
 import { PINO_LOGGER } from '../logger/logger.tokens.js';
+import { WorkspaceModule } from '../workspace/workspace.module.js';
 import { TOKENS } from './tokens.js';
 import { CategoriesController } from './categories.controller.js';
 import { MonthlyBudgetsController } from './monthly-budgets.controller.js';
@@ -64,10 +65,12 @@ class BudgetMongoShutdownHook implements OnApplicationShutdown {
  * `createMongoConnection` is a deliberate, independent duplicate of
  * `identity-infrastructure`'s (cross-scope import is fenced by the
  * `scope:budget`/`scope:identity` ESLint boundary), so this module cannot
- * reuse `IdentityModule`'s connection.
+ * reuse `IdentityModule`'s connection. Imports `WorkspaceModule` so the
+ * `WorkspaceMemberGuard` every workspace-scoped controller applies can
+ * resolve its `FindMembershipService` in this module's injector.
  */
 @Module({
-  imports: [LoggerModule, AuthModule],
+  imports: [LoggerModule, AuthModule, WorkspaceModule],
   controllers: [
     CategoriesController,
     MonthlyBudgetsController,
@@ -155,9 +158,13 @@ class BudgetMongoShutdownHook implements OnApplicationShutdown {
       provide: TOKENS.UpsertMonthlyBudget,
       useFactory: (
         monthlyBudgetRepository: IMonthlyBudgetRepository,
+        categoryRepository: ICategoryRepository,
       ): UpsertMonthlyBudgetService =>
-        new UpsertMonthlyBudgetService({ monthlyBudgetRepository }),
-      inject: [TOKENS.MonthlyBudgetRepository],
+        new UpsertMonthlyBudgetService({
+          monthlyBudgetRepository,
+          categoryRepository,
+        }),
+      inject: [TOKENS.MonthlyBudgetRepository, TOKENS.CategoryRepository],
     },
     {
       provide: TOKENS.ListMonthlyBudgets,

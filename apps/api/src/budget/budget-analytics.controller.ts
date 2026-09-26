@@ -20,6 +20,9 @@ import type { SessionUser } from 'shared-contracts';
 import { SessionGuard } from '../auth/session.guard.js';
 import { ActiveUserGuard } from '../auth/active-user.guard.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
+import { CurrentMembership } from '../auth/current-membership.decorator.js';
+import { WorkspaceMemberGuard } from '../workspace/workspace-member.guard.js';
+import type { RequestWorkspaceMembership } from '../workspace/workspace-membership.js';
 import { buildBudgetContext } from './build-budget-context.js';
 import { resolveDefaultAccount } from './resolve-default-account.js';
 import { TOKENS } from './tokens.js';
@@ -48,8 +51,8 @@ function toPlannerCategorySummary(
  * `resolveDefaultAccount`). Mirrors `CategoriesController`'s guard/DI
  * pattern.
  */
-@Controller('budget')
-@UseGuards(SessionGuard, ActiveUserGuard)
+@Controller('workspaces/:workspaceId/budget')
+@UseGuards(SessionGuard, ActiveUserGuard, WorkspaceMemberGuard)
 export class BudgetAnalyticsController {
   public constructor(
     @Inject(TOKENS.AccountRepository)
@@ -65,8 +68,9 @@ export class BudgetAnalyticsController {
   @Get('balance')
   public async balance(
     @CurrentUser() user: SessionUser,
+    @CurrentMembership() membership: RequestWorkspaceMembership,
   ): Promise<BalanceResponse> {
-    const context = buildBudgetContext(user);
+    const context = buildBudgetContext(user, membership);
     const account = await resolveDefaultAccount(
       this.accountRepository,
       context.config.workspaceId,
@@ -85,10 +89,11 @@ export class BudgetAnalyticsController {
   public async summary(
     @Query() query: PlannerSummaryFilterQuery,
     @CurrentUser() user: SessionUser,
+    @CurrentMembership() membership: RequestWorkspaceMembership,
   ): Promise<PlannerSummaryResponse> {
     const { data } = await this.getPlannerSummary.run(
       { month: query.month },
-      buildBudgetContext(user),
+      buildBudgetContext(user, membership),
     );
 
     return {
@@ -101,12 +106,13 @@ export class BudgetAnalyticsController {
   public async chart(
     @Query() query: HistoryChartFilterQuery,
     @CurrentUser() user: SessionUser,
+    @CurrentMembership() membership: RequestWorkspaceMembership,
   ): Promise<HistoryChartResponse> {
     // Express builds `req.query` with a null prototype, which LIVR rejects
     // as a non-object — spread it into a plain object before validation.
     const { data } = await this.getHistoryChart.run(
       { ...query },
-      buildBudgetContext(user),
+      buildBudgetContext(user, membership),
     );
 
     return data.map((entry) => ({

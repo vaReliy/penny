@@ -28,7 +28,7 @@ import {
   GetTransactionService,
 } from 'budget-application';
 import { Account, Category, Transaction } from 'budget-core';
-import { DEFAULT_WORKSPACE_ID, TransactionType } from 'budget-contracts';
+import { TransactionType } from 'budget-contracts';
 import { Money } from 'shared-util';
 import { createFakeUserRepository } from 'identity-testing';
 import type {
@@ -44,8 +44,16 @@ import type { IUserRepository } from 'identity-core';
 import { SessionGuard } from '../auth/session.guard.js';
 import { AUTH_COOKIE_NAME } from '../auth/cookie.constants.js';
 import { TransactionsController } from './transactions.controller.js';
+import type { RequestWorkspaceMembership } from '../workspace/workspace-membership.js';
 
 registerLivrRules();
+
+/** The path workspace every request in this spec targets, as verified by `WorkspaceMemberGuard`. */
+const WORKSPACE_ID = 'f'.repeat(24);
+const MEMBERSHIP: RequestWorkspaceMembership = {
+  workspaceId: WORKSPACE_ID,
+  role: 'member',
+};
 
 const VALID_ACCOUNT_ID = 'a'.repeat(24);
 const VALID_CATEGORY_ID = 'b'.repeat(24);
@@ -91,7 +99,7 @@ function makeFakeCategoryRepository(
 ): ICategoryRepository {
   const category = Category.create(
     VALID_CATEGORY_ID,
-    DEFAULT_WORKSPACE_ID,
+    WORKSPACE_ID,
     'Groceries',
   );
   return {
@@ -109,12 +117,7 @@ function makeFakeCategoryRepository(
 function makeFakeAccountRepository(
   overrides: Partial<IAccountRepository> = {},
 ): IAccountRepository {
-  const account = Account.create(
-    VALID_ACCOUNT_ID,
-    DEFAULT_WORKSPACE_ID,
-    'Cash',
-    'UAH',
-  );
+  const account = Account.create(VALID_ACCOUNT_ID, WORKSPACE_ID, 'Cash', 'UAH');
   return {
     findById: vi.fn().mockResolvedValue(null),
     save: vi.fn(async (a: Account) => a),
@@ -210,6 +213,7 @@ describe('TransactionsController (real SessionGuard/ActiveUserGuard in the chain
           date: '2026-07-15',
         },
         user,
+        MEMBERSHIP,
       ),
     ).rejects.toBeInstanceOf(AuthenticationError);
   });
@@ -242,6 +246,7 @@ describe('TransactionsController (real SessionGuard/ActiveUserGuard in the chain
         description: 'Milk and bread',
       },
       user,
+      MEMBERSHIP,
     );
 
     expect(result.id).toBe(VALID_TRANSACTION_ID);
@@ -277,6 +282,7 @@ describe('TransactionsController (real SessionGuard/ActiveUserGuard in the chain
         ...({ createdBy: 'someone-else' } as Record<string, unknown>),
       } as Parameters<TransactionsController['record']>[0],
       user,
+      MEMBERSHIP,
     );
 
     expect(savedTransaction?.createdBy).toBe('user-1');
@@ -295,6 +301,7 @@ describe('TransactionsController (real SessionGuard/ActiveUserGuard in the chain
           date: '2026-07-15',
         },
         user,
+        MEMBERSHIP,
       )
       .catch((e: unknown) => e);
 
@@ -317,6 +324,7 @@ describe('TransactionsController (real SessionGuard/ActiveUserGuard in the chain
           date: '2026-07-15',
         },
         user,
+        MEMBERSHIP,
       )
       .catch((e: unknown) => e);
 
@@ -340,6 +348,7 @@ describe('TransactionsController (real SessionGuard/ActiveUserGuard in the chain
           description: 'x'.repeat(501),
         },
         user,
+        MEMBERSHIP,
       )
       .catch((e: unknown) => e);
 
@@ -365,6 +374,7 @@ describe('TransactionsController (real SessionGuard/ActiveUserGuard in the chain
           date: '2026-07-15',
         },
         user,
+        MEMBERSHIP,
       ),
     ).rejects.toThrow();
   });
@@ -373,7 +383,7 @@ describe('TransactionsController (real SessionGuard/ActiveUserGuard in the chain
     const user = await authenticate();
     const transaction = Transaction.create(
       VALID_TRANSACTION_ID,
-      DEFAULT_WORKSPACE_ID,
+      WORKSPACE_ID,
       VALID_ACCOUNT_ID,
       VALID_CATEGORY_ID,
       TransactionType.EXPENSE,
@@ -385,7 +395,11 @@ describe('TransactionsController (real SessionGuard/ActiveUserGuard in the chain
       transactionRepository.findByWorkspace as ReturnType<typeof vi.fn>
     ).mockResolvedValue([transaction]);
 
-    const result = await controller.list({ month: '2026-07' }, user);
+    const result = await controller.list(
+      { month: '2026-07' },
+      user,
+      MEMBERSHIP,
+    );
 
     expect(result).toHaveLength(1);
     expect(result[0]?.id).toBe(VALID_TRANSACTION_ID);
@@ -395,7 +409,7 @@ describe('TransactionsController (real SessionGuard/ActiveUserGuard in the chain
     const user = await authenticate();
     const transaction = Transaction.create(
       VALID_TRANSACTION_ID,
-      DEFAULT_WORKSPACE_ID,
+      WORKSPACE_ID,
       VALID_ACCOUNT_ID,
       VALID_CATEGORY_ID,
       TransactionType.EXPENSE,
@@ -413,7 +427,7 @@ describe('TransactionsController (real SessionGuard/ActiveUserGuard in the chain
       month: '2026-07',
     }) as TransactionFilterQuery;
 
-    const result = await controller.list(query, user);
+    const result = await controller.list(query, user, MEMBERSHIP);
 
     expect(result).toHaveLength(1);
   });
@@ -421,7 +435,7 @@ describe('TransactionsController (real SessionGuard/ActiveUserGuard in the chain
   it('rejects a list call with neither month nor from/to (unbounded scan guard)', async () => {
     const user = await authenticate();
 
-    await expect(controller.list({}, user)).rejects.toBeInstanceOf(
+    await expect(controller.list({}, user, MEMBERSHIP)).rejects.toBeInstanceOf(
       ServiceValidationError,
     );
   });
@@ -430,7 +444,7 @@ describe('TransactionsController (real SessionGuard/ActiveUserGuard in the chain
     const user = await authenticate();
     const transaction = Transaction.create(
       VALID_TRANSACTION_ID,
-      DEFAULT_WORKSPACE_ID,
+      WORKSPACE_ID,
       VALID_ACCOUNT_ID,
       VALID_CATEGORY_ID,
       TransactionType.EXPENSE,
@@ -442,7 +456,7 @@ describe('TransactionsController (real SessionGuard/ActiveUserGuard in the chain
       transactionRepository.findByIdInWorkspace as ReturnType<typeof vi.fn>
     ).mockResolvedValue(transaction);
 
-    const result = await controller.get(VALID_TRANSACTION_ID, user);
+    const result = await controller.get(VALID_TRANSACTION_ID, user, MEMBERSHIP);
 
     expect(result.id).toBe(VALID_TRANSACTION_ID);
   });
@@ -454,7 +468,7 @@ describe('TransactionsController (real SessionGuard/ActiveUserGuard in the chain
     ).mockResolvedValue(null);
 
     await expect(
-      controller.get(VALID_TRANSACTION_ID, user),
+      controller.get(VALID_TRANSACTION_ID, user, MEMBERSHIP),
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 });

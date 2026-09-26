@@ -43,7 +43,6 @@ import {
   ListCategoriesService,
 } from 'budget-application';
 import { Category } from 'budget-core';
-import { DEFAULT_WORKSPACE_ID } from 'budget-contracts';
 import { createFakeUserRepository } from 'identity-testing';
 import type { ICategoryRepository } from 'budget-core';
 import type { SessionUser } from 'shared-contracts';
@@ -52,10 +51,18 @@ import { SessionGuard } from '../auth/session.guard.js';
 import { ActiveUserGuard } from '../auth/active-user.guard.js';
 import { AUTH_COOKIE_NAME } from '../auth/cookie.constants.js';
 import { CategoriesController } from './categories.controller.js';
+import type { RequestWorkspaceMembership } from '../workspace/workspace-membership.js';
 import type { ITokenIssuer } from 'identity-application';
 import type { IUserRepository } from 'identity-core';
 
 registerLivrRules();
+
+/** The path workspace every request in this spec targets, as verified by `WorkspaceMemberGuard`. */
+const WORKSPACE_ID = 'f'.repeat(24);
+const MEMBERSHIP: RequestWorkspaceMembership = {
+  workspaceId: WORKSPACE_ID,
+  role: 'member',
+};
 
 const VALID_ID = 'a'.repeat(24);
 
@@ -198,7 +205,7 @@ describe('CategoriesController (real SessionGuard/ActiveUserGuard in the chain)'
   it('denies (defense in depth) when a non-active caller reaches the controller directly', async () => {
     const user = await authenticate(UserStatus.PENDING);
 
-    await expect(controller.list(user)).rejects.toBeInstanceOf(
+    await expect(controller.list(user, MEMBERSHIP)).rejects.toBeInstanceOf(
       AuthenticationError,
     );
   });
@@ -209,13 +216,17 @@ describe('CategoriesController (real SessionGuard/ActiveUserGuard in the chain)'
       async (c: Category) => Category.create(VALID_ID, c.workspaceId, c.name),
     );
 
-    const result = await controller.create({ name: 'Groceries' }, user);
+    const result = await controller.create(
+      { name: 'Groceries' },
+      user,
+      MEMBERSHIP,
+    );
 
     expect(result).toEqual({ id: VALID_ID, name: 'Groceries' });
     expect(categoryRepository.save).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Groceries',
-        workspaceId: DEFAULT_WORKSPACE_ID,
+        workspaceId: WORKSPACE_ID,
       }),
     );
   });
@@ -224,7 +235,7 @@ describe('CategoriesController (real SessionGuard/ActiveUserGuard in the chain)'
     const user = await authenticate();
 
     const error = await controller
-      .create({ name: 'a'.repeat(121) }, user)
+      .create({ name: 'a'.repeat(121) }, user, MEMBERSHIP)
       .catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(ServiceValidationError);
@@ -233,19 +244,19 @@ describe('CategoriesController (real SessionGuard/ActiveUserGuard in the chain)'
 
   it('lists categories for the workspace', async () => {
     const user = await authenticate();
-    const existing = Category.create(VALID_ID, DEFAULT_WORKSPACE_ID, 'Rent');
+    const existing = Category.create(VALID_ID, WORKSPACE_ID, 'Rent');
     (
       categoryRepository.findByWorkspace as ReturnType<typeof vi.fn>
     ).mockResolvedValue([existing]);
 
-    const result = await controller.list(user);
+    const result = await controller.list(user, MEMBERSHIP);
 
     expect(result).toEqual([{ id: VALID_ID, name: 'Rent' }]);
   });
 
   it('renames a category', async () => {
     const user = await authenticate();
-    const existing = Category.create(VALID_ID, DEFAULT_WORKSPACE_ID, 'Rent');
+    const existing = Category.create(VALID_ID, WORKSPACE_ID, 'Rent');
     (
       categoryRepository.findByIdInWorkspace as ReturnType<typeof vi.fn>
     ).mockResolvedValue(existing);
@@ -253,40 +264,43 @@ describe('CategoriesController (real SessionGuard/ActiveUserGuard in the chain)'
       async (c: Category) => c,
     );
 
-    const result = await controller.update(VALID_ID, { name: 'Housing' }, user);
+    const result = await controller.update(
+      VALID_ID,
+      { name: 'Housing' },
+      user,
+      MEMBERSHIP,
+    );
 
     expect(result).toEqual({ id: VALID_ID, name: 'Housing' });
   });
 
   it('archives a category and reflects archivedAt in the response', async () => {
     const user = await authenticate();
-    const existing = Category.create(VALID_ID, DEFAULT_WORKSPACE_ID, 'Rent');
+    const existing = Category.create(VALID_ID, WORKSPACE_ID, 'Rent');
     (
       categoryRepository.findByIdInWorkspace as ReturnType<typeof vi.fn>
     ).mockResolvedValue(existing);
 
-    const result = await controller.archive(VALID_ID, user);
+    const result = await controller.archive(VALID_ID, user, MEMBERSHIP);
 
     expect(result.id).toBe(VALID_ID);
     expect(result.archivedAt).toEqual(expect.any(String));
     expect(categoryRepository.archive).toHaveBeenCalledWith(
       VALID_ID,
-      DEFAULT_WORKSPACE_ID,
+      WORKSPACE_ID,
     );
   });
 
   it('archiving an already-archived category is rejected (no hard delete, one-way transition)', async () => {
     const user = await authenticate();
-    const archived = Category.create(
-      VALID_ID,
-      DEFAULT_WORKSPACE_ID,
-      'Rent',
-    ).archive();
+    const archived = Category.create(VALID_ID, WORKSPACE_ID, 'Rent').archive();
     (
       categoryRepository.findByIdInWorkspace as ReturnType<typeof vi.fn>
     ).mockResolvedValue(archived);
 
-    await expect(controller.archive(VALID_ID, user)).rejects.toMatchObject({
+    await expect(
+      controller.archive(VALID_ID, user, MEMBERSHIP),
+    ).rejects.toMatchObject({
       statusCode: 409,
     });
   });

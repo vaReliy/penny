@@ -155,3 +155,4 @@ Each completed task is one row in the table below.
 | 2026-09-25 | penny | workspace-application-services                               | T2   | 0      | 0/0/0/-           | 1       | no       | standard       |                                                                   |
 | 2026-09-25 | penny | cli-user-list-and-telegram-id                                | T2   | 0      | 0/0/0/-           | 0       | no       | standard       |                                                                   |
 | 2026-09-26 | penny | cli-workspace-commands                                       | T2   | 0      | 0/0/0/-           | 0       | no       | standard       |                                                                   |
+| 2026-09-26 | penny | api-workspace-cutover                                        | T2   | 0      | 0/0/0/-           | 0       | no       | deep (impl)    | qa skipped: API-only, web out of scope until W6a                  |

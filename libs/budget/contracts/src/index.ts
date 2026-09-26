@@ -1,5 +1,4 @@
 export * from './lib/transaction-type.js';
-export * from './lib/default-workspace-id.js';
 export * from './lib/category.dto.js';
 export * from './lib/monthly-budget.dto.js';
 export * from './lib/transaction.dto.js';

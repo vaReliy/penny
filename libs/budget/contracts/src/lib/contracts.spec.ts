@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_WORKSPACE_ID, TransactionType } from '../index.js';
+import { TransactionType } from '../index.js';
 import type {
   BalanceResponse,
   CategoryResponse,
@@ -20,13 +20,6 @@ describe('TransactionType', () => {
 
   it('has exactly two members — no undocumented types', () => {
     expect(Object.keys(TransactionType)).toStrictEqual(['INCOME', 'EXPENSE']);
-  });
-});
-
-describe('DEFAULT_WORKSPACE_ID', () => {
-  it('is a non-empty string constant', () => {
-    expect(typeof DEFAULT_WORKSPACE_ID).toBe('string');
-    expect(DEFAULT_WORKSPACE_ID.length).toBeGreaterThan(0);
   });
 });
 
