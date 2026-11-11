@@ -25,7 +25,7 @@
     "helmet": "8.2.0",
     "jsonwebtoken": "9.0.3",
     "livr": "2.10.2",
-    "mongoose": "8.24.1",
+    "mongoose": "8.24.7",
     "nest-commander": "3.20.1",
     "pino": "9.14.0",
     "pino-http": "11.0.0",
